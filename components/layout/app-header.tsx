@@ -5,6 +5,15 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/store/theme-store";
+import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sun,
   Moon,
@@ -12,107 +21,210 @@ import {
   PenLine,
   GraduationCap,
   Swords,
+  FolderOpen,
   BarChart3,
   Award,
-  FolderOpen,
   BookOpen,
+  Menu,
+  MoreHorizontal,
+  Upload,
+  Download,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
-const navItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/editor", label: "Build", icon: PenLine },
-  { href: "/learn", label: "Learn", icon: GraduationCap, matchPrefix: "/learn" },
-  { href: "/challenges", label: "Challenges", icon: Swords, matchPrefix: "/challenges" },
+const primaryNav = [
+  { href: "/", label: "Home", icon: Home, match: (p: string) => p === "/" },
+  {
+    href: "/editor",
+    label: "Build",
+    icon: PenLine,
+    match: (p: string) => p === "/editor",
+  },
+  {
+    href: "/learn",
+    label: "Learn",
+    icon: GraduationCap,
+    match: (p: string) => p.startsWith("/learn"),
+  },
+  {
+    href: "/challenges",
+    label: "Challenges",
+    icon: Swords,
+    match: (p: string) => p.startsWith("/challenges"),
+  },
+  {
+    href: "/projects",
+    label: "Projects",
+    icon: FolderOpen,
+    match: (p: string) => p === "/projects",
+  },
+] as const;
+
+const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
   { href: "/achievements", label: "Achievements", icon: Award },
-  { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/docs/composer", label: "Docs", icon: BookOpen, matchPrefix: "/docs" },
-];
+  { href: "/docs/composer", label: "Docs", icon: BookOpen },
+  { href: "/import", label: "Import", icon: Upload },
+  { href: "/export", label: "Export", icon: Download },
+] as const;
 
-interface AppHeaderProps {
-  variant?: "default" | "compact";
+function isActive(pathname: string, match: (p: string) => boolean) {
+  return match(pathname);
 }
 
-export function AppHeader({ variant = "default" }: AppHeaderProps) {
+export function AppHeader() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
-  const isCompact = variant === "compact";
+  const showModeSwitcher =
+    pathname === "/editor" ||
+    pathname.startsWith("/learn") ||
+    pathname.startsWith("/challenges");
 
   return (
-    <header
-      className={cn(
-        "z-40 shrink-0",
-        isCompact ? "glass-nav-compact" : "px-4 pt-2 pb-1"
-      )}
-    >
-      <div
-        className={cn(
-          "flex items-center justify-between gap-3",
-          isCompact
-            ? "h-[var(--app-header-height)] px-3 sm:px-4"
-            : "glass-nav mx-auto h-11 max-w-7xl rounded-xl px-3 sm:px-4"
-        )}
-      >
+    <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
+      <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
             src="https://kuqci.github.io/logo.png"
             alt="KUQCI"
-            width={isCompact ? 22 : 24}
-            height={isCompact ? 22 : 24}
+            width={24}
+            height={24}
             className="rounded-md"
             unoptimized
           />
-          <div className="hidden flex-col sm:flex">
-            <span className="text-sm font-semibold leading-tight text-[var(--color-foreground)]">
-              KUQCI
-            </span>
-            <span className="text-[10px] leading-tight text-[var(--color-muted-foreground)]">
-              Circuit Visualizer
-            </span>
-          </div>
+          <span className="hidden text-sm font-semibold text-[var(--color-foreground)] sm:inline">
+            KUQCI
+          </span>
         </Link>
 
-        <nav className="flex flex-1 items-center justify-center gap-0.5 overflow-x-auto">
-          {navItems.map((item) => {
+        {/* Desktop primary nav */}
+        <nav className="hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
+          {primaryNav.map((item) => {
             const Icon = item.icon;
-            const active =
-              pathname === item.href ||
-              (item.matchPrefix && pathname.startsWith(item.matchPrefix)) ||
-              (item.href === "/docs/composer" && pathname.startsWith("/docs"));
+            const active = isActive(pathname, item.match);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "kuqci-nav-link flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap",
+                  "kuqci-nav-link flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
                   active
-                    ? "active text-[var(--color-brand)]"
-                    : "text-[var(--color-muted-foreground)]"
+                    ? "active bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
+                    : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
                 )}
               >
-                <Icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden lg:inline">{item.label}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                {item.label}
               </Link>
             );
           })}
         </nav>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="h-8 w-8 shrink-0"
-        >
-          {theme === "dark" ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
+        <div className="ml-auto flex items-center gap-2">
+          {showModeSwitcher && (
+            <ModeSwitcher size="sm" className="hidden lg:inline-flex" />
           )}
-        </Button>
+
+          {/* More menu — desktop/tablet */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden h-8 gap-1.5 px-2 text-sm md:inline-flex"
+                aria-label="More navigation"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                More
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {secondaryNav.map((item) => {
+                const Icon = item.icon;
+                const active = pathname === item.href || pathname.startsWith(item.href);
+                return (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2",
+                        active && "text-[var(--color-brand)]"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleTheme}>
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="h-4 w-4" />
+                    Light theme
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" />
+                    Dark theme
+                  </>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Mobile menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 md:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {[...primaryNav, ...secondaryNav].map((item) => {
+                const Icon = item.icon;
+                const active =
+                  "match" in item
+                    ? item.match(pathname)
+                    : pathname === item.href || pathname.startsWith(item.href);
+                return (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2",
+                        active && "text-[var(--color-brand)]"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={toggleTheme}>
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="h-4 w-4" />
+                    Light theme
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" />
+                    Dark theme
+                  </>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );

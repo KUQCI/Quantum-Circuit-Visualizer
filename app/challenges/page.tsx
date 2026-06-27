@@ -4,12 +4,17 @@ import { useEffect } from "react";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { ChallengeCard } from "@/components/learning/ChallengeCard";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
+import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
+import { NextStepCard } from "@/components/navigation/NextStepCard";
+import { PageActions } from "@/components/navigation/PageActions";
 import { CHALLENGES, getChallengesByDifficulty } from "@/lib/learning/challenges";
+import { getNextChallenge } from "@/lib/navigation/flow";
 import { quantaMessages } from "@/lib/mascot/messages";
 import {
   isChallengeUnlockedByTier,
   useProgressStore,
 } from "@/store/progress-store";
+import { BarChart3, Award, GraduationCap } from "lucide-react";
 
 export default function ChallengesPage() {
   const completedLessons = useProgressStore((s) => s.completedLessons);
@@ -20,6 +25,7 @@ export default function ChallengesPage() {
     recordActivity();
   }, [recordActivity]);
 
+  const nextChallenge = getNextChallenge(completedLessons, completedChallenges);
   const tiers = ["beginner", "intermediate", "advanced"] as const;
 
   return (
@@ -29,9 +35,42 @@ export default function ChallengesPage() {
         <p className="page-description">
           Test your skills with objective-based quantum quests
         </p>
+        <PageActions
+          className="mt-4"
+          primary={
+            nextChallenge
+              ? [
+                  {
+                    label: `Start ${nextChallenge.title}`,
+                    href: `/challenges/${nextChallenge.id}`,
+                  },
+                ]
+              : []
+          }
+          secondary={[
+            { label: "Learn", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+            { label: "Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
+            { label: "Achievements", href: "/achievements", icon: <Award className="h-4 w-4" /> },
+          ]}
+        />
       </div>
 
       <ProgressSummary compact />
+
+      {nextChallenge && (
+        <NextStepCard
+          className="my-6"
+          badge="Continue Challenge"
+          title={nextChallenge.title}
+          description={nextChallenge.description}
+          href={`/challenges/${nextChallenge.id}`}
+          ctaLabel="Continue"
+          secondaryHref="/progress"
+          secondaryLabel="View Progress"
+        />
+      )}
+
+      <ContinueWhereYouLeftOff className="my-6" showProject={false} />
 
       <QuantaMessage
         title="Quanta's tip"

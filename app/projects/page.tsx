@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageActions } from "@/components/navigation/PageActions";
 import { useCircuitStore } from "@/store/circuit-store";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
 import { formatDate } from "@/lib/utils";
@@ -22,6 +23,8 @@ import {
   Trash2,
   Pencil,
   Save,
+  GraduationCap,
+  Download,
 } from "lucide-react";
 
 export default function ProjectsPage() {
@@ -80,16 +83,16 @@ export default function ProjectsPage() {
             Manage saved circuits stored in your browser
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => saveProject(circuit.name)}>
-            <Save className="h-4 w-4" />
-            Save Current
-          </Button>
-          <Button onClick={handleNewProject}>
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
-        </div>
+        <PageActions
+          primary={[
+            { label: "New Project", onClick: handleNewProject, icon: <Plus className="h-4 w-4" /> },
+          ]}
+          secondary={[
+            { label: "Save Current", onClick: () => saveProject(circuit.name), icon: <Save className="h-4 w-4" /> },
+            { label: "Export", href: "/export", icon: <Download className="h-4 w-4" /> },
+            { label: "Continue Learning", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          ]}
+        />
       </div>
 
       {projects.length === 0 ? (
@@ -166,6 +169,17 @@ export default function ProjectsPage() {
                   >
                     <Copy className="h-3.5 w-3.5" />
                     Duplicate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      openProject(project.id);
+                      router.push("/export");
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Export
                   </Button>
                   <Button
                     size="sm"

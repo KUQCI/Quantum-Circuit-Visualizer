@@ -1,22 +1,35 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { QuantaDuck } from "@/components/mascot/QuantaDuck";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { LessonPath } from "@/components/learning/LessonPath";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
+import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
+import { NextStepCard } from "@/components/navigation/NextStepCard";
+import { PageActions } from "@/components/navigation/PageActions";
 import { quantaMessages } from "@/lib/mascot/messages";
+import {
+  getBeginnerChallenge,
+  getNextLesson,
+} from "@/lib/navigation/flow";
 import { useProgressStore } from "@/store/progress-store";
-import { Button } from "@/components/ui/button";
-import { PenLine } from "lucide-react";
+import { PenLine, Swords, BarChart3, Award } from "lucide-react";
 
 export default function LearnPage() {
   const recordActivity = useProgressStore((s) => s.recordActivity);
+  const completedLessons = useProgressStore((s) => s.completedLessons);
+  const completedChallenges = useProgressStore((s) => s.completedChallenges);
 
   useEffect(() => {
     recordActivity();
   }, [recordActivity]);
+
+  const nextLesson = getNextLesson(completedLessons);
+  const beginnerChallenge = getBeginnerChallenge(
+    completedLessons,
+    completedChallenges
+  );
 
   return (
     <div className="page-container max-w-5xl">
@@ -29,22 +42,43 @@ export default function LearnPage() {
             </p>
             <h1 className="page-title mt-1 text-3xl">Learn Quantum Circuits</h1>
             <p className="page-description mt-2">
-              Learn quantum circuits through interactive challenges
+              Learn quantum circuits through interactive lessons guided by Quanta
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button asChild size="sm">
-                <Link href="/learn/what-is-a-qubit">Start Lesson 1</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/editor">
-                  <PenLine className="h-3.5 w-3.5" />
-                  Build Mode
-                </Link>
-              </Button>
-            </div>
+            <PageActions
+              className="mt-4"
+              primary={
+                nextLesson
+                  ? [
+                      {
+                        label: nextLesson.title,
+                        href: `/learn/${nextLesson.id}`,
+                      },
+                    ]
+                  : [{ label: "Review Lessons", href: "/learn/what-is-a-qubit" }]
+              }
+              secondary={[
+                { label: "Build Mode", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+                { label: "Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
+              ]}
+            />
           </div>
         </div>
       </div>
+
+      <ContinueWhereYouLeftOff className="mb-8" showProject={false} />
+
+      {beginnerChallenge && (
+        <NextStepCard
+          className="mb-8"
+          badge="Recommended Challenge"
+          title={beginnerChallenge.title}
+          description={beginnerChallenge.description}
+          href={`/challenges/${beginnerChallenge.id}`}
+          ctaLabel="Start Challenge"
+          secondaryHref="/achievements"
+          secondaryLabel="View Achievements"
+        />
+      )}
 
       <QuantaMessage
         title="Welcome to Quantum Academy"
@@ -57,6 +91,14 @@ export default function LearnPage() {
           Your Progress
         </h2>
         <ProgressSummary />
+        <PageActions
+          className="mt-4"
+          secondary={[
+            { label: "View Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
+            { label: "Achievements", href: "/achievements", icon: <Award className="h-4 w-4" /> },
+            { label: "Challenges", href: "/challenges", icon: <Swords className="h-4 w-4" /> },
+          ]}
+        />
       </section>
 
       <section>

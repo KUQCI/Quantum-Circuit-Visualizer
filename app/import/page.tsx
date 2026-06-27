@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { CodeEditor } from "@/components/code/code-editor";
 import { useCircuitStore } from "@/store/circuit-store";
+import { PageActions } from "@/components/navigation/PageActions";
 import { validateCircuit } from "@/lib/validation";
 import {
   CODE_LANGUAGES,
@@ -23,7 +24,7 @@ import {
   bellStateOpenQasmCode,
   bellStateCircuit,
 } from "@/lib/sample-circuits";
-import { AlertCircle, CheckCircle2, PenLine } from "lucide-react";
+import { AlertCircle, CheckCircle2, PenLine, GraduationCap, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Circuit } from "@/lib/circuit-schema";
 
@@ -101,6 +102,15 @@ export default function ImportPage() {
           only — never executed.
         </p>
       </div>
+
+      <PageActions
+        className="mb-6"
+        secondary={[
+          { label: "Build Mode", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+          { label: "Learn Basics", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          { label: "Composer Guide", href: "/docs/composer", icon: <BookOpen className="h-4 w-4" /> },
+        ]}
+      />
 
       <Card className="mb-6">
         <CardHeader>

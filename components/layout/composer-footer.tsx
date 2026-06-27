@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useThemeStore } from "@/store/theme-store";
-import { Sun, Moon, ExternalLink } from "lucide-react";
+import { Sun, Moon, ExternalLink, PenLine, GraduationCap, Download, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ComposerFooter() {
@@ -20,19 +20,29 @@ export function ComposerFooter() {
           KUQCI
           <ExternalLink className="h-2.5 w-2.5" />
         </Link>
+        <Link href="/editor" className="inline-flex items-center gap-1 transition-colors hover:text-[var(--color-brand)]">
+          <PenLine className="h-2.5 w-2.5" />
+          Build
+        </Link>
+        <Link href="/learn" className="hidden items-center gap-1 transition-colors hover:text-[var(--color-brand)] sm:inline-flex">
+          <GraduationCap className="h-2.5 w-2.5" />
+          Learn
+        </Link>
+        <Link href="/export" className="hidden items-center gap-1 transition-colors hover:text-[var(--color-brand)] sm:inline-flex">
+          <Download className="h-2.5 w-2.5" />
+          Export
+        </Link>
+        <Link href="/projects" className="hidden items-center gap-1 transition-colors hover:text-[var(--color-brand)] md:inline-flex">
+          <FolderOpen className="h-2.5 w-2.5" />
+          Projects
+        </Link>
         <Link
           href="/docs/composer"
-          className="transition-colors hover:text-[var(--color-brand)]"
+          className="hidden transition-colors hover:text-[var(--color-brand)] lg:inline"
         >
-          Documentation
+          Docs
         </Link>
-        <Link
-          href="/roadmap"
-          className="transition-colors hover:text-[var(--color-brand)]"
-        >
-          Roadmap
-        </Link>
-        <span className="hidden sm:inline">Circuit Visualizer v1.0</span>
+        <span className="hidden xl:inline">Circuit Visualizer v1.0</span>
       </div>
       <div className="flex items-center gap-1">
         <ThemeButton

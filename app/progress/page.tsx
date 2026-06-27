@@ -3,11 +3,15 @@
 import { useEffect } from "react";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
+import { NextStepCard } from "@/components/navigation/NextStepCard";
+import { PageActions } from "@/components/navigation/PageActions";
 import { LESSONS } from "@/lib/learning/lessons";
 import { CHALLENGES } from "@/lib/learning/challenges";
 import { MODULE_LABELS, MODULE_IDS, xpForNextLevel } from "@/lib/learning/progress";
+import { getNextChallenge, getNextLesson } from "@/lib/navigation/flow";
 import { getProgressQuantaMessage } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
+import { Award, Swords } from "lucide-react";
 
 const SKILL_LABELS: Record<string, string> = {
   qubits: "Qubits",
@@ -36,15 +40,41 @@ export default function ProgressPage() {
     completedLessons.length,
     currentStreak
   );
+  const nextLesson = getNextLesson(completedLessons);
+  const nextChallenge = getNextChallenge(completedLessons, completedChallenges);
 
   return (
     <div className="page-container max-w-4xl">
       <div className="page-header mb-6">
         <h1 className="page-title text-3xl">Progress</h1>
         <p className="page-description">Your Quantum Academy journey</p>
+        <PageActions
+          className="mt-4"
+          secondary={[
+            { label: "Achievements", href: "/achievements", icon: <Award className="h-4 w-4" /> },
+            { label: "Challenges", href: "/challenges", icon: <Swords className="h-4 w-4" /> },
+          ]}
+        />
       </div>
 
       <ProgressSummary />
+
+      {nextLesson && (
+        <NextStepCard
+          className="my-6"
+          badge="Resume Learning"
+          title={nextLesson.title}
+          description={nextLesson.description}
+          href={`/learn/${nextLesson.id}`}
+          ctaLabel="Resume Lesson"
+          secondaryHref={
+            nextChallenge ? `/challenges/${nextChallenge.id}` : "/challenges"
+          }
+          secondaryLabel={
+            nextChallenge ? "Try a Challenge" : "View Challenges"
+          }
+        />
+      )}
 
       <QuantaMessage title="Quanta" message={quantaMsg} className="my-6" />
 

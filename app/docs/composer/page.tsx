@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -6,6 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageActions } from "@/components/navigation/PageActions";
+import { PenLine, Upload, GraduationCap } from "lucide-react";
 
 const sections = [
   {
@@ -63,13 +64,7 @@ export default function ComposerGuidePage() {
   return (
     <div className="page-container max-w-3xl">
       <div className="page-header mb-10">
-        <Link
-          href="/editor"
-          className="text-xs text-[var(--color-brand)] hover:underline"
-        >
-          ← Open Composer
-        </Link>
-        <h1 className="page-title mt-4 text-3xl">Quantum Circuit Composer Guide</h1>
+        <h1 className="page-title text-3xl">Quantum Circuit Composer Guide</h1>
         <p className="page-description mt-3">
           Based on the{" "}
           <a
@@ -82,6 +77,16 @@ export default function ComposerGuidePage() {
           </a>
           , adapted for the KUQCI Circuit Visualizer.
         </p>
+        <PageActions
+          className="mt-4"
+          primary={[
+            { label: "Open Build Mode", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+          ]}
+          secondary={[
+            { label: "Import Example", href: "/import", icon: <Upload className="h-4 w-4" /> },
+            { label: "Learn Basics", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          ]}
+        />
       </div>
 
       <div className="space-y-6">

@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { AchievementGrid } from "@/components/learning/AchievementBadge";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
+import { PageActions } from "@/components/navigation/PageActions";
 import { ACHIEVEMENTS } from "@/lib/learning/achievements";
 import { quantaMessages } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
+import { BarChart3, GraduationCap } from "lucide-react";
 
 export default function AchievementsPage() {
   const unlocked = useProgressStore((s) => s.unlockedAchievements);
@@ -23,6 +25,13 @@ export default function AchievementsPage() {
         <p className="page-description">
           {unlocked.length} / {ACHIEVEMENTS.length} badges unlocked
         </p>
+        <PageActions
+          className="mt-4"
+          secondary={[
+            { label: "View Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
+            { label: "Learn", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          ]}
+        />
       </div>
 
       <ProgressSummary compact />

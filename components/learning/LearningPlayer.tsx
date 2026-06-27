@@ -9,6 +9,7 @@ import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-pa
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaHint } from "@/components/mascot/QuantaHint";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
+import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { checkCircuit } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
 import { useCircuitStore } from "@/store/circuit-store";
@@ -35,6 +36,9 @@ interface LearningPlayerProps {
   activity: ActivityDefinition;
   mode: "lesson" | "challenge";
   nextHref?: string;
+  prevHref?: string;
+  relatedHref?: string;
+  relatedLabel?: string;
   backHref: string;
 }
 
@@ -42,6 +46,9 @@ export function LearningPlayer({
   activity,
   mode,
   nextHref,
+  prevHref,
+  relatedHref,
+  relatedLabel,
   backHref,
 }: LearningPlayerProps) {
   const router = useRouter();
@@ -135,6 +142,12 @@ export function LearningPlayer({
       setQuantaFeedback(activity.quantaIncorrect);
     }
   };
+
+  const handleOpenInBuild = () => {
+    router.push("/editor");
+  };
+
+  const nextLabel = mode === "lesson" ? "Next Lesson" : "Next Challenge";
 
   const storyText = isLesson(activity)
     ? activity.story
@@ -289,6 +302,17 @@ export function LearningPlayer({
 
       {/* Bottom actions */}
       <div className="shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4">
+        {feedbackStatus === "success" && nextHref && (
+          <NextStepCard
+            badge={mode === "lesson" ? "Lesson Complete" : "Challenge Complete"}
+            title={mode === "lesson" ? "Ready for the next lesson?" : "Ready for the next challenge?"}
+            description="Keep your momentum going — or open this circuit in Build mode to experiment."
+            href={nextHref}
+            ctaLabel={nextLabel}
+            secondaryHref="/progress"
+            secondaryLabel="View Progress"
+          />
+        )}
         <ChallengeFeedback
           status={feedbackStatus}
           message={feedbackMessage}
@@ -308,6 +332,19 @@ export function LearningPlayer({
             <RotateCcw className="h-4 w-4" />
             Reset
           </Button>
+          {prevHref && (
+            <Button asChild size="default" variant="outline" className="gap-2">
+              <Link href={prevHref}>Previous</Link>
+            </Button>
+          )}
+          <Button size="default" variant="outline" className="gap-2" onClick={handleOpenInBuild}>
+            Open in Build
+          </Button>
+          {relatedHref && relatedLabel && (
+            <Button asChild size="default" variant="secondary" className="gap-2">
+              <Link href={relatedHref}>{relatedLabel}</Link>
+            </Button>
+          )}
           {feedbackStatus === "success" && nextHref && (
             <Button
               size="default"
@@ -315,7 +352,7 @@ export function LearningPlayer({
               className="ml-auto gap-2"
               onClick={() => router.push(nextHref)}
             >
-              Next Lesson
+              {nextLabel}
               <ChevronRight className="h-4 w-4" />
             </Button>
           )}

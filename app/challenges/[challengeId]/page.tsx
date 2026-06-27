@@ -3,6 +3,11 @@ import {
   CHALLENGE_IDS,
   getChallengeById,
 } from "@/lib/learning/challenges";
+import {
+  getNextChallengeById,
+  getPrevChallenge,
+  getRelatedLesson,
+} from "@/lib/navigation/flow";
 import { ChallengePlayerClient } from "./challenge-player-client";
 
 export function generateStaticParams() {
@@ -25,14 +30,17 @@ export default async function ChallengePage({
     );
   }
 
-  const idx = CHALLENGES.findIndex((c) => c.id === challengeId);
-  const next =
-    idx >= 0 && idx < CHALLENGES.length - 1 ? CHALLENGES[idx + 1] : null;
+  const nextChallenge = getNextChallengeById(challengeId);
+  const prevChallenge = getPrevChallenge(challengeId);
+  const relatedLesson = getRelatedLesson(challengeId);
 
   return (
     <ChallengePlayerClient
       challenge={challenge}
-      nextHref={next ? `/challenges/${next.id}` : undefined}
+      nextHref={nextChallenge ? `/challenges/${nextChallenge.id}` : undefined}
+      prevHref={prevChallenge ? `/challenges/${prevChallenge.id}` : undefined}
+      relatedHref={relatedLesson ? `/learn/${relatedLesson.id}` : undefined}
+      relatedLabel={relatedLesson ? `Review ${relatedLesson.title}` : undefined}
     />
   );
 }

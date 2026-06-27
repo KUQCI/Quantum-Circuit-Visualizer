@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
+import { PageActions } from "@/components/navigation/PageActions";
 import { useCircuitStore } from "@/store/circuit-store";
 import { formatDate } from "@/lib/utils";
 import {
@@ -21,6 +23,7 @@ import {
   Play,
   GraduationCap,
   ExternalLink,
+  FolderOpen,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -34,7 +37,7 @@ export default function HomePage() {
 
   return (
     <div className="page-container max-w-5xl">
-      <div className="mb-12 text-center">
+      <div className="mb-8 text-center">
         <Link
           href="https://kuqci.github.io/"
           target="_blank"
@@ -61,27 +64,20 @@ export default function HomePage() {
           From bits to qubits — build, view, and convert quantum circuits with
           visual editing and multi-language code export.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button asChild size="lg">
-            <Link href="/editor">
-              <PenLine className="h-4 w-4" />
-              Build Mode
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/learn">
-              <GraduationCap className="h-4 w-4" />
-              Learn Mode
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/import">
-              <Upload className="h-4 w-4" />
-              Import Code
-            </Link>
-          </Button>
-        </div>
+        <PageActions
+          className="mt-8 justify-center"
+          primary={[
+            { label: "Start Building", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+            { label: "Start Learning", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          ]}
+          secondary={[
+            { label: "Open Projects", href: "/projects", icon: <FolderOpen className="h-4 w-4" /> },
+            { label: "Import Qiskit", href: "/import", icon: <Upload className="h-4 w-4" /> },
+          ]}
+        />
       </div>
+
+      <ContinueWhereYouLeftOff className="mb-10" />
 
       <div className="mb-10 grid gap-4 sm:grid-cols-3">
         <Card>
@@ -129,14 +125,27 @@ export default function HomePage() {
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-[var(--color-foreground)]">
-          Recent Projects
-        </h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
+            Recent Projects
+          </h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/projects">View all</Link>
+          </Button>
+        </div>
         {recentProjects.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-[var(--color-muted-foreground)]">
               No saved projects yet. Create a circuit in the editor or import
               code to get started.
+              <div className="mt-4 flex justify-center gap-2">
+                <Button asChild size="sm">
+                  <Link href="/editor">Start Building</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/import">Import Code</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -157,7 +166,7 @@ export default function HomePage() {
                 <CardContent>
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/editor?project=${project.id}`}>
-                      Open in Editor
+                      Open in Build
                     </Link>
                   </Button>
                 </CardContent>

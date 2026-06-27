@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { CodeEditor } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
+import { PageActions } from "@/components/navigation/PageActions";
 import { useCircuitStore } from "@/store/circuit-store";
 import { getCircuitSummary } from "@/lib/qiskit-generator";
 import {
@@ -19,7 +20,7 @@ import {
   getCodeLanguage,
   type CodeLanguageId,
 } from "@/lib/code-adapters";
-import { PenLine } from "lucide-react";
+import { PenLine, Save, BookOpen, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ExportPage() {
@@ -51,6 +52,18 @@ export default function ExportPage() {
           visual circuit
         </p>
       </div>
+
+      <PageActions
+        className="mb-6"
+        primary={[
+          { label: "Open in Build", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+        ]}
+        secondary={[
+          { label: "Save Project", href: "/projects", icon: <Save className="h-4 w-4" /> },
+          { label: "Composer Guide", href: "/docs/composer", icon: <BookOpen className="h-4 w-4" /> },
+          { label: "Projects", href: "/projects", icon: <FolderOpen className="h-4 w-4" /> },
+        ]}
+      />
 
       <Card className="mb-6">
         <CardHeader>

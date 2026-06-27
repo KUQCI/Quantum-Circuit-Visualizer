@@ -1,4 +1,9 @@
 import { LESSONS, LESSON_IDS, getLessonById } from "@/lib/learning/lessons";
+import {
+  getNextLessonById,
+  getPrevLesson,
+  getRelatedChallenge,
+} from "@/lib/navigation/flow";
 import { LessonPlayerClient } from "./lesson-player-client";
 
 export function generateStaticParams() {
@@ -21,13 +26,21 @@ export default async function LessonPage({
     );
   }
 
-  const idx = LESSONS.findIndex((l) => l.id === lessonId);
-  const nextLesson = idx >= 0 && idx < LESSONS.length - 1 ? LESSONS[idx + 1] : null;
+  const nextLesson = getNextLessonById(lessonId);
+  const prevLesson = getPrevLesson(lessonId);
+  const relatedChallenge = getRelatedChallenge(lessonId);
 
   return (
     <LessonPlayerClient
       lesson={lesson}
       nextHref={nextLesson ? `/learn/${nextLesson.id}` : undefined}
+      prevHref={prevLesson ? `/learn/${prevLesson.id}` : undefined}
+      relatedHref={
+        relatedChallenge ? `/challenges/${relatedChallenge.id}` : undefined
+      }
+      relatedLabel={
+        relatedChallenge ? `Try ${relatedChallenge.title}` : undefined
+      }
     />
   );
 }

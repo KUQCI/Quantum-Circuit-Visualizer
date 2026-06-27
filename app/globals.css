@@ -63,7 +63,7 @@
   --color-gate-barrier: #393939;
   --shadow-card: 0 0 24px rgba(47, 128, 237, 0.08), 0 2px 12px rgba(0, 0, 0, 0.28);
   --shadow-nav: 0 1px 0 rgba(125, 211, 252, 0.08), 0 2px 8px rgba(0, 0, 0, 0.18);
-  --app-header-height: 2.75rem;
+  --app-header-height: 3.5rem;
   --color-gate-label: #161616;
   --color-viz-wire: #484f58;
   --color-viz-line: #58a6ff;
@@ -124,7 +124,7 @@
   --color-gate-barrier: #525252;
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(47, 128, 237, 0.06);
   --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06), 0 1px 4px rgba(15, 23, 42, 0.04);
-  --app-header-height: 2.75rem;
+  --app-header-height: 3.5rem;
   --color-gate-label: #0f172a;
   --color-viz-wire: #94a3b8;
   --color-viz-line: #2f80ed;

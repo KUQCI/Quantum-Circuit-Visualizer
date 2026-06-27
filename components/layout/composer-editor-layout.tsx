@@ -1,8 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { ComposerToolbar } from "@/components/layout/composer-toolbar";
 import { ComposerFooter } from "@/components/layout/composer-footer";
 import { EditorBootstrap } from "@/components/layout/editor-bootstrap";
@@ -27,33 +25,10 @@ export function ComposerEditorLayout() {
   } = useEditorUiStore();
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--color-background)]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-background)]">
       <Suspense fallback={null}>
         <EditorBootstrap />
       </Suspense>
-
-      <header className="glass-nav-compact flex h-10 shrink-0 items-center justify-between px-3 sm:px-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:text-[var(--color-brand)]"
-        >
-          <Image
-            src="https://kuqci.github.io/logo.png"
-            alt="KUQCI"
-            width={20}
-            height={20}
-            className="rounded"
-            unoptimized
-          />
-          <span>
-            Circuit{" "}
-            <span className="text-[var(--color-brand)]">Visualizer</span>
-          </span>
-        </Link>
-        <span className="hidden text-xs text-[var(--color-muted-foreground)] sm:inline">
-          Quantum Circuit Composer
-        </span>
-      </header>
 
       <ComposerToolbar />
 
