@@ -52,8 +52,8 @@ export function PhaseDisk({
       }
     >
       <div
-        className="absolute inset-0 rounded-full bg-[var(--color-secondary)]"
-        style={{ opacity: 0.6 }}
+        className="absolute inset-0 rounded-full"
+        style={{ backgroundColor: "var(--color-accent)", opacity: 0.5 }}
       />
       <div
         className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-full"

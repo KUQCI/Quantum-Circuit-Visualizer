@@ -5,29 +5,29 @@
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
 }
 
-/* Composer-inspired dark theme */
+/* Deep blue quantum theme — no neutral greys */
 :root,
 [data-theme="dark"] {
-  --color-background: #161616;
-  --color-foreground: #f4f4f4;
-  --color-card: #262626;
-  --color-card-foreground: #f4f4f4;
-  --color-surface: #1e1e1e;
-  --color-canvas: #161616;
+  --color-background: #060a12;
+  --color-foreground: #e8edf5;
+  --color-card: #0b1220;
+  --color-card-foreground: #e8edf5;
+  --color-surface: #080e18;
+  --color-canvas: #040810;
   --color-primary: #0f62fe;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #393939;
-  --color-secondary-foreground: #f4f4f4;
-  --color-muted: #262626;
-  --color-muted-foreground: #a8a8a8;
-  --color-accent: #393939;
+  --color-secondary: #122038;
+  --color-secondary-foreground: #c8d8f0;
+  --color-muted: #0a1422;
+  --color-muted-foreground: #6b8aad;
+  --color-accent: #152a48;
   --color-accent-foreground: #78a9ff;
-  --color-border: #393939;
-  --color-input: #393939;
-  --color-ring: #0f62fe;
+  --color-border: #1a3052;
+  --color-input: #0c1524;
+  --color-ring: #4589ff;
   --color-destructive: #fa4d56;
   --color-viz-accent: #33b1ff;
-  --color-toolbar: #262626;
+  --color-toolbar: #080e18;
   --color-gate-h: #fa4d56;
   --color-gate-pauli: #4589ff;
   --color-gate-phase: #be95ff;
@@ -35,33 +35,33 @@
   --color-gate-two: #a56eff;
   --color-gate-three: #ff832b;
   --color-gate-measure: #08bdba;
-  --color-gate-nonunitary: #8d8d8d;
-  --color-gate-barrier: #6f6f6f;
+  --color-gate-nonunitary: #3d5a80;
+  --color-gate-barrier: #2a4060;
   --color-success: #42be65;
   --color-warning: #f1c21b;
 }
 
 [data-theme="light"] {
-  --color-background: #ffffff;
-  --color-foreground: #161616;
-  --color-card: #f4f4f4;
-  --color-card-foreground: #161616;
+  --color-background: #f0f4fa;
+  --color-foreground: #0a1628;
+  --color-card: #ffffff;
+  --color-card-foreground: #0a1628;
   --color-surface: #ffffff;
-  --color-canvas: #f4f4f4;
+  --color-canvas: #e8eef8;
   --color-primary: #0f62fe;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #e0e0e0;
-  --color-secondary-foreground: #161616;
-  --color-muted: #f4f4f4;
-  --color-muted-foreground: #525252;
-  --color-accent: #e0e0e0;
+  --color-secondary: #d0dff0;
+  --color-secondary-foreground: #0a1628;
+  --color-muted: #e4ecf8;
+  --color-muted-foreground: #4a6080;
+  --color-accent: #c8daf0;
   --color-accent-foreground: #0f62fe;
-  --color-border: #c6c6c6;
-  --color-input: #f4f4f4;
+  --color-border: #b0c4e0;
+  --color-input: #f0f4fa;
   --color-ring: #0f62fe;
   --color-destructive: #da1e28;
   --color-viz-accent: #1192e8;
-  --color-toolbar: #f4f4f4;
+  --color-toolbar: #e8eef8;
   --color-gate-h: #da1e28;
   --color-gate-pauli: #0f62fe;
   --color-gate-phase: #8a3ffc;
@@ -69,14 +69,22 @@
   --color-gate-two: #6929c4;
   --color-gate-three: #eb6200;
   --color-gate-measure: #009d9a;
-  --color-gate-nonunitary: #6f6f6f;
-  --color-gate-barrier: #8d8d8d;
+  --color-gate-nonunitary: #5a7090;
+  --color-gate-barrier: #8aa0c0;
   --color-success: #198038;
   --color-warning: #f1c21b;
 }
 
 * {
   border-color: var(--color-border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
 }
 
 body {
@@ -100,6 +108,9 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 .composer-panel {
