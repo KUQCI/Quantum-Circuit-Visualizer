@@ -53,7 +53,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start development server |
-| `npm run build` | Production build |
+| `npm run build` | Production build (SSR, for Vercel) |
+| `npm run build:pages` | Static export for GitHub Pages |
 | `npm start` | Start production server |
 | `npm run test` | Run Vitest unit tests |
 | `npm run lint` | Run ESLint |
@@ -68,8 +69,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
   /export/page.tsx       Circuit export
   /projects/page.tsx     Project management
   /roadmap/page.tsx      Development roadmap
-  /api/parse-qiskit/     POST — parse Qiskit code → JSON
-  /api/generate-qiskit/  POST — generate Qiskit code from JSON
+  /api/                    Optional API routes (Vercel/SSR builds only)
 
 /components
   /layout                App header and navigation
@@ -107,7 +107,33 @@ Qiskit Python Code
   OpenQASM 2.0   ← translator-core.ts (ported from translator.py)
 ```
 
-The original Python translator (`translator.py`) provides OpenQASM 2.0 parsing with a `GATE_LIBRARY`, `ExprParser` for mathematical expressions (e.g. `pi/2`, `3*theta`), and `formatParam` using fraction approximation. This logic is ported to TypeScript in `lib/translator-core.ts` for serverless deployment on Vercel.
+The original Python translator (`translator.py`) provides OpenQASM 2.0 parsing with a `GATE_LIBRARY`, `ExprParser` for mathematical expressions (e.g. `pi/2`, `3*theta`), and `formatParam` using fraction approximation. This logic is ported to TypeScript in `lib/translator-core.ts`. Import and export run entirely in the browser — no server required.
+
+## GitHub Pages Deployment (Recommended)
+
+The app is configured for **fully client-side** operation on GitHub Pages. All parsing and code generation runs in the browser.
+
+### One-time setup
+
+1. Push the repository to GitHub
+2. Go to **Settings → Pages** in your repo
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**
+4. Push to `main` — the workflow in `.github/workflows/deploy-pages.yml` builds and deploys automatically
+
+### Live URL
+
+After deployment, the site is available at:
+
+**https://kuqci.github.io/Quantum-Circuit-Visualizer/**
+
+### Local static preview
+
+```bash
+npm run build:pages
+npx serve out
+```
+
+Then open the URL shown (note: use the `/Quantum-Circuit-Visualizer/` path prefix when testing locally).
 
 ## GitHub Workflow
 
@@ -118,27 +144,17 @@ The original Python translator (`translator.py`) provides OpenQASM 2.0 parsing w
 5. Push: `git push origin feature/my-feature`
 6. Open a Pull Request on GitHub
 
-## Vercel Deployment
+## Vercel Deployment (Optional)
+
+Vercel is supported as an alternative. Use the standard `npm run build` (without `GITHUB_PAGES`) for SSR mode with API routes.
 
 1. Push your repository to GitHub
 2. Go to [vercel.com](https://vercel.com) and sign in
 3. Click **Import Project** and select your GitHub repository
-4. Vercel auto-detects Next.js — accept the default settings:
-   - **Framework Preset:** Next.js
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `.next`
+4. Vercel auto-detects Next.js — accept the default settings
 5. Click **Deploy**
 
-Environment variables are configured in `next.config.ts`:
-
-```typescript
-env: {
-  NEXT_PUBLIC_APP_NAME: "Qiskit Visualizer",
-  NEXT_PUBLIC_APP_VERSION: "1.0.0",
-}
-```
-
-No additional secrets are required for v1. The app runs entirely client-side for circuit editing, with API routes handling parse/generate on the server.
+No environment variables are required for v1.
 
 ## Feature Roadmap
 

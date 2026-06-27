@@ -13,37 +13,17 @@ import {
 import { CodeEditor } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
 import { useCircuitStore } from "@/store/circuit-store";
-import { getCircuitSummary } from "@/lib/qiskit-generator";
+import { generateQiskitCode, getCircuitSummary } from "@/lib/qiskit-generator";
 import { PenLine } from "lucide-react";
 
 export default function ExportPage() {
-  const { circuit, getGeneratedCode } = useCircuitStore();
+  const { circuit } = useCircuitStore();
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const generate = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/generate-qiskit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ circuit }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setCode(data.code);
-        } else {
-          setCode(getGeneratedCode());
-        }
-      } catch {
-        setCode(getGeneratedCode());
-      } finally {
-        setLoading(false);
-      }
-    };
-    generate();
-  }, [circuit, getGeneratedCode]);
+    const result = generateQiskitCode(circuit);
+    setCode(result.success ? result.code : `# Error: ${result.error}`);
+  }, [circuit]);
 
   const summary = getCircuitSummary(circuit);
 
@@ -86,9 +66,6 @@ export default function ExportPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Generated Qiskit Code</CardTitle>
-          {loading && (
-            <CardDescription>Generating...</CardDescription>
-          )}
         </CardHeader>
         <CardContent>
           <CodeEditor value={code} readOnly height="360px" />

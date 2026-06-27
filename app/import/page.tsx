@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { CodeEditor } from "@/components/code/code-editor";
 import { useCircuitStore } from "@/store/circuit-store";
+import { parseQiskitCode } from "@/lib/qiskit-parser";
+import { validateCircuit } from "@/lib/validation";
 import { bellStateQiskitCode } from "@/lib/sample-circuits";
 import { AlertCircle, CheckCircle2, PenLine } from "lucide-react";
 import type { Circuit } from "@/lib/circuit-schema";
@@ -30,22 +32,30 @@ export default function ImportPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ParseResponse | null>(null);
 
-  const handleParse = async () => {
+  const handleParse = () => {
     setLoading(true);
     setResult(null);
-    try {
-      const res = await fetch("/api/parse-qiskit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      const data: ParseResponse = await res.json();
-      setResult(data);
-    } catch {
-      setResult({ success: false, error: "Network error. Please try again." });
-    } finally {
+
+    const parsed = parseQiskitCode(code);
+    if (!parsed.success) {
+      setResult(parsed);
       setLoading(false);
+      return;
     }
+
+    const validated = validateCircuit(parsed.circuit);
+    if (!validated.valid) {
+      setResult({
+        success: false,
+        error: "Parsed circuit failed schema validation",
+        details: validated.errors,
+      });
+      setLoading(false);
+      return;
+    }
+
+    setResult({ success: true, circuit: validated.circuit });
+    setLoading(false);
   };
 
   const handleOpenInEditor = () => {
