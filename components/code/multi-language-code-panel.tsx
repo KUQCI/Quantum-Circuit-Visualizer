@@ -78,6 +78,7 @@ export function MultiLanguageCodePanel() {
       <div className="min-h-0 flex-1 overflow-hidden p-2">
         <div className="h-full min-h-[120px]">
           <CodeEditor
+            key={codePanelLanguage}
             value={code}
             onChange={handleCodeChange}
             readOnly={readOnly}
