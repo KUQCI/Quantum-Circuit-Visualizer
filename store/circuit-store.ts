@@ -12,6 +12,7 @@ import {
 import { generateQiskitCode } from "@/lib/qiskit-generator";
 import { validateCircuitPlacement } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
+import { useProgressStore } from "@/store/progress-store";
 
 export interface Project {
   id: string;
@@ -404,6 +405,7 @@ export const useCircuitStore = create<CircuitState>()(
         const updated = [project, ...projects];
         saveProjectsToStorage(updated);
         set({ projects: updated, currentProjectId: project.id });
+        useProgressStore.getState().recordProjectSaved();
         return project.id;
       },
 

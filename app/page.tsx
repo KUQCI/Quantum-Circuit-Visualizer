@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   ArrowLeftRight,
   Play,
+  GraduationCap,
   ExternalLink,
 } from "lucide-react";
 
@@ -64,7 +65,13 @@ export default function HomePage() {
           <Button asChild size="lg">
             <Link href="/editor">
               <PenLine className="h-4 w-4" />
-              Start New Circuit
+              Build Mode
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/learn">
+              <GraduationCap className="h-4 w-4" />
+              Learn Mode
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">

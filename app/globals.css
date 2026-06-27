@@ -335,3 +335,85 @@ body {
 .skip-link:focus {
   left: 0.5rem;
 }
+
+@keyframes quanta-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* ── Quantum Academy ── */
+.academy-hero {
+  background: linear-gradient(
+    135deg,
+    rgba(69, 137, 255, 0.08) 0%,
+    rgba(167, 139, 250, 0.06) 50%,
+    transparent 100%
+  );
+}
+
+.academy-xp-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  background: linear-gradient(90deg, rgba(69, 137, 255, 0.15), rgba(167, 139, 250, 0.15));
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand-border);
+  border-radius: 9999px;
+}
+
+.academy-level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: var(--color-brand-subtle);
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand-border);
+}
+
+.academy-progress-bar {
+  background: var(--color-secondary);
+}
+
+.academy-progress-fill {
+  background: linear-gradient(90deg, var(--color-brand), #a78bfa);
+}
+
+.academy-card-complete {
+  box-shadow: inset 0 0 0 1px var(--color-success);
+}
+
+.academy-stat {
+  background: var(--color-card);
+}
+
+.quanta-bubble-default {
+  border-color: var(--color-brand-border);
+  background: linear-gradient(
+    135deg,
+    rgba(69, 137, 255, 0.06),
+    rgba(167, 139, 250, 0.04)
+  );
+}
+
+.quanta-bubble-hint {
+  border-color: rgba(167, 139, 250, 0.35);
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.quanta-bubble-success {
+  border-color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.quanta-bubble-error {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: var(--color-error-subtle);
+}
