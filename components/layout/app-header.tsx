@@ -30,22 +30,36 @@ const navItems = [
   { href: "/docs/composer", label: "Docs", icon: BookOpen, matchPrefix: "/docs" },
 ];
 
-export function AppHeader() {
+interface AppHeaderProps {
+  variant?: "default" | "compact";
+}
+
+export function AppHeader({ variant = "default" }: AppHeaderProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
+  const isCompact = variant === "compact";
 
   return (
-    <header className="sticky top-0 z-50 px-4 pt-3 pb-1">
-      <div className="glass-nav mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 rounded-2xl px-4">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2.5"
-        >
+    <header
+      className={cn(
+        "z-40 shrink-0",
+        isCompact ? "glass-nav-compact" : "px-4 pt-2 pb-1"
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3",
+          isCompact
+            ? "h-[var(--app-header-height)] px-3 sm:px-4"
+            : "glass-nav mx-auto h-11 max-w-7xl rounded-xl px-3 sm:px-4"
+        )}
+      >
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
             src="https://kuqci.github.io/logo.png"
             alt="KUQCI"
-            width={28}
-            height={28}
+            width={isCompact ? 22 : 24}
+            height={isCompact ? 22 : 24}
             className="rounded-md"
             unoptimized
           />
@@ -72,7 +86,7 @@ export function AppHeader() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "kuqci-nav-link flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium whitespace-nowrap",
+                  "kuqci-nav-link flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium whitespace-nowrap",
                   active
                     ? "active text-[var(--color-brand)]"
                     : "text-[var(--color-muted-foreground)]"
@@ -91,7 +105,7 @@ export function AppHeader() {
           onClick={toggleTheme}
           title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="shrink-0"
+          className="h-8 w-8 shrink-0"
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />

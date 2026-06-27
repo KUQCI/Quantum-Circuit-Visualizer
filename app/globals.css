@@ -61,8 +61,9 @@
   --color-gate-measure-fg: #f4f4f4;
   --color-gate-nonunitary: #525252;
   --color-gate-barrier: #393939;
-  --shadow-card: 0 0 32px rgba(47, 128, 237, 0.12), 0 4px 20px rgba(0, 0, 0, 0.35);
-  --shadow-nav: 0 0 40px rgba(47, 128, 237, 0.15), 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 0 24px rgba(47, 128, 237, 0.08), 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-nav: 0 1px 0 rgba(125, 211, 252, 0.08), 0 2px 8px rgba(0, 0, 0, 0.18);
+  --app-header-height: 2.75rem;
   --color-gate-label: #161616;
   --color-viz-wire: #484f58;
   --color-viz-line: #58a6ff;
@@ -122,7 +123,8 @@
   --color-gate-nonunitary: #6f6f6f;
   --color-gate-barrier: #525252;
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(47, 128, 237, 0.06);
-  --shadow-nav: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(47, 128, 237, 0.08);
+  --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06), 0 1px 4px rgba(15, 23, 42, 0.04);
+  --app-header-height: 2.75rem;
   --color-gate-label: #0f172a;
   --color-viz-wire: #94a3b8;
   --color-viz-line: #2f80ed;
@@ -178,10 +180,30 @@ body {
 }
 
 .glass-nav {
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border);
   background: var(--color-glass);
   box-shadow: var(--shadow-nav);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
+}
+
+.glass-nav-compact {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-toolbar);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.workspace-shell {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workspace-main {
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .shadow-card {
@@ -396,11 +418,7 @@ body {
 
 .quanta-bubble-default {
   border-color: var(--color-brand-border);
-  background: linear-gradient(
-    135deg,
-    rgba(69, 137, 255, 0.06),
-    rgba(167, 139, 250, 0.04)
-  );
+  background: var(--color-brand-subtle);
 }
 
 .quanta-bubble-hint {
@@ -422,12 +440,12 @@ body {
 .learning-workspace-shell {
   width: 94vw;
   max-width: 1800px;
+  height: 100%;
   margin-inline: auto;
-  padding: 0.5rem 0 1rem;
-  height: calc(100dvh - 5.25rem);
-  min-height: 640px;
+  padding: 0.375rem 0 0.5rem;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .learning-player {
@@ -514,6 +532,60 @@ body {
 
 .learning-panel-code-mobile {
   overflow: hidden;
+}
+
+.learning-panel-lesson-collapsed {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .learning-player-grid-lesson-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .learning-player-grid-lesson-collapsed .learning-panel-ops {
+    grid-column: 1;
+    grid-row: 1;
+    max-height: 220px;
+  }
+
+  .learning-player-grid-lesson-collapsed .learning-panel-canvas {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .learning-player-grid-lesson-collapsed {
+    grid-template-columns:
+      minmax(240px, 280px)
+      minmax(400px, 1fr);
+  }
+
+  .learning-player-grid-lesson-collapsed .learning-panel-ops {
+    grid-column: 1;
+    grid-row: 1;
+    max-height: none;
+  }
+
+  .learning-player-grid-lesson-collapsed .learning-panel-canvas {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (min-width: 1280px) {
+  .learning-player-grid-lesson-collapsed {
+    grid-template-columns:
+      minmax(240px, 280px)
+      minmax(600px, 1fr)
+      minmax(320px, 400px);
+  }
+
+  .learning-player-grid-lesson-collapsed .learning-panel-code {
+    grid-column: 3;
+    grid-row: 1;
+  }
 }
 
 .learning-code-panel .segment-btn {

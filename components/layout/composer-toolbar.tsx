@@ -86,7 +86,7 @@ export function ComposerToolbar() {
 
   return (
     <>
-      <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
+      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Input
             value={circuit.name}

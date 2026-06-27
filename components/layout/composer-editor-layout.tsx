@@ -32,16 +32,16 @@ export function ComposerEditorLayout() {
         <EditorBootstrap />
       </Suspense>
 
-      <header className="glass-nav flex h-12 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
+      <header className="glass-nav-compact flex h-10 shrink-0 items-center justify-between px-3 sm:px-4">
         <Link
           href="/"
-          className="flex items-center gap-2.5 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:text-[var(--color-brand)]"
+          className="flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:text-[var(--color-brand)]"
         >
           <Image
             src="https://kuqci.github.io/logo.png"
             alt="KUQCI"
-            width={22}
-            height={22}
+            width={20}
+            height={20}
             className="rounded"
             unoptimized
           />
@@ -69,7 +69,7 @@ export function ComposerEditorLayout() {
             <aside
               className={cn(
                 "composer-panel shrink-0 overflow-hidden border-r",
-                "absolute inset-y-0 left-0 z-30 w-[min(240px,85vw)] shadow-xl lg:relative lg:z-auto lg:w-[220px] xl:w-[240px]"
+                "absolute inset-y-0 left-0 z-30 w-[min(240px,85vw)] lg:relative lg:z-auto lg:w-[220px] xl:w-[240px]"
               )}
             >
               <GateLibrary
@@ -115,7 +115,7 @@ export function ComposerEditorLayout() {
             />
           </div>
           {showVizPanels && (
-            <div className="min-h-[180px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[200px]">
+            <div className="min-h-[160px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[180px]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}
@@ -132,7 +132,7 @@ export function ComposerEditorLayout() {
             <aside
               className={cn(
                 "composer-panel flex shrink-0 flex-col overflow-hidden border-l",
-                "absolute inset-y-0 right-0 z-30 w-[min(320px,92vw)] shadow-xl lg:relative lg:z-auto lg:w-[280px] xl:w-[320px]"
+                "absolute inset-y-0 right-0 z-30 w-[min(320px,92vw)] lg:relative lg:z-auto lg:w-[280px] xl:w-[320px]"
               )}
             >
               <button

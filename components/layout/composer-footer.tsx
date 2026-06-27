@@ -9,7 +9,7 @@ export function ComposerFooter() {
   const { theme, setTheme } = useThemeStore();
 
   return (
-    <footer className="flex h-8 shrink-0 items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-4 text-[10px] text-[var(--color-muted-foreground)]">
+    <footer className="flex h-7 shrink-0 items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-3 text-[10px] text-[var(--color-muted-foreground)] sm:px-4">
       <div className="flex items-center gap-3">
         <Link
           href="https://kuqci.github.io/"

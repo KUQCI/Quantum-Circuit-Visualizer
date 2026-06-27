@@ -19,8 +19,11 @@ import {
   CheckCircle,
   ChevronRight,
   Lightbulb,
+  PanelLeftClose,
+  PanelLeftOpen,
   RotateCcw,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type ActivityDefinition = LessonDefinition | ChallengeDefinition;
 
@@ -58,6 +61,7 @@ export function LearningPlayer({
 
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [lessonPanelOpen, setLessonPanelOpen] = useState(true);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "success" | "error">("idle");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [quantaFeedback, setQuantaFeedback] = useState("");
@@ -142,15 +146,32 @@ export function LearningPlayer({
       ].join("");
 
   return (
-    <div className="learning-player flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] shadow-sm">
+    <div className="learning-player flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)]">
       {/* Top bar */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-4 py-2.5">
-        <Button asChild variant="ghost" size="sm" className="h-9 gap-1.5 text-sm">
-          <Link href={backHref}>
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
-        </Button>
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-sm">
+            <Link href={backHref}>
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back</span>
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 px-2 text-sm lg:hidden"
+            onClick={() => setLessonPanelOpen((open) => !open)}
+            aria-expanded={lessonPanelOpen}
+            aria-label={lessonPanelOpen ? "Hide lesson panel" : "Show lesson panel"}
+          >
+            {lessonPanelOpen ? (
+              <PanelLeftClose className="h-4 w-4" />
+            ) : (
+              <PanelLeftOpen className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Lesson</span>
+          </Button>
+        </div>
         <div className="min-w-0 flex-1 text-center">
           <h1 className="truncate text-base font-semibold sm:text-lg">{activity.title}</h1>
           <p className="text-sm capitalize text-[var(--color-muted-foreground)]">
@@ -158,13 +179,40 @@ export function LearningPlayer({
             {isComplete && " · Completed"}
           </p>
         </div>
-        <span className="academy-xp-pill shrink-0 text-xs">+{activity.xpReward} XP</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden h-8 gap-1.5 px-2 text-sm lg:inline-flex"
+            onClick={() => setLessonPanelOpen((open) => !open)}
+            aria-expanded={lessonPanelOpen}
+            aria-label={lessonPanelOpen ? "Hide lesson panel" : "Show lesson panel"}
+          >
+            {lessonPanelOpen ? (
+              <PanelLeftClose className="h-4 w-4" />
+            ) : (
+              <PanelLeftOpen className="h-4 w-4" />
+            )}
+            Lesson
+          </Button>
+          <span className="academy-xp-pill text-xs">+{activity.xpReward} XP</span>
+        </div>
       </div>
 
       {/* Main 4-column workspace (desktop) */}
-      <div className="learning-player-grid min-h-0 flex-1">
+      <div
+        className={cn(
+          "learning-player-grid min-h-0 flex-1",
+          !lessonPanelOpen && "learning-player-grid-lesson-collapsed"
+        )}
+      >
         {/* Lesson / Quanta panel */}
-        <aside className="learning-panel learning-panel-lesson flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r">
+        <aside
+          className={cn(
+            "learning-panel learning-panel-lesson flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r",
+            !lessonPanelOpen && "learning-panel-lesson-collapsed"
+          )}
+        >
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <QuantaMessage
               title="Quanta"
@@ -240,7 +288,7 @@ export function LearningPlayer({
       </div>
 
       {/* Bottom actions */}
-      <div className="shrink-0 space-y-3 border-t border-[var(--color-border)] p-4">
+      <div className="shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4">
         <ChallengeFeedback
           status={feedbackStatus}
           message={feedbackMessage}
