@@ -72,7 +72,7 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <ArrowLeftRight className="h-4 w-4 text-indigo-600" />
+              <ArrowLeftRight className="h-4 w-4 text-[var(--color-viz-accent)]" />
               Qiskit Import/Export
             </CardTitle>
           </CardHeader>
@@ -86,7 +86,7 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-amber-600" />
+              <Clock className="h-4 w-4 text-[var(--color-warning)]" />
               Execution Coming Later
             </CardTitle>
           </CardHeader>
