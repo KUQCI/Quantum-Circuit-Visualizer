@@ -11,7 +11,7 @@ export function ChallengePlayerClient({
   nextHref?: string;
 }) {
   return (
-    <div className="page-container max-w-[1600px] py-4">
+    <div className="learning-workspace-shell">
       <LearningPlayer
         activity={challenge}
         mode="challenge"

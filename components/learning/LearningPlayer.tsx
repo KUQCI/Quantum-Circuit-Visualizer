@@ -142,51 +142,53 @@ export function LearningPlayer({
       ].join("");
 
   return (
-    <div className="flex h-[calc(100dvh-8rem)] min-h-[480px] flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-background)]">
+    <div className="learning-player flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] shadow-sm">
       {/* Top bar */}
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] px-3 py-2">
-        <Button asChild variant="ghost" size="sm" className="h-8 gap-1 text-xs">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-4 py-2.5">
+        <Button asChild variant="ghost" size="sm" className="h-9 gap-1.5 text-sm">
           <Link href={backHref}>
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
         </Button>
         <div className="min-w-0 flex-1 text-center">
-          <h1 className="truncate text-sm font-semibold">{activity.title}</h1>
-          <p className="text-[10px] capitalize text-[var(--color-muted-foreground)]">
+          <h1 className="truncate text-base font-semibold sm:text-lg">{activity.title}</h1>
+          <p className="text-sm capitalize text-[var(--color-muted-foreground)]">
             {activity.difficulty} · {mode}
             {isComplete && " · Completed"}
           </p>
         </div>
-        <span className="academy-xp-pill text-[10px]">+{activity.xpReward} XP</span>
+        <span className="academy-xp-pill shrink-0 text-xs">+{activity.xpReward} XP</span>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-12">
-        {/* Left: instructions */}
-        <aside className="flex flex-col border-b border-[var(--color-border)] lg:col-span-3 lg:border-b-0 lg:border-r">
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      {/* Main 4-column workspace (desktop) */}
+      <div className="learning-player-grid min-h-0 flex-1">
+        {/* Lesson / Quanta panel */}
+        <aside className="learning-panel learning-panel-lesson flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <QuantaMessage
               title="Quanta"
               message={activity.quantaIntro}
               variant="default"
+              size="lg"
             />
-            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/50 p-3">
-              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
+              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
                 Instructions
               </h2>
-              <p className="whitespace-pre-wrap text-xs leading-relaxed text-[var(--color-foreground)]">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-foreground)] sm:text-base">
                 {storyText}
               </p>
             </div>
             {targetCircuit && (
-              <div className="rounded-lg border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-3">
-                <h3 className="mb-1 text-[10px] font-semibold text-[var(--color-brand)]">
+              <div className="rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
+                <h3 className="mb-1 text-sm font-semibold text-[var(--color-brand)]">
                   Target circuit
                 </h3>
-                <p className="text-[10px] text-[var(--color-muted-foreground)]">
+                <p className="text-sm text-[var(--color-muted-foreground)]">
                   {targetCircuit.operations.length} gate(s) · {targetCircuit.qubits.length} qubit(s)
                 </p>
-                <ul className="mt-2 space-y-0.5 font-mono text-[10px]">
+                <ul className="mt-2 space-y-1 font-mono text-sm">
                   {targetCircuit.operations
                     .sort((a, b) => a.column - b.column)
                     .map((op) => (
@@ -203,26 +205,25 @@ export function LearningPlayer({
           </div>
         </aside>
 
-        {/* Center: editor */}
-        <div className="flex min-h-0 flex-col lg:col-span-6">
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,180px)_1fr]">
-            <div className="hidden overflow-hidden border-r border-[var(--color-border)] sm:block">
-              <GateLibrary
-                onDragStart={setDraggingGate}
-                onDragEnd={() => setDraggingGate(null)}
-              />
-            </div>
-            <div className="min-h-0 overflow-auto bg-[var(--color-canvas)]">
-              <CircuitCanvas
-                draggingGate={draggingGate}
-                onDragEnd={() => setDraggingGate(null)}
-              />
-            </div>
-          </div>
-        </div>
+        {/* Operations panel */}
+        <aside className="learning-panel learning-panel-ops hidden min-h-0 flex-col border-b border-[var(--color-border)] md:flex lg:border-b-0 lg:border-r">
+          <GateLibrary
+            variant="learning"
+            onDragStart={setDraggingGate}
+            onDragEnd={() => setDraggingGate(null)}
+          />
+        </aside>
 
-        {/* Right: code */}
-        <aside className="hidden min-h-0 flex-col border-t border-[var(--color-border)] lg:col-span-3 lg:flex lg:border-t-0 lg:border-l">
+        {/* Circuit canvas — primary focus */}
+        <main className="learning-panel learning-panel-canvas min-h-[280px] min-w-0 overflow-hidden bg-[var(--color-canvas)] md:min-h-0">
+          <CircuitCanvas
+            draggingGate={draggingGate}
+            onDragEnd={() => setDraggingGate(null)}
+          />
+        </main>
+
+        {/* Code editor */}
+        <aside className="learning-panel learning-panel-code hidden min-h-0 min-h-[240px] flex-col border-t border-[var(--color-border)] xl:flex xl:min-h-0 xl:border-t-0 xl:border-l">
           <LearningCodePanel
             onExport={handleExportAction}
             onImportSync={handleImportSync}
@@ -230,8 +231,16 @@ export function LearningPlayer({
         </aside>
       </div>
 
+      {/* Mobile code panel (below canvas on smaller screens) */}
+      <div className="learning-panel-code-mobile max-h-[280px] shrink-0 border-t border-[var(--color-border)] xl:hidden">
+        <LearningCodePanel
+          onExport={handleExportAction}
+          onImportSync={handleImportSync}
+        />
+      </div>
+
       {/* Bottom actions */}
-      <div className="shrink-0 space-y-2 border-t border-[var(--color-border)] p-3">
+      <div className="shrink-0 space-y-3 border-t border-[var(--color-border)] p-4">
         <ChallengeFeedback
           status={feedbackStatus}
           message={feedbackMessage}
@@ -239,32 +248,27 @@ export function LearningPlayer({
           xpAwarded={xpAwarded}
         />
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" className="gap-1" onClick={handleCheck}>
-            <CheckCircle className="h-3.5 w-3.5" />
+          <Button size="default" className="gap-2" onClick={handleCheck}>
+            <CheckCircle className="h-4 w-4" />
             Check Answer
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1"
-            onClick={() => setShowHint(true)}
-          >
-            <Lightbulb className="h-3.5 w-3.5" />
+          <Button size="default" variant="outline" className="gap-2" onClick={() => setShowHint(true)}>
+            <Lightbulb className="h-4 w-4" />
             Show Hint
           </Button>
-          <Button size="sm" variant="ghost" className="gap-1" onClick={handleReset}>
-            <RotateCcw className="h-3.5 w-3.5" />
+          <Button size="default" variant="ghost" className="gap-2" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4" />
             Reset
           </Button>
           {feedbackStatus === "success" && nextHref && (
             <Button
-              size="sm"
+              size="default"
               variant="secondary"
-              className="ml-auto gap-1"
+              className="ml-auto gap-2"
               onClick={() => router.push(nextHref)}
             >
-              Next
-              <ChevronRight className="h-3.5 w-3.5" />
+              Next Lesson
+              <ChevronRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -273,7 +277,6 @@ export function LearningPlayer({
   );
 }
 
-/** Code panel wrapper that notifies learning progress on copy/sync */
 function LearningCodePanel({
   onExport,
   onImportSync,
@@ -282,13 +285,13 @@ function LearningCodePanel({
   onImportSync: () => void;
 }) {
   return (
-    <div className="relative flex h-full min-h-0 flex-col">
+    <div className="learning-code-panel flex h-full min-h-[220px] flex-col">
       <MultiLanguageCodePanel />
-      <div className="flex shrink-0 gap-1 border-t border-[var(--color-border)] p-2">
+      <div className="flex shrink-0 gap-2 border-t border-[var(--color-border)] p-3">
         <Button
           size="sm"
           variant="outline"
-          className="h-7 flex-1 text-[10px]"
+          className="h-9 flex-1 text-sm"
           onClick={onExport}
         >
           Mark Export Done
@@ -296,7 +299,7 @@ function LearningCodePanel({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 flex-1 text-[10px]"
+          className="h-9 flex-1 text-sm"
           onClick={onImportSync}
         >
           Mark Import Done

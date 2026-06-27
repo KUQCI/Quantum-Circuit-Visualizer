@@ -21,9 +21,15 @@ import {
 interface GateLibraryProps {
   onDragStart: (gateType: string) => void;
   onDragEnd?: () => void;
+  /** Larger tiles and text for learning workspace */
+  variant?: "default" | "learning";
 }
 
-export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
+export function GateLibrary({
+  onDragStart,
+  onDragEnd,
+  variant = "default",
+}: GateLibraryProps) {
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
 
@@ -52,10 +58,20 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex h-full flex-col">
+      <div
+        className={cn(
+          "flex h-full flex-col",
+          variant === "learning" && "learning-gate-library"
+        )}
+      >
         <div className="border-b border-[var(--color-border)] px-3 py-2.5">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            <h2
+              className={cn(
+                "font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]",
+                variant === "learning" ? "text-xs" : "text-xs"
+              )}
+            >
               Operations
             </h2>
             <div className="flex gap-0.5">
@@ -130,6 +146,7 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
                   gate={gate}
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
+                  variant={variant}
                 />
               ))}
             </div>
@@ -144,12 +161,15 @@ function GateGridItem({
   gate,
   onDragStart,
   onDragEnd,
+  variant = "default",
 }: {
   gate: (typeof GATE_LIBRARY_UI)[0];
   onDragStart: (t: string) => void;
   onDragEnd?: () => void;
+  variant?: "default" | "learning";
 }) {
   const isWide = gate.type === "rccx" || gate.type === "rc3x";
+  const isLearning = variant === "learning";
 
   return (
     <Tooltip>
@@ -164,12 +184,17 @@ function GateGridItem({
           }}
           onDragEnd={() => onDragEnd?.()}
           className={cn(
-            "flex aspect-square cursor-grab select-none flex-col items-center justify-center rounded-[3px] shadow-sm transition-transform active:cursor-grabbing active:scale-95 hover:brightness-110",
+            "flex cursor-grab select-none flex-col items-center justify-center rounded-[3px] shadow-sm transition-transform active:cursor-grabbing active:scale-95 hover:brightness-110",
+            isLearning ? "aspect-square min-h-[52px]" : "aspect-square",
             isWide && "col-span-2 aspect-[2/1]",
             getGateColor(gate)
           )}
         >
-          <GateSymbol gate={gate} variant="palette" className="h-7 w-7" />
+          <GateSymbol
+            gate={gate}
+            variant="palette"
+            className={isLearning ? "h-8 w-8" : "h-7 w-7"}
+          />
         </div>
       </TooltipTrigger>
       <TooltipContent side="right">

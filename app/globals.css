@@ -417,3 +417,115 @@ body {
   border-color: rgba(248, 113, 113, 0.35);
   background: var(--color-error-subtle);
 }
+
+/* ── Learning workspace (lesson / challenge player) ── */
+.learning-workspace-shell {
+  width: 94vw;
+  max-width: 1800px;
+  margin-inline: auto;
+  padding: 0.5rem 0 1rem;
+  height: calc(100dvh - 5.25rem);
+  min-height: 640px;
+  display: flex;
+  flex-direction: column;
+}
+
+.learning-player {
+  flex: 1;
+  min-height: 0;
+}
+
+.learning-player-grid {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(280px, 1fr);
+}
+
+@media (min-width: 768px) {
+  .learning-player-grid {
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .learning-panel-lesson {
+    grid-column: 1;
+    grid-row: 1 / -1;
+  }
+
+  .learning-panel-ops {
+    grid-column: 2;
+    grid-row: 1;
+    max-height: 220px;
+  }
+
+  .learning-panel-canvas {
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 360px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .learning-player-grid {
+    grid-template-columns:
+      minmax(260px, 300px)
+      minmax(240px, 280px)
+      minmax(400px, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .learning-panel-lesson {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .learning-panel-ops {
+    grid-column: 2;
+    grid-row: 1;
+    max-height: none;
+  }
+
+  .learning-panel-canvas {
+    grid-column: 3;
+    grid-row: 1;
+    min-height: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .learning-player-grid {
+    grid-template-columns:
+      minmax(260px, 300px)
+      minmax(240px, 280px)
+      minmax(600px, 1fr)
+      minmax(320px, 400px);
+  }
+
+  .learning-panel-code {
+    grid-column: 4;
+    grid-row: 1;
+  }
+
+  .learning-panel-code-mobile {
+    display: none;
+  }
+}
+
+.learning-panel-code-mobile {
+  overflow: hidden;
+}
+
+.learning-code-panel .segment-btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.learning-code-panel .text-xs {
+  font-size: 0.8125rem;
+}
+
+.learning-gate-library input {
+  height: 2rem;
+  font-size: 0.8125rem;
+}

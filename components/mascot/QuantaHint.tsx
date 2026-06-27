@@ -14,6 +14,7 @@ export function QuantaHint({ hint, visible }: QuantaHintProps) {
       title="Quanta's hint"
       message={hint}
       variant="hint"
+      size="lg"
     />
   );
 }
