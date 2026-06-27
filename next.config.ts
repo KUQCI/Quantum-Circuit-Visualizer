@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   env: {
-    NEXT_PUBLIC_APP_NAME: "Qiskit Visualizer",
+    NEXT_PUBLIC_APP_NAME: "KUQCI Circuit Visualizer",
     NEXT_PUBLIC_APP_VERSION: "1.0.0",
     NEXT_PUBLIC_BASE_PATH: isGitHubPages ? `/${repoName}` : "",
   },

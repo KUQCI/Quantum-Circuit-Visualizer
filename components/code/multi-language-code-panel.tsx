@@ -51,7 +51,7 @@ export function MultiLanguageCodePanel() {
               className={cn(
                 "rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
                 codePanelLanguage === lang.id
-                  ? "bg-[var(--color-primary)] text-white"
+                  ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
                   : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
               )}
               onClick={() => setCodePanelLanguage(lang.id as CodeLanguageId)}

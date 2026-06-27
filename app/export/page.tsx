@@ -93,7 +93,7 @@ export default function ExportPage() {
                 className={cn(
                   "rounded px-3 py-1.5 text-xs font-medium",
                   language === lang.id
-                    ? "bg-[var(--color-primary)] text-white"
+                    ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
                     : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
                 )}
                 onClick={() => setLanguage(lang.id)}

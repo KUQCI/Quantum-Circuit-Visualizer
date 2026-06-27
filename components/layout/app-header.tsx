@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useThemeStore } from "@/store/theme-store";
 import {
-  Atom,
   Sun,
   Moon,
   Home,
@@ -31,17 +31,33 @@ export function AppHeader() {
   const { theme, toggleTheme } = useThemeStore();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-card)]/90">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4">
+    <header className="sticky top-0 z-50 px-4 pt-3">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 rounded-2xl border border-[rgba(125,211,252,0.2)] bg-[rgba(5,9,20,0.72)] px-4 shadow-blue-glow backdrop-blur-xl">
         <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 font-semibold text-[var(--color-accent-foreground)]"
+          href="https://kuqci.github.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex shrink-0 items-center gap-2.5"
         >
-          <Atom className="h-5 w-5" />
-          <span className="hidden sm:inline">Qiskit Visualizer</span>
+          <Image
+            src="https://kuqci.github.io/logo.png"
+            alt="KUQCI"
+            width={28}
+            height={28}
+            className="rounded-md"
+            unoptimized
+          />
+          <div className="hidden flex-col sm:flex">
+            <span className="text-sm font-semibold leading-tight text-[var(--color-foreground)]">
+              KUQCI
+            </span>
+            <span className="text-[10px] leading-tight text-[var(--color-muted-foreground)]">
+              Circuit Visualizer
+            </span>
+          </div>
         </Link>
 
-        <nav className="flex flex-1 items-center justify-center gap-0.5 overflow-x-auto">
+        <nav className="flex flex-1 items-center justify-center gap-1 overflow-x-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
@@ -50,10 +66,10 @@ export function AppHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-1.5 rounded px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                  "kuqci-nav-link flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium whitespace-nowrap",
                   active
-                    ? "bg-[var(--color-secondary)] text-[var(--color-accent-foreground)]"
-                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+                    ? "active text-[var(--color-cyan-quantum)]"
+                    : "text-[var(--color-muted-foreground)]"
                 )}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -68,7 +84,7 @@ export function AppHeader() {
           size="icon"
           onClick={toggleTheme}
           title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="shrink-0"
+          className="shrink-0 text-[var(--color-muted-foreground)] hover:text-[var(--color-cyan-quantum)]"
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />

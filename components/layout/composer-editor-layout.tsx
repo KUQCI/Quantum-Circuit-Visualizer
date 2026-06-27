@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ComposerToolbar } from "@/components/layout/composer-toolbar";
 import { ComposerFooter } from "@/components/layout/composer-footer";
 import { GateLibrary } from "@/components/gates/gate-library";
@@ -10,7 +11,7 @@ import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-pa
 import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { Atom, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ComposerEditorLayout() {
@@ -25,13 +26,22 @@ export function ComposerEditorLayout() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--color-background)]">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)] px-4">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-[rgba(125,211,252,0.16)] bg-[rgba(5,9,20,0.85)] px-4 backdrop-blur-sm">
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm font-semibold text-[var(--color-foreground)]"
+          className="flex items-center gap-2.5 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:text-[var(--color-cyan-quantum)]"
         >
-          <Atom className="h-4 w-4 text-[var(--color-primary)]" />
-          Qiskit Visualizer
+          <Image
+            src="https://kuqci.github.io/logo.png"
+            alt="KUQCI"
+            width={22}
+            height={22}
+            className="rounded"
+            unoptimized
+          />
+          <span>
+            Circuit <span className="text-[var(--color-cyan-quantum)]">Visualizer</span>
+          </span>
         </Link>
         <span className="text-xs text-[var(--color-muted-foreground)]">
           Quantum Circuit Composer
@@ -52,7 +62,7 @@ export function ComposerEditorLayout() {
 
         <button
           type="button"
-          className="flex w-5 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+          className="flex w-5 shrink-0 items-center justify-center border-r border-[rgba(125,211,252,0.16)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[rgba(125,211,252,0.08)] hover:text-[var(--color-cyan-quantum)]"
           onClick={() => setOperationsPanelCollapsed(!operationsPanelCollapsed)}
           title={
             operationsPanelCollapsed
@@ -80,7 +90,7 @@ export function ComposerEditorLayout() {
             />
           </div>
           {showVizPanels && (
-            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)]">
+            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[rgba(125,211,252,0.16)]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}

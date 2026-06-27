@@ -1,78 +1,92 @@
 @import "tailwindcss";
 
 @theme {
-  --radius: 0.25rem;
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+  --radius: 1rem;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Source Code Pro",
+    Menlo, monospace;
 }
 
-/* Deep blue quantum theme — no neutral greys */
+/* KUQCI quantum theme — ink, cyan-quantum, gold-duck */
 :root,
 [data-theme="dark"] {
-  --color-background: #060a12;
-  --color-foreground: #e8edf5;
-  --color-card: #0b1220;
-  --color-card-foreground: #e8edf5;
-  --color-surface: #080e18;
+  --color-ink: #050914;
+  --color-surface: #08111f;
+  --color-surface-2: #0b1628;
+  --color-blue-qci: #2f80ed;
+  --color-cyan-quantum: #7dd3fc;
+  --color-gold-duck: #f6c453;
+
+  --color-background: #050914;
+  --color-foreground: #e2e8f0;
+  --color-card: #08111f;
+  --color-card-foreground: #e2e8f0;
+  --color-surface: #08111f;
   --color-canvas: #040810;
-  --color-primary: #0f62fe;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #122038;
-  --color-secondary-foreground: #c8d8f0;
-  --color-muted: #0a1422;
-  --color-muted-foreground: #6b8aad;
-  --color-accent: #152a48;
-  --color-accent-foreground: #78a9ff;
-  --color-border: #1a3052;
-  --color-input: #0c1524;
-  --color-ring: #4589ff;
-  --color-destructive: #fa4d56;
-  --color-viz-accent: #33b1ff;
-  --color-toolbar: #080e18;
-  --color-gate-h: #fa4d56;
-  --color-gate-pauli: #4589ff;
-  --color-gate-phase: #be95ff;
-  --color-gate-rotation: #42be65;
-  --color-gate-two: #a56eff;
-  --color-gate-three: #ff832b;
-  --color-gate-measure: #08bdba;
-  --color-gate-nonunitary: #3d5a80;
-  --color-gate-barrier: #2a4060;
-  --color-success: #42be65;
-  --color-warning: #f1c21b;
+  --color-primary: #f6c453;
+  --color-primary-foreground: #050914;
+  --color-secondary: rgba(125, 211, 252, 0.1);
+  --color-secondary-foreground: #7dd3fc;
+  --color-muted: #0b1628;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: rgba(125, 211, 252, 0.12);
+  --color-accent-foreground: #7dd3fc;
+  --color-border: rgba(125, 211, 252, 0.18);
+  --color-input: #0b1628;
+  --color-ring: #2f80ed;
+  --color-destructive: #f87171;
+  --color-viz-accent: #7dd3fc;
+  --color-toolbar: #08111f;
+  --color-gate-h: #f87171;
+  --color-gate-pauli: #2f80ed;
+  --color-gate-phase: #a78bfa;
+  --color-gate-rotation: #4ade80;
+  --color-gate-two: #c084fc;
+  --color-gate-three: #fb923c;
+  --color-gate-measure: #22d3ee;
+  --color-gate-nonunitary: #64748b;
+  --color-gate-barrier: #334155;
+  --color-success: #4ade80;
+  --color-warning: #f6c453;
+  --shadow-blue-glow: 0 0 40px rgba(47, 128, 237, 0.15),
+    0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="light"] {
   --color-background: #f0f4fa;
-  --color-foreground: #0a1628;
+  --color-foreground: #050914;
   --color-card: #ffffff;
-  --color-card-foreground: #0a1628;
+  --color-card-foreground: #050914;
   --color-surface: #ffffff;
   --color-canvas: #e8eef8;
-  --color-primary: #0f62fe;
+  --color-primary: #2f80ed;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #d0dff0;
-  --color-secondary-foreground: #0a1628;
-  --color-muted: #e4ecf8;
-  --color-muted-foreground: #4a6080;
-  --color-accent: #c8daf0;
-  --color-accent-foreground: #0f62fe;
-  --color-border: #b0c4e0;
+  --color-secondary: rgba(47, 128, 237, 0.08);
+  --color-secondary-foreground: #1d4ed8;
+  --color-muted: #e8eef8;
+  --color-muted-foreground: #64748b;
+  --color-accent: rgba(47, 128, 237, 0.1);
+  --color-accent-foreground: #2f80ed;
+  --color-border: rgba(47, 128, 237, 0.2);
   --color-input: #f0f4fa;
-  --color-ring: #0f62fe;
-  --color-destructive: #da1e28;
-  --color-viz-accent: #1192e8;
+  --color-ring: #2f80ed;
+  --color-destructive: #dc2626;
+  --color-viz-accent: #2f80ed;
   --color-toolbar: #e8eef8;
-  --color-gate-h: #da1e28;
-  --color-gate-pauli: #0f62fe;
-  --color-gate-phase: #8a3ffc;
-  --color-gate-rotation: #198038;
-  --color-gate-two: #6929c4;
-  --color-gate-three: #eb6200;
-  --color-gate-measure: #009d9a;
-  --color-gate-nonunitary: #5a7090;
-  --color-gate-barrier: #8aa0c0;
-  --color-success: #198038;
-  --color-warning: #f1c21b;
+  --color-gate-h: #dc2626;
+  --color-gate-pauli: #2f80ed;
+  --color-gate-phase: #7c3aed;
+  --color-gate-rotation: #16a34a;
+  --color-gate-two: #9333ea;
+  --color-gate-three: #ea580c;
+  --color-gate-measure: #0891b2;
+  --color-gate-nonunitary: #64748b;
+  --color-gate-barrier: #94a3b8;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --shadow-blue-glow: 0 0 40px rgba(47, 128, 237, 0.1),
+    0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -90,12 +104,15 @@ html[data-theme="light"] {
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .font-mono {
   font-family: var(--font-mono);
+}
+
+.shadow-blue-glow {
+  box-shadow: var(--shadow-blue-glow);
 }
 
 ::-webkit-scrollbar {
@@ -106,16 +123,16 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: rgba(125, 211, 252, 0.2);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  background: var(--color-cyan-quantum);
 }
 
 .composer-panel {
-  background: var(--color-card);
-  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  border-color: rgba(125, 211, 252, 0.16);
 }
 
 .composer-toolbar-btn {
@@ -123,10 +140,32 @@ body {
   transition: color 0.15s, background 0.15s;
 }
 .composer-toolbar-btn:hover:not(:disabled) {
-  color: var(--color-foreground);
-  background: var(--color-secondary);
+  color: var(--color-cyan-quantum);
+  background: rgba(125, 211, 252, 0.08);
 }
 .composer-toolbar-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.kuqci-nav-link {
+  position: relative;
+  transition: color 0.2s;
+}
+.kuqci-nav-link:hover {
+  color: var(--color-cyan-quantum);
+}
+.kuqci-nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-gold-duck);
+  transition: width 0.2s;
+}
+.kuqci-nav-link:hover::after,
+.kuqci-nav-link.active::after {
+  width: 100%;
 }

@@ -49,7 +49,7 @@ export function ComposerToolbar() {
 
   return (
     <>
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-3">
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-[rgba(125,211,252,0.16)] bg-[var(--color-toolbar)] px-3">
         <div className="flex items-center gap-3">
           <Input
             value={circuit.name}
@@ -215,7 +215,7 @@ export function ComposerToolbar() {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 gap-1.5 border-[var(--color-border)] bg-transparent text-xs"
+            className="h-7 gap-1.5 text-xs"
             onClick={() => saveProject()}
           >
             <Save className="h-3.5 w-3.5" />
@@ -223,7 +223,7 @@ export function ComposerToolbar() {
           </Button>
           <Button
             size="sm"
-            className="h-7 gap-1.5 bg-[var(--color-primary)] text-xs hover:brightness-110"
+            className="h-7 gap-1.5 text-xs"
             onClick={() => router.push("/export")}
             title="Export Qiskit code (Run on hardware coming soon)"
           >
