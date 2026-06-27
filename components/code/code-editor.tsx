@@ -38,16 +38,16 @@ export function CodeEditor({
   if (!mounted) {
     return (
       <div
-        className="rounded border border-[var(--color-border)] bg-[var(--color-muted)] p-4 font-mono text-sm"
+        className="flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] text-sm text-[var(--color-muted-foreground)]"
         style={{ height }}
       >
-        {value}
+        Loading editor...
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-hidden rounded border border-[var(--color-border)]">
+    <div className="h-full overflow-hidden rounded-lg border border-[var(--color-border)]">
       <MonacoEditor
         height={height}
         language={language}

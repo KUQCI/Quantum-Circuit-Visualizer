@@ -94,6 +94,7 @@ export default function ExportPage() {
                   "segment-btn",
                   language === lang.id && "segment-btn-active"
                 )}
+                aria-pressed={language === lang.id}
                 onClick={() => setLanguage(lang.id)}
               >
                 {lang.label}

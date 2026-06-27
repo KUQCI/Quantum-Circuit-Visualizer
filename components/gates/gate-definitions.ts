@@ -327,11 +327,11 @@ const GATE_COLOR_MAP: Record<GateDefinition["colorGroup"], string> = {
   h: "border-transparent bg-[var(--color-gate-h)] text-white",
   pauli: "border-transparent bg-[var(--color-gate-pauli)] text-white",
   phase: "border-transparent bg-[var(--color-gate-phase)] text-white",
-  rotation: "border-transparent bg-[var(--color-gate-rotation)] text-[#161616]",
+  rotation: "border-transparent bg-[var(--color-gate-rotation)] text-[var(--color-gate-label)]",
   two: "border-transparent bg-[var(--color-gate-two)] text-white",
   three: "border-transparent bg-[var(--color-gate-three)] text-white",
-  measure: "border-transparent bg-[var(--color-gate-measure)] text-[#161616]",
-  nonunitary: "border-transparent bg-[var(--color-gate-nonunitary)] text-[#161616]",
+  measure: "border-transparent bg-[var(--color-gate-measure)] text-[var(--color-gate-label)]",
+  nonunitary: "border-transparent bg-[var(--color-gate-nonunitary)] text-[var(--color-gate-label)]",
   barrier:
     "border-transparent bg-[var(--color-gate-barrier)]/30 text-[var(--color-muted-foreground)] border border-dashed border-[var(--color-gate-barrier)]",
   modifier:

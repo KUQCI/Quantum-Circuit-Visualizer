@@ -73,7 +73,7 @@ export function MultiLanguageCodePanel() {
       )}
 
       <div className="min-h-0 flex-1 overflow-hidden p-2">
-        <div className="h-[calc(100vh-22rem)] min-h-[120px]">
+        <div className="h-full min-h-[120px]">
           <CodeEditor
             value={code}
             onChange={handleCodeChange}

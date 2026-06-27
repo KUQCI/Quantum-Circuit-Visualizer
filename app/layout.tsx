@@ -33,6 +33,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem("qiskit-visualizer-theme");if(s){var t=JSON.parse(s).state.theme;if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen antialiased font-sans">
         <AppShell>{children}</AppShell>
       </body>

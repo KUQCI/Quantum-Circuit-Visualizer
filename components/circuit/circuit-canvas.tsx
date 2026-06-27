@@ -14,7 +14,7 @@ import {
   qubitToY,
 } from "@/components/gates/gate-definitions";
 import { GateSymbol, GateTooltipContent } from "@/components/gates/gate-symbol";
-import { PhaseDisk } from "@/components/visualizations/phase-disk";
+import { PhaseDisk, getMarginalDiskForQubit } from "@/components/visualizations/phase-disk";
 import { simulateCircuit } from "@/lib/quantum-state";
 import {
   getExecutionLayers,
@@ -715,6 +715,7 @@ export function CircuitCanvas({
               onClick={undo}
               disabled={!canUndo()}
               title="Undo"
+              aria-label="Undo"
             >
               <Undo2 className="h-3.5 w-3.5" />
             </button>
@@ -724,6 +725,7 @@ export function CircuitCanvas({
               onClick={redo}
               disabled={!canRedo()}
               title="Redo"
+              aria-label="Redo"
             >
               <Redo2 className="h-3.5 w-3.5" />
             </button>
@@ -881,9 +883,13 @@ export function CircuitCanvas({
               ))}
 
             {circuit.qubits.map((qubit, idx) => {
-              const singleQubitAmp =
-                circuit.qubits.length === 1 && phaseSim.amplitudes.length >= 2
-                  ? phaseSim.amplitudes[1]
+              const diskProps =
+                showPhaseDisks && phaseSim.amplitudes.length > 0
+                  ? getMarginalDiskForQubit(
+                      phaseSim.amplitudes,
+                      circuit.qubits.length,
+                      idx
+                    )
                   : null;
 
               return (
@@ -901,8 +907,13 @@ export function CircuitCanvas({
                 <div className="relative flex-1 pr-8">
                   <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-muted-foreground)]/50" />
                   <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center">
-                    {showPhaseDisks && circuit.qubits.length === 1 ? (
-                      <PhaseDisk amplitude={singleQubitAmp} size={20} />
+                    {showPhaseDisks && diskProps ? (
+                      <PhaseDisk
+                        amplitude={diskProps.amplitude}
+                        purity={diskProps.purity}
+                        size={20}
+                        title={`${qubit.label} marginal state`}
+                      />
                     ) : (
                       <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--color-muted-foreground)] bg-[var(--color-canvas)]">
                         <div className="h-2.5 w-2.5 rounded-full border border-[var(--color-muted-foreground)]" />

@@ -21,6 +21,7 @@ import {
 import {
   bellStateQiskitCode,
   bellStateOpenQasmCode,
+  bellStateCircuit,
 } from "@/lib/sample-circuits";
 import { AlertCircle, CheckCircle2, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ const EXAMPLES: Record<CodeLanguageId, string> = {
   openqasm: bellStateOpenQasmCode,
   cirq: "",
   "qiskit-runtime": "",
-  json: "",
+  json: JSON.stringify(bellStateCircuit, null, 2),
 };
 
 export default function ImportPage() {
@@ -118,6 +119,7 @@ export default function ImportPage() {
                   "segment-btn",
                   language === lang.id && "segment-btn-active"
                 )}
+                aria-pressed={language === lang.id}
                 onClick={() => handleLanguageChange(lang.id)}
               >
                 {lang.label}

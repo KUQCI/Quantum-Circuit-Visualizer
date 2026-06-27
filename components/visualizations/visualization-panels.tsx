@@ -49,8 +49,8 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
       className={cn(
         "grid h-full divide-x divide-[var(--color-border)] border-[var(--color-border)] bg-[var(--color-background)]",
         activePanels.length === 1 && "grid-cols-1",
-        activePanels.length === 2 && "grid-cols-1 md:grid-cols-2",
-        activePanels.length === 3 && "grid-cols-1 md:grid-cols-3"
+        activePanels.length === 2 && "grid-cols-1 lg:grid-cols-2",
+        activePanels.length === 3 && "grid-cols-1 lg:grid-cols-3"
       )}
     >
       {vizPanels.probabilities && (

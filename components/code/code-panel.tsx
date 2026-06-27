@@ -15,11 +15,18 @@ export function CodePanelActions({
   filename = "circuit.py",
 }: CodePanelActionsProps) {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
 
   const handleCopy = async () => {
-    await copyToClipboard(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await copyToClipboard(code);
+      setCopied(true);
+      setCopyError(false);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 2500);
+    }
   };
 
   return (
@@ -30,7 +37,7 @@ export function CodePanelActions({
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}
-        {copied ? "Copied" : "Copy"}
+        {copied ? "Copied" : copyError ? "Copy failed" : "Copy"}
       </Button>
       <Button
         variant="outline"

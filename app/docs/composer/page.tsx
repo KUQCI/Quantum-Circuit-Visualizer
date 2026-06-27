@@ -10,7 +10,7 @@ import {
 const sections = [
   {
     title: "What is Quantum Circuit Composer?",
-    body: `Qiskit Visualizer's Composer is a graphical quantum programming workspace inspired by IBM Quantum Composer. Drag and drop operations to build quantum circuits, visualize qubit states live, and automatically generate Qiskit Python code.`,
+    body: `The KUQCI Circuit Visualizer Composer is a graphical quantum programming workspace inspired by IBM Quantum Composer. Drag and drop operations to build quantum circuits, visualize qubit states live, and automatically generate multi-language code.`,
   },
   {
     title: "Tour of the interface",

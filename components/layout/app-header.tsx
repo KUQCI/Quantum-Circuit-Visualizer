@@ -14,6 +14,7 @@ import {
   Download,
   FolderOpen,
   Map,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/import", label: "Import", icon: Upload },
   { href: "/export", label: "Export", icon: Download },
   { href: "/projects", label: "Projects", icon: FolderOpen },
+  { href: "/docs/composer", label: "Docs", icon: BookOpen },
   { href: "/roadmap", label: "Roadmap", icon: Map },
 ];
 
@@ -60,11 +62,14 @@ export function AppHeader() {
         <nav className="flex flex-1 items-center justify-center gap-0.5 overflow-x-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active =
+              pathname === item.href ||
+              (item.href === "/docs/composer" && pathname.startsWith("/docs"));
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "kuqci-nav-link flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium whitespace-nowrap",
                   active

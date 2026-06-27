@@ -149,12 +149,7 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <Button asChild variant="outline" size="sm">
-                    <Link
-                      href="/editor"
-                      onClick={() =>
-                        useCircuitStore.getState().openProject(project.id)
-                      }
-                    >
+                    <Link href={`/editor?project=${project.id}`}>
                       Open in Editor
                     </Link>
                   </Button>

@@ -17,6 +17,7 @@ import {
   Eye,
   HelpCircle,
   Check,
+  Menu,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -47,10 +48,31 @@ export function ComposerToolbar() {
     setAlignmentMode,
   } = useEditorUiStore();
 
+  const fileItems = [
+    { label: "New circuit", action: () => useCircuitStore.getState().resetCircuit() },
+    { label: "Save file", action: () => saveProject() },
+    { label: "Open projects", action: () => router.push("/projects") },
+    { label: "Import circuit", action: () => router.push("/import") },
+    { label: "Export Qiskit", action: () => router.push("/export") },
+  ];
+
+  const editItems = [
+    { label: "Undo", action: () => useCircuitStore.getState().undo() },
+    { label: "Redo", action: () => useCircuitStore.getState().redo() },
+    { label: "Manage registers", action: () => setRegistersOpen(true) },
+    { label: "Left alignment", action: () => useCircuitStore.getState().alignOperationsLeft() },
+  ];
+
+  const helpItems = [
+    { label: "Composer guide", action: () => router.push("/docs/composer") },
+    { label: "API reference", action: () => router.push("/docs/api") },
+    { label: "Roadmap", action: () => router.push("/roadmap") },
+  ];
+
   return (
     <>
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-3">
-        <div className="flex items-center gap-3">
+      <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Input
             value={circuit.name}
             onChange={(e) =>
@@ -58,51 +80,75 @@ export function ComposerToolbar() {
                 circuit: { ...circuit, name: e.target.value },
               })
             }
-            className="h-7 w-44 border-none bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-0"
+            aria-label="Circuit name"
+            className="h-7 min-w-0 max-w-[140px] border-none bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-0 sm:max-w-[176px]"
           />
+
+          {/* Mobile menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded sm:hidden"
+                aria-label="Open editor menu"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="max-h-[70vh] w-56 overflow-y-auto">
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="text-xs">File</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {fileItems.map((item) => (
+                    <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="text-xs">Edit</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {editItems.map((item) => (
+                    <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuCheckboxItem
+                checked={showCodePanel}
+                onCheckedChange={setShowCodePanel}
+                className="text-xs"
+              >
+                Code editor panel
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showVizPanels}
+                onCheckedChange={setShowVizPanels}
+                className="text-xs"
+              >
+                Visualizations panel
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showPhaseDisks}
+                onCheckedChange={setShowPhaseDisks}
+                className="text-xs"
+              >
+                Phase disks
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
+              {helpItems.map((item) => (
+                <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Desktop menus */}
           <nav className="hidden items-center gap-0.5 sm:flex">
-            <ToolbarMenu
-              label="File"
-              icon={FileText}
-              items={[
-                {
-                  label: "New circuit",
-                  action: () => useCircuitStore.getState().resetCircuit(),
-                },
-                { label: "Save file", action: () => saveProject() },
-                {
-                  label: "Open projects",
-                  action: () => router.push("/projects"),
-                },
-                { label: "Import circuit", action: () => router.push("/import") },
-                {
-                  label: "Export Qiskit",
-                  action: () => router.push("/export"),
-                },
-              ]}
-            />
-            <ToolbarMenu
-              label="Edit"
-              icon={Edit3}
-              items={[
-                {
-                  label: "Undo",
-                  action: () => useCircuitStore.getState().undo(),
-                },
-                {
-                  label: "Redo",
-                  action: () => useCircuitStore.getState().redo(),
-                },
-                {
-                  label: "Manage registers",
-                  action: () => setRegistersOpen(true),
-                },
-                {
-                  label: "Left alignment",
-                  action: () => useCircuitStore.getState().alignOperationsLeft(),
-                },
-              ]}
-            />
+            <ToolbarMenu label="File" icon={FileText} items={fileItems} />
+            <ToolbarMenu label="Edit" icon={Edit3} items={editItems} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="composer-toolbar-btn flex items-center gap-1 rounded px-2 py-1 text-xs">
@@ -113,9 +159,7 @@ export function ComposerToolbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[180px]">
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="text-xs">
-                    Panels
-                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger className="text-xs">Panels</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     <DropdownMenuCheckboxItem
                       checked={showCodePanel}
@@ -163,15 +207,13 @@ export function ComposerToolbar() {
                 </DropdownMenuCheckboxItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="text-xs">
-                    Alignment
-                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger className="text-xs">Alignment</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     {(
                       [
                         ["freeform", "Freeform"],
                         ["left", "Left alignment"],
-                        ["layers", "Layers alignment"],
+                        ["layers", "Layers view"],
                       ] as const
                     ).map(([mode, label]) => (
                       <DropdownMenuItem
@@ -179,14 +221,12 @@ export function ComposerToolbar() {
                         className="text-xs"
                         onClick={() => {
                           setAlignmentMode(mode);
-                          if (mode !== "freeform") {
+                          if (mode === "left") {
                             useCircuitStore.getState().alignOperationsLeft();
                           }
                         }}
                       >
-                        {alignmentMode === mode && (
-                          <Check className="mr-2 h-3 w-3" />
-                        )}
+                        {alignmentMode === mode && <Check className="mr-2 h-3 w-3" />}
                         {label}
                       </DropdownMenuItem>
                     ))}
@@ -194,41 +234,28 @@ export function ComposerToolbar() {
                 </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
-            <ToolbarMenu
-              label="Help"
-              icon={HelpCircle}
-              items={[
-                {
-                  label: "Composer guide",
-                  action: () => router.push("/docs/composer"),
-                },
-                {
-                  label: "API reference",
-                  action: () => router.push("/docs/api"),
-                },
-                { label: "Roadmap", action: () => router.push("/roadmap") },
-              ]}
-            />
+            <ToolbarMenu label="Help" icon={HelpCircle} items={helpItems} />
           </nav>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="h-7 gap-1.5 text-xs"
+            className="h-7 gap-1.5 px-2 text-xs sm:px-3"
             onClick={() => saveProject()}
           >
             <Save className="h-3.5 w-3.5" />
-            Save file
+            <span className="hidden sm:inline">Save file</span>
           </Button>
           <Button
             size="sm"
-            className="h-7 gap-1.5 text-xs"
+            className="h-7 gap-1.5 px-2 text-xs sm:px-3"
             onClick={() => router.push("/export")}
             title="Export Qiskit code (Run on hardware coming soon)"
           >
             <Play className="h-3.5 w-3.5" />
-            Run circuit
+            <span className="hidden sm:inline">Run circuit</span>
           </Button>
         </div>
       </div>
@@ -257,11 +284,7 @@ function ToolbarMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[160px]">
         {items.map((item) => (
-          <DropdownMenuItem
-            key={item.label}
-            onClick={item.action}
-            className="text-xs"
-          >
+          <DropdownMenuItem key={item.label} onClick={item.action} className="text-xs">
             {item.label}
           </DropdownMenuItem>
         ))}

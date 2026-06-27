@@ -56,14 +56,14 @@ export default function ProjectsPage() {
 
   return (
     <div className="page-container">
-      <div className="page-header mb-6 flex items-center justify-between gap-4">
+      <div className="page-header mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="page-title">Projects</h1>
           <p className="page-description">
             Manage saved circuits stored in your browser
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={() => saveProject(circuit.name)}
@@ -99,18 +99,19 @@ export default function ProjectsPage() {
           {projects.map((project) => (
             <Card key={project.id} className="transition-all hover:border-[var(--color-border-strong)]">
               <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
+                <div className="space-y-1">
                   {editingId === project.id ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="h-8 w-48"
+                        className="h-8 w-full max-w-xs"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleRename(project.id);
                           if (e.key === "Escape") setEditingId(null);
                         }}
                         autoFocus
+                        aria-label="Project name"
                       />
                       <Button size="sm" onClick={() => handleRename(project.id)}>
                         Save

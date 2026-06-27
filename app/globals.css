@@ -62,6 +62,10 @@
   --color-gate-barrier: #334155;
   --shadow-card: 0 0 32px rgba(47, 128, 237, 0.12), 0 4px 20px rgba(0, 0, 0, 0.35);
   --shadow-nav: 0 0 40px rgba(47, 128, 237, 0.15), 0 4px 24px rgba(0, 0, 0, 0.4);
+  --color-gate-label: #161616;
+  --color-viz-wire: #484f58;
+  --color-viz-line: #58a6ff;
+  --color-error-border: rgba(248, 113, 113, 0.35);
 }
 
 /* ── Light theme ── */
@@ -117,6 +121,10 @@
   --color-gate-barrier: #cbd5e1;
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(47, 128, 237, 0.06);
   --shadow-nav: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(47, 128, 237, 0.08);
+  --color-gate-label: #0f172a;
+  --color-viz-wire: #94a3b8;
+  --color-viz-line: #2f80ed;
+  --color-error-border: rgba(220, 38, 38, 0.25);
 }
 
 * {
@@ -253,7 +261,7 @@ body {
 
 /* ── Alert cards ── */
 .alert-error {
-  border-color: rgba(248, 113, 113, 0.35) !important;
+  border-color: var(--color-error-border) !important;
   background: var(--color-error-subtle) !important;
 }
 .alert-error-title {

@@ -46,10 +46,14 @@ export function ManageRegistersDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-[var(--color-muted-foreground)]">
+            <label
+              htmlFor="register-qubits"
+              className="text-xs font-medium text-[var(--color-muted-foreground)]"
+            >
               Qubits
             </label>
             <Input
+              id="register-qubits"
               type="number"
               min={1}
               max={16}
@@ -59,10 +63,14 @@ export function ManageRegistersDialog({
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-[var(--color-muted-foreground)]">
+            <label
+              htmlFor="register-classical"
+              className="text-xs font-medium text-[var(--color-muted-foreground)]"
+            >
               Classical bits
             </label>
             <Input
+              id="register-classical"
               type="number"
               min={0}
               max={16}

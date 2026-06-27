@@ -28,8 +28,9 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    if (!q) return GATE_LIBRARY_UI;
-    return GATE_LIBRARY_UI.filter(
+    const draggable = GATE_LIBRARY_UI.filter((g) => g.type !== "control");
+    if (!q) return draggable;
+    return draggable.filter(
       (g) =>
         g.label.toLowerCase().includes(q) ||
         g.type.toLowerCase().includes(q) ||
@@ -104,7 +105,7 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-5 gap-1">
+                  <div className="grid grid-cols-4 gap-1">
                     {gates.map((gate) => (
                       <GateGridItem
                         key={gate.type}

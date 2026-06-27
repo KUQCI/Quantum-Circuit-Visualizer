@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ComposerToolbar } from "@/components/layout/composer-toolbar";
 import { ComposerFooter } from "@/components/layout/composer-footer";
+import { EditorBootstrap } from "@/components/layout/editor-bootstrap";
 import { GateLibrary } from "@/components/gates/gate-library";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
 import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-panel";
 import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ComposerEditorLayout() {
@@ -22,10 +23,15 @@ export function ComposerEditorLayout() {
     showVizPanels,
     operationsPanelCollapsed,
     setOperationsPanelCollapsed,
+    setShowCodePanel,
   } = useEditorUiStore();
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[var(--color-background)]">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--color-background)]">
+      <Suspense fallback={null}>
+        <EditorBootstrap />
+      </Suspense>
+
       <header className="glass-nav flex h-12 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
         <Link
           href="/"
@@ -44,16 +50,21 @@ export function ComposerEditorLayout() {
             <span className="text-[var(--color-brand)]">Visualizer</span>
           </span>
         </Link>
-        <span className="text-xs text-[var(--color-muted-foreground)]">
+        <span className="hidden text-xs text-[var(--color-muted-foreground)] sm:inline">
           Quantum Circuit Composer
         </span>
       </header>
 
       <ComposerToolbar />
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
         {!operationsPanelCollapsed && (
-          <aside className="composer-panel w-[220px] shrink-0 overflow-hidden border-r xl:w-[240px]">
+          <aside
+            className={cn(
+              "composer-panel shrink-0 overflow-hidden border-r",
+              "absolute inset-y-0 left-0 z-30 w-[min(240px,85vw)] shadow-xl lg:relative lg:z-auto lg:w-[220px] xl:w-[240px]"
+            )}
+          >
             <GateLibrary
               onDragStart={setDraggingGate}
               onDragEnd={() => setDraggingGate(null)}
@@ -63,7 +74,7 @@ export function ComposerEditorLayout() {
 
         <button
           type="button"
-          className="flex w-5 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
+          className="relative z-20 flex w-5 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
           onClick={() => setOperationsPanelCollapsed(!operationsPanelCollapsed)}
           title={
             operationsPanelCollapsed
@@ -96,15 +107,30 @@ export function ComposerEditorLayout() {
             />
           </div>
           {showVizPanels && (
-            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)]">
+            <div className="min-h-[180px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[200px]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}
         </div>
 
         {showCodePanel && (
-          <aside className="composer-panel w-[280px] shrink-0 overflow-hidden border-l xl:w-[320px]">
-            <MultiLanguageCodePanel />
+          <aside
+            className={cn(
+              "composer-panel flex shrink-0 flex-col overflow-hidden border-l",
+              "absolute inset-y-0 right-0 z-30 w-[min(320px,92vw)] shadow-xl lg:relative lg:z-auto lg:w-[280px] xl:w-[320px]"
+            )}
+          >
+            <button
+              type="button"
+              className="flex h-8 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-brand)] lg:hidden"
+              onClick={() => setShowCodePanel(false)}
+              aria-label="Close code panel"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="min-h-0 flex-1">
+              <MultiLanguageCodePanel />
+            </div>
           </aside>
         )}
       </div>

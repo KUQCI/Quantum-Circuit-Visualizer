@@ -81,6 +81,47 @@ export function PhaseDisk({
   );
 }
 
+export function getMarginalDiskForQubit(
+  amplitudes: Complex[],
+  numQubits: number,
+  q: number
+): { amplitude: Complex | null; purity: number } {
+  if (numQubits === 0 || amplitudes.length === 0) {
+    return { amplitude: null, purity: 1 };
+  }
+
+  if (numQubits === 1 && q === 0) {
+    return { amplitude: amplitudes[1] ?? null, purity: 1 };
+  }
+
+  let p0 = 0;
+  let p1 = 0;
+  let amp1: Complex = { re: 0, im: 0 };
+
+  for (let i = 0; i < amplitudes.length; i++) {
+    const bit = (i >> (numQubits - 1 - q)) & 1;
+    const prob = cAbs2(amplitudes[i]);
+    if (bit === 0) {
+      p0 += prob;
+    } else {
+      p1 += prob;
+      amp1 = {
+        re: amp1.re + amplitudes[i].re,
+        im: amp1.im + amplitudes[i].im,
+      };
+    }
+  }
+
+  const norm1 = Math.sqrt(p1) || 1;
+  const beta = { re: amp1.re / norm1, im: amp1.im / norm1 };
+
+  if (p1 <= 0.001) {
+    return { amplitude: { re: 0, im: 0 }, purity: 0.5 + p0 * 0.5 };
+  }
+
+  return { amplitude: beta, purity: 0.5 + p0 * 0.5 };
+}
+
 export function QubitPhaseDisks({
   amplitudes,
   numQubits,

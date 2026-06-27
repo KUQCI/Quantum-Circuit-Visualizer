@@ -5,6 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Sphere, Line } from "@react-three/drei";
 import type { QSpherePoint } from "@/lib/quantum-state";
 import { phaseToColor } from "@/lib/quantum-state";
+import { useThemeStore } from "@/store/theme-store";
 
 interface QSphereSceneProps {
   points: QSpherePoint[];
@@ -12,15 +13,27 @@ interface QSphereSceneProps {
   numQubits: number;
 }
 
-function WireframeSphere() {
+function useVizColors() {
+  const theme = useThemeStore((s) => s.theme);
+  return useMemo(
+    () => ({
+      wire: theme === "dark" ? "#484f58" : "#94a3b8",
+      accent: theme === "dark" ? "#58a6ff" : "#2f80ed",
+      axis: theme === "dark" ? "#388bfd" : "#2563eb",
+    }),
+    [theme]
+  );
+}
+
+function WireframeSphere({ color }: { color: string }) {
   return (
     <Sphere args={[1, 36, 36]}>
-      <meshBasicMaterial color="#484f58" wireframe transparent opacity={0.4} />
+      <meshBasicMaterial color={color} wireframe transparent opacity={0.4} />
     </Sphere>
   );
 }
 
-function EquatorRing() {
+function EquatorRing({ color }: { color: string }) {
   const ringPoints = useMemo(() => {
     const pts: [number, number, number][] = [];
     for (let i = 0; i <= 64; i++) {
@@ -30,12 +43,11 @@ function EquatorRing() {
     return pts;
   }, []);
 
-  return <Line points={ringPoints} color="#484f58" lineWidth={1} />;
+  return <Line points={ringPoints} color={color} lineWidth={1} />;
 }
 
 function StatePoint({ point }: { point: QSpherePoint }) {
   const color = phaseToColor(point.phase);
-  // Node radius proportional to probability (Qiskit / IBM Composer convention)
   const size = Math.max(0.04, Math.sqrt(point.probability) * 0.22);
 
   return (
@@ -53,8 +65,10 @@ function StatePoint({ point }: { point: QSpherePoint }) {
 
 function BlochVector({
   vector,
+  color,
 }: {
   vector: { x: number; y: number; z: number };
+  color: string;
 }) {
   const linePoints = useMemo(
     (): [number, number, number][] => [
@@ -66,14 +80,12 @@ function BlochVector({
 
   return (
     <group>
-      <Line points={linePoints} color="#58a6ff" lineWidth={2} />
-      <mesh
-        position={[vector.x * 0.95, vector.y * 0.95, vector.z * 0.95]}
-      >
+      <Line points={linePoints} color={color} lineWidth={2} />
+      <mesh position={[vector.x * 0.95, vector.y * 0.95, vector.z * 0.95]}>
         <sphereGeometry args={[0.07, 16, 16]} />
         <meshStandardMaterial
-          color="#58a6ff"
-          emissive="#58a6ff"
+          color={color}
+          emissive={color}
           emissiveIntensity={0.5}
         />
       </mesh>
@@ -82,25 +94,27 @@ function BlochVector({
 }
 
 function Scene({ points, blochVector, numQubits }: QSphereSceneProps) {
+  const colors = useVizColors();
+
   return (
     <>
       <ambientLight intensity={0.55} />
       <directionalLight position={[4, 4, 4]} intensity={0.9} />
       <directionalLight position={[-3, -2, -3]} intensity={0.25} />
-      <WireframeSphere />
-      <EquatorRing />
+      <WireframeSphere color={colors.wire} />
+      <EquatorRing color={colors.wire} />
       <Line
         points={[
           [0, -1.15, 0],
           [0, 1.15, 0],
         ]}
-        color="#388bfd"
+        color={colors.axis}
         lineWidth={1}
         transparent
         opacity={0.45}
       />
       {numQubits === 1 && blochVector ? (
-        <BlochVector vector={blochVector} />
+        <BlochVector vector={blochVector} color={colors.accent} />
       ) : (
         points.map((p) => <StatePoint key={p.label} point={p} />)
       )}
