@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { useThemeStore, getMonacoTheme } from "@/store/theme-store";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -28,6 +29,7 @@ export function CodeEditor({
   language = "python",
 }: CodeEditorProps) {
   const [mounted, setMounted] = useState(false);
+  const theme = useThemeStore((s) => s.theme);
 
   useEffect(() => {
     setMounted(true);
@@ -36,7 +38,7 @@ export function CodeEditor({
   if (!mounted) {
     return (
       <div
-        className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] p-4 font-mono text-sm"
+        className="rounded border border-[var(--color-border)] bg-[var(--color-muted)] p-4 font-mono text-sm"
         style={{ height }}
       >
         {value}
@@ -45,12 +47,13 @@ export function CodeEditor({
   }
 
   return (
-    <div className="overflow-hidden rounded-md border border-[var(--color-border)]">
+    <div className="h-full overflow-hidden rounded border border-[var(--color-border)]">
       <MonacoEditor
         height={height}
         language={language}
         value={value}
         onChange={(v) => onChange?.(v ?? "")}
+        theme={getMonacoTheme(theme)}
         options={{
           readOnly,
           minimap: { enabled: false },
@@ -58,10 +61,12 @@ export function CodeEditor({
           lineNumbers: "on",
           scrollBeyondLastLine: false,
           wordWrap: "on",
-          padding: { top: 12 },
+          padding: { top: 12, bottom: 12 },
           automaticLayout: true,
+          tabSize: 4,
+          renderLineHighlight: readOnly ? "none" : "line",
+          scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
         }}
-        theme="vs-dark"
       />
     </div>
   );

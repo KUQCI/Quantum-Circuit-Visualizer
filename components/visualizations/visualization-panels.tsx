@@ -31,7 +31,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
           Q-sphere
         </h3>
-        <div className="flex h-44 items-center justify-center">
+        <div className="flex h-52 items-stretch justify-center md:h-56">
           <QSphere
             points={result.qSpherePoints}
             numQubits={result.numQubits}

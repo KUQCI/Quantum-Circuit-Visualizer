@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useCircuitStore, createOperationFromGateType } from "@/store/circuit-store";
 import { GateLibrary } from "@/components/gates/gate-library";
 import { getGateByType, getGateColorByType } from "@/components/gates/gate-definitions";
@@ -12,8 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CodeEditor } from "@/components/code/code-editor";
-import { CodePanelActions } from "@/components/code/code-panel";
+import { QiskitCodePanel } from "@/components/code/qiskit-code-panel";
 import { formatParam, parseParamExpression } from "@/lib/translator-core";
 import {
   Undo2,
@@ -310,7 +309,7 @@ export function CircuitCanvas() {
       </div>
 
       {validationWarnings.length > 0 && (
-        <div className="mx-4 mt-2 flex items-start gap-2 rounded-md border border-amber-700/50 bg-amber-900/20 px-3 py-2 text-xs text-amber-200">
+        <div className="mx-4 mt-2 flex items-start gap-2 rounded border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 px-3 py-2 text-xs text-[var(--color-warning)]">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <div>
             {validationWarnings.map((w, i) => (
@@ -462,21 +461,11 @@ export function CircuitCanvas() {
 }
 
 export function EditorLayout() {
-  const { circuit, getGeneratedCode, resetCircuit } = useCircuitStore();
-  const [code, setCode] = useState("");
-
-  const refreshCode = useCallback(() => {
-    setCode(getGeneratedCode());
-  }, [getGeneratedCode]);
-
-  useEffect(() => {
-    refreshCode();
-    return useCircuitStore.subscribe(refreshCode);
-  }, [refreshCode]);
+  const { circuit } = useCircuitStore();
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      <aside className="w-52 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-card)]">
+      <aside className="w-52 shrink-0 overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-card)]">
         <GateLibrary onDragStart={() => {}} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--color-surface)]">
@@ -485,23 +474,7 @@ export function EditorLayout() {
         </div>
         <VisualizationPanels circuit={circuit} />
       </div>
-      <aside className="flex w-80 shrink-0 flex-col border-l border-[var(--color-border)] bg-[var(--color-card)]">
-        <div className="border-b border-[var(--color-border)] px-4 py-3">
-          <h2 className="text-sm font-semibold">Qiskit Code</h2>
-          <p className="text-xs text-[var(--color-muted-foreground)]">
-            Live-generated Python
-          </p>
-        </div>
-        <div className="min-h-0 flex-1 overflow-hidden p-3">
-          <CodeEditor value={code} readOnly height="calc(100vh - 280px)" />
-        </div>
-        <div className="flex flex-wrap gap-2 border-t border-[var(--color-border)] p-3">
-          <CodePanelActions code={code} />
-          <Button variant="outline" size="sm" onClick={resetCircuit}>
-            Reset Circuit
-          </Button>
-        </div>
-      </aside>
+      <QiskitCodePanel />
     </div>
   );
 }

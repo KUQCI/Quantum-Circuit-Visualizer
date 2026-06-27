@@ -58,7 +58,7 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <CheckCircle2 className="h-4 w-4 text-[var(--color-success)]" />
               JSON Sync Ready
             </CardTitle>
           </CardHeader>
