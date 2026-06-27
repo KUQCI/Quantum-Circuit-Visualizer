@@ -13,26 +13,42 @@ import {
 import { CodeEditor } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
 import { useCircuitStore } from "@/store/circuit-store";
-import { generateQiskitCode, getCircuitSummary } from "@/lib/qiskit-generator";
+import { getCircuitSummary } from "@/lib/qiskit-generator";
+import {
+  CODE_LANGUAGES,
+  getCodeLanguage,
+  type CodeLanguageId,
+} from "@/lib/code-adapters";
 import { PenLine } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ExportPage() {
   const { circuit } = useCircuitStore();
+  const [language, setLanguage] = useState<CodeLanguageId>("qiskit");
   const [code, setCode] = useState("");
 
+  const adapter = getCodeLanguage(language);
+
   useEffect(() => {
-    const result = generateQiskitCode(circuit);
-    setCode(result.success ? result.code : `# Error: ${result.error}`);
-  }, [circuit]);
+    const result = adapter.generate(circuit);
+    setCode(
+      result.success && result.code
+        ? result.code
+        : `# Error: ${result.error ?? "Generation failed"}`
+    );
+  }, [circuit, adapter, language]);
 
   const summary = getCircuitSummary(circuit);
+  const ext = adapter.defaultFilename.split(".").pop() ?? "txt";
+  const filename = `${circuit.name.replace(/\s+/g, "_").toLowerCase()}.${ext}`;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Export Circuit</h1>
         <p className="mt-1 text-[var(--color-muted-foreground)]">
-          Generate Qiskit Python code from the current circuit
+          Generate code in Qiskit, OpenQASM, Cirq, IBM Runtime, or JSON from your
+          visual circuit
         </p>
       </div>
 
@@ -65,17 +81,43 @@ export default function ExportPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Generated Qiskit Code</CardTitle>
+          <CardTitle className="text-base">Export format</CardTitle>
+          <CardDescription>{adapter.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <CodeEditor value={code} readOnly height="360px" />
+          <div className="mb-4 flex flex-wrap gap-2">
+            {CODE_LANGUAGES.map((lang) => (
+              <button
+                key={lang.id}
+                type="button"
+                className={cn(
+                  "rounded px-3 py-1.5 text-xs font-medium",
+                  language === lang.id
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
+                )}
+                onClick={() => setLanguage(lang.id)}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+          <CodeEditor
+            value={code}
+            readOnly
+            language={adapter.monacoLanguage}
+            height="360px"
+          />
           <div className="mt-4 flex flex-wrap gap-3">
-            <CodePanelActions code={code} filename={`${circuit.name.replace(/\s+/g, "_").toLowerCase()}.py`} />
+            <CodePanelActions code={code} filename={filename} />
             <Button asChild variant="outline">
               <Link href="/editor">
                 <PenLine className="h-4 w-4" />
                 Open in Editor
               </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/docs/api">IBM API Reference</Link>
             </Button>
           </div>
         </CardContent>

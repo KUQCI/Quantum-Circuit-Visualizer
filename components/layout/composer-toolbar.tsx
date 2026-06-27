@@ -74,7 +74,7 @@ export function ComposerToolbar() {
                   label: "Open projects",
                   action: () => router.push("/projects"),
                 },
-                { label: "Import Qiskit", action: () => router.push("/import") },
+                { label: "Import circuit", action: () => router.push("/import") },
                 {
                   label: "Export Qiskit",
                   action: () => router.push("/export"),
@@ -201,6 +201,10 @@ export function ComposerToolbar() {
                 {
                   label: "Composer guide",
                   action: () => router.push("/docs/composer"),
+                },
+                {
+                  label: "API reference",
+                  action: () => router.push("/docs/api"),
                 },
                 { label: "Roadmap", action: () => router.push("/roadmap") },
               ]}

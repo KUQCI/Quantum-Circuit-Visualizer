@@ -50,7 +50,7 @@ qc.rx(pi/2, 0)
   it("rejects unsupported gates", () => {
     const code = `from qiskit import QuantumCircuit
 qc = QuantumCircuit(2)
-qc.ccx(0, 1, 2)
+qc.unknown_gate(0)
 `;
     const result = parseQiskitCode(code);
     expect(result.success).toBe(false);

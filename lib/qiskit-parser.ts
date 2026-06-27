@@ -28,20 +28,10 @@ export interface ParseError {
 export type QiskitParseResult = ParseResult | ParseError;
 
 const SUPPORTED_QISKIT_GATES = new Set([
-  "h",
-  "x",
-  "y",
-  "z",
-  "s",
-  "t",
-  "rx",
-  "ry",
-  "rz",
-  "cx",
-  "cz",
-  "swap",
-  "measure",
-  "barrier",
+  "h", "x", "y", "z", "s", "sdg", "t", "tdg", "id", "sx", "sxdg", "p",
+  "rx", "ry", "rz", "u",
+  "cx", "cz", "swap", "rxx", "rzz", "ccx", "rccx", "rc3x",
+  "measure", "reset", "barrier",
 ]);
 
 interface ParsedGateCall {
@@ -208,6 +198,21 @@ function gateToOperation(
     };
   }
 
+  if (gate === "reset") {
+    if (indices.length !== 1) {
+      throw new SyntaxError("reset requires 1 qubit index");
+    }
+    return {
+      id: generateOperationId(),
+      type: "reset",
+      label: "|0⟩",
+      targets: [qubitIdFromIndex(indices[0])],
+      controls: [],
+      classicalTargets: [],
+      column,
+    };
+  }
+
   const gateInfo = GATE_LIBRARY[gate];
   if (!gateInfo) {
     throw new NotImplementedError(`Gate '${gate}' is not in the gate library`);
@@ -241,7 +246,19 @@ function gateToOperation(
 
   if (gateInfo.nQubits === 2) {
     if (indices.length !== 2) {
-      throw new SyntaxError(`${gate} expects 2 qubit indices (control, target)`);
+      throw new SyntaxError(`${gate} expects 2 qubit indices`);
+    }
+    if (gate === "swap") {
+      return {
+        id: generateOperationId(),
+        type: gate,
+        label: getGateLabel(gate),
+        targets: [qubitIdFromIndex(indices[0]), qubitIdFromIndex(indices[1])],
+        controls: [],
+        classicalTargets: [],
+        column,
+        parameters,
+      };
     }
     return {
       id: generateOperationId(),
@@ -255,7 +272,43 @@ function gateToOperation(
     };
   }
 
-  throw new NotImplementedError(`Multi-qubit gate ${gate} with ${gateInfo.nQubits} qubits not supported in v1`);
+  if (gateInfo.nQubits === 3) {
+    if (indices.length !== 3) {
+      throw new SyntaxError(`${gate} expects 3 qubit indices`);
+    }
+    return {
+      id: generateOperationId(),
+      type: gate,
+      label: getGateLabel(gate),
+      targets: [qubitIdFromIndex(indices[2])],
+      controls: [qubitIdFromIndex(indices[0]), qubitIdFromIndex(indices[1])],
+      classicalTargets: [],
+      column,
+      parameters,
+    };
+  }
+
+  if (gateInfo.nQubits === 4) {
+    if (indices.length !== 4) {
+      throw new SyntaxError(`${gate} expects 4 qubit indices`);
+    }
+    return {
+      id: generateOperationId(),
+      type: gate,
+      label: getGateLabel(gate),
+      targets: [qubitIdFromIndex(indices[3])],
+      controls: [
+        qubitIdFromIndex(indices[0]),
+        qubitIdFromIndex(indices[1]),
+        qubitIdFromIndex(indices[2]),
+      ],
+      classicalTargets: [],
+      column,
+      parameters,
+    };
+  }
+
+  throw new NotImplementedError(`Multi-qubit gate ${gate} with ${gateInfo.nQubits} qubits not supported`);
 }
 
 class NotImplementedError extends Error {
@@ -295,65 +348,5 @@ export function parseQiskitCode(code: string, name = "Imported Circuit"): Qiskit
   }
 }
 
-export function circuitToQasm(circuit: Circuit): string {
-  const lines = ['OPENQASM 2.0;', 'include "qelib1.inc";', ""];
-
-  lines.push(`qreg q[${circuit.qubits.length}];`);
-  if (circuit.classicalBits.length > 0) {
-    lines.push(`creg c[${circuit.classicalBits.length}];`);
-  }
-  lines.push("");
-
-  const sortedOps = [...circuit.operations].sort((a, b) => a.column - b.column);
-
-  for (const op of sortedOps) {
-    if (op.type === "barrier") {
-      const qubitStr = circuit.qubits.map((q) => q.label).join(",");
-      lines.push(`barrier ${qubitStr};`);
-      continue;
-    }
-
-    if (op.type === "measure") {
-      const qIdx = parseInt(op.targets[0].replace("q", ""), 10);
-      const cIdx = parseInt(op.classicalTargets[0].replace("c", ""), 10);
-      lines.push(`measure q[${qIdx}] -> c[${cIdx}];`);
-      continue;
-    }
-
-    const gateInfo = GATE_LIBRARY[op.type];
-    if (!gateInfo) {
-      throw new NotImplementedError(`Gate ${op.type} not in gate library`);
-    }
-
-    const paramStr =
-      op.parameters && op.parameters.length > 0
-        ? `(${op.parameters.map((p) => p.display ?? formatParam(p.value)).join(",")})`
-        : op.parameters?.length
-          ? "()"
-          : gateInfo.nParams > 0
-            ? "(0)"
-            : "";
-
-    if (gateInfo.nQubits === 1) {
-      const qIdx = parseInt(op.targets[0].replace("q", ""), 10);
-      lines.push(`${op.type}${paramStr ? paramStr : ""} q[${qIdx}];`.replace(" ()", ""));
-      if (paramStr) {
-        lines[lines.length - 1] = `${op.type}${paramStr} q[${qIdx}];`;
-      } else {
-        lines[lines.length - 1] = `${op.type} q[${qIdx}];`;
-      }
-    } else if (gateInfo.nQubits === 2) {
-      const cIdx = parseInt(op.controls[0].replace("q", ""), 10);
-      const tIdx = parseInt(op.targets[0].replace("q", ""), 10);
-      if (paramStr) {
-        lines.push(`${op.type}${paramStr} q[${cIdx}],q[${tIdx}];`);
-      } else {
-        lines.push(`${op.type} q[${cIdx}],q[${tIdx}];`);
-      }
-    }
-  }
-
-  return lines.join("\n") + "\n";
-}
-
 export { NotImplementedError };
+export { circuitToQasm } from "./openqasm-generator";

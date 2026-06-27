@@ -12,33 +12,56 @@ import {
 } from "@/components/ui/card";
 import { CodeEditor } from "@/components/code/code-editor";
 import { useCircuitStore } from "@/store/circuit-store";
-import { parseQiskitCode } from "@/lib/qiskit-parser";
 import { validateCircuit } from "@/lib/validation";
-import { bellStateQiskitCode } from "@/lib/sample-circuits";
+import {
+  CODE_LANGUAGES,
+  getCodeLanguage,
+  type CodeLanguageId,
+} from "@/lib/code-adapters";
+import {
+  bellStateQiskitCode,
+  bellStateOpenQasmCode,
+} from "@/lib/sample-circuits";
 import { AlertCircle, CheckCircle2, PenLine } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Circuit } from "@/lib/circuit-schema";
 
-interface ParseResponse {
-  success: boolean;
-  circuit?: Circuit;
-  error?: string;
-  details?: string[];
-}
+const EXAMPLES: Record<CodeLanguageId, string> = {
+  qiskit: bellStateQiskitCode,
+  openqasm: bellStateOpenQasmCode,
+  cirq: "",
+  "qiskit-runtime": "",
+  json: "",
+};
 
 export default function ImportPage() {
   const router = useRouter();
   const { setCircuit } = useCircuitStore();
+  const [language, setLanguage] = useState<CodeLanguageId>("qiskit");
   const [code, setCode] = useState(bellStateQiskitCode);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ParseResponse | null>(null);
+  const [result, setResult] = useState<{
+    success: boolean;
+    circuit?: Circuit;
+    error?: string;
+    details?: string[];
+  } | null>(null);
+
+  const adapter = getCodeLanguage(language);
+
+  const handleLanguageChange = (lang: CodeLanguageId) => {
+    setLanguage(lang);
+    setCode(EXAMPLES[lang] || "");
+    setResult(null);
+  };
 
   const handleParse = () => {
     setLoading(true);
     setResult(null);
 
-    const parsed = parseQiskitCode(code);
-    if (!parsed.success) {
-      setResult(parsed);
+    const parsed = adapter.parse(code);
+    if (!parsed.success || !parsed.circuit) {
+      setResult({ success: false, error: parsed.error });
       setLoading(false);
       return;
     }
@@ -66,33 +89,61 @@ export default function ImportPage() {
   };
 
   const circuit = result?.success ? result.circuit : null;
+  const importableLanguages = CODE_LANGUAGES.filter((l) => l.bidirectional);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Import Qiskit Code</h1>
+        <h1 className="text-2xl font-bold">Import Circuit</h1>
         <p className="mt-1 text-[var(--color-muted-foreground)]">
-          Paste Qiskit Python code to parse it into a visual circuit. Code is
-          parsed as text only — never executed.
+          Paste Qiskit Python, OpenQASM 2.0, or JSON circuit code. Parsed as text
+          only — never executed.
         </p>
       </div>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-base">Qiskit Python Code</CardTitle>
+          <CardTitle className="text-base">Source format</CardTitle>
           <CardDescription>
-            Supports QuantumCircuit declarations and standard gate calls
+            Choose the language of your circuit code
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CodeEditor value={code} onChange={setCode} height="320px" />
+          <div className="mb-4 flex flex-wrap gap-2">
+            {importableLanguages.map((lang) => (
+              <button
+                key={lang.id}
+                type="button"
+                className={cn(
+                  "rounded px-3 py-1.5 text-xs font-medium",
+                  language === lang.id
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
+                )}
+                onClick={() => handleLanguageChange(lang.id)}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+          <CodeEditor
+            value={code}
+            onChange={setCode}
+            language={adapter.monacoLanguage}
+            height="320px"
+          />
           <div className="mt-4 flex gap-3">
             <Button onClick={handleParse} disabled={loading}>
-              {loading ? "Parsing..." : "Parse Qiskit"}
+              {loading ? "Parsing..." : `Parse ${adapter.label}`}
             </Button>
-            <Button variant="outline" onClick={() => setCode(bellStateQiskitCode)}>
-              Load Bell State Example
-            </Button>
+            {EXAMPLES[language] && (
+              <Button
+                variant="outline"
+                onClick={() => setCode(EXAMPLES[language])}
+              >
+                Load Bell State Example
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -145,23 +196,6 @@ export default function ImportPage() {
                   {circuit.operations.filter((op) => op.type === "measure").length}
                 </div>
                 <div className="text-xs text-[var(--color-muted-foreground)]">Measurements</div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <h3 className="mb-2 text-sm font-medium">Gate List</h3>
-              <div className="flex flex-wrap gap-2">
-                {circuit.operations.map((op) => (
-                  <span
-                    key={op.id}
-                    className="rounded-md border border-[var(--color-border)] bg-[var(--color-secondary)] px-2 py-1 font-mono text-xs"
-                  >
-                    {op.label}
-                    {op.parameters?.[0]?.display
-                      ? `(${op.parameters[0].display})`
-                      : ""}
-                  </span>
-                ))}
               </div>
             </div>
 

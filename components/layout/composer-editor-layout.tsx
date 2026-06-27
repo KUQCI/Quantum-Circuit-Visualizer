@@ -6,7 +6,7 @@ import { ComposerToolbar } from "@/components/layout/composer-toolbar";
 import { ComposerFooter } from "@/components/layout/composer-footer";
 import { GateLibrary } from "@/components/gates/gate-library";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
-import { QiskitCodePanel } from "@/components/code/qiskit-code-panel";
+import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-panel";
 import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
@@ -88,7 +88,7 @@ export function ComposerEditorLayout() {
 
         {showCodePanel && (
           <aside className="composer-panel w-[280px] shrink-0 overflow-hidden border-l xl:w-[320px]">
-            <QiskitCodePanel />
+            <MultiLanguageCodePanel />
           </aside>
         )}
       </div>

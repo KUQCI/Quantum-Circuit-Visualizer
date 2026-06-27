@@ -64,6 +64,8 @@ export const GATE_LIBRARY: Record<
   cu3: { nQubits: 2, nParams: 3, label: "CU3" },
   cu: { nQubits: 2, nParams: 4, label: "CU" },
   ccx: { nQubits: 3, nParams: 0, label: "CCX" },
+  rccx: { nQubits: 3, nParams: 0, label: "RCCX" },
+  rc3x: { nQubits: 4, nParams: 0, label: "RC3X" },
   cswap: { nQubits: 3, nParams: 0, label: "CSWAP" },
 };
 
