@@ -315,3 +315,21 @@ body {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
 }
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--color-brand);
+  color: var(--color-brand-foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0 0 0.5rem 0.5rem;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+}

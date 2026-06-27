@@ -21,6 +21,7 @@ import { simulateCircuit } from "@/lib/quantum-state";
 import {
   getExecutionLayers,
   getMaxInspectStep,
+  getOperationsUpToStep,
 } from "@/lib/circuit-layout";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -481,7 +482,19 @@ export function CircuitCanvas({
     [circuit.operations]
   );
 
-  const phaseSim = useMemo(() => simulateCircuit(circuit), [circuit]);
+  const inspectCircuit = useMemo(() => {
+    if (!inspectMode) return circuit;
+    if (inspectStep === 0) return { ...circuit, operations: [] };
+    return {
+      ...circuit,
+      operations: getOperationsUpToStep(circuit.operations, inspectStep),
+    };
+  }, [circuit, inspectMode, inspectStep]);
+
+  const phaseSim = useMemo(
+    () => simulateCircuit(inspectCircuit),
+    [inspectCircuit]
+  );
 
   const numColumns = Math.max(
     8,

@@ -9,9 +9,9 @@ A full-stack quantum circuit editor and converter that bidirectionally transform
 - **Qiskit Export** — Generate Qiskit Python code from visual circuits in real time
 - **JSON Sync Layer** — Unified circuit schema connects editor, import, and export
 - **Project Management** — Save, rename, duplicate, and delete circuits via localStorage
-- **Probabilities Chart** — Real-time bar chart of measurement outcome distribution
-- **Q-sphere Visualization** — Interactive quantum state sphere with phase coloring
-- **Sample Circuits** — Bell State, GHZ State, Simple Superposition, Quantum Teleportation
+- **Measurement Histograms** — Shot-based local simulator with configurable backends
+- **Statevector Table** — Real, imaginary, phase, and probability amplitudes
+- **Multi-Language Export** — Qiskit, OpenQASM 2.0, Cirq, Runtime JSON
 
 ## Tech Stack
 
@@ -28,9 +28,10 @@ A full-stack quantum circuit editor and converter that bidirectionally transform
 
 ## Supported Gates (v1)
 
-**Single-qubit:** H, X, Y, Z, S, T, RX, RY, RZ  
-**Two-qubit:** CX, CZ, SWAP  
-**Special:** Measure, Barrier
+**Single-qubit:** H, X, Y, Z, I, √X, S, T, P, RX, RY, RZ, U  
+**Two-qubit:** CX, CZ, SWAP, RXX, RZZ  
+**Three-qubit:** CCX, RCCX, RC3X  
+**Special:** Measure, Reset, Barrier
 
 ## Local Setup
 
@@ -164,7 +165,7 @@ No environment variables are required for v1.
 |-------|--------|-------------|
 | Phase 1 | ✅ Complete | Qiskit code → visual circuit (import) |
 | Phase 2 | ✅ Complete | Visual circuit → Qiskit code (editor + export) |
-| Phase 3 | 🔜 Planned | Execution and result visualization |
+| Phase 3 | ✅ Complete | Local simulator, measurement histograms, backend selection |
 
 ## Testing
 
@@ -183,8 +184,9 @@ Tests cover:
 ## Security Notes
 
 - User-submitted Qiskit code is **never executed** — it is parsed as plain text only
-- No authentication or payment processing in v1
-- No quantum execution — visualization and conversion only
+- Local shot-based simulation runs entirely in the browser (no server execution)
+- No authentication or payment processing
+- IBM cloud/hardware execution requires exporting code and your own IBM Quantum API token
 
 ## License
 

@@ -10,8 +10,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       {!isEditor && <AppHeader />}
-      {children}
+      <main id="main-content">{children}</main>
     </ThemeProvider>
   );
 }

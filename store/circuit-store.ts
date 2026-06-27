@@ -27,6 +27,7 @@ interface HistoryEntry {
 
 interface CircuitState {
   circuit: Circuit;
+  currentProjectId: string | null;
   selectedOperationId: string | null;
   clipboard: Operation | null;
   validationWarnings: string[];
@@ -61,7 +62,7 @@ interface CircuitState {
 
   projects: Project[];
   loadProjects: () => void;
-  saveProject: (name?: string) => void;
+  saveProject: (name?: string) => string;
   openProject: (id: string) => Circuit | null;
   renameProject: (id: string, name: string) => void;
   duplicateProject: (id: string) => void;
@@ -96,10 +97,20 @@ function saveProjectsToStorage(projects: Project[]) {
   localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
 }
 
+export function circuitHasContent(circuit: Circuit): boolean {
+  return (
+    circuit.operations.length > 0 ||
+    circuit.name.trim() !== "Untitled circuit" ||
+    circuit.qubits.length !== 2 ||
+    circuit.classicalBits.length > 0
+  );
+}
+
 export const useCircuitStore = create<CircuitState>()(
   persist(
     (set, get) => ({
       circuit: createEmptyCircuit("Untitled circuit", 2, 0),
+      currentProjectId: null,
       selectedOperationId: null,
       clipboard: null,
       validationWarnings: [],
@@ -118,6 +129,7 @@ export const useCircuitStore = create<CircuitState>()(
         const circuit = createEmptyCircuit("Untitled circuit", 2, 0);
         set((state) => ({
           circuit,
+          currentProjectId: null,
           selectedOperationId: null,
           ...pushHistory({ ...state, circuit }),
         }));
@@ -362,41 +374,52 @@ export const useCircuitStore = create<CircuitState>()(
       loadProjects: () => set({ projects: loadProjectsFromStorage() }),
 
       saveProject: (name) => {
-        const { circuit, projects } = get();
+        const { circuit, projects, currentProjectId } = get();
         const now = new Date().toISOString();
-        const existingIdx = projects.findIndex((p) => p.name === (name ?? circuit.name));
+        const projectName = name ?? circuit.name;
 
-        if (existingIdx >= 0) {
-          const updated = [...projects];
-          updated[existingIdx] = {
-            ...updated[existingIdx],
-            circuit: structuredClone(circuit),
-            updatedAt: now,
-            name: name ?? circuit.name,
-          };
-          saveProjectsToStorage(updated);
-          set({ projects: updated });
-        } else {
-          const project: Project = {
-            id: `proj_${Date.now()}`,
-            name: name ?? circuit.name,
-            circuit: structuredClone(circuit),
-            createdAt: now,
-            updatedAt: now,
-          };
-          const updated = [project, ...projects];
-          saveProjectsToStorage(updated);
-          set({ projects: updated });
+        if (currentProjectId) {
+          const existingIdx = projects.findIndex((p) => p.id === currentProjectId);
+          if (existingIdx >= 0) {
+            const updated = [...projects];
+            updated[existingIdx] = {
+              ...updated[existingIdx],
+              circuit: structuredClone(circuit),
+              updatedAt: now,
+              name: projectName,
+            };
+            saveProjectsToStorage(updated);
+            set({ projects: updated });
+            return currentProjectId;
+          }
         }
+
+        const project: Project = {
+          id: `proj_${Date.now()}`,
+          name: projectName,
+          circuit: structuredClone(circuit),
+          createdAt: now,
+          updatedAt: now,
+        };
+        const updated = [project, ...projects];
+        saveProjectsToStorage(updated);
+        set({ projects: updated, currentProjectId: project.id });
+        return project.id;
       },
 
       openProject: (id) => {
-        const project = get().projects.find((p) => p.id === id);
-        if (project) {
-          get().setCircuit(structuredClone(project.circuit));
-          return project.circuit;
+        const projects =
+          get().projects.length > 0
+            ? get().projects
+            : loadProjectsFromStorage();
+        const project = projects.find((p) => p.id === id);
+        if (!project) return null;
+        if (get().projects.length === 0) {
+          set({ projects });
         }
-        return null;
+        get().setCircuit(structuredClone(project.circuit));
+        set({ currentProjectId: id });
+        return project.circuit;
       },
 
       renameProject: (id, name) => {
@@ -433,6 +456,7 @@ export const useCircuitStore = create<CircuitState>()(
       name: "qiskit-visualizer-circuit",
       partialize: (state) => ({
         circuit: state.circuit,
+        currentProjectId: state.currentProjectId,
         history: state.history.slice(-10),
         historyIndex: Math.min(state.historyIndex, 9),
       }),

@@ -138,6 +138,16 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
             </div>
           )}
 
+          {backendId === "local-statevector" && (
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-sm">
+              <p className="text-[var(--color-muted-foreground)]">
+                Statevector preview is already live in the bottom panels. Edit
+                your circuit to see Probabilities, Q-sphere, and Statevector
+                update in real time — no shots required.
+              </p>
+            </div>
+          )}
+
           {runError && (
             <p className="text-xs text-[var(--color-destructive)]">{runError}</p>
           )}
@@ -175,6 +185,8 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
                 )}
                 Run circuit
               </Button>
+            ) : backendId === "local-statevector" ? (
+              <Button onClick={() => onOpenChange(false)}>Done</Button>
             ) : null}
           </div>
         </div>

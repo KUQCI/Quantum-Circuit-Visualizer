@@ -11,7 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCircuitStore } from "@/store/circuit-store";
+import { createEmptyCircuit } from "@/lib/circuit-schema";
 import { formatDate } from "@/lib/utils";
 import {
   Plus,
@@ -32,19 +34,24 @@ export default function ProjectsPage() {
     renameProject,
     duplicateProject,
     deleteProject,
+    resetCircuit,
     circuit,
   } = useCircuitStore();
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(
+    null
+  );
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
 
   const handleOpen = (id: string) => {
-    openProject(id);
-    router.push("/editor");
+    if (openProject(id)) {
+      router.push("/editor");
+    }
   };
 
   const handleRename = (id: string) => {
@@ -52,6 +59,16 @@ export default function ProjectsPage() {
       renameProject(id, editName.trim());
     }
     setEditingId(null);
+  };
+
+  const handleNewProject = () => {
+    resetCircuit();
+    const name = `New Circuit ${projects.length + 1}`;
+    useCircuitStore.setState({
+      circuit: createEmptyCircuit(name, 2, 0),
+    });
+    saveProject(name);
+    router.push("/editor");
   };
 
   return (
@@ -64,19 +81,11 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={() => saveProject(circuit.name)}
-          >
+          <Button variant="outline" onClick={() => saveProject(circuit.name)}>
             <Save className="h-4 w-4" />
             Save Current
           </Button>
-          <Button
-            onClick={() => {
-              saveProject(`New Circuit ${projects.length + 1}`);
-              loadProjects();
-            }}
-          >
+          <Button onClick={handleNewProject}>
             <Plus className="h-4 w-4" />
             New Project
           </Button>
@@ -97,7 +106,10 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid gap-4">
           {projects.map((project) => (
-            <Card key={project.id} className="transition-all hover:border-[var(--color-border-strong)]">
+            <Card
+              key={project.id}
+              className="transition-all hover:border-[var(--color-border-strong)]"
+            >
               <CardHeader className="pb-2">
                 <div className="space-y-1">
                   {editingId === project.id ? (
@@ -158,7 +170,9 @@ export default function ProjectsPage() {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => deleteProject(project.id)}
+                    onClick={() =>
+                      setDeleteTarget({ id: project.id, name: project.name })
+                    }
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Delete
@@ -169,6 +183,24 @@ export default function ProjectsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title="Delete project?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.name}" will be permanently removed from your browser storage.`
+            : ""
+        }
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleteTarget) deleteProject(deleteTarget.id);
+        }}
+      />
     </div>
   );
 }

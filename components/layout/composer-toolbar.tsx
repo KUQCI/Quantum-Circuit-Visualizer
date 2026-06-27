@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCircuitStore } from "@/store/circuit-store";
+import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dialog";
 import { RunCircuitDialog } from "@/components/execution/run-circuit-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Save,
   Play,
@@ -33,9 +34,11 @@ import {
 
 export function ComposerToolbar() {
   const router = useRouter();
-  const { circuit, saveProject } = useCircuitStore();
+  const { circuit, saveProject, resetCircuit, undo, redo, canUndo, canRedo } =
+    useCircuitStore();
   const [registersOpen, setRegistersOpen] = useState(false);
   const [runOpen, setRunOpen] = useState(false);
+  const [confirmNewOpen, setConfirmNewOpen] = useState(false);
   const {
     showCodePanel,
     showVizPanels,
@@ -49,8 +52,16 @@ export function ComposerToolbar() {
     setAlignmentMode,
   } = useEditorUiStore();
 
+  const handleNewCircuit = () => {
+    if (circuitHasContent(circuit)) {
+      setConfirmNewOpen(true);
+      return;
+    }
+    resetCircuit();
+  };
+
   const fileItems = [
-    { label: "New circuit", action: () => useCircuitStore.getState().resetCircuit() },
+    { label: "New circuit", action: handleNewCircuit },
     { label: "Save file", action: () => saveProject() },
     { label: "Open projects", action: () => router.push("/projects") },
     { label: "Import circuit", action: () => router.push("/import") },
@@ -58,10 +69,13 @@ export function ComposerToolbar() {
   ];
 
   const editItems = [
-    { label: "Undo", action: () => useCircuitStore.getState().undo() },
-    { label: "Redo", action: () => useCircuitStore.getState().redo() },
+    { label: "Undo", action: undo, disabled: !canUndo() },
+    { label: "Redo", action: redo, disabled: !canRedo() },
     { label: "Manage registers", action: () => setRegistersOpen(true) },
-    { label: "Left alignment", action: () => useCircuitStore.getState().alignOperationsLeft() },
+    {
+      label: "Left alignment",
+      action: () => useCircuitStore.getState().alignOperationsLeft(),
+    },
   ];
 
   const helpItems = [
@@ -110,7 +124,12 @@ export function ComposerToolbar() {
                 <DropdownMenuSubTrigger className="text-xs">Edit</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   {editItems.map((item) => (
-                    <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
+                    <DropdownMenuItem
+                      key={item.label}
+                      className="text-xs"
+                      disabled={item.disabled}
+                      onClick={item.action}
+                    >
                       {item.label}
                     </DropdownMenuItem>
                   ))}
@@ -136,6 +155,20 @@ export function ComposerToolbar() {
                 className="text-xs"
               >
                 Phase disks
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={vizPanels.probabilities}
+                onCheckedChange={(v) => setVizPanel("probabilities", !!v)}
+                className="text-xs"
+              >
+                Probabilities
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={vizPanels.qsphere}
+                onCheckedChange={(v) => setVizPanel("qsphere", !!v)}
+                className="text-xs"
+              >
+                Q-sphere
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
                 checked={vizPanels.histogram}
@@ -288,6 +321,15 @@ export function ComposerToolbar() {
       </div>
       <ManageRegistersDialog open={registersOpen} onOpenChange={setRegistersOpen} />
       <RunCircuitDialog open={runOpen} onOpenChange={setRunOpen} />
+      <ConfirmDialog
+        open={confirmNewOpen}
+        onOpenChange={setConfirmNewOpen}
+        title="Start a new circuit?"
+        description="This will replace the current circuit. Save your work first if you want to keep it."
+        confirmLabel="New circuit"
+        destructive
+        onConfirm={resetCircuit}
+      />
     </>
   );
 }
@@ -299,7 +341,7 @@ function ToolbarMenu({
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  items: { label: string; action: () => void }[];
+  items: { label: string; action: () => void; disabled?: boolean }[];
 }) {
   return (
     <DropdownMenu>
@@ -312,7 +354,12 @@ function ToolbarMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-[160px]">
         {items.map((item) => (
-          <DropdownMenuItem key={item.label} onClick={item.action} className="text-xs">
+          <DropdownMenuItem
+            key={item.label}
+            onClick={item.action}
+            disabled={item.disabled}
+            className="text-xs"
+          >
             {item.label}
           </DropdownMenuItem>
         ))}

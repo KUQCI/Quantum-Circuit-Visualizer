@@ -57,6 +57,8 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
                 )}
                 onClick={() => setCompact(false)}
                 title="Grid view"
+                aria-label="Grid view"
+                aria-pressed={!compact}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
               </button>
@@ -68,6 +70,8 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
                 )}
                 onClick={() => setCompact(true)}
                 title="List view"
+                aria-label="List view"
+                aria-pressed={compact}
               >
                 <List className="h-3.5 w-3.5" />
               </button>
@@ -79,6 +83,7 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search gates..."
+              aria-label="Search gates"
               className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
             />
           </div>

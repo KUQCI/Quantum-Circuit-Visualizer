@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CodeEditor } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCodeSync } from "@/components/code/use-code-sync";
-import { useCircuitStore } from "@/store/circuit-store";
+import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { CODE_LANGUAGES, type CodeLanguageId } from "@/lib/code-adapters";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ import {
 
 export function MultiLanguageCodePanel() {
   const { resetCircuit, circuit } = useCircuitStore();
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
   const setCodePanelLanguage = useEditorUiStore((s) => s.setCodePanelLanguage);
   const {
@@ -54,6 +57,7 @@ export function MultiLanguageCodePanel() {
               )}
               onClick={() => setCodePanelLanguage(lang.id as CodeLanguageId)}
               title={lang.description}
+              aria-pressed={codePanelLanguage === lang.id}
             >
               {lang.label}
             </button>
@@ -99,8 +103,15 @@ export function MultiLanguageCodePanel() {
           variant="ghost"
           size="sm"
           className="h-7 gap-1 text-xs"
-          onClick={resetCircuit}
+          onClick={() => {
+            if (circuitHasContent(circuit)) {
+              setConfirmResetOpen(true);
+            } else {
+              resetCircuit();
+            }
+          }}
           title="Reset circuit"
+          aria-label="Reset circuit"
         >
           <RotateCcw className="h-3 w-3" />
         </Button>
@@ -116,6 +127,16 @@ export function MultiLanguageCodePanel() {
           </Link>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmResetOpen}
+        onOpenChange={setConfirmResetOpen}
+        title="Reset circuit?"
+        description="All gates and changes will be cleared from the canvas."
+        confirmLabel="Reset"
+        destructive
+        onConfirm={resetCircuit}
+      />
     </div>
   );
 }

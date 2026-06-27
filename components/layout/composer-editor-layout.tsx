@@ -59,17 +59,25 @@ export function ComposerEditorLayout() {
 
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         {!operationsPanelCollapsed && (
-          <aside
-            className={cn(
-              "composer-panel shrink-0 overflow-hidden border-r",
-              "absolute inset-y-0 left-0 z-30 w-[min(240px,85vw)] shadow-xl lg:relative lg:z-auto lg:w-[220px] xl:w-[240px]"
-            )}
-          >
-            <GateLibrary
-              onDragStart={setDraggingGate}
-              onDragEnd={() => setDraggingGate(null)}
+          <>
+            <button
+              type="button"
+              className="fixed inset-0 z-20 bg-black/40 lg:hidden"
+              aria-label="Close operations panel"
+              onClick={() => setOperationsPanelCollapsed(true)}
             />
-          </aside>
+            <aside
+              className={cn(
+                "composer-panel shrink-0 overflow-hidden border-r",
+                "absolute inset-y-0 left-0 z-30 w-[min(240px,85vw)] shadow-xl lg:relative lg:z-auto lg:w-[220px] xl:w-[240px]"
+              )}
+            >
+              <GateLibrary
+                onDragStart={setDraggingGate}
+                onDragEnd={() => setDraggingGate(null)}
+              />
+            </aside>
+          </>
         )}
 
         <button
@@ -114,24 +122,32 @@ export function ComposerEditorLayout() {
         </div>
 
         {showCodePanel && (
-          <aside
-            className={cn(
-              "composer-panel flex shrink-0 flex-col overflow-hidden border-l",
-              "absolute inset-y-0 right-0 z-30 w-[min(320px,92vw)] shadow-xl lg:relative lg:z-auto lg:w-[280px] xl:w-[320px]"
-            )}
-          >
+          <>
             <button
               type="button"
-              className="flex h-8 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-brand)] lg:hidden"
-              onClick={() => setShowCodePanel(false)}
+              className="fixed inset-0 z-20 bg-black/40 lg:hidden"
               aria-label="Close code panel"
+              onClick={() => setShowCodePanel(false)}
+            />
+            <aside
+              className={cn(
+                "composer-panel flex shrink-0 flex-col overflow-hidden border-l",
+                "absolute inset-y-0 right-0 z-30 w-[min(320px,92vw)] shadow-xl lg:relative lg:z-auto lg:w-[280px] xl:w-[320px]"
+              )}
             >
-              <X className="h-4 w-4" />
-            </button>
-            <div className="min-h-0 flex-1">
-              <MultiLanguageCodePanel />
-            </div>
-          </aside>
+              <button
+                type="button"
+                className="flex h-8 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-brand)] lg:hidden"
+                onClick={() => setShowCodePanel(false)}
+                aria-label="Close code panel"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="min-h-0 flex-1">
+                <MultiLanguageCodePanel />
+              </div>
+            </aside>
+          </>
         )}
       </div>
 

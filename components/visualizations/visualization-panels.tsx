@@ -21,7 +21,10 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
   const lastResult = useExecutionStore((s) => s.lastResult);
 
   const effectiveCircuit = useMemo(() => {
-    if (!inspectMode || inspectStep === 0) return circuit;
+    if (!inspectMode) return circuit;
+    if (inspectStep === 0) {
+      return { ...circuit, operations: [] };
+    }
     return {
       ...circuit,
       operations: getOperationsUpToStep(circuit.operations, inspectStep),

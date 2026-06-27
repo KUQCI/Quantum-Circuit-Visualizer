@@ -18,7 +18,7 @@ import {
   Upload,
   CheckCircle2,
   ArrowLeftRight,
-  Clock,
+  Play,
   ExternalLink,
 } from "lucide-react";
 
@@ -108,14 +108,14 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-[var(--color-warning)]" />
-              Execution Coming Later
+              <Play className="h-4 w-4 text-[var(--color-success)]" />
+              Local Simulator Ready
             </CardTitle>
           </CardHeader>
           <CardContent>
             <CardDescription>
-              Circuit execution and result visualization are planned for a
-              future release.
+              Run circuits in-browser with shot-based sampling, measurement
+              histograms, and backend selection.
             </CardDescription>
           </CardContent>
         </Card>
