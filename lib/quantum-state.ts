@@ -32,6 +32,7 @@ export interface QuantumStateResult {
 }
 
 const MAX_QUBITS = 6;
+const PROB_THRESHOLD = 1e-10;
 
 function c(re: number, im = 0): Complex {
   return { re, im };
@@ -60,13 +61,8 @@ function cPhase(a: Complex): number {
   return Math.atan2(a.im, a.re);
 }
 
-function bitCount(n: number): number {
-  let count = 0;
-  while (n) {
-    count += n & 1;
-    n >>= 1;
-  }
-  return count;
+function cExp(angle: number): Complex {
+  return c(Math.cos(angle), Math.sin(angle));
 }
 
 function formatBasisLabel(index: number, numQubits: number): string {
@@ -79,6 +75,73 @@ function identity(n: number): Complex[][] {
   );
   for (let i = 0; i < n; i++) m[i][i] = c(1);
   return m;
+}
+
+/** Binomial coefficient C(n, k) — matches Qiskit's n_choose_k */
+export function nChooseK(n: number, k: number): number {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  let result = 1;
+  for (let i = 0; i < k; i++) {
+    result = (result * (n - i)) / (i + 1);
+  }
+  return Math.round(result);
+}
+
+/** Lexicographic index among bit strings with fixed Hamming weight — Qiskit lex_index */
+export function lexIndex(n: number, k: number, ones: number[]): number {
+  if (ones.length !== k) return 0;
+  let dualm = 0;
+  for (let i = 0; i < k; i++) {
+    const comb = n - 1 - ones[k - 1 - i];
+    dualm += nChooseK(comb, i + 1);
+  }
+  return dualm;
+}
+
+/** Index of a bit string among states with the same Hamming weight — Qiskit bit_string_index */
+export function bitStringIndex(bitString: string): number {
+  const n = bitString.length;
+  const k = bitString.split("").filter((ch) => ch === "1").length;
+  const ones = [...bitString].reduce<number[]>((acc, ch, pos) => {
+    if (ch === "1") acc.push(pos);
+    return acc;
+  }, []);
+  return lexIndex(n, k, ones);
+}
+
+/**
+ * Q-sphere coordinates per Qiskit plot_state_qsphere:
+ * |0…0⟩ at north pole, |1…1⟩ at south pole, latitude = Hamming weight.
+ */
+export function indexToQSphereCoords(
+  index: number,
+  numQubits: number
+): { x: number; y: number; z: number } {
+  const element = formatBasisLabel(index, numQubits);
+  const weight = element.split("").filter((ch) => ch === "1").length;
+  const d = numQubits;
+  const zvalue = -2 * (weight / d) + 1;
+  const numberOfDivisions = nChooseK(d, weight) || 1;
+  const weightOrder = bitStringIndex(element);
+
+  let angle =
+    (weight / d) * (Math.PI * 2) +
+    weightOrder * 2 * (Math.PI / numberOfDivisions);
+
+  if (
+    weight > d / 2 ||
+    (weight === d / 2 && weightOrder >= numberOfDivisions / 2)
+  ) {
+    angle = Math.PI - angle - (2 * Math.PI) / numberOfDivisions;
+  }
+
+  const r = Math.sqrt(Math.max(0, 1 - zvalue * zvalue));
+  return {
+    x: r * Math.cos(angle),
+    y: r * Math.sin(angle),
+    z: zvalue,
+  };
 }
 
 function rx(theta: number): Complex[][] {
@@ -108,7 +171,23 @@ function rz(theta: number): Complex[][] {
   ];
 }
 
-function getSingleQubitMatrix(type: string, theta = 0): Complex[][] | null {
+function uMatrix(theta: number, phi: number, lam: number): Complex[][] {
+  const c0 = Math.cos(theta / 2);
+  const s0 = Math.sin(theta / 2);
+  const negExpLam = c(-Math.cos(lam), -Math.sin(lam));
+  const expPhi = cExp(phi);
+  const expPhiLam = cExp(phi + lam);
+  return [
+    [c(c0), cMul(negExpLam, c(s0))],
+    [cMul(expPhi, c(s0)), cMul(expPhiLam, c(c0))],
+  ];
+}
+
+function getSingleQubitMatrix(
+  type: string,
+  params: number[] = []
+): Complex[][] | null {
+  const theta = params[0] ?? 0;
   switch (type) {
     case "h":
       return [
@@ -154,54 +233,65 @@ function getSingleQubitMatrix(type: string, theta = 0): Complex[][] | null {
       return rz(theta);
     case "id":
       return identity(2);
-    case "sx": {
-      const c0 = Math.cos(Math.PI / 4);
-      const s0 = Math.sin(Math.PI / 4);
+    case "sx":
       return [
-        [c(0.5 + c0 / 2, 0.5 - c0 / 2), c(0, -s0 / 2)],
-        [c(0, -s0 / 2), c(0.5 + c0 / 2, 0.5 - c0 / 2)],
+        [c(0.5, 0.5), c(0.5, -0.5)],
+        [c(0.5, -0.5), c(0.5, 0.5)],
       ];
-    }
-    case "sxdg": {
-      const c0 = Math.cos(-Math.PI / 4);
-      const s0 = Math.sin(-Math.PI / 4);
+    case "sxdg":
       return [
-        [c(0.5 + c0 / 2, 0.5 - c0 / 2), c(0, -s0 / 2)],
-        [c(0, -s0 / 2), c(0.5 + c0 / 2, 0.5 - c0 / 2)],
+        [c(0.5, -0.5), c(0.5, 0.5)],
+        [c(0.5, 0.5), c(0.5, -0.5)],
       ];
-    }
     case "rx":
       return rx(theta);
     case "ry":
       return ry(theta);
     case "rz":
       return rz(theta);
+    case "u":
+      return uMatrix(theta, params[1] ?? 0, params[2] ?? 0);
     default:
       return null;
   }
 }
 
-function getTwoQubitMatrix(type: string): Complex[][] | null {
-  const i2 = identity(2);
-  const x = getSingleQubitMatrix("x")!;
-  const z = getSingleQubitMatrix("z")!;
+function rxxMatrix(theta: number): Complex[][] {
+  const c0 = Math.cos(theta / 2);
+  const is = c(0, -Math.sin(theta / 2));
+  const m = identity(4);
+  m[0][0] = c(c0);
+  m[1][1] = c(c0);
+  m[2][2] = c(c0);
+  m[3][3] = c(c0);
+  m[0][3] = is;
+  m[3][0] = is;
+  m[1][2] = is;
+  m[2][1] = is;
+  return m;
+}
 
-  function kron(a: Complex[][], b: Complex[][]): Complex[][] {
-    const result: Complex[][] = [];
-    for (let i = 0; i < a.length; i++) {
-      for (let j = 0; j < b.length; j++) {
-        const row: Complex[] = [];
-        for (let k = 0; k < a.length; k++) {
-          for (let l = 0; l < b.length; l++) {
-            row.push(cMul(a[i][k], b[j][l]));
-          }
-        }
-        result.push(row);
-      }
-    }
-    return result;
-  }
+function rzzMatrix(theta: number): Complex[][] {
+  const em = c(Math.cos(-theta / 2), Math.sin(-theta / 2));
+  const ep = c(Math.cos(theta / 2), Math.sin(theta / 2));
+  return [
+    [em, c(0), c(0), c(0)],
+    [c(0), ep, c(0), c(0)],
+    [c(0), c(0), ep, c(0)],
+    [c(0), c(0), c(0), em],
+  ];
+}
 
+function ccxMatrix(): Complex[][] {
+  const m = identity(8);
+  m[6][6] = c(0);
+  m[7][7] = c(0);
+  m[6][7] = c(1);
+  m[7][6] = c(1);
+  return m;
+}
+
+function getTwoQubitMatrix(type: string, theta = 0): Complex[][] | null {
   switch (type) {
     case "cx": {
       const cx: Complex[][] = Array.from({ length: 4 }, () =>
@@ -214,7 +304,7 @@ function getTwoQubitMatrix(type: string): Complex[][] | null {
       return cx;
     }
     case "cz": {
-      const cz: Complex[][] = identity(4);
+      const cz = identity(4);
       cz[3][3] = c(-1);
       return cz;
     }
@@ -228,6 +318,10 @@ function getTwoQubitMatrix(type: string): Complex[][] | null {
       sw[3][3] = c(1);
       return sw;
     }
+    case "rxx":
+      return rxxMatrix(theta);
+    case "rzz":
+      return rzzMatrix(theta);
     default:
       return null;
   }
@@ -245,28 +339,23 @@ function applySingleQubitGate(
   for (let i = 0; i < dim; i++) {
     const tBit = (i >> (numQubits - 1 - target)) & 1;
     for (let j = 0; j < 2; j++) {
-      const newTBit = j;
       const iOther = i & ~(1 << (numQubits - 1 - target));
-      const iNew = iOther | (newTBit << (numQubits - 1 - target));
+      const iNew = iOther | (j << (numQubits - 1 - target));
       result[iNew] = cAdd(result[iNew], cMul(matrix[j][tBit], state[i]));
     }
   }
   return result;
 }
 
-function applyTwoQubitGate(
+function applyMultiQubitGate(
   state: Complex[],
   matrix: Complex[][],
-  control: number,
-  target: number,
+  qubits: number[],
   numQubits: number
 ): Complex[] {
   const dim = 1 << numQubits;
+  const k = qubits.length;
   const result = state.map(() => c(0));
-
-  const qubits = Array.from({ length: numQubits }, (_, i) => i);
-  const rest = qubits.filter((q) => q !== control && q !== target);
-  const ordered = [control, target, ...rest];
 
   for (let i = 0; i < dim; i++) {
     const bits: number[] = [];
@@ -274,22 +363,18 @@ function applyTwoQubitGate(
       bits[q] = (i >> (numQubits - 1 - q)) & 1;
     }
 
-    const cBit = bits[control];
-    const tBit = bits[target];
+    const col = qubits.reduce((acc, q) => (acc << 1) | bits[q], 0);
 
-    for (let cNew = 0; cNew < 2; cNew++) {
-      for (let tNew = 0; tNew < 2; tNew++) {
-        const row = cNew * 2 + tNew;
-        const col = cBit * 2 + tBit;
-        const newBits = [...bits];
-        newBits[control] = cNew;
-        newBits[target] = tNew;
-        let iNew = 0;
-        for (let q = 0; q < numQubits; q++) {
-          iNew = (iNew << 1) | newBits[q];
-        }
-        result[iNew] = cAdd(result[iNew], cMul(matrix[row][col], state[i]));
+    for (let row = 0; row < 1 << k; row++) {
+      const newBits = [...bits];
+      for (let j = 0; j < k; j++) {
+        newBits[qubits[j]] = (row >> (k - 1 - j)) & 1;
       }
+      let iNew = 0;
+      for (let q = 0; q < numQubits; q++) {
+        iNew = (iNew << 1) | newBits[q];
+      }
+      result[iNew] = cAdd(result[iNew], cMul(matrix[row][col], state[i]));
     }
   }
 
@@ -307,19 +392,26 @@ function computeBlochVector(state: Complex[]): { x: number; y: number; z: number
   };
 }
 
-function indexToQSphereCoords(
-  index: number,
-  numQubits: number
-): { x: number; y: number; z: number } {
-  const dim = 1 << numQubits;
-  const theta = (Math.PI * bitCount(index)) / numQubits;
-  const phi = (2 * Math.PI * index) / dim;
-  const sinTheta = Math.sin(theta);
-  return {
-    x: sinTheta * Math.cos(phi),
-    y: sinTheta * Math.sin(phi),
-    z: Math.cos(theta),
-  };
+/** Remove global phase relative to the largest amplitude (Qiskit q-sphere convention). */
+function removeGlobalPhase(state: Complex[]): Complex[] {
+  let maxIdx = 0;
+  let maxAbs = 0;
+  for (let i = 0; i < state.length; i++) {
+    const abs = Math.sqrt(cAbs2(state[i]));
+    if (abs > maxAbs) {
+      maxAbs = abs;
+      maxIdx = i;
+    }
+  }
+  if (maxAbs < 1e-14) return state;
+
+  const globalPhase = cPhase(state[maxIdx]);
+  const rot = cExp(-globalPhase);
+  return state.map((amp) => cMul(rot, amp));
+}
+
+function paramValues(op: Operation): number[] {
+  return op.parameters?.map((p) => p.value) ?? [];
 }
 
 function applyOperation(
@@ -331,29 +423,41 @@ function applyOperation(
     return state;
   }
 
-  if (op.type === "swap" && op.controls.length === 0 && op.targets.length === 2) {
+  const params = paramValues(op);
+
+  if (
+    (op.type === "swap" || op.type === "rxx" || op.type === "rzz") &&
+    op.controls.length === 0 &&
+    op.targets.length === 2
+  ) {
     const q1 = qubitIndexFromId(op.targets[0]);
     const q2 = qubitIndexFromId(op.targets[1]);
-    const matrix = getTwoQubitMatrix("swap");
+    const matrix = getTwoQubitMatrix(op.type, params[0] ?? 0);
     if (!matrix) return null;
-    return applyTwoQubitGate(state, matrix, q1, q2, numQubits);
+    return applyMultiQubitGate(state, matrix, [q1, q2], numQubits);
   }
 
-  const singleMatrix = getSingleQubitMatrix(
-    op.type,
-    op.parameters?.[0]?.value ?? 0
-  );
-  if (singleMatrix && op.targets.length === 1) {
+  const singleMatrix = getSingleQubitMatrix(op.type, params);
+  if (singleMatrix && op.targets.length === 1 && op.controls.length === 0) {
     const target = qubitIndexFromId(op.targets[0]);
     return applySingleQubitGate(state, singleMatrix, target, numQubits);
+  }
+
+  if (op.type === "ccx" && op.controls.length === 2 && op.targets.length === 1) {
+    const qubits = [
+      qubitIndexFromId(op.controls[0]),
+      qubitIndexFromId(op.controls[1]),
+      qubitIndexFromId(op.targets[0]),
+    ];
+    return applyMultiQubitGate(state, ccxMatrix(), qubits, numQubits);
   }
 
   if (op.controls.length === 1 && op.targets.length === 1) {
     const control = qubitIndexFromId(op.controls[0]);
     const target = qubitIndexFromId(op.targets[0]);
-    const matrix = getTwoQubitMatrix(op.type);
+    const matrix = getTwoQubitMatrix(op.type, params[0] ?? 0);
     if (!matrix) return null;
-    return applyTwoQubitGate(state, matrix, control, target, numQubits);
+    return applyMultiQubitGate(state, matrix, [control, target], numQubits);
   }
 
   return null;
@@ -384,13 +488,12 @@ export function simulateCircuit(circuit: Circuit): QuantumStateResult {
     };
   }
 
-  const dim = 1 << numQubits;
-  let state: Complex[] = Array.from({ length: dim }, () => c(0));
+  let state: Complex[] = Array.from({ length: 1 << numQubits }, () => c(0));
   state[0] = c(1);
 
   const sortedOps = [...circuit.operations]
     .filter((op) => op.type !== "barrier")
-    .sort((a, b) => a.column - b.column);
+    .sort((a, b) => a.column - b.column || a.id.localeCompare(b.id));
 
   for (const op of sortedOps) {
     if (op.type === "measure") continue;
@@ -408,8 +511,16 @@ export function simulateCircuit(circuit: Circuit): QuantumStateResult {
     state = next;
   }
 
+  const probSum = state.reduce((sum, amp) => sum + cAbs2(amp), 0);
+  if (Math.abs(probSum - 1) > 1e-6 && probSum > 0) {
+    const norm = Math.sqrt(probSum);
+    state = state.map((amp) => c(amp.re / norm, amp.im / norm));
+  }
+
+  const displayState = removeGlobalPhase(state);
+
   const probabilities: ProbabilityEntry[] = state.map((amp, i) => {
-    const prob = cAbs2(amp);
+    const prob = Math.min(cAbs2(amp), 1);
     return {
       label: `|${formatBasisLabel(i, numQubits)}⟩`,
       probability: prob,
@@ -417,10 +528,10 @@ export function simulateCircuit(circuit: Circuit): QuantumStateResult {
     };
   });
 
-  const qSpherePoints: QSpherePoint[] = state
+  const qSpherePoints: QSpherePoint[] = displayState
     .map((amp, i) => {
-      const prob = cAbs2(amp);
-      if (prob < 1e-10) return null;
+      const prob = Math.min(cAbs2(amp), 1);
+      if (prob < PROB_THRESHOLD) return null;
       const coords = indexToQSphereCoords(i, numQubits);
       return {
         label: formatBasisLabel(i, numQubits),
@@ -442,7 +553,8 @@ export function simulateCircuit(circuit: Circuit): QuantumStateResult {
   };
 }
 
+/** Map phase to HSL color — aligned with Qiskit phase_to_rgb hue offset. */
 export function phaseToColor(phase: number): string {
-  const hue = ((phase + Math.PI) / (2 * Math.PI)) * 360;
+  const hue = (((phase + (Math.PI * 5) / 4) % (Math.PI * 2)) / (Math.PI * 2)) * 360;
   return `hsl(${hue}, 75%, 55%)`;
 }

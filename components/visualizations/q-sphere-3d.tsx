@@ -35,7 +35,8 @@ function EquatorRing() {
 
 function StatePoint({ point }: { point: QSpherePoint }) {
   const color = phaseToColor(point.phase);
-  const size = Math.max(0.05, point.amplitude * 0.2);
+  // Node radius proportional to probability (Qiskit / IBM Composer convention)
+  const size = Math.max(0.04, Math.sqrt(point.probability) * 0.22);
 
   return (
     <mesh position={[point.x * 0.95, point.y * 0.95, point.z * 0.95]}>

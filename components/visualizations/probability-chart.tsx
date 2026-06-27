@@ -19,17 +19,13 @@ export function ProbabilityChart({
     [probabilities]
   );
 
-  const maxProb = useMemo(
-    () => Math.max(...probabilities.map((p) => p.percentage), 1),
-    [probabilities]
-  );
-
   const chartWidth = Math.max(320, probabilities.length * 36);
   const chartHeight = 160;
   const padding = { top: 16, right: 12, bottom: 36, left: 44 };
   const innerW = chartWidth - padding.left - padding.right;
   const innerH = chartHeight - padding.top - padding.bottom;
   const barWidth = Math.min(40, innerW / Math.max(probabilities.length, 1) - 4);
+  const probSum = probabilities.reduce((s, p) => s + p.probability, 0);
 
   if (error) {
     return (
@@ -115,7 +111,7 @@ export function ProbabilityChart({
             padding.left +
             (i + 0.5) * (innerW / probabilities.length) -
             barWidth / 2;
-          const barH = (entry.percentage / maxProb) * innerH;
+          const barH = (entry.percentage / 100) * innerH;
           const y = padding.top + innerH - barH;
           const isVisible = entry.probability > 1e-6;
 
@@ -171,6 +167,11 @@ export function ProbabilityChart({
       {visible.length === 1 && (
         <p className="mt-1 text-center text-[10px] text-[var(--color-muted-foreground)]">
           State: {visible[0].label} — {visible[0].percentage.toFixed(1)}%
+        </p>
+      )}
+      {Math.abs(probSum - 1) > 0.01 && (
+        <p className="mt-1 text-center text-[10px] text-[var(--color-warning)]">
+          Probabilities sum to {(probSum * 100).toFixed(1)}% (expected 100%)
         </p>
       )}
     </div>
