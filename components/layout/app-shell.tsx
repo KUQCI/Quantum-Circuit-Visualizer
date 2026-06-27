@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { AppHeader } from "@/components/layout/app-header";
@@ -59,7 +57,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AppHeader />
         <main
           id="main-content"
-          className={cn(isFullWorkspace ? "workspace-main" : "min-h-[calc(100dvh-3.5rem)]")}
+          className={cn(
+            isFullWorkspace ? "workspace-main" : "min-h-[calc(100dvh-3.5rem)]",
+            isPlayer && "workspace-main--player"
+          )}
         >
           {!isPlayer && breadcrumbs.length > 0 && (
             <div className="border-b border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 sm:px-4">

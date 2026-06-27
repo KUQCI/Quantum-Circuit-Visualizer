@@ -159,7 +159,7 @@ export function LearningPlayer({
       ].join("");
 
   return (
-    <div className="learning-player flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-background)]">
+    <div className="learning-player flex h-full min-h-0 w-full flex-col overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-background)]">
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
@@ -284,7 +284,7 @@ export function LearningPlayer({
         </main>
 
         {/* Code editor */}
-        <aside className="learning-panel learning-panel-code hidden min-h-0 min-h-[240px] flex-col border-t border-[var(--color-border)] xl:flex xl:min-h-0 xl:border-t-0 xl:border-l">
+        <aside className="learning-panel learning-panel-code hidden min-h-0 flex-col border-t border-[var(--color-border)] xl:flex xl:min-h-0 xl:border-t-0 xl:border-l">
           <LearningCodePanel
             onExport={handleExportAction}
             onImportSync={handleImportSync}

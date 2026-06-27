@@ -27,8 +27,6 @@ import {
   BookOpen,
   Menu,
   MoreHorizontal,
-  Upload,
-  Download,
 } from "lucide-react";
 
 const primaryNav = [
@@ -63,8 +61,6 @@ const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
-  { href: "/import", label: "Import", icon: Upload },
-  { href: "/export", label: "Export", icon: Download },
 ] as const;
 
 function isActive(pathname: string, match: (p: string) => boolean) {
