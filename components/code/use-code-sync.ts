@@ -8,7 +8,8 @@ import { validateCircuit } from "@/lib/validation";
 import { debounce } from "@/lib/utils";
 
 export function useCodeSync() {
-  const { circuit, setCircuit } = useCircuitStore();
+  const circuit = useCircuitStore((s) => s.circuit);
+  const setCircuit = useCircuitStore((s) => s.setCircuit);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
   const [code, setCode] = useState("");
   const [parseError, setParseError] = useState<string | null>(null);
@@ -18,6 +19,8 @@ export function useCodeSync() {
   const parseGenerationRef = useRef(0);
   /** Skip one circuit→code sync after the circuit was updated by parsing editor text */
   const skipNextCircuitToCodeSyncRef = useRef(false);
+  /** While true, never overwrite the editor from the canvas (user is typing or has a parse error) */
+  const suppressCircuitToCodeSyncRef = useRef(false);
   const adapter = getCodeLanguage(codePanelLanguage);
 
   const syncCodeFromCircuit = useCallback(() => {
@@ -37,6 +40,7 @@ export function useCodeSync() {
       if (generation !== parseGenerationRef.current) return;
 
       if (!adapter.bidirectional) {
+        suppressCircuitToCodeSyncRef.current = false;
         setSyncStatus("synced");
         return;
       }
@@ -47,16 +51,19 @@ export function useCodeSync() {
       if (!result.success || !result.circuit) {
         setParseError(result.error ?? "Parse failed");
         setSyncStatus("error");
+        suppressCircuitToCodeSyncRef.current = true;
         return;
       }
       const validated = validateCircuit(result.circuit);
       if (!validated.valid) {
         setParseError(validated.errors.join("; "));
         setSyncStatus("error");
+        suppressCircuitToCodeSyncRef.current = true;
         return;
       }
 
       skipNextCircuitToCodeSyncRef.current = true;
+      suppressCircuitToCodeSyncRef.current = false;
       setCircuit(validated.circuit);
       setParseError(null);
       setSyncStatus("synced");
@@ -80,18 +87,27 @@ export function useCodeSync() {
       skipNextCircuitToCodeSyncRef.current = false;
       return;
     }
+    if (suppressCircuitToCodeSyncRef.current) {
+      return;
+    }
     syncCodeFromCircuit();
   }, [circuit, syncCodeFromCircuit]);
 
   // Cancel in-flight parses when switching language tabs
   useEffect(() => {
     parseGenerationRef.current += 1;
+    suppressCircuitToCodeSyncRef.current = false;
+    skipNextCircuitToCodeSyncRef.current = false;
+    syncCodeFromCircuit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on language tab change
   }, [codePanelLanguage]);
 
   const handleCodeChange = useCallback(
     (newCode: string) => {
+      suppressCircuitToCodeSyncRef.current = true;
       setCode(newCode);
       if (!adapter.bidirectional) {
+        suppressCircuitToCodeSyncRef.current = false;
         setSyncStatus("synced");
         setParseError(null);
         return;
@@ -106,6 +122,7 @@ export function useCodeSync() {
 
   const forceSyncFromCircuit = useCallback(() => {
     parseGenerationRef.current += 1;
+    suppressCircuitToCodeSyncRef.current = false;
     skipNextCircuitToCodeSyncRef.current = false;
     syncCodeFromCircuit();
   }, [syncCodeFromCircuit]);
