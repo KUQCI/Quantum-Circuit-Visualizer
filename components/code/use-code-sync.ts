@@ -15,8 +15,9 @@ export function useCodeSync() {
   const [syncStatus, setSyncStatus] = useState<"synced" | "editing" | "error">(
     "synced"
   );
-  const syncSourceRef = useRef<"circuit" | "code">("circuit");
   const parseGenerationRef = useRef(0);
+  /** Skip one circuit→code sync after the circuit was updated by parsing editor text */
+  const skipNextCircuitToCodeSyncRef = useRef(false);
   const adapter = getCodeLanguage(codePanelLanguage);
 
   const syncCodeFromCircuit = useCallback(() => {
@@ -54,13 +55,11 @@ export function useCodeSync() {
         setSyncStatus("error");
         return;
       }
-      syncSourceRef.current = "code";
+
+      skipNextCircuitToCodeSyncRef.current = true;
       setCircuit(validated.circuit);
       setParseError(null);
       setSyncStatus("synced");
-      requestAnimationFrame(() => {
-        syncSourceRef.current = "circuit";
-      });
     },
     [adapter, circuit.name, setCircuit]
   );
@@ -75,23 +74,22 @@ export function useCodeSync() {
     }, 600);
   }, [parseCode]);
 
-  // Canvas edits → refresh code for the active language
+  // Canvas edits (or language switch via adapter change) → refresh editor text
   useEffect(() => {
-    if (syncSourceRef.current === "circuit") {
-      syncCodeFromCircuit();
+    if (skipNextCircuitToCodeSyncRef.current) {
+      skipNextCircuitToCodeSyncRef.current = false;
+      return;
     }
+    syncCodeFromCircuit();
   }, [circuit, syncCodeFromCircuit]);
 
-  // Language tab switch → always regenerate from circuit (source of truth)
+  // Cancel in-flight parses when switching language tabs
   useEffect(() => {
     parseGenerationRef.current += 1;
-    syncSourceRef.current = "circuit";
-    syncCodeFromCircuit();
-  }, [codePanelLanguage, syncCodeFromCircuit]);
+  }, [codePanelLanguage]);
 
   const handleCodeChange = useCallback(
     (newCode: string) => {
-      syncSourceRef.current = "code";
       setCode(newCode);
       if (!adapter.bidirectional) {
         setSyncStatus("synced");
@@ -108,7 +106,7 @@ export function useCodeSync() {
 
   const forceSyncFromCircuit = useCallback(() => {
     parseGenerationRef.current += 1;
-    syncSourceRef.current = "circuit";
+    skipNextCircuitToCodeSyncRef.current = false;
     syncCodeFromCircuit();
   }, [syncCodeFromCircuit]);
 
