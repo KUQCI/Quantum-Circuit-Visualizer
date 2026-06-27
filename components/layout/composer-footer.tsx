@@ -14,7 +14,7 @@ export function ComposerFooter() {
         <Link href="/roadmap" className="hover:text-[var(--color-foreground)]">
           About
         </Link>
-        <Link href="/roadmap" className="hover:text-[var(--color-foreground)]">
+        <Link href="/docs/composer" className="hover:text-[var(--color-foreground)]">
           Documentation
         </Link>
         <span className="hidden sm:inline">Qiskit Visualizer v1.0</span>

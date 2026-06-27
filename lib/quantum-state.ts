@@ -140,6 +140,36 @@ function getSingleQubitMatrix(type: string, theta = 0): Complex[][] | null {
         [c(1), c(0)],
         [c(0), c(Math.cos(Math.PI / 4), Math.sin(Math.PI / 4))],
       ];
+    case "tdg":
+      return [
+        [c(1), c(0)],
+        [c(0), c(Math.cos(-Math.PI / 4), Math.sin(-Math.PI / 4))],
+      ];
+    case "sdg":
+      return [
+        [c(1), c(0)],
+        [c(0), c(0, -1)],
+      ];
+    case "p":
+      return rz(theta);
+    case "id":
+      return identity(2);
+    case "sx": {
+      const c0 = Math.cos(Math.PI / 4);
+      const s0 = Math.sin(Math.PI / 4);
+      return [
+        [c(0.5 + c0 / 2, 0.5 - c0 / 2), c(0, -s0 / 2)],
+        [c(0, -s0 / 2), c(0.5 + c0 / 2, 0.5 - c0 / 2)],
+      ];
+    }
+    case "sxdg": {
+      const c0 = Math.cos(-Math.PI / 4);
+      const s0 = Math.sin(-Math.PI / 4);
+      return [
+        [c(0.5 + c0 / 2, 0.5 - c0 / 2), c(0, -s0 / 2)],
+        [c(0, -s0 / 2), c(0.5 + c0 / 2, 0.5 - c0 / 2)],
+      ];
+    }
     case "rx":
       return rx(theta);
     case "ry":
@@ -297,7 +327,7 @@ function applyOperation(
   op: Operation,
   numQubits: number
 ): Complex[] | null {
-  if (op.type === "barrier" || op.type === "measure") {
+  if (op.type === "barrier" || op.type === "measure" || op.type === "reset") {
     return state;
   }
 

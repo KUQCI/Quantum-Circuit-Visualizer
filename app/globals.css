@@ -33,7 +33,9 @@
   --color-gate-phase: #be95ff;
   --color-gate-rotation: #42be65;
   --color-gate-two: #a56eff;
+  --color-gate-three: #ff832b;
   --color-gate-measure: #08bdba;
+  --color-gate-nonunitary: #8d8d8d;
   --color-gate-barrier: #6f6f6f;
   --color-success: #42be65;
   --color-warning: #f1c21b;
@@ -65,7 +67,9 @@
   --color-gate-phase: #8a3ffc;
   --color-gate-rotation: #198038;
   --color-gate-two: #6929c4;
+  --color-gate-three: #eb6200;
   --color-gate-measure: #009d9a;
+  --color-gate-nonunitary: #6f6f6f;
   --color-gate-barrier: #8d8d8d;
   --color-success: #198038;
   --color-warning: #f1c21b;

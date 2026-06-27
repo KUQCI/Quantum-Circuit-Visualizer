@@ -11,6 +11,7 @@ import {
 } from "@/lib/circuit-schema";
 import { generateQiskitCode } from "@/lib/qiskit-generator";
 import { validateCircuitPlacement } from "@/lib/validation";
+import { applyLeftAlignment } from "@/lib/circuit-layout";
 
 export interface Project {
   id: string;
@@ -27,6 +28,7 @@ interface HistoryEntry {
 interface CircuitState {
   circuit: Circuit;
   selectedOperationId: string | null;
+  clipboard: Operation | null;
   validationWarnings: string[];
   history: HistoryEntry[];
   historyIndex: number;
@@ -39,11 +41,15 @@ interface CircuitState {
   removeQubit: (qubitId: string) => void;
   addClassicalBit: () => void;
   removeClassicalBit: (bitId: string) => void;
+  setRegisterCounts: (qubits: number, classicalBits: number) => void;
 
   addOperation: (operation: Omit<Operation, "id">) => void;
   updateOperation: (id: string, updates: Partial<Operation>) => void;
   removeOperation: (id: string) => void;
   moveOperation: (id: string, column: number) => void;
+  copyOperation: (id: string) => void;
+  pasteOperation: (column: number, qubitIndex: number) => void;
+  alignOperationsLeft: () => void;
 
   undo: () => void;
   redo: () => void;
@@ -93,10 +99,11 @@ function saveProjectsToStorage(projects: Project[]) {
 export const useCircuitStore = create<CircuitState>()(
   persist(
     (set, get) => ({
-      circuit: createEmptyCircuit("Untitled Circuit", 2, 0),
+      circuit: createEmptyCircuit("Untitled circuit", 2, 0),
       selectedOperationId: null,
+      clipboard: null,
       validationWarnings: [],
-      history: [{ circuit: createEmptyCircuit("Untitled Circuit", 2, 0) }],
+      history: [{ circuit: createEmptyCircuit("Untitled circuit", 2, 0) }],
       historyIndex: 0,
       projects: [],
 
@@ -108,7 +115,7 @@ export const useCircuitStore = create<CircuitState>()(
       },
 
       resetCircuit: () => {
-        const circuit = createEmptyCircuit("Untitled Circuit", 2, 0);
+        const circuit = createEmptyCircuit("Untitled circuit", 2, 0);
         set((state) => ({
           circuit,
           selectedOperationId: null,
@@ -205,6 +212,33 @@ export const useCircuitStore = create<CircuitState>()(
         });
       },
 
+      setRegisterCounts: (numQubits, numClassicalBits) => {
+        set((state) => {
+          let circuit = structuredClone(state.circuit);
+          circuit.qubits = Array.from({ length: Math.max(1, numQubits) }, (_, i) => ({
+            id: `q${i}`,
+            label: `q[${i}]`,
+          }));
+          circuit.classicalBits = Array.from(
+            { length: Math.max(0, numClassicalBits) },
+            (_, i) => ({ id: `c${i}`, label: `c[${i}]` })
+          );
+          circuit.operations = circuit.operations.filter((op) => {
+            const maxQ = circuit.qubits.length;
+            const allQubits = [...op.targets, ...op.controls].every((id) => {
+              const idx = parseInt(id.replace("q", ""), 10);
+              return idx >= 0 && idx < maxQ;
+            });
+            const allClassical = op.classicalTargets.every((id) => {
+              const idx = parseInt(id.replace("c", ""), 10);
+              return idx >= 0 && idx < circuit.classicalBits.length;
+            });
+            return allQubits && allClassical;
+          });
+          return { circuit, ...pushHistory({ ...state, circuit }) };
+        });
+      },
+
       addOperation: (operation) => {
         set((state) => {
           const op: Operation = { ...operation, id: generateOperationId() };
@@ -251,6 +285,42 @@ export const useCircuitStore = create<CircuitState>()(
               op.id === id ? { ...op, column: Math.max(0, column) } : op
             ),
           };
+          return { circuit, ...pushHistory({ ...state, circuit }) };
+        });
+      },
+
+      copyOperation: (id) => {
+        const op = get().circuit.operations.find((o) => o.id === id);
+        if (op) set({ clipboard: structuredClone(op) });
+      },
+
+      pasteOperation: (column, qubitIndex) => {
+        const { clipboard, circuit } = get();
+        if (!clipboard) return;
+
+        const offsetQubit = (id: string): string => {
+          const origIdx = parseInt(id.replace("q", ""), 10);
+          const minIdx = Math.min(
+            ...[...clipboard.targets, ...clipboard.controls].map((q) =>
+              parseInt(q.replace("q", ""), 10)
+            )
+          );
+          const newIdx = qubitIndex + (origIdx - minIdx);
+          return `q${Math.max(0, Math.min(circuit.qubits.length - 1, newIdx))}`;
+        };
+
+        const pasted: Omit<Operation, "id"> = {
+          ...clipboard,
+          column,
+          targets: clipboard.targets.map(offsetQubit),
+          controls: clipboard.controls.map(offsetQubit),
+        };
+        get().addOperation(pasted);
+      },
+
+      alignOperationsLeft: () => {
+        set((state) => {
+          const circuit = applyLeftAlignment(state.circuit);
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
       },

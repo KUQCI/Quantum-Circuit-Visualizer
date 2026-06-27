@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useCircuitStore, createOperationFromGateType } from "@/store/circuit-store";
+import { useEditorUiStore } from "@/store/editor-ui-store";
 import {
   getGateByType,
   getGateColorByType,
+  getQubitsNeeded,
   COLUMN_WIDTH,
   WIRE_HEIGHT,
   WIRE_LABEL_WIDTH,
@@ -12,6 +14,12 @@ import {
   qubitToY,
 } from "@/components/gates/gate-definitions";
 import { GateSymbol, GateTooltipContent } from "@/components/gates/gate-symbol";
+import { PhaseDisk } from "@/components/visualizations/phase-disk";
+import { simulateCircuit } from "@/lib/quantum-state";
+import {
+  getExecutionLayers,
+  getMaxInspectStep,
+} from "@/lib/circuit-layout";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +40,9 @@ import {
   AlignLeft,
   Info,
   Copy,
-  Scissors,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsDown,
 } from "lucide-react";
 import type { Operation } from "@/lib/circuit-schema";
 
@@ -80,6 +90,8 @@ function GateBlock({
   wireIndex,
   numWires,
   isPaletteDragging,
+  onMoveStart,
+  isInspectLocked,
 }: {
   operation: Operation;
   isSelected: boolean;
@@ -88,6 +100,8 @@ function GateBlock({
   wireIndex: number;
   numWires: number;
   isPaletteDragging: boolean;
+  onMoveStart?: () => void;
+  isInspectLocked?: boolean;
 }) {
   const gateDef = getGateByType(operation.type);
   const isControl = operation.controls.length > 0;
@@ -201,13 +215,21 @@ function GateBlock({
     <div
       className={cn(
         "absolute flex items-center justify-center",
-        isPaletteDragging ? "pointer-events-none" : "cursor-pointer"
+        isPaletteDragging || isInspectLocked
+          ? "pointer-events-none"
+          : "cursor-pointer"
       )}
       style={{
         left: operation.column * COLUMN_WIDTH + 12,
         top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
         width: 36,
         height: 36,
+      }}
+      draggable={isSelected && !isPaletteDragging && !isInspectLocked}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("moveOperationId", operation.id);
+        e.dataTransfer.effectAllowed = "move";
+        onMoveStart?.();
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -348,11 +370,17 @@ function SelectedGateActionBar({
   wireIndex,
   onDelete,
   onInspect,
+  onCopy,
+  onMoveStart,
+  draggable,
 }: {
   operation: Operation;
   wireIndex: number;
   onDelete: () => void;
   onInspect: () => void;
+  onCopy: () => void;
+  onMoveStart: () => void;
+  draggable?: boolean;
 }) {
   const gateDef = getGateByType(operation.type);
 
@@ -375,19 +403,20 @@ function SelectedGateActionBar({
       </button>
       <button
         type="button"
-        className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded opacity-40"
-        title="Copy (coming soon)"
-        disabled
+        className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+        title="Copy gate"
+        onClick={onCopy}
       >
         <Copy className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
-        className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded opacity-40"
-        title="Cut (coming soon)"
-        disabled
+        className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+        title="Drag gate to move"
+        onMouseDown={onMoveStart}
+        draggable={draggable}
       >
-        <Scissors className="h-3.5 w-3.5" />
+        <ChevronsDown className="h-3.5 w-3.5 rotate-90" />
       </button>
       <button
         type="button"
@@ -409,10 +438,15 @@ export function CircuitCanvas({
     circuit,
     selectedOperationId,
     validationWarnings,
+    clipboard,
     setSelectedOperation,
     addOperation,
     removeOperation,
     updateOperation,
+    moveOperation,
+    copyOperation,
+    pasteOperation,
+    alignOperationsLeft,
     addQubit,
     removeQubit,
     addClassicalBit,
@@ -422,14 +456,30 @@ export function CircuitCanvas({
     canRedo,
   } = useCircuitStore();
 
+  const {
+    alignmentMode,
+    showPhaseDisks,
+    inspectMode,
+    inspectStep,
+    setInspectMode,
+    setInspectStep,
+  } = useEditorUiStore();
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [dropPreview, setDropPreview] = useState<DropPosition | null>(null);
-  const [inspectMode, setInspectMode] = useState(false);
+  const [movingOperationId, setMovingOperationId] = useState<string | null>(null);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [paramValue, setParamValue] = useState("");
 
   const isPaletteDragging = draggingGate !== null;
+  const maxInspectStep = getMaxInspectStep(circuit.operations);
+  const executionLayers = useMemo(
+    () => getExecutionLayers(circuit.operations),
+    [circuit.operations]
+  );
+
+  const phaseSim = useMemo(() => simulateCircuit(circuit), [circuit]);
 
   const numColumns = Math.max(
     8,
@@ -444,8 +494,12 @@ export function CircuitCanvas({
 
   const placeGate = useCallback(
     (gateType: string, qubitIndex: number, column: number) => {
+      if (inspectMode) return;
+
       const gateDef = getGateByType(gateType);
       if (!gateDef) return;
+
+      if (gateType === "control") return;
 
       if (gateType === "barrier") {
         addOperation(
@@ -456,22 +510,45 @@ export function CircuitCanvas({
             column
           )
         );
+        if (alignmentMode !== "freeform") alignOperationsLeft();
         return;
       }
 
       if (gateType === "measure") {
-        if (circuit.classicalBits.length === 0) {
-          addClassicalBit();
-        }
+        if (circuit.classicalBits.length === 0) addClassicalBit();
         addOperation(
           createOperationFromGateType(
             "measure",
             [`q${qubitIndex}`],
             [],
             column,
-            ["c0"]
+            [`c${Math.min(qubitIndex, circuit.classicalBits.length - 1)}`]
           )
         );
+        if (alignmentMode !== "freeform") alignOperationsLeft();
+        return;
+      }
+
+      if (gateType === "reset") {
+        addOperation(
+          createOperationFromGateType("reset", [`q${qubitIndex}`], [], column)
+        );
+        if (alignmentMode !== "freeform") alignOperationsLeft();
+        return;
+      }
+
+      if (gateDef.category === "three") {
+        const needed = getQubitsNeeded(gateDef);
+        if (circuit.qubits.length < needed) return;
+        const controls =
+          gateType === "rc3x"
+            ? [`q${qubitIndex}`, `q${qubitIndex + 1}`, `q${qubitIndex + 2}`]
+            : [`q${qubitIndex}`, `q${qubitIndex + 1}`];
+        const target = [`q${qubitIndex + needed - 1}`];
+        addOperation(
+          createOperationFromGateType(gateType, target, controls, column)
+        );
+        if (alignmentMode !== "freeform") alignOperationsLeft();
         return;
       }
 
@@ -482,18 +559,48 @@ export function CircuitCanvas({
             ? qubitIndex + 1
             : qubitIndex - 1;
         if (targetIdx < 0 || targetIdx === controlIdx) return;
-        addOperation(
-          createOperationFromGateType(
-            gateType,
-            [`q${targetIdx}`],
-            [`q${controlIdx}`],
-            column,
-            [],
-            gateDef.defaultParams ? [gateDef.defaultParams] : undefined
-          )
-        );
+
+        if (gateType === "swap") {
+          addOperation(
+            createOperationFromGateType(
+              gateType,
+              [`q${controlIdx}`, `q${targetIdx}`],
+              [],
+              column
+            )
+          );
+        } else if (gateType === "rxx" || gateType === "rzz") {
+          addOperation(
+            createOperationFromGateType(
+              gateType,
+              [`q${targetIdx}`],
+              [`q${controlIdx}`],
+              column,
+              [],
+              gateDef.defaultParams ? [gateDef.defaultParams] : undefined
+            )
+          );
+        } else {
+          addOperation(
+            createOperationFromGateType(
+              gateType,
+              [`q${targetIdx}`],
+              [`q${controlIdx}`],
+              column,
+              [],
+              gateDef.defaultParams ? [gateDef.defaultParams] : undefined
+            )
+          );
+        }
+        if (alignmentMode !== "freeform") alignOperationsLeft();
         return;
       }
+
+      const params = gateDef.defaultParams3
+        ? gateDef.defaultParams3
+        : gateDef.defaultParams
+          ? [gateDef.defaultParams]
+          : undefined;
 
       addOperation(
         createOperationFromGateType(
@@ -502,11 +609,12 @@ export function CircuitCanvas({
           [],
           column,
           [],
-          gateDef.defaultParams ? [gateDef.defaultParams] : undefined
+          params
         )
       );
+      if (alignmentMode !== "freeform") alignOperationsLeft();
     },
-    [circuit, addOperation, addClassicalBit]
+    [circuit, addOperation, addClassicalBit, alignOperationsLeft, alignmentMode, inspectMode]
   );
 
   const handleDragOver = useCallback(
@@ -534,10 +642,14 @@ export function CircuitCanvas({
       e.preventDefault();
       e.stopPropagation();
 
+      const moveId =
+        e.dataTransfer.getData("moveOperationId") || movingOperationId;
       const gateType =
         e.dataTransfer.getData("gateType") || draggingGate || null;
-      if (!gateType || !canvasRef.current) {
+
+      if (!canvasRef.current) {
         setDropPreview(null);
+        setMovingOperationId(null);
         onDragEnd?.();
         return;
       }
@@ -549,14 +661,28 @@ export function CircuitCanvas({
         circuit.qubits.length
       );
 
-      if (pos) {
+      if (moveId && pos && !inspectMode) {
+        moveOperation(moveId, pos.column);
+        if (alignmentMode !== "freeform") alignOperationsLeft();
+      } else if (gateType && pos && !inspectMode) {
         placeGate(gateType, pos.qubitIndex, pos.column);
       }
 
       setDropPreview(null);
+      setMovingOperationId(null);
       onDragEnd?.();
     },
-    [draggingGate, circuit.qubits.length, placeGate, onDragEnd]
+    [
+      draggingGate,
+      movingOperationId,
+      circuit.qubits.length,
+      placeGate,
+      moveOperation,
+      alignOperationsLeft,
+      alignmentMode,
+      inspectMode,
+      onDragEnd,
+    ]
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -605,10 +731,11 @@ export function CircuitCanvas({
             <button
               type="button"
               className="composer-toolbar-btn flex items-center gap-1 rounded px-2 py-1 text-xs"
-              title="Left alignment"
+              title="Compact columns (left alignment)"
+              onClick={() => alignOperationsLeft()}
             >
               <AlignLeft className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Left alignment</span>
+              <span className="hidden sm:inline capitalize">{alignmentMode}</span>
             </button>
             <button
               type="button"
@@ -617,12 +744,42 @@ export function CircuitCanvas({
                 inspectMode &&
                   "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
               )}
-              onClick={() => setInspectMode(!inspectMode)}
-              title="Inspect"
+              onClick={() => {
+                if (!inspectMode && alignmentMode === "freeform") {
+                  alignOperationsLeft();
+                }
+                setInspectMode(!inspectMode);
+              }}
+              title="Inspect circuit step-by-step"
             >
               <Info className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Inspect</span>
             </button>
+            {inspectMode && (
+              <>
+                <button
+                  type="button"
+                  className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+                  disabled={inspectStep <= 0}
+                  onClick={() => setInspectStep(inspectStep - 1)}
+                  title="Previous layer"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-[10px] text-[var(--color-muted-foreground)]">
+                  {inspectStep}/{maxInspectStep}
+                </span>
+                <button
+                  type="button"
+                  className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+                  disabled={inspectStep >= maxInspectStep}
+                  onClick={() => setInspectStep(inspectStep + 1)}
+                  title="Next layer"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -674,6 +831,19 @@ export function CircuitCanvas({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onDragLeave={handleDragLeave}
+          onContextMenu={(e) => {
+            if (!clipboard || inspectMode) return;
+            e.preventDefault();
+            const pos = canvasRef.current
+              ? resolveDropPosition(
+                  e.clientX,
+                  e.clientY,
+                  canvasRef.current,
+                  circuit.qubits.length
+                )
+              : null;
+            if (pos) pasteOperation(pos.column, pos.qubitIndex);
+          }}
         >
           <div
             ref={canvasRef}
@@ -695,7 +865,28 @@ export function CircuitCanvas({
               />
             ))}
 
-            {circuit.qubits.map((qubit, idx) => (
+            {alignmentMode === "layers" &&
+              executionLayers.map((layer, layerIdx) => (
+                <div
+                  key={layerIdx}
+                  className="pointer-events-none absolute top-0 flex items-start justify-center pt-1 text-[9px] font-medium text-[var(--color-primary)]"
+                  style={{
+                    left: WIRE_LABEL_WIDTH + layerIdx * COLUMN_WIDTH,
+                    width: COLUMN_WIDTH,
+                    height: circuit.qubits.length * WIRE_HEIGHT,
+                  }}
+                >
+                  {layerIdx + 1}
+                </div>
+              ))}
+
+            {circuit.qubits.map((qubit, idx) => {
+              const singleQubitAmp =
+                circuit.qubits.length === 1 && phaseSim.amplitudes.length >= 2
+                  ? phaseSim.amplitudes[1]
+                  : null;
+
+              return (
               <div
                 key={qubit.id}
                 className="relative flex items-center"
@@ -709,12 +900,19 @@ export function CircuitCanvas({
                 </div>
                 <div className="relative flex-1 pr-8">
                   <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-muted-foreground)]/50" />
-                  <div className="absolute right-0 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--color-muted-foreground)] bg-[var(--color-canvas)]">
-                    <div className="h-2.5 w-2.5 rounded-full border border-[var(--color-muted-foreground)]" />
+                  <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center">
+                    {showPhaseDisks && circuit.qubits.length === 1 ? (
+                      <PhaseDisk amplitude={singleQubitAmp} size={20} />
+                    ) : (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--color-muted-foreground)] bg-[var(--color-canvas)]">
+                        <div className="h-2.5 w-2.5 rounded-full border border-[var(--color-muted-foreground)]" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
 
             {circuit.classicalBits.length > 0 && (
               <div className="border-t border-dashed border-[var(--color-border)]" />
@@ -775,6 +973,8 @@ export function CircuitCanvas({
                       wireIndex={0}
                       numWires={circuit.qubits.length}
                       isPaletteDragging={isPaletteDragging}
+                      isInspectLocked={inspectMode}
+                      onMoveStart={() => setMovingOperationId(op.id)}
                     />
                   );
                 }
@@ -788,17 +988,22 @@ export function CircuitCanvas({
                     wireIndex={wireIdx}
                     numWires={circuit.qubits.length}
                     isPaletteDragging={isPaletteDragging}
+                    isInspectLocked={inspectMode}
+                    onMoveStart={() => setMovingOperationId(op.id)}
                   />
                 ));
               })}
             </div>
 
-            {selectedOp && !isPaletteDragging && (
+            {selectedOp && !isPaletteDragging && !inspectMode && (
               <SelectedGateActionBar
                 operation={selectedOp}
                 wireIndex={selectedWireIndex}
                 onDelete={() => removeOperation(selectedOp.id)}
                 onInspect={() => setInspectMode(true)}
+                onCopy={() => copyOperation(selectedOp.id)}
+                onMoveStart={() => setMovingOperationId(selectedOp.id)}
+                draggable
               />
             )}
           </div>
@@ -834,7 +1039,7 @@ export function CircuitCanvas({
         )}
 
         {selectedOp &&
-          ["rx", "ry", "rz"].includes(selectedOp.type) &&
+          ["rx", "ry", "rz", "p"].includes(selectedOp.type) &&
           !inspectMode && (
             <div className="border-t border-[var(--color-border)] px-4 py-3">
               <label className="text-xs font-medium text-[var(--color-muted-foreground)]">

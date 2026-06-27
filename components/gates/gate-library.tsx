@@ -104,7 +104,7 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-1">
+                  <div className="grid grid-cols-5 gap-1">
                     {gates.map((gate) => (
                       <GateGridItem
                         key={gate.type}
