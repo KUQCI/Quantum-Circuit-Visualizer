@@ -6,6 +6,7 @@ import {
   GATE_CATEGORIES,
   GATE_LIBRARY_UI,
   getGateColor,
+  getPaletteGates,
 } from "./gate-definitions";
 import { GateSymbol, GateTooltipContent } from "./gate-symbol";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,8 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
 
+  const paletteGates = useMemo(() => getPaletteGates(), []);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
     const draggable = GATE_LIBRARY_UI.filter((g) => g.type !== "control");
@@ -39,6 +42,13 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
         g.qiskitExample.toLowerCase().includes(q)
     );
   }, [query]);
+
+  const filteredPalette = useMemo(() => {
+    const q = query.toLowerCase().trim();
+    if (!q) return paletteGates;
+    const types = new Set(filtered.map((g) => g.type));
+    return paletteGates.filter((g) => types.has(g.type));
+  }, [query, filtered, paletteGates]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -90,15 +100,15 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
-          {GATE_CATEGORIES.map((category) => {
-            const gates = filtered.filter((g) => g.category === category.id);
-            if (gates.length === 0) return null;
-            return (
-              <div key={category.id} className="mb-3">
-                <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-                  {category.label}
-                </h3>
-                {compact ? (
+          {compact ? (
+            GATE_CATEGORIES.map((category) => {
+              const gates = filtered.filter((g) => g.category === category.id);
+              if (gates.length === 0) return null;
+              return (
+                <div key={category.id} className="mb-3">
+                  <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                    {category.label}
+                  </h3>
                   <div className="space-y-0.5">
                     {gates.map((gate) => (
                       <GateListItem
@@ -109,21 +119,21 @@ export function GateLibrary({ onDragStart, onDragEnd }: GateLibraryProps) {
                       />
                     ))}
                   </div>
-                ) : (
-                  <div className="grid grid-cols-4 gap-1">
-                    {gates.map((gate) => (
-                      <GateGridItem
-                        key={gate.type}
-                        gate={gate}
-                        onDragStart={onDragStart}
-                        onDragEnd={onDragEnd}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })
+          ) : (
+            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 xl:grid-cols-4">
+              {filteredPalette.map((gate) => (
+                <GateGridItem
+                  key={gate.type}
+                  gate={gate}
+                  onDragStart={onDragStart}
+                  onDragEnd={onDragEnd}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </TooltipProvider>
@@ -139,6 +149,8 @@ function GateGridItem({
   onDragStart: (t: string) => void;
   onDragEnd?: () => void;
 }) {
+  const isWide = gate.type === "rccx" || gate.type === "rc3x";
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -152,11 +164,12 @@ function GateGridItem({
           }}
           onDragEnd={() => onDragEnd?.()}
           className={cn(
-            "flex aspect-square cursor-grab select-none flex-col items-center justify-center rounded-sm border text-[11px] font-semibold transition-transform active:cursor-grabbing active:scale-95 hover:brightness-125",
+            "flex aspect-square cursor-grab select-none flex-col items-center justify-center rounded-[3px] shadow-sm transition-transform active:cursor-grabbing active:scale-95 hover:brightness-110",
+            isWide && "col-span-2 aspect-[2/1]",
             getGateColor(gate)
           )}
         >
-          <GateSymbol gate={gate} />
+          <GateSymbol gate={gate} variant="palette" className="h-7 w-7" />
         </div>
       </TooltipTrigger>
       <TooltipContent side="right">
@@ -188,14 +201,20 @@ function GateListItem({
           }}
           onDragEnd={() => onDragEnd?.()}
           className={cn(
-            "flex cursor-grab select-none items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-[var(--color-secondary)] active:cursor-grabbing",
-            getGateColor(gate)
+            "flex cursor-grab select-none items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-[var(--color-secondary)] active:cursor-grabbing"
           )}
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm">
-            <GateSymbol gate={gate} className="h-3 w-3" />
+          <span
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] shadow-sm",
+              getGateColor(gate)
+            )}
+          >
+            <GateSymbol gate={gate} variant="palette" className="h-5 w-5" />
           </span>
-          <span className="truncate font-medium">{gate.fullName}</span>
+          <span className="truncate font-medium text-[var(--color-foreground)]">
+            {gate.fullName}
+          </span>
         </div>
       </TooltipTrigger>
       <TooltipContent side="right">

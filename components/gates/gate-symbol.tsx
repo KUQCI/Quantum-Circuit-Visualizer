@@ -1,19 +1,26 @@
 import type { GateDefinition } from "./gate-definitions";
+import { GatePaletteIcon } from "./gate-palette-icon";
 import {
   Gauge,
   Minus,
   ArrowLeftRight,
   Circle,
-  RotateCcw,
 } from "lucide-react";
 
 export function GateSymbol({
   gate,
   className = "h-3.5 w-3.5",
+  variant = "canvas",
 }: {
   gate: GateDefinition;
   className?: string;
+  /** palette = IBM Composer operations grid; canvas = compact circuit tile */
+  variant?: "palette" | "canvas";
 }) {
+  if (variant === "palette") {
+    return <GatePaletteIcon gate={gate} className={className} />;
+  }
+
   switch (gate.symbol) {
     case "measure":
       return <Gauge className={className} strokeWidth={2} />;
@@ -40,7 +47,9 @@ export function GateSymbol({
       );
     case "sqrtx":
       return (
-        <span className="text-[8px] font-bold leading-none">√X</span>
+        <span className="text-[8px] font-bold leading-none">
+          {gate.type === "sxdg" ? "√X†" : "√X"}
+        </span>
       );
     case "if":
       return (
@@ -53,8 +62,8 @@ export function GateSymbol({
       if (gate.type === "sdg") {
         return <span className="text-[10px] font-bold leading-none">S†</span>;
       }
-      if (gate.type === "sxdg") {
-        return <span className="text-[8px] font-bold leading-none">√X†</span>;
+      if (gate.type === "cx") {
+        return <span className="text-[14px] font-bold leading-none">⊕</span>;
       }
       return (
         <span className="text-[11px] font-bold leading-none">{gate.label}</span>

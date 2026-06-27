@@ -56,7 +56,7 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     fullName: "Pauli-Y",
     qiskitExample: "qc.y(0)",
     category: "single",
-    colorGroup: "pauli",
+    colorGroup: "rotation",
     description: "Pauli-Y rotation: combination of bit and phase flip.",
   },
   {
@@ -65,7 +65,7 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     fullName: "Pauli-Z",
     qiskitExample: "qc.z(0)",
     category: "single",
-    colorGroup: "pauli",
+    colorGroup: "phase",
     description: "Phase-flip gate — adds a π phase to |1⟩.",
   },
   {
@@ -74,7 +74,7 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     fullName: "Identity (I)",
     qiskitExample: "qc.id(0)",
     category: "single",
-    colorGroup: "pauli",
+    colorGroup: "two",
     symbol: "identity",
     description: "No operation applied for one unit of gate time.",
   },
@@ -196,7 +196,6 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     qiskitExample: "qc.cx(0, 1)",
     category: "two",
     colorGroup: "two",
-    symbol: "control",
     description:
       "Flips target qubit if control qubit is |1⟩. Essential for entanglement.",
   },
@@ -207,7 +206,6 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     qiskitExample: "qc.cz(0, 1)",
     category: "two",
     colorGroup: "two",
-    symbol: "control",
     description: "Applies Z to target when control is |1⟩. Symmetric two-qubit gate.",
   },
   {
@@ -247,7 +245,6 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     qiskitExample: "qc.ccx(0, 1, 2)",
     category: "three",
     colorGroup: "three",
-    symbol: "control",
     description:
       "Double controlled-NOT — flips target when both controls are |1⟩.",
   },
@@ -258,7 +255,6 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     qiskitExample: "qc.rccx(0, 1, 2)",
     category: "three",
     colorGroup: "three",
-    symbol: "control",
     description: "Simplified Toffoli gate up to relative phases.",
   },
   {
@@ -268,7 +264,6 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
     qiskitExample: "qc.rc3x(0, 1, 2, 3)",
     category: "three",
     colorGroup: "three",
-    symbol: "control",
     description: "Simplified 3-controlled Toffoli up to relative phases.",
   },
   {
@@ -323,19 +318,59 @@ export const GATE_CATEGORIES = [
   { id: "modifier", label: "Modifiers" },
 ] as const;
 
+/** IBM Composer–style flat palette order (grid view). */
+export const GATE_PALETTE_ORDER: string[] = [
+  "h",
+  "cx",
+  "cz",
+  "swap",
+  "id",
+  "x",
+  "t",
+  "s",
+  "z",
+  "tdg",
+  "sdg",
+  "p",
+  "rz",
+  "sx",
+  "sxdg",
+  "y",
+  "rx",
+  "ry",
+  "rxx",
+  "rzz",
+  "u",
+  "ccx",
+  "rccx",
+  "rc3x",
+  "measure",
+  "reset",
+  "barrier",
+];
+
+export function getPaletteGates(): GateDefinition[] {
+  const byType = new Map(GATE_LIBRARY_UI.map((g) => [g.type, g]));
+  return GATE_PALETTE_ORDER.map((type) => byType.get(type)).filter(
+    (g): g is GateDefinition => g !== undefined
+  );
+}
+
 const GATE_COLOR_MAP: Record<GateDefinition["colorGroup"], string> = {
   h: "border-transparent bg-[var(--color-gate-h)] text-white",
   pauli: "border-transparent bg-[var(--color-gate-pauli)] text-white",
-  phase: "border-transparent bg-[var(--color-gate-phase)] text-white",
-  rotation: "border-transparent bg-[var(--color-gate-rotation)] text-[var(--color-gate-label)]",
+  phase: "border-transparent bg-[var(--color-gate-phase)] text-[var(--color-gate-label)]",
+  rotation: "border-transparent bg-[var(--color-gate-rotation)] text-white",
   two: "border-transparent bg-[var(--color-gate-two)] text-white",
   three: "border-transparent bg-[var(--color-gate-three)] text-white",
-  measure: "border-transparent bg-[var(--color-gate-measure)] text-[var(--color-gate-label)]",
-  nonunitary: "border-transparent bg-[var(--color-gate-nonunitary)] text-[var(--color-gate-label)]",
+  measure:
+    "border-transparent bg-[var(--color-gate-measure)] text-[var(--color-gate-measure-fg)]",
+  nonunitary:
+    "border-transparent bg-[var(--color-gate-nonunitary)] text-[var(--color-gate-measure-fg)]",
   barrier:
-    "border-transparent bg-[var(--color-gate-barrier)]/30 text-[var(--color-muted-foreground)] border border-dashed border-[var(--color-gate-barrier)]",
+    "border-transparent bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-dashed border-[var(--color-gate-measure-fg)]/40",
   modifier:
-    "border-transparent bg-[var(--color-secondary)] text-[var(--color-foreground)] border border-[var(--color-border)]",
+    "border-transparent bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-[var(--color-gate-measure-fg)]/30",
 };
 
 export function getGateColor(gate: GateDefinition | string): string {
