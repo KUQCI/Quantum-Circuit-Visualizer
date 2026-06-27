@@ -10,6 +10,8 @@ import {
   COLUMN_WIDTH,
   WIRE_HEIGHT,
   WIRE_LABEL_WIDTH,
+  GATE_COLUMN_INSET,
+  BARRIER_COLUMN_INSET,
   columnToX,
   qubitToY,
 } from "@/components/gates/gate-definitions";
@@ -119,7 +121,7 @@ function GateBlock({
           isPaletteDragging ? "pointer-events-none" : "cursor-pointer"
         )}
         style={{
-          left: operation.column * COLUMN_WIDTH + 8,
+          left: columnToX(operation.column) + BARRIER_COLUMN_INSET,
           width: 4,
           height: numWires * WIRE_HEIGHT - 16,
         }}
@@ -220,7 +222,7 @@ function GateBlock({
           : "cursor-pointer"
       )}
       style={{
-        left: operation.column * COLUMN_WIDTH + 12,
+        left: columnToX(operation.column) + GATE_COLUMN_INSET,
         top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
         width: 36,
         height: 36,
@@ -306,7 +308,7 @@ function DropPreview({
       <div
         className="pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary)]/20"
         style={{
-          left: columnToX(position.column) + 8,
+          left: columnToX(position.column) + BARRIER_COLUMN_INSET,
           top: 8,
           height: numQubits * WIRE_HEIGHT - 16,
         }}
@@ -319,7 +321,7 @@ function DropPreview({
       <div
         className={previewStyle}
         style={{
-          left: columnToX(position.column) + 12,
+          left: columnToX(position.column) + GATE_COLUMN_INSET,
           top: qubitToY(position.qubitIndex) + WIRE_HEIGHT / 2 - 16,
         }}
       >
@@ -330,7 +332,7 @@ function DropPreview({
           <div
             className="pointer-events-none absolute z-30 w-0.5 bg-[var(--color-primary)]/60"
             style={{
-              left: columnToX(position.column) + 28,
+              left: columnToX(position.column) + GATE_COLUMN_INSET + 16,
               top:
                 Math.min(controlIdx, targetIdx) * WIRE_HEIGHT +
                 WIRE_HEIGHT / 2,
@@ -340,7 +342,7 @@ function DropPreview({
           <div
             className={previewStyle}
             style={{
-              left: columnToX(position.column) + 12,
+              left: columnToX(position.column) + GATE_COLUMN_INSET,
               top: qubitToY(targetIdx) + WIRE_HEIGHT / 2 - 16,
             }}
           >
@@ -355,7 +357,7 @@ function DropPreview({
           <div
             className="pointer-events-none absolute z-30 h-3 w-3 rounded-full border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/30"
             style={{
-              left: columnToX(position.column) + 22,
+              left: columnToX(position.column) + GATE_COLUMN_INSET + 10,
               top: qubitToY(controlIdx) + WIRE_HEIGHT / 2 - 6,
             }}
           />
@@ -856,6 +858,16 @@ export function CircuitCanvas({
             }}
             onClick={() => setSelectedOperation(null)}
           >
+            <div
+              className="pointer-events-none absolute top-0 z-10 border-r border-[var(--color-border)]"
+              style={{
+                left: WIRE_LABEL_WIDTH - 1,
+                height: canvasHeight,
+                width: 0,
+              }}
+              aria-hidden
+            />
+
             {Array.from({ length: numColumns }).map((_, col) => (
               <div
                 key={col}

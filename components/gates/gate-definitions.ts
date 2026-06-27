@@ -356,8 +356,13 @@ export function getGateByType(type: string): GateDefinition | undefined {
 
 export const COLUMN_WIDTH = 72;
 export const WIRE_HEIGHT = 56;
+/** Fixed width of the left qubit/classical label column (visual only). */
 export const WIRE_LABEL_WIDTH = 56;
+/** Horizontal inset to center a gate box inside a timeline column. */
+export const GATE_COLUMN_INSET = 12;
+export const BARRIER_COLUMN_INSET = 8;
 
+/** Map logical operation.column to canvas x (after label column). */
 export function columnToX(column: number): number {
   return WIRE_LABEL_WIDTH + column * COLUMN_WIDTH;
 }
