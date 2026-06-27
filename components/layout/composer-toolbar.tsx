@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dialog";
+import { RunCircuitDialog } from "@/components/execution/run-circuit-dialog";
 import {
   Save,
   Play,
@@ -35,6 +35,7 @@ export function ComposerToolbar() {
   const router = useRouter();
   const { circuit, saveProject } = useCircuitStore();
   const [registersOpen, setRegistersOpen] = useState(false);
+  const [runOpen, setRunOpen] = useState(false);
   const {
     showCodePanel,
     showVizPanels,
@@ -136,12 +137,31 @@ export function ComposerToolbar() {
               >
                 Phase disks
               </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={vizPanels.histogram}
+                onCheckedChange={(v) => setVizPanel("histogram", !!v)}
+                className="text-xs"
+              >
+                Measurement histogram
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={vizPanels.statevector}
+                onCheckedChange={(v) => setVizPanel("statevector", !!v)}
+                className="text-xs"
+              >
+                Statevector
+              </DropdownMenuCheckboxItem>
               <DropdownMenuSeparator />
-              {helpItems.map((item) => (
-                <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
-                  {item.label}
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="text-xs">Help</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {helpItems.map((item) => (
+                    <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
+                      {item.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -195,6 +215,13 @@ export function ComposerToolbar() {
                       className="text-xs"
                     >
                       Statevector
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={vizPanels.histogram}
+                      onCheckedChange={(v) => setVizPanel("histogram", !!v)}
+                      className="text-xs"
+                    >
+                      Measurement histogram
                     </DropdownMenuCheckboxItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
@@ -251,8 +278,8 @@ export function ComposerToolbar() {
           <Button
             size="sm"
             className="h-7 gap-1.5 px-2 text-xs sm:px-3"
-            onClick={() => router.push("/export")}
-            title="Export Qiskit code (Run on hardware coming soon)"
+            onClick={() => setRunOpen(true)}
+            title="Set up and run on simulator"
           >
             <Play className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Run circuit</span>
@@ -260,6 +287,7 @@ export function ComposerToolbar() {
         </div>
       </div>
       <ManageRegistersDialog open={registersOpen} onOpenChange={setRegistersOpen} />
+      <RunCircuitDialog open={runOpen} onOpenChange={setRunOpen} />
     </>
   );
 }

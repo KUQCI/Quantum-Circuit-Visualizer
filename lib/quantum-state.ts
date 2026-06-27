@@ -463,6 +463,65 @@ function applyOperation(
   return null;
 }
 
+/** Apply a unitary gate to a statevector (exported for shot simulation). */
+export function applyGateToState(
+  state: Complex[],
+  op: Operation,
+  numQubits: number
+): Complex[] | null {
+  return applyOperation(state, op, numQubits);
+}
+
+export function collapseQubit(
+  state: Complex[],
+  numQubits: number,
+  qubit: number,
+  outcome: 0 | 1
+): Complex[] {
+  const dim = 1 << numQubits;
+  const collapsed = state.map((amp, i) => {
+    const bit = (i >> (numQubits - 1 - qubit)) & 1;
+    return bit === outcome ? amp : c(0);
+  });
+  const sum = collapsed.reduce((s, amp) => s + cAbs2(amp), 0);
+  if (sum < 1e-14) return collapsed;
+  const norm = Math.sqrt(sum);
+  return collapsed.map((amp) => c(amp.re / norm, amp.im / norm));
+}
+
+export function measureQubit(
+  state: Complex[],
+  numQubits: number,
+  qubit: number,
+  rng: () => number = Math.random
+): { state: Complex[]; outcome: 0 | 1 } {
+  const dim = 1 << numQubits;
+  let p0 = 0;
+  for (let i = 0; i < dim; i++) {
+    const bit = (i >> (numQubits - 1 - qubit)) & 1;
+    if (bit === 0) p0 += cAbs2(state[i]);
+  }
+  const outcome: 0 | 1 = rng() < p0 ? 0 : 1;
+  return { state: collapseQubit(state, numQubits, qubit, outcome), outcome };
+}
+
+export function sampleFromStatevector(
+  state: Complex[],
+  numQubits: number,
+  rng: () => number = Math.random
+): string {
+  const dim = 1 << numQubits;
+  const r = rng();
+  let cumulative = 0;
+  for (let i = 0; i < dim; i++) {
+    cumulative += cAbs2(state[i]);
+    if (r <= cumulative) {
+      return formatBasisLabel(i, numQubits);
+    }
+  }
+  return formatBasisLabel(dim - 1, numQubits);
+}
+
 export function simulateCircuit(circuit: Circuit): QuantumStateResult {
   const numQubits = circuit.qubits.length;
 

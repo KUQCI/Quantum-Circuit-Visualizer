@@ -5,9 +5,11 @@ import type { Circuit } from "@/lib/circuit-schema";
 import { simulateCircuit } from "@/lib/quantum-state";
 import { getOperationsUpToStep } from "@/lib/circuit-layout";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { useExecutionStore } from "@/store/execution-store";
 import { ProbabilityChart } from "./probability-chart";
 import { QSphere } from "./q-sphere";
 import { StatevectorChart } from "./statevector-chart";
+import { MeasurementHistogram } from "./measurement-histogram";
 import { cn } from "@/lib/utils";
 
 interface VisualizationPanelsProps {
@@ -16,6 +18,7 @@ interface VisualizationPanelsProps {
 
 export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
   const { vizPanels, inspectMode, inspectStep } = useEditorUiStore();
+  const lastResult = useExecutionStore((s) => s.lastResult);
 
   const effectiveCircuit = useMemo(() => {
     if (!inspectMode || inspectStep === 0) return circuit;
@@ -34,6 +37,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
     vizPanels.probabilities && "probabilities",
     vizPanels.qsphere && "qsphere",
     vizPanels.statevector && "statevector",
+    vizPanels.histogram && "histogram",
   ].filter(Boolean);
 
   if (activePanels.length === 0) {
@@ -44,20 +48,30 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
     );
   }
 
+  const gridCols =
+    activePanels.length === 1
+      ? "grid-cols-1"
+      : activePanels.length === 2
+        ? "grid-cols-1 lg:grid-cols-2"
+        : activePanels.length === 3
+          ? "grid-cols-1 lg:grid-cols-3"
+          : "grid-cols-1 lg:grid-cols-2 xl:grid-cols-4";
+
   return (
     <div
       className={cn(
         "grid h-full divide-x divide-[var(--color-border)] border-[var(--color-border)] bg-[var(--color-background)]",
-        activePanels.length === 1 && "grid-cols-1",
-        activePanels.length === 2 && "grid-cols-1 lg:grid-cols-2",
-        activePanels.length === 3 && "grid-cols-1 lg:grid-cols-3"
+        gridCols
       )}
     >
       {vizPanels.probabilities && (
-        <div className="flex flex-col overflow-hidden p-3">
+        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
           <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Probabilities
           </h3>
+          <p className="mb-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
+            Ideal |ψ|² (live, ignores measurements)
+          </p>
           <div className="min-h-0 flex-1">
             <ProbabilityChart
               probabilities={result.probabilities}
@@ -68,7 +82,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.qsphere && (
-        <div className="flex flex-col overflow-hidden p-3">
+        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
           <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Q-sphere
           </h3>
@@ -83,7 +97,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.statevector && (
-        <div className="flex flex-col overflow-hidden p-3">
+        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
           <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Statevector
           </h3>
@@ -92,6 +106,25 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
               amplitudes={result.amplitudes}
               numQubits={result.numQubits}
               error={result.error}
+            />
+          </div>
+        </div>
+      )}
+      {vizPanels.histogram && (
+        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
+          <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+            Measurement results
+          </h3>
+          <p className="mb-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
+            Shot counts from Run circuit
+          </p>
+          <div className="min-h-0 flex-1">
+            <MeasurementHistogram
+              histogram={lastResult?.histogram ?? []}
+              shots={lastResult?.shots ?? 0}
+              registerLabel={lastResult?.registerLabel}
+              error={lastResult?.error}
+              emptyMessage="Click Run circuit to simulate measurement shots"
             />
           </div>
         </div>

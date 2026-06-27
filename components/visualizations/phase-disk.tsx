@@ -122,6 +122,63 @@ export function getMarginalDiskForQubit(
   return { amplitude: beta, purity: 0.5 + p0 * 0.5 };
 }
 
+function formatPhaseLabel(rad: number): string {
+  const pi = Math.PI;
+  const eps = 0.02;
+  const ratios: [number, string][] = [
+    [0, "0"],
+    [pi / 4, "π/4"],
+    [pi / 2, "π/2"],
+    [3 * pi / 4, "3π/4"],
+    [pi, "π"],
+    [-pi / 4, "−π/4"],
+    [-pi / 2, "−π/2"],
+    [-3 * pi / 4, "−3π/4"],
+    [-pi, "−π"],
+  ];
+  for (const [value, label] of ratios) {
+    if (Math.abs(rad - value) < eps) return label;
+  }
+  return `${((rad * 180) / Math.PI).toFixed(1)}°`;
+}
+
+export function QubitStateTooltipContent({
+  amplitude,
+  purity,
+  label,
+}: {
+  amplitude: Complex | null;
+  purity: number;
+  label: string;
+}) {
+  if (!amplitude) {
+    return <p className="text-xs text-[var(--color-muted-foreground)]">No state data</p>;
+  }
+
+  const p1 = cAbs2(amplitude);
+  const phase = Math.atan2(amplitude.im, amplitude.re);
+  const cosPhi = Math.cos(phase);
+  const sinPhi = Math.sin(phase);
+
+  return (
+    <div className="space-y-1 font-mono text-[11px]">
+      <p className="font-sans font-medium text-[var(--color-foreground)]">{label}</p>
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[var(--color-muted-foreground)]">
+        <span>Phase φ</span>
+        <span className="text-[var(--color-foreground)]">{formatPhaseLabel(phase)}</span>
+        <span>Re[e^iφ]</span>
+        <span className="text-[var(--color-foreground)]">{cosPhi.toFixed(12)}</span>
+        <span>Im[e^iφ]</span>
+        <span className="text-[var(--color-foreground)]">{sinPhi.toFixed(12)}</span>
+        <span>Prob of |1⟩</span>
+        <span className="text-[var(--color-foreground)]">{(p1 * 100).toFixed(0)}%</span>
+        <span>Purity</span>
+        <span className="text-[var(--color-foreground)]">{purity.toFixed(12)}</span>
+      </div>
+    </div>
+  );
+}
+
 export function QubitPhaseDisks({
   amplitudes,
   numQubits,

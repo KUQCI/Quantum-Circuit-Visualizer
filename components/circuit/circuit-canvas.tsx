@@ -14,7 +14,7 @@ import {
   qubitToY,
 } from "@/components/gates/gate-definitions";
 import { GateSymbol, GateTooltipContent } from "@/components/gates/gate-symbol";
-import { PhaseDisk, getMarginalDiskForQubit } from "@/components/visualizations/phase-disk";
+import { PhaseDisk, getMarginalDiskForQubit, QubitStateTooltipContent } from "@/components/visualizations/phase-disk";
 import { simulateCircuit } from "@/lib/quantum-state";
 import {
   getExecutionLayers,
@@ -908,12 +908,28 @@ export function CircuitCanvas({
                   <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-muted-foreground)]/50" />
                   <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center">
                     {showPhaseDisks && diskProps ? (
-                      <PhaseDisk
-                        amplitude={diskProps.amplitude}
-                        purity={diskProps.purity}
-                        size={20}
-                        title={`${qubit.label} marginal state`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
+                            aria-label={`${qubit.label} state details`}
+                          >
+                            <PhaseDisk
+                              amplitude={diskProps.amplitude}
+                              purity={diskProps.purity}
+                              size={20}
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="max-w-xs p-3">
+                          <QubitStateTooltipContent
+                            amplitude={diskProps.amplitude}
+                            purity={diskProps.purity}
+                            label={qubit.label}
+                          />
+                        </TooltipContent>
+                      </Tooltip>
                     ) : (
                       <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--color-muted-foreground)] bg-[var(--color-canvas)]">
                         <div className="h-2.5 w-2.5 rounded-full border border-[var(--color-muted-foreground)]" />

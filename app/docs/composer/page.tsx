@@ -20,7 +20,7 @@ const sections = [
       "Graphical circuit editor — drag gates onto qubit wires. Select a gate for the action bar (info, copy, move, delete).",
       "Toolbar — undo/redo, alignment modes, inspect mode with step-through controls.",
       "Phase disks — optional visualization at each qubit wire end (single-qubit circuits). Toggle via View → Phase disks.",
-      "Visualizations — Probabilities, Q-sphere, and Statevector panels at the bottom. Configure via View → Panels.",
+      "Visualizations — Probabilities, Q-sphere, Statevector, and Measurement histogram panels at the bottom. Configure via View → Panels.",
     ],
   },
   {
@@ -44,8 +44,9 @@ const sections = [
     items: [
       "Probabilities — bar chart of measurement outcome percentages (up to 8 qubits in IBM; we simulate up to 6).",
       "Q-sphere — global view of the quantum state on a sphere (ignores measurements during simulation).",
-      "Statevector — amplitude magnitudes with phase-encoded colors.",
-      "All live visualizations use a client-side statevector simulator and ignore measurement operations, matching IBM Composer behavior.",
+      "Statevector — table view with real/imaginary amplitudes, phase, and probability; toggle to bar chart.",
+      "Measurement histogram — shot counts after running the circuit on the local simulator.",
+      "Live visualizations (Probabilities, Q-sphere, Statevector) use a client-side statevector simulator and ignore measurement operations, matching IBM Composer behavior.",
     ],
   },
   {
@@ -53,8 +54,8 @@ const sections = [
     body: `H, X, Y, Z, I, √X, √X†, S, S†, T, T†, P, RX, RY, RZ, U, CX, CZ, SWAP, RXX, RZZ, CCX, RCCX, RC3X, Measure, Reset, and Barrier. Hover any gate in the catalog for its Qiskit example and description.`,
   },
   {
-    title: "Run on hardware",
-    body: `IBM Quantum Composer runs circuits on real QPUs. Qiskit Visualizer currently exports Qiskit code and runs local simulation. Click Run circuit to export — backend execution is planned for a future release.`,
+    title: "Run on simulator",
+    body: `Click Run circuit in the toolbar to open the execution dialog. Choose the Local simulator backend, set the number of shots (1–8192), and run. Results appear in the Measurement histogram panel and in the dialog preview. IBM Qasm Simulator and IBM Quantum hardware backends export Qiskit Runtime code for submission with your IBM Quantum account.`,
   },
 ];
 

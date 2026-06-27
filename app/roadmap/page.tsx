@@ -38,14 +38,14 @@ const phases = [
   {
     phase: 3,
     title: "Execution & Advanced Visualization",
-    status: "planned" as const,
+    status: "complete" as const,
     description:
-      "Run circuits on quantum simulators and visualize measurement results. Basic probability and Q-sphere visualizations are available in the editor.",
+      "Run circuits on local simulators with shot-based sampling, visualize measurement histograms, and inspect enhanced statevector data. IBM backend export paths are included for cloud and hardware execution.",
     features: [
-      "Simulator integration (backend execution)",
-      "Measurement result histograms",
-      "Enhanced state vector display",
-      "Backend selection",
+      "Local simulator integration with configurable shots",
+      "Measurement result histograms (classical register aware)",
+      "Enhanced statevector table (real, imag, phase, probability)",
+      "Backend selection (local, IBM Qasm Simulator, IBM hardware)",
     ],
   },
 ];

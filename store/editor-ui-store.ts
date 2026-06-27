@@ -16,6 +16,7 @@ interface EditorUiState {
     probabilities: boolean;
     qsphere: boolean;
     statevector: boolean;
+    histogram: boolean;
   };
   inspectMode: boolean;
   inspectStep: number;
@@ -43,7 +44,8 @@ export const useEditorUiStore = create<EditorUiState>()(
       vizPanels: {
         probabilities: true,
         qsphere: true,
-        statevector: false,
+        statevector: true,
+        histogram: true,
       },
       inspectMode: false,
       inspectStep: 0,
