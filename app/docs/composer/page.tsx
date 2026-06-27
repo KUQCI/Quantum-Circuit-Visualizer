@@ -60,26 +60,26 @@ const sections = [
 
 export default function ComposerGuidePage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
-      <div className="mb-10">
+    <div className="page-container max-w-3xl">
+      <div className="page-header mb-10">
         <Link
           href="/editor"
-          className="text-xs text-[var(--color-primary)] hover:underline"
+          className="text-xs text-[var(--color-brand)] hover:underline"
         >
           ← Open Composer
         </Link>
-        <h1 className="mt-4 text-3xl font-bold">Quantum Circuit Composer Guide</h1>
-        <p className="mt-3 text-[var(--color-muted-foreground)]">
+        <h1 className="page-title mt-4 text-3xl">Quantum Circuit Composer Guide</h1>
+        <p className="page-description mt-3">
           Based on the{" "}
           <a
             href="https://quantum.cloud.ibm.com/docs/en/guides/composer"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[var(--color-primary)] hover:underline"
+            className="text-[var(--color-brand)] hover:underline"
           >
             IBM Quantum Composer documentation
           </a>
-          , adapted for Qiskit Visualizer.
+          , adapted for the KUQCI Circuit Visualizer.
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export default function ComposerGuidePage() {
                       key={item}
                       className="flex gap-2 text-sm text-[var(--color-muted-foreground)]"
                     >
-                      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[var(--color-primary)]" />
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-brand)]" />
                       <span>{item}</span>
                     </li>
                   ))}

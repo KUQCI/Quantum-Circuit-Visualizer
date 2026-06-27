@@ -43,10 +43,10 @@ export default function ExportPage() {
   const filename = `${circuit.name.replace(/\s+/g, "_").toLowerCase()}.${ext}`;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Export Circuit</h1>
-        <p className="mt-1 text-[var(--color-muted-foreground)]">
+    <div className="page-container">
+      <div className="page-header">
+        <h1 className="page-title">Export Circuit</h1>
+        <p className="page-description">
           Generate code in Qiskit, OpenQASM, Cirq, IBM Runtime, or JSON from your
           visual circuit
         </p>
@@ -59,19 +59,19 @@ export default function ExportPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-4">
-            <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+            <div className="stat-box">
               <div className="text-2xl font-bold">{summary.qubits}</div>
               <div className="text-xs text-[var(--color-muted-foreground)]">Qubits</div>
             </div>
-            <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+            <div className="stat-box">
               <div className="text-2xl font-bold">{summary.classicalBits}</div>
               <div className="text-xs text-[var(--color-muted-foreground)]">Classical Bits</div>
             </div>
-            <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+            <div className="stat-box">
               <div className="text-2xl font-bold">{summary.operations}</div>
               <div className="text-xs text-[var(--color-muted-foreground)]">Operations</div>
             </div>
-            <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+            <div className="stat-box">
               <div className="text-2xl font-bold">{summary.depth}</div>
               <div className="text-xs text-[var(--color-muted-foreground)]">Depth (columns)</div>
             </div>
@@ -91,10 +91,8 @@ export default function ExportPage() {
                 key={lang.id}
                 type="button"
                 className={cn(
-                  "rounded px-3 py-1.5 text-xs font-medium",
-                  language === lang.id
-                    ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
-                    : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
+                  "segment-btn",
+                  language === lang.id && "segment-btn-active"
                 )}
                 onClick={() => setLanguage(lang.id)}
               >

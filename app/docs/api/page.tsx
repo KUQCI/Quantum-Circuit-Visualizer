@@ -12,16 +12,16 @@ import { ExternalLink } from "lucide-react";
 
 export default function ApiReferencePage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
-      <div className="mb-10">
+    <div className="page-container max-w-3xl">
+      <div className="page-header mb-10">
         <Link
           href="/editor"
-          className="text-xs text-[var(--color-primary)] hover:underline"
+          className="text-xs text-[var(--color-brand)] hover:underline"
         >
           ← Open Composer
         </Link>
-        <h1 className="mt-4 text-3xl font-bold">IBM Quantum API Reference</h1>
-        <p className="mt-3 text-[var(--color-muted-foreground)]">
+        <h1 className="page-title mt-4 text-3xl">IBM Quantum API Reference</h1>
+        <p className="page-description mt-3">
           Official IBM Quantum documentation for running circuits built in this
           visualizer. Export your circuit as Qiskit or OpenQASM, then use these
           APIs to execute on simulators or real hardware.
@@ -48,7 +48,7 @@ export default function ApiReferencePage() {
                     href={lang.docsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex shrink-0 items-center gap-1 text-xs text-[var(--color-primary)] hover:underline"
+                    className="flex shrink-0 items-center gap-1 text-xs text-[var(--color-brand)] hover:underline"
                   >
                     Docs
                     <ExternalLink className="h-3 w-3" />
@@ -69,7 +69,7 @@ export default function ApiReferencePage() {
                 href={api.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-base font-medium text-[var(--color-primary)] hover:underline"
+                className="flex items-center gap-2 text-base font-medium text-[var(--color-brand)] hover:underline"
               >
                 {api.label}
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -94,7 +94,7 @@ export default function ApiReferencePage() {
             4. Use the{" "}
             <a
               href="https://quantum.cloud.ibm.com/docs/en/api/qiskit-ibm-runtime"
-              className="text-[var(--color-primary)] hover:underline"
+              className="text-[var(--color-brand)] hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >

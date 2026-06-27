@@ -32,13 +32,13 @@ export default function HomePage() {
   const recentProjects = projects.slice(0, 4);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <div className="page-container max-w-5xl">
       <div className="mb-12 text-center">
         <Link
           href="https://kuqci.github.io/"
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-cyan-quantum)]"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-brand)]"
         >
           <Image
             src="https://kuqci.github.io/logo.png"
@@ -54,13 +54,13 @@ export default function HomePage() {
 
         <h1 className="text-4xl font-bold tracking-tight text-[var(--color-foreground)] sm:text-5xl">
           Quantum Circuit{" "}
-          <span className="text-[var(--color-cyan-quantum)]">Visualizer</span>
+          <span className="text-[var(--color-brand)]">Visualizer</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-[var(--color-muted-foreground)]">
+        <p className="mx-auto mt-4 max-w-xl text-lg leading-relaxed text-[var(--color-muted-foreground)]">
           From bits to qubits — build, view, and convert quantum circuits with
           visual editing and multi-language code export.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild size="lg">
             <Link href="/editor">
               <PenLine className="h-4 w-4" />
@@ -94,7 +94,7 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <ArrowLeftRight className="h-4 w-4 text-[var(--color-cyan-quantum)]" />
+              <ArrowLeftRight className="h-4 w-4 text-[var(--color-brand)]" />
               Multi-Language Export
             </CardTitle>
           </CardHeader>
@@ -108,7 +108,7 @@ export default function HomePage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-[var(--color-gold-duck)]" />
+              <Clock className="h-4 w-4 text-[var(--color-warning)]" />
               Execution Coming Later
             </CardTitle>
           </CardHeader>
@@ -127,7 +127,7 @@ export default function HomePage() {
         </h2>
         {recentProjects.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center text-[var(--color-muted-foreground)]">
+            <CardContent className="py-10 text-center text-[var(--color-muted-foreground)]">
               No saved projects yet. Create a circuit in the editor or import
               code to get started.
             </CardContent>
@@ -137,7 +137,7 @@ export default function HomePage() {
             {recentProjects.map((project) => (
               <Card
                 key={project.id}
-                className="transition-all hover:border-[rgba(125,211,252,0.3)]"
+                className="transition-all hover:border-[var(--color-border-strong)]"
               >
                 <CardHeader>
                   <CardTitle className="text-base">{project.name}</CardTitle>

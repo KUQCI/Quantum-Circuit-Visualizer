@@ -420,7 +420,7 @@ function SelectedGateActionBar({
       </button>
       <button
         type="button"
-        className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded text-red-400 hover:bg-red-500/10"
+        className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded text-[var(--color-destructive)] hover:bg-[var(--color-error-subtle)]"
         title="Delete gate"
         onClick={onDelete}
       >

@@ -92,10 +92,10 @@ export default function ImportPage() {
   const importableLanguages = CODE_LANGUAGES.filter((l) => l.bidirectional);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Import Circuit</h1>
-        <p className="mt-1 text-[var(--color-muted-foreground)]">
+    <div className="page-container">
+      <div className="page-header">
+        <h1 className="page-title">Import Circuit</h1>
+        <p className="page-description">
           Paste Qiskit Python, OpenQASM 2.0, or JSON circuit code. Parsed as text
           only — never executed.
         </p>
@@ -115,10 +115,8 @@ export default function ImportPage() {
                 key={lang.id}
                 type="button"
                 className={cn(
-                  "rounded px-3 py-1.5 text-xs font-medium",
-                  language === lang.id
-                    ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
-                    : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
+                  "segment-btn",
+                  language === lang.id && "segment-btn-active"
                 )}
                 onClick={() => handleLanguageChange(lang.id)}
               >
@@ -149,14 +147,14 @@ export default function ImportPage() {
       </Card>
 
       {result && !result.success && (
-        <Card className="mb-6 border-red-800/50 bg-red-900/20">
+        <Card className="alert-error mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-red-300">
+            <CardTitle className="alert-error-title flex items-center gap-2 text-base">
               <AlertCircle className="h-4 w-4" />
               Parse Error
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-red-200">
+          <CardContent className="alert-error-body text-sm">
             <p>{result.error}</p>
             {result.details && (
               <ul className="mt-2 list-inside list-disc">
@@ -172,26 +170,26 @@ export default function ImportPage() {
       {circuit && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-green-300">
+            <CardTitle className="alert-success-title flex items-center gap-2 text-base">
               <CheckCircle2 className="h-4 w-4" />
               Circuit Detected: {circuit.name}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+              <div className="stat-box">
                 <div className="text-2xl font-bold">{circuit.qubits.length}</div>
                 <div className="text-xs text-[var(--color-muted-foreground)]">Qubits</div>
               </div>
-              <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+              <div className="stat-box">
                 <div className="text-2xl font-bold">{circuit.classicalBits.length}</div>
                 <div className="text-xs text-[var(--color-muted-foreground)]">Classical Bits</div>
               </div>
-              <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+              <div className="stat-box">
                 <div className="text-2xl font-bold">{circuit.operations.length}</div>
                 <div className="text-xs text-[var(--color-muted-foreground)]">Operations</div>
               </div>
-              <div className="rounded-md bg-[var(--color-muted)] p-3 text-center">
+              <div className="stat-box">
                 <div className="text-2xl font-bold">
                   {circuit.operations.filter((op) => op.type === "measure").length}
                 </div>

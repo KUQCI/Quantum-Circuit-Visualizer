@@ -49,10 +49,8 @@ export function MultiLanguageCodePanel() {
               key={lang.id}
               type="button"
               className={cn(
-                "rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
-                codePanelLanguage === lang.id
-                  ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
-                  : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+                "segment-btn px-2 py-0.5 text-[10px]",
+                codePanelLanguage === lang.id && "segment-btn-active"
               )}
               onClick={() => setCodePanelLanguage(lang.id as CodeLanguageId)}
               title={lang.description}
@@ -111,7 +109,7 @@ export function MultiLanguageCodePanel() {
             href={adapter.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-auto flex items-center gap-1 text-[10px] text-[var(--color-primary)] hover:underline"
+            className="ml-auto flex items-center gap-1 text-[10px] text-[var(--color-brand)] hover:underline"
           >
             API docs
             <ExternalLink className="h-3 w-3" />

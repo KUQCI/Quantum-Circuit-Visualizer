@@ -26,10 +26,10 @@ export function ComposerEditorLayout() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--color-background)]">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-[rgba(125,211,252,0.16)] bg-[rgba(5,9,20,0.85)] px-4 backdrop-blur-sm">
+      <header className="glass-nav flex h-12 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
         <Link
           href="/"
-          className="flex items-center gap-2.5 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:text-[var(--color-cyan-quantum)]"
+          className="flex items-center gap-2.5 text-sm font-semibold text-[var(--color-foreground)] transition-colors hover:text-[var(--color-brand)]"
         >
           <Image
             src="https://kuqci.github.io/logo.png"
@@ -40,7 +40,8 @@ export function ComposerEditorLayout() {
             unoptimized
           />
           <span>
-            Circuit <span className="text-[var(--color-cyan-quantum)]">Visualizer</span>
+            Circuit{" "}
+            <span className="text-[var(--color-brand)]">Visualizer</span>
           </span>
         </Link>
         <span className="text-xs text-[var(--color-muted-foreground)]">
@@ -62,9 +63,14 @@ export function ComposerEditorLayout() {
 
         <button
           type="button"
-          className="flex w-5 shrink-0 items-center justify-center border-r border-[rgba(125,211,252,0.16)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[rgba(125,211,252,0.08)] hover:text-[var(--color-cyan-quantum)]"
+          className="flex w-5 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
           onClick={() => setOperationsPanelCollapsed(!operationsPanelCollapsed)}
           title={
+            operationsPanelCollapsed
+              ? "Expand operations catalog"
+              : "Collapse operations catalog"
+          }
+          aria-label={
             operationsPanelCollapsed
               ? "Expand operations catalog"
               : "Collapse operations catalog"
@@ -90,7 +96,7 @@ export function ComposerEditorLayout() {
             />
           </div>
           {showVizPanels && (
-            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[rgba(125,211,252,0.16)]">
+            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}

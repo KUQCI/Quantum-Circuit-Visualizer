@@ -31,8 +31,8 @@ export function AppHeader() {
   const { theme, toggleTheme } = useThemeStore();
 
   return (
-    <header className="sticky top-0 z-50 px-4 pt-3">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 rounded-2xl border border-[rgba(125,211,252,0.2)] bg-[rgba(5,9,20,0.72)] px-4 shadow-blue-glow backdrop-blur-xl">
+    <header className="sticky top-0 z-50 px-4 pt-3 pb-1">
+      <div className="glass-nav mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 rounded-2xl px-4">
         <Link
           href="https://kuqci.github.io/"
           target="_blank"
@@ -57,7 +57,7 @@ export function AppHeader() {
           </div>
         </Link>
 
-        <nav className="flex flex-1 items-center justify-center gap-1 overflow-x-auto">
+        <nav className="flex flex-1 items-center justify-center gap-0.5 overflow-x-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
@@ -68,7 +68,7 @@ export function AppHeader() {
                 className={cn(
                   "kuqci-nav-link flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium whitespace-nowrap",
                   active
-                    ? "active text-[var(--color-cyan-quantum)]"
+                    ? "active text-[var(--color-brand)]"
                     : "text-[var(--color-muted-foreground)]"
                 )}
               >
@@ -84,7 +84,8 @@ export function AppHeader() {
           size="icon"
           onClick={toggleTheme}
           title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          className="shrink-0 text-[var(--color-muted-foreground)] hover:text-[var(--color-cyan-quantum)]"
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          className="shrink-0"
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />

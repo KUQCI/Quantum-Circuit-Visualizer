@@ -55,11 +55,11 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="page-container">
+      <div className="page-header mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="mt-1 text-[var(--color-muted-foreground)]">
+          <h1 className="page-title">Projects</h1>
+          <p className="page-description">
             Manage saved circuits stored in your browser
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid gap-4">
           {projects.map((project) => (
-            <Card key={project.id} className="transition-shadow hover:shadow-md">
+            <Card key={project.id} className="transition-all hover:border-[var(--color-border-strong)]">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   {editingId === project.id ? (
