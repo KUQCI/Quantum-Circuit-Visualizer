@@ -2,7 +2,6 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useCircuitStore, createOperationFromGateType } from "@/store/circuit-store";
-import { GateLibrary } from "@/components/gates/gate-library";
 import { getGateByType, getGateColorByType } from "@/components/gates/gate-definitions";
 import {
   COLUMN_WIDTH,
@@ -12,7 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { QiskitCodePanel } from "@/components/code/qiskit-code-panel";
 import { formatParam, parseParamExpression } from "@/lib/translator-core";
 import {
   Undo2,
@@ -21,8 +19,9 @@ import {
   Minus,
   Trash2,
   AlertTriangle,
+  AlignLeft,
+  Info,
 } from "lucide-react";
-import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
 import type { Operation } from "@/lib/circuit-schema";
 
 function GateBlock({
@@ -113,9 +112,9 @@ function GateBlock({
           !["cx", "cz", "swap"].includes(operation.type))) && (
         <div
           className={cn(
-            "relative flex h-9 w-9 flex-col items-center justify-center rounded border text-xs font-bold shadow-sm transition-all",
+            "relative flex h-8 w-8 flex-col items-center justify-center rounded-sm text-[11px] font-bold shadow-md transition-all",
             getGateColorByType(operation.type),
-            isSelected && "ring-2 ring-[var(--color-ring)] ring-offset-1 ring-offset-[var(--color-card)]",
+            isSelected && "ring-2 ring-[var(--color-ring)] ring-offset-1 ring-offset-[var(--color-canvas)]",
             "cursor-pointer hover:brightness-110"
           )}
         >
@@ -165,6 +164,7 @@ export function CircuitCanvas() {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
+  const [inspectMode, setInspectMode] = useState(false);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [paramValue, setParamValue] = useState("");
 
@@ -256,53 +256,65 @@ export function CircuitCanvas() {
   );
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Input
-            value={circuit.name}
-            onChange={(e) =>
-              useCircuitStore.setState({
-                circuit: { ...circuit, name: e.target.value },
-              })
-            }
-            className="h-8 w-48 text-sm font-medium"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
+    <div className="flex h-full flex-col bg-[var(--color-canvas)]">
+      {/* Circuit toolbar — Composer style */}
+      <div className="flex h-9 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-3">
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
             onClick={undo}
             disabled={!canUndo()}
             title="Undo"
           >
-            <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
+            <Undo2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
             onClick={redo}
             disabled={!canRedo()}
             title="Redo"
           >
-            <Redo2 className="h-4 w-4" />
-          </Button>
+            <Redo2 className="h-3.5 w-3.5" />
+          </button>
+          <div className="mx-1.5 h-4 w-px bg-[var(--color-border)]" />
+          <button
+            type="button"
+            className="composer-toolbar-btn flex items-center gap-1 rounded px-2 py-1 text-xs"
+            title="Left alignment"
+          >
+            <AlignLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Left alignment</span>
+          </button>
+          <button
+            type="button"
+            className={cn(
+              "composer-toolbar-btn flex items-center gap-1 rounded px-2 py-1 text-xs",
+              inspectMode && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
+            )}
+            onClick={() => setInspectMode(!inspectMode)}
+            title="Inspect"
+          >
+            <Info className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Inspect</span>
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={addQubit}>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={addQubit}>
             <Plus className="h-3 w-3" /> Qubit
           </Button>
-          <Button variant="outline" size="sm" onClick={addClassicalBit}>
+          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={addClassicalBit}>
             <Plus className="h-3 w-3" /> Classical
           </Button>
           {circuit.qubits.length > 1 && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={() =>
-                removeQubit(`q${circuit.qubits.length - 1}`)
-              }
+              className="h-7 gap-1 text-xs"
+              onClick={() => removeQubit(`q${circuit.qubits.length - 1}`)}
             >
-              <Minus className="h-3 w-3" /> Qubit
+              <Minus className="h-3 w-3" />
             </Button>
           )}
         </div>
@@ -319,12 +331,12 @@ export function CircuitCanvas() {
         </div>
       )}
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-3">
         <div
           ref={canvasRef}
-          className="relative min-w-max rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]"
+          className="relative min-w-max"
           style={{
-            width: WIRE_LABEL_WIDTH + numColumns * COLUMN_WIDTH + 40,
+            width: WIRE_LABEL_WIDTH + numColumns * COLUMN_WIDTH + 60,
           }}
           onClick={() => setSelectedOperation(null)}
         >
@@ -357,8 +369,12 @@ export function CircuitCanvas() {
               >
                 {qubit.label}
               </div>
-              <div className="relative flex-1">
-                <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-border)]" />
+              <div className="relative flex-1 pr-8">
+                <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-muted-foreground)]/50" />
+                {/* Wire terminal */}
+                <div className="absolute right-0 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--color-muted-foreground)] bg-[var(--color-canvas)]">
+                  <div className="h-2.5 w-2.5 rounded-full border border-[var(--color-muted-foreground)]" />
+                </div>
               </div>
             </div>
           ))}
@@ -419,7 +435,18 @@ export function CircuitCanvas() {
         </div>
       </div>
 
-      {selectedOp && ["rx", "ry", "rz"].includes(selectedOp.type) && (
+      {inspectMode && selectedOp && (
+        <div className="shrink-0 border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-3 py-2 text-xs text-[var(--color-muted-foreground)]">
+          <span className="font-medium text-[var(--color-foreground)]">
+            {selectedOp.label}
+          </span>
+          {" · "}Column {selectedOp.column + 1}
+          {selectedOp.parameters?.[0]?.display &&
+            ` · θ = ${selectedOp.parameters[0].display}`}
+        </div>
+      )}
+
+      {selectedOp && ["rx", "ry", "rz"].includes(selectedOp.type) && !inspectMode && (
         <div className="border-t border-[var(--color-border)] px-4 py-3">
           <label className="text-xs font-medium text-[var(--color-muted-foreground)]">
             Rotation parameter (e.g. pi/2, 3*pi/4)
@@ -456,25 +483,6 @@ export function CircuitCanvas() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-export function EditorLayout() {
-  const { circuit } = useCircuitStore();
-
-  return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      <aside className="w-52 shrink-0 overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-card)]">
-        <GateLibrary onDragStart={() => {}} />
-      </aside>
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--color-surface)]">
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <CircuitCanvas />
-        </div>
-        <VisualizationPanels circuit={circuit} />
-      </div>
-      <QiskitCodePanel />
     </div>
   );
 }

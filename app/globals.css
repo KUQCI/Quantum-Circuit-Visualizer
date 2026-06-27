@@ -1,69 +1,74 @@
 @import "tailwindcss";
 
 @theme {
-  --radius: 0.375rem;
+  --radius: 0.25rem;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
 }
 
-/* Dark theme (default) */
+/* Composer-inspired dark theme */
 :root,
 [data-theme="dark"] {
-  --color-background: #0d1117;
-  --color-foreground: #e6edf3;
-  --color-card: #161b22;
-  --color-card-foreground: #e6edf3;
-  --color-surface: #0d1117;
-  --color-primary: #388bfd;
+  --color-background: #161616;
+  --color-foreground: #f4f4f4;
+  --color-card: #262626;
+  --color-card-foreground: #f4f4f4;
+  --color-surface: #1e1e1e;
+  --color-canvas: #161616;
+  --color-primary: #0f62fe;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #21262d;
-  --color-secondary-foreground: #c9d1d9;
-  --color-muted: #161b22;
-  --color-muted-foreground: #8b949e;
-  --color-accent: #1f2937;
-  --color-accent-foreground: #58a6ff;
-  --color-border: #30363d;
-  --color-input: #21262d;
-  --color-ring: #388bfd;
-  --color-destructive: #f85149;
-  --color-viz-accent: #58a6ff;
-  --color-gate-h: #da3633;
-  --color-gate-pauli: #388bfd;
-  --color-gate-phase: #a371f7;
-  --color-gate-rotation: #3fb950;
-  --color-gate-two: #8957e5;
-  --color-gate-measure: #39c5cf;
-  --color-gate-barrier: #6e7681;
-  --color-success: #3fb950;
-  --color-warning: #d29922;
+  --color-secondary: #393939;
+  --color-secondary-foreground: #f4f4f4;
+  --color-muted: #262626;
+  --color-muted-foreground: #a8a8a8;
+  --color-accent: #393939;
+  --color-accent-foreground: #78a9ff;
+  --color-border: #393939;
+  --color-input: #393939;
+  --color-ring: #0f62fe;
+  --color-destructive: #fa4d56;
+  --color-viz-accent: #33b1ff;
+  --color-toolbar: #262626;
+  --color-gate-h: #fa4d56;
+  --color-gate-pauli: #4589ff;
+  --color-gate-phase: #be95ff;
+  --color-gate-rotation: #42be65;
+  --color-gate-two: #a56eff;
+  --color-gate-measure: #08bdba;
+  --color-gate-barrier: #6f6f6f;
+  --color-success: #42be65;
+  --color-warning: #f1c21b;
 }
 
 [data-theme="light"] {
-  --color-background: #f6f8fa;
-  --color-foreground: #1f2328;
-  --color-card: #ffffff;
-  --color-card-foreground: #1f2328;
-  --color-surface: #f6f8fa;
-  --color-primary: #0969da;
+  --color-background: #ffffff;
+  --color-foreground: #161616;
+  --color-card: #f4f4f4;
+  --color-card-foreground: #161616;
+  --color-surface: #ffffff;
+  --color-canvas: #f4f4f4;
+  --color-primary: #0f62fe;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #f3f4f6;
-  --color-secondary-foreground: #424a53;
-  --color-muted: #f6f8fa;
-  --color-muted-foreground: #656d76;
-  --color-accent: #eef2ff;
-  --color-accent-foreground: #4f46e5;
-  --color-border: #d0d7de;
-  --color-input: #ffffff;
-  --color-ring: #0969da;
-  --color-destructive: #cf222e;
-  --color-viz-accent: #0969da;
-  --color-gate-h: #cf222e;
-  --color-gate-pauli: #0969da;
-  --color-gate-phase: #8250df;
-  --color-gate-rotation: #1a7f37;
-  --color-gate-two: #8250df;
-  --color-gate-measure: #0598bc;
-  --color-gate-barrier: #656d76;
-  --color-success: #1a7f37;
-  --color-warning: #bf8700;
+  --color-secondary: #e0e0e0;
+  --color-secondary-foreground: #161616;
+  --color-muted: #f4f4f4;
+  --color-muted-foreground: #525252;
+  --color-accent: #e0e0e0;
+  --color-accent-foreground: #0f62fe;
+  --color-border: #c6c6c6;
+  --color-input: #f4f4f4;
+  --color-ring: #0f62fe;
+  --color-destructive: #da1e28;
+  --color-viz-accent: #1192e8;
+  --color-toolbar: #f4f4f4;
+  --color-gate-h: #da1e28;
+  --color-gate-pauli: #0f62fe;
+  --color-gate-phase: #8a3ffc;
+  --color-gate-rotation: #198038;
+  --color-gate-two: #6929c4;
+  --color-gate-measure: #009d9a;
+  --color-gate-barrier: #8d8d8d;
+  --color-success: #198038;
+  --color-warning: #f1c21b;
 }
 
 * {
@@ -73,22 +78,40 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-background);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
-  border-radius: 4px;
+  border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-muted-foreground);
+
+.composer-panel {
+  background: var(--color-card);
+  border-color: var(--color-border);
+}
+
+.composer-toolbar-btn {
+  color: var(--color-muted-foreground);
+  transition: color 0.15s, background 0.15s;
+}
+.composer-toolbar-btn:hover:not(:disabled) {
+  color: var(--color-foreground);
+  background: var(--color-secondary);
+}
+.composer-toolbar-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }

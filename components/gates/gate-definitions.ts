@@ -53,13 +53,13 @@ export const GATE_CATEGORIES = [
 ] as const;
 
 const GATE_COLOR_MAP: Record<GateDefinition["colorGroup"], string> = {
-  h: "border-[var(--color-gate-h)] bg-[var(--color-gate-h)]/20 text-[#ff7b72]",
-  pauli: "border-[var(--color-gate-pauli)] bg-[var(--color-gate-pauli)]/20 text-[#79c0ff]",
-  phase: "border-[var(--color-gate-phase)] bg-[var(--color-gate-phase)]/20 text-[#d2a8ff]",
-  rotation: "border-[var(--color-gate-rotation)] bg-[var(--color-gate-rotation)]/20 text-[#7ee787]",
-  two: "border-[var(--color-gate-two)] bg-[var(--color-gate-two)]/20 text-[#d2a8ff]",
-  measure: "border-[var(--color-gate-measure)] bg-[var(--color-gate-measure)]/20 text-[#56d4dd]",
-  barrier: "border-[var(--color-gate-barrier)] bg-[var(--color-gate-barrier)]/15 text-[#8b949e]",
+  h: "border-transparent bg-[var(--color-gate-h)] text-white",
+  pauli: "border-transparent bg-[var(--color-gate-pauli)] text-white",
+  phase: "border-transparent bg-[var(--color-gate-phase)] text-white",
+  rotation: "border-transparent bg-[var(--color-gate-rotation)] text-[#161616]",
+  two: "border-transparent bg-[var(--color-gate-two)] text-white",
+  measure: "border-transparent bg-[var(--color-gate-measure)] text-[#161616]",
+  barrier: "border-transparent bg-[var(--color-gate-barrier)]/30 text-[var(--color-muted-foreground)] border border-dashed border-[var(--color-gate-barrier)]",
 };
 
 export function getGateColor(gate: GateDefinition | string): string {

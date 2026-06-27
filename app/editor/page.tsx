@@ -1,5 +1,5 @@
-import { EditorLayout } from "@/components/circuit/circuit-canvas";
+import { ComposerEditorLayout } from "@/components/layout/composer-editor-layout";
 
 export default function EditorPage() {
-  return <EditorLayout />;
+  return <ComposerEditorLayout />;
 }
