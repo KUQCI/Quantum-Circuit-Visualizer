@@ -2,8 +2,10 @@
 
 import type { ChallengeDefinition } from "@/lib/learning/types";
 import { LearningPlayer } from "@/components/learning/LearningPlayer";
+import { LockedActivityState } from "@/components/learning/LockedActivityState";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { getChallengeBreadcrumbs } from "@/lib/navigation/flow";
+import { isChallengeUnlockedByTier, useProgressStore } from "@/store/progress-store";
 
 export function ChallengePlayerClient({
   challenge,
@@ -18,6 +20,25 @@ export function ChallengePlayerClient({
   relatedHref?: string;
   relatedLabel?: string;
 }) {
+  const completedLessons = useProgressStore((s) => s.completedLessons);
+  const completedChallenges = useProgressStore((s) => s.completedChallenges);
+  const unlocked = isChallengeUnlockedByTier(
+    challenge.difficulty,
+    completedLessons,
+    completedChallenges
+  );
+
+  if (!unlocked) {
+    return (
+      <LockedActivityState
+        title={`${challenge.title} is locked`}
+        description="Complete more lessons and earlier challenges to unlock this tier."
+        backHref="/challenges"
+        backLabel="Back to Challenges"
+      />
+    );
+  }
+
   return (
     <div className="learning-workspace-shell">
       <Breadcrumbs

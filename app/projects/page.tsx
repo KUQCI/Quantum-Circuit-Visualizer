@@ -102,7 +102,7 @@ export default function ProjectsPage() {
               No projects yet. Build a circuit in the editor and save it here.
             </p>
             <Button className="mt-4" onClick={() => router.push("/editor")}>
-              Go to Editor
+              Open Build
             </Button>
           </CardContent>
         </Card>

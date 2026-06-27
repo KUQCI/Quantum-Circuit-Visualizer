@@ -5,6 +5,7 @@ import {
   getRelatedChallenge,
   getRelatedLesson,
   getAchievementHint,
+  getBeginnerChallenge,
 } from "@/lib/navigation/flow";
 
 describe("navigation flow", () => {
@@ -32,5 +33,14 @@ describe("navigation flow", () => {
 
   it("provides achievement hints", () => {
     expect(getAchievementHint("pauli-pro")?.href).toBe("/challenges/pauli-flip");
+  });
+
+  it("returns null when all beginner challenges complete", () => {
+    const beginnerIds = [
+      "superposition-sprint",
+      "pauli-flip",
+      "measurement-check",
+    ];
+    expect(getBeginnerChallenge([], beginnerIds)).toBeNull();
   });
 });

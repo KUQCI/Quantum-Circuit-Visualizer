@@ -47,7 +47,14 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
             <span>Level {level}</span>
             <span>Level {xpInfo.nextLevel}</span>
           </div>
-          <div className="academy-progress-bar h-2 overflow-hidden rounded-full">
+          <div
+            className="academy-progress-bar h-2 overflow-hidden rounded-full"
+            role="progressbar"
+            aria-valuenow={Math.round(xpInfo.progress * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Progress to level ${xpInfo.nextLevel}`}
+          >
             <div
               className="academy-progress-fill h-full rounded-full transition-all"
               style={{ width: `${Math.min(100, xpInfo.progress * 100)}%` }}

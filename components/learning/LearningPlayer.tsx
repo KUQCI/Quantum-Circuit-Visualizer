@@ -67,6 +67,7 @@ export function LearningPlayer({
   );
 
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
+  const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [lessonPanelOpen, setLessonPanelOpen] = useState(true);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "success" | "error">("idle");
@@ -144,10 +145,12 @@ export function LearningPlayer({
   };
 
   const handleOpenInBuild = () => {
+    setCircuit(structuredClone(circuit));
     router.push("/editor");
   };
 
   const nextLabel = mode === "lesson" ? "Next Lesson" : "Next Challenge";
+  const panelLabel = mode === "lesson" ? "Guide" : "Briefing";
 
   const storyText = isLesson(activity)
     ? activity.story
@@ -182,7 +185,7 @@ export function LearningPlayer({
             ) : (
               <PanelLeftOpen className="h-4 w-4" />
             )}
-            <span className="hidden sm:inline">Lesson</span>
+            <span className="hidden sm:inline">{panelLabel}</span>
           </Button>
         </div>
         <div className="min-w-0 flex-1 text-center">
@@ -206,8 +209,13 @@ export function LearningPlayer({
             ) : (
               <PanelLeftOpen className="h-4 w-4" />
             )}
-            Lesson
+            {panelLabel}
           </Button>
+          {selectedGate && (
+            <span className="hidden text-xs text-[var(--color-brand)] sm:inline">
+              Tap a wire to place {selectedGate.toUpperCase()}
+            </span>
+          )}
           <span className="academy-xp-pill text-xs">+{activity.xpReward} XP</span>
         </div>
       </div>
@@ -267,9 +275,11 @@ export function LearningPlayer({
         </aside>
 
         {/* Operations panel */}
-        <aside className="learning-panel learning-panel-ops hidden min-h-0 flex-col border-b border-[var(--color-border)] md:flex lg:border-b-0 lg:border-r">
+        <aside className="learning-panel learning-panel-ops flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r">
           <GateLibrary
             variant="learning"
+            selectedGate={selectedGate}
+            onGateSelect={setSelectedGate}
             onDragStart={setDraggingGate}
             onDragEnd={() => setDraggingGate(null)}
           />
@@ -280,6 +290,8 @@ export function LearningPlayer({
           <CircuitCanvas
             draggingGate={draggingGate}
             onDragEnd={() => setDraggingGate(null)}
+            placementGate={selectedGate}
+            onPlacementComplete={() => setSelectedGate(null)}
           />
         </main>
 

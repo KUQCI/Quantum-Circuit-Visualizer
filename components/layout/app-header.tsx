@@ -27,6 +27,8 @@ import {
   BookOpen,
   Menu,
   MoreHorizontal,
+  Upload,
+  Download,
 } from "lucide-react";
 
 const primaryNav = [
@@ -61,6 +63,9 @@ const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
+  { href: "/import", label: "Import", icon: Upload },
+  { href: "/export", label: "Export", icon: Download },
+  { href: "/roadmap", label: "Roadmap", icon: BookOpen },
 ] as const;
 
 function isActive(pathname: string, match: (p: string) => boolean) {
@@ -118,7 +123,7 @@ export function AppHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           {showModeSwitcher && (
-            <ModeSwitcher size="sm" className="hidden lg:inline-flex" />
+            <ModeSwitcher size="sm" className="hidden md:inline-flex" />
           )}
 
           {/* More menu — desktop/tablet */}

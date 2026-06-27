@@ -22,6 +22,7 @@ export function AchievementBadge({ achievementId }: { achievementId: string }) {
           ? "border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)]"
           : "border-[var(--color-border)] opacity-80"
       )}
+      aria-label={`${achievement.name}${unlocked ? ", unlocked" : ", locked"}`}
     >
       <span className="text-3xl" aria-hidden>
         {unlocked ? achievement.icon : "🔒"}

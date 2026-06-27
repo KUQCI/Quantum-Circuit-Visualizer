@@ -1,4 +1,5 @@
-import { LESSONS, LESSON_IDS, getLessonById } from "@/lib/learning/lessons";
+import { notFound } from "next/navigation";
+import { LESSON_IDS, getLessonById } from "@/lib/learning/lessons";
 import {
   getNextLessonById,
   getPrevLesson,
@@ -19,11 +20,7 @@ export default async function LessonPage({
   const lesson = getLessonById(lessonId);
 
   if (!lesson) {
-    return (
-      <div className="page-container py-12 text-center">
-        <p>Lesson not found.</p>
-      </div>
-    );
+    notFound();
   }
 
   const nextLesson = getNextLessonById(lessonId);

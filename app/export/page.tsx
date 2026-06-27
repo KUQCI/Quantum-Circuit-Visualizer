@@ -13,7 +13,7 @@ import {
 import { CodeEditor } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
 import { PageActions } from "@/components/navigation/PageActions";
-import { useCircuitStore } from "@/store/circuit-store";
+import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { getCircuitSummary } from "@/lib/qiskit-generator";
 import {
   CODE_LANGUAGES,
@@ -42,6 +42,7 @@ export default function ExportPage() {
   const summary = getCircuitSummary(circuit);
   const ext = adapter.defaultFilename.split(".").pop() ?? "txt";
   const filename = `${circuit.name.replace(/\s+/g, "_").toLowerCase()}.${ext}`;
+  const hasContent = circuitHasContent(circuit);
 
   return (
     <div className="page-container">
@@ -64,6 +65,23 @@ export default function ExportPage() {
           { label: "Projects", href: "/projects", icon: <FolderOpen className="h-4 w-4" /> },
         ]}
       />
+
+      {!hasContent && (
+        <Card className="mb-6 border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)]">
+          <CardHeader>
+            <CardTitle className="text-base">No circuit to export yet</CardTitle>
+            <CardDescription>
+              Build a circuit in the editor or open a saved project before exporting code.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PageActions
+              primary={[{ label: "Start Building", href: "/editor" }]}
+              secondary={[{ label: "Open Projects", href: "/projects" }]}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-6">
         <CardHeader>

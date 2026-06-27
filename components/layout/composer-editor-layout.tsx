@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function ComposerEditorLayout() {
   const circuit = useCircuitStore((s) => s.circuit);
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
+  const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const {
     showCodePanel,
     showVizPanels,
@@ -48,6 +49,8 @@ export function ComposerEditorLayout() {
               )}
             >
               <GateLibrary
+                selectedGate={selectedGate}
+                onGateSelect={setSelectedGate}
                 onDragStart={setDraggingGate}
                 onDragEnd={() => setDraggingGate(null)}
               />
@@ -87,6 +90,8 @@ export function ComposerEditorLayout() {
             <CircuitCanvas
               draggingGate={draggingGate}
               onDragEnd={() => setDraggingGate(null)}
+              placementGate={selectedGate}
+              onPlacementComplete={() => setSelectedGate(null)}
             />
           </div>
           {showVizPanels && (

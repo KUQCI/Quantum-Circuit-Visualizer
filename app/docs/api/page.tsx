@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -6,26 +5,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageActions } from "@/components/navigation/PageActions";
 import { IBM_QUANTUM_API_LINKS } from "@/lib/code-adapters";
 import { CODE_LANGUAGES } from "@/lib/code-adapters";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, PenLine, GraduationCap, Upload } from "lucide-react";
 
 export default function ApiReferencePage() {
   return (
     <div className="page-container max-w-3xl">
       <div className="page-header mb-10">
-        <Link
-          href="/editor"
-          className="text-xs text-[var(--color-brand)] hover:underline"
-        >
-          ← Open Composer
-        </Link>
-        <h1 className="page-title mt-4 text-3xl">IBM Quantum API Reference</h1>
+        <h1 className="page-title text-3xl">IBM Quantum API Reference</h1>
         <p className="page-description mt-3">
           Official IBM Quantum documentation for running circuits built in this
           visualizer. Export your circuit as Qiskit or OpenQASM, then use these
           APIs to execute on simulators or real hardware.
         </p>
+        <PageActions
+          className="mt-4"
+          primary={[
+            { label: "Open Build", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+          ]}
+          secondary={[
+            { label: "Import Example", href: "/import", icon: <Upload className="h-4 w-4" /> },
+            { label: "Learn Basics", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          ]}
+        />
       </div>
 
       <Card className="mb-8">
@@ -87,7 +91,7 @@ export default function ApiReferencePage() {
           <CardTitle className="text-base">Quick workflow</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-[var(--color-muted-foreground)]">
-          <p>1. Build a circuit in the Composer editor.</p>
+          <p>1. Build a circuit in Build mode.</p>
           <p>2. Switch the code panel to Qiskit or OpenQASM — edits sync both ways.</p>
           <p>3. Export as Runtime snippet to run on IBM Quantum hardware.</p>
           <p>

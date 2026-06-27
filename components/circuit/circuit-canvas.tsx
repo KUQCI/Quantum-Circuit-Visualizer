@@ -57,6 +57,9 @@ interface DropPosition {
 interface CircuitCanvasProps {
   draggingGate?: string | null;
   onDragEnd?: () => void;
+  /** Tap-to-place: gate selected from palette, placed on canvas click */
+  placementGate?: string | null;
+  onPlacementComplete?: () => void;
 }
 
 function resolveDropPosition(
@@ -436,6 +439,8 @@ function SelectedGateActionBar({
 export function CircuitCanvas({
   draggingGate = null,
   onDragEnd,
+  placementGate = null,
+  onPlacementComplete,
 }: CircuitCanvasProps) {
   const {
     circuit,
@@ -476,6 +481,7 @@ export function CircuitCanvas({
   const [paramValue, setParamValue] = useState("");
 
   const isPaletteDragging = draggingGate !== null;
+  const isPlacementMode = placementGate !== null;
   const maxInspectStep = getMaxInspectStep(circuit.operations);
   const executionLayers = useMemo(
     () => getExecutionLayers(circuit.operations),
@@ -767,6 +773,7 @@ export function CircuitCanvas({
                 }
                 setInspectMode(!inspectMode);
               }}
+              aria-pressed={inspectMode}
               title="Inspect circuit step-by-step"
             >
               <Info className="h-3.5 w-3.5" />
@@ -780,6 +787,7 @@ export function CircuitCanvas({
                   disabled={inspectStep <= 0}
                   onClick={() => setInspectStep(inspectStep - 1)}
                   title="Previous layer"
+                  aria-label="Previous inspect layer"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
@@ -792,6 +800,7 @@ export function CircuitCanvas({
                   disabled={inspectStep >= maxInspectStep}
                   onClick={() => setInspectStep(inspectStep + 1)}
                   title="Next layer"
+                  aria-label="Next inspect layer"
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
@@ -843,8 +852,22 @@ export function CircuitCanvas({
           ref={scrollRef}
           className={cn(
             "relative flex-1 overflow-auto p-3",
-            isPaletteDragging && "cursor-copy"
+            isPaletteDragging && "cursor-copy",
+            isPlacementMode && "cursor-crosshair"
           )}
+          onClick={(e) => {
+            if (!placementGate || inspectMode || !canvasRef.current) return;
+            const pos = resolveDropPosition(
+              e.clientX,
+              e.clientY,
+              canvasRef.current,
+              circuit.qubits.length
+            );
+            if (pos) {
+              placeGate(placementGate, pos.qubitIndex, pos.column);
+              onPlacementComplete?.();
+            }
+          }}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onDragLeave={handleDragLeave}

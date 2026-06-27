@@ -23,12 +23,17 @@ interface GateLibraryProps {
   onDragEnd?: () => void;
   /** Larger tiles and text for learning workspace */
   variant?: "default" | "learning";
+  /** Tap-to-select gate for touch / click placement */
+  selectedGate?: string | null;
+  onGateSelect?: (gateType: string | null) => void;
 }
 
 export function GateLibrary({
   onDragStart,
   onDragEnd,
   variant = "default",
+  selectedGate = null,
+  onGateSelect,
 }: GateLibraryProps) {
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
@@ -132,6 +137,8 @@ export function GateLibrary({
                         gate={gate}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
+                        selected={selectedGate === gate.type}
+                        onGateSelect={onGateSelect}
                       />
                     ))}
                   </div>
@@ -147,6 +154,8 @@ export function GateLibrary({
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
                   variant={variant}
+                  selected={selectedGate === gate.type}
+                  onGateSelect={onGateSelect}
                 />
               ))}
             </div>
@@ -162,11 +171,15 @@ function GateGridItem({
   onDragStart,
   onDragEnd,
   variant = "default",
+  selected = false,
+  onGateSelect,
 }: {
   gate: (typeof GATE_LIBRARY_UI)[0];
   onDragStart: (t: string) => void;
   onDragEnd?: () => void;
   variant?: "default" | "learning";
+  selected?: boolean;
+  onGateSelect?: (gateType: string | null) => void;
 }) {
   const isWide = gate.type === "rccx" || gate.type === "rc3x";
   const isLearning = variant === "learning";
@@ -176,6 +189,18 @@ function GateGridItem({
       <TooltipTrigger asChild>
         <div
           draggable
+          role="button"
+          tabIndex={0}
+          aria-pressed={selected}
+          onClick={() => {
+            onGateSelect?.(selected ? null : gate.type);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onGateSelect?.(selected ? null : gate.type);
+            }
+          }}
           onDragStart={(e) => {
             e.dataTransfer.setData("text/plain", gate.type);
             e.dataTransfer.setData("gateType", gate.type);
@@ -187,7 +212,8 @@ function GateGridItem({
             "flex cursor-grab select-none flex-col items-center justify-center rounded-[3px] shadow-sm transition-transform active:cursor-grabbing active:scale-95 hover:brightness-110",
             isLearning ? "aspect-square min-h-[52px]" : "aspect-square",
             isWide && "col-span-2 aspect-[2/1]",
-            getGateColor(gate)
+            getGateColor(gate),
+            selected && "ring-2 ring-[var(--color-brand)] ring-offset-1 ring-offset-[var(--color-surface)]"
           )}
         >
           <GateSymbol
@@ -208,16 +234,24 @@ function GateListItem({
   gate,
   onDragStart,
   onDragEnd,
+  selected = false,
+  onGateSelect,
 }: {
   gate: (typeof GATE_LIBRARY_UI)[0];
   onDragStart: (t: string) => void;
   onDragEnd?: () => void;
+  selected?: boolean;
+  onGateSelect?: (gateType: string | null) => void;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div
           draggable
+          role="button"
+          tabIndex={0}
+          aria-pressed={selected}
+          onClick={() => onGateSelect?.(selected ? null : gate.type)}
           onDragStart={(e) => {
             e.dataTransfer.setData("text/plain", gate.type);
             e.dataTransfer.setData("gateType", gate.type);
@@ -226,7 +260,8 @@ function GateListItem({
           }}
           onDragEnd={() => onDragEnd?.()}
           className={cn(
-            "flex cursor-grab select-none items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-[var(--color-secondary)] active:cursor-grabbing"
+            "flex cursor-grab select-none items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-[var(--color-secondary)] active:cursor-grabbing",
+            selected && "bg-[var(--color-brand-subtle)] ring-1 ring-[var(--color-brand-border)]"
           )}
         >
           <span

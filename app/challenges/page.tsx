@@ -26,6 +26,7 @@ export default function ChallengesPage() {
   }, [recordActivity]);
 
   const nextChallenge = getNextChallenge(completedLessons, completedChallenges);
+  const allComplete = completedChallenges.length >= CHALLENGES.length;
   const tiers = ["beginner", "intermediate", "advanced"] as const;
 
   return (
@@ -45,7 +46,9 @@ export default function ChallengesPage() {
                     href: `/challenges/${nextChallenge.id}`,
                   },
                 ]
-              : []
+              : allComplete
+                ? [{ label: "View Achievements", href: "/achievements" }]
+                : []
           }
           secondary={[
             { label: "Learn", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
@@ -57,7 +60,20 @@ export default function ChallengesPage() {
 
       <ProgressSummary compact />
 
-      {nextChallenge && (
+      {allComplete && (
+        <NextStepCard
+          className="my-6"
+          badge="All challenges complete"
+          title="Quantum champion!"
+          description="You have finished every challenge. Review achievements or keep building circuits."
+          href="/achievements"
+          ctaLabel="View Achievements"
+          secondaryHref="/editor"
+          secondaryLabel="Open Build"
+        />
+      )}
+
+      {nextChallenge && !allComplete && (
         <NextStepCard
           className="my-6"
           badge="Continue Challenge"

@@ -101,7 +101,7 @@ export function getBeginnerChallenge(
   for (const c of beginner) {
     if (!completedChallenges.includes(c.id)) return c;
   }
-  return beginner[0] ?? null;
+  return null;
 }
 
 export function getContinueTargets(

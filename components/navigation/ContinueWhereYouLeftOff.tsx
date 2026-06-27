@@ -91,17 +91,22 @@ export function ContinueWhereYouLeftOff({
     );
   }
 
-  const primary = cards[0];
   return (
-    <NextStepCard
-      className={className}
-      badge={primary.badge}
-      title={primary.title}
-      description={primary.description}
-      href={primary.href}
-      ctaLabel={primary.ctaLabel}
-      secondaryHref={primary.secondaryHref}
-      secondaryLabel={primary.secondaryLabel}
-    />
+    <div className={className}>
+      <div className="space-y-4">
+        {cards.map((card) => (
+          <NextStepCard
+            key={card.href}
+            badge={card.badge}
+            title={card.title}
+            description={card.description}
+            href={card.href}
+            ctaLabel={card.ctaLabel}
+            secondaryHref={card.secondaryHref}
+            secondaryLabel={card.secondaryLabel}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

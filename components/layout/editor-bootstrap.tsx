@@ -12,7 +12,6 @@ export function EditorBootstrap() {
   const openProject = useCircuitStore((s) => s.openProject);
   const loadProjects = useCircuitStore((s) => s.loadProjects);
   const {
-    setOperationsPanelCollapsed,
     setShowCodePanel,
     setShowVizPanels,
   } = useEditorUiStore();
@@ -43,11 +42,10 @@ export function EditorBootstrap() {
   useEffect(() => {
     const isCompact = window.matchMedia("(max-width: 1024px)").matches;
     if (isCompact) {
-      setOperationsPanelCollapsed(true);
       setShowCodePanel(false);
       setShowVizPanels(false);
     }
-  }, [setOperationsPanelCollapsed, setShowCodePanel, setShowVizPanels]);
+  }, [setShowCodePanel, setShowVizPanels]);
 
   if (!projectLoadError) return null;
 

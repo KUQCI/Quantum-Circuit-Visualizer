@@ -1,5 +1,5 @@
+import { notFound } from "next/navigation";
 import {
-  CHALLENGES,
   CHALLENGE_IDS,
   getChallengeById,
 } from "@/lib/learning/challenges";
@@ -23,11 +23,7 @@ export default async function ChallengePage({
   const challenge = getChallengeById(challengeId);
 
   if (!challenge) {
-    return (
-      <div className="page-container py-12 text-center">
-        <p>Challenge not found.</p>
-      </div>
-    );
+    notFound();
   }
 
   const nextChallenge = getNextChallengeById(challengeId);

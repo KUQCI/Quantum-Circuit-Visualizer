@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CodeEditor } from "@/components/code/code-editor";
@@ -116,7 +115,7 @@ export function MultiLanguageCodePanel() {
           <RotateCcw className="h-3 w-3" />
         </Button>
         {adapter.docsUrl && (
-          <Link
+          <a
             href={adapter.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -124,7 +123,7 @@ export function MultiLanguageCodePanel() {
           >
             API docs
             <ExternalLink className="h-3 w-3" />
-          </Link>
+          </a>
         )}
       </div>
 

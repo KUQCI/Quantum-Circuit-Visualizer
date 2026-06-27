@@ -354,7 +354,7 @@ body {
   z-index: 100;
   padding: 0.5rem 1rem;
   background: var(--color-brand);
-  color: var(--color-brand-foreground);
+  color: var(--color-background);
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: 0 0 0.5rem 0.5rem;
@@ -467,7 +467,29 @@ body {
   min-height: 0;
   width: 100%;
   grid-template-columns: 1fr;
-  grid-template-rows: auto minmax(280px, 1fr);
+  grid-template-rows: auto auto minmax(240px, 1fr) auto auto;
+}
+
+.learning-panel-lesson {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.learning-panel-ops {
+  grid-column: 1;
+  grid-row: 2;
+  max-height: 168px;
+}
+
+.learning-panel-canvas {
+  grid-column: 1;
+  grid-row: 3;
+  min-height: 240px;
+}
+
+.learning-panel-code-mobile {
+  grid-column: 1;
+  grid-row: 4;
 }
 
 @media (min-width: 768px) {
@@ -491,6 +513,11 @@ body {
     grid-column: 2;
     grid-row: 2;
     min-height: 320px;
+  }
+
+  .learning-panel-code-mobile {
+    grid-column: 1 / -1;
+    grid-row: auto;
   }
 }
 

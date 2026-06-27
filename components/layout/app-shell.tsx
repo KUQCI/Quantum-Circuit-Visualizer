@@ -33,6 +33,8 @@ function getContentBreadcrumbs(pathname: string) {
     return [{ label: "Home", href: "/" }, { label: "Import" }];
   if (pathname === "/export")
     return [{ label: "Home", href: "/" }, { label: "Export" }];
+  if (pathname === "/roadmap")
+    return [{ label: "Home", href: "/" }, { label: "Roadmap" }];
   if (pathname.startsWith("/docs"))
     return [
       { label: "Home", href: "/" },
