@@ -3,6 +3,13 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useThemeStore, getMonacoTheme } from "@/store/theme-store";
+import type { CodeLanguageId } from "@/lib/code-adapters";
+import {
+  getMonacoEditorOptions,
+  monacoLanguageForProfile,
+  setupMonacoEditor,
+} from "@/lib/monaco-editor-setup";
+import type { Monaco } from "@monaco-editor/react";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -19,6 +26,7 @@ interface CodeEditorProps {
   readOnly?: boolean;
   height?: string;
   language?: string;
+  completionProfile?: CodeLanguageId;
 }
 
 export function CodeEditor({
@@ -27,13 +35,19 @@ export function CodeEditor({
   readOnly = false,
   height = "400px",
   language = "python",
+  completionProfile,
 }: CodeEditorProps) {
   const [mounted, setMounted] = useState(false);
   const theme = useThemeStore((s) => s.theme);
+  const editorLanguage = monacoLanguageForProfile(language, completionProfile);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleBeforeMount = (monaco: Monaco) => {
+    setupMonacoEditor(monaco);
+  };
 
   if (!mounted) {
     return (
@@ -47,26 +61,15 @@ export function CodeEditor({
   }
 
   return (
-    <div className="h-full overflow-hidden rounded-lg border border-[var(--color-border)]">
+    <div className="code-editor-root h-full rounded-lg border border-[var(--color-border)]">
       <MonacoEditor
         height={height}
-        language={language}
+        language={editorLanguage}
         value={value}
         onChange={(v) => onChange?.(v ?? "")}
         theme={getMonacoTheme(theme)}
-        options={{
-          readOnly,
-          minimap: { enabled: false },
-          fontSize: 13,
-          lineNumbers: "on",
-          scrollBeyondLastLine: false,
-          wordWrap: "on",
-          padding: { top: 12, bottom: 12 },
-          automaticLayout: true,
-          tabSize: 4,
-          renderLineHighlight: readOnly ? "none" : "line",
-          scrollbar: { verticalScrollbarSize: 8, horizontalScrollbarSize: 8 },
-        }}
+        beforeMount={handleBeforeMount}
+        options={getMonacoEditorOptions(readOnly)}
       />
     </div>
   );

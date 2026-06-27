@@ -140,6 +140,7 @@ export default function ImportPage() {
             value={code}
             onChange={setCode}
             language={adapter.monacoLanguage}
+            completionProfile={language}
             height="320px"
           />
           <div className="mt-4 flex gap-3">

@@ -640,3 +640,19 @@ body {
   height: 2rem;
   font-size: 0.8125rem;
 }
+
+/* Monaco editor — keep autocomplete/hover widgets visible above panels */
+.code-editor-root,
+.code-editor-shell {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+.monaco-editor .suggest-widget,
+.monaco-editor .monaco-hover,
+.monaco-editor .parameter-hints-widget,
+.monaco-editor .context-view,
+.monaco-editor .overflowingContentWidgets {
+  z-index: 10000 !important;
+}

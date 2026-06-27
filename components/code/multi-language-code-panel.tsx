@@ -75,7 +75,7 @@ export function MultiLanguageCodePanel() {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-hidden p-2">
+      <div className="code-editor-shell min-h-0 flex-1 p-2">
         <div className="h-full min-h-[120px]">
           <CodeEditor
             key={codePanelLanguage}
@@ -83,6 +83,7 @@ export function MultiLanguageCodePanel() {
             onChange={handleCodeChange}
             readOnly={readOnly}
             language={adapter.monacoLanguage}
+            completionProfile={codePanelLanguage}
             height="100%"
           />
         </div>
