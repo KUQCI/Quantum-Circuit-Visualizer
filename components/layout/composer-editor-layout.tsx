@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ComposerToolbar } from "@/components/layout/composer-toolbar";
 import { ComposerFooter } from "@/components/layout/composer-footer";
@@ -12,6 +13,7 @@ import { Atom } from "lucide-react";
 
 export function ComposerEditorLayout() {
   const circuit = useCircuitStore((s) => s.circuit);
+  const [draggingGate, setDraggingGate] = useState<string | null>(null);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--color-background)]">
@@ -34,12 +36,18 @@ export function ComposerEditorLayout() {
       {/* Main workspace: Operations | Circuit | Code */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className="composer-panel w-[200px] shrink-0 overflow-hidden border-r">
-          <GateLibrary onDragStart={() => {}} />
+          <GateLibrary
+            onDragStart={setDraggingGate}
+            onDragEnd={() => setDraggingGate(null)}
+          />
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--color-canvas)]">
           <div className="min-h-0 flex-[3] overflow-hidden">
-            <CircuitCanvas />
+            <CircuitCanvas
+              draggingGate={draggingGate}
+              onDragEnd={() => setDraggingGate(null)}
+            />
           </div>
           <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)]">
             <VisualizationPanels circuit={circuit} />
