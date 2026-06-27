@@ -98,14 +98,14 @@ export default function ImportPage() {
       </Card>
 
       {result && !result.success && (
-        <Card className="mb-6 border-red-200 bg-red-50">
+        <Card className="mb-6 border-red-800/50 bg-red-900/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-red-800">
+            <CardTitle className="flex items-center gap-2 text-base text-red-300">
               <AlertCircle className="h-4 w-4" />
               Parse Error
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-red-700">
+          <CardContent className="text-sm text-red-200">
             <p>{result.error}</p>
             {result.details && (
               <ul className="mt-2 list-inside list-disc">
@@ -121,7 +121,7 @@ export default function ImportPage() {
       {circuit && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-green-800">
+            <CardTitle className="flex items-center gap-2 text-base text-green-300">
               <CheckCircle2 className="h-4 w-4" />
               Circuit Detected: {circuit.name}
             </CardTitle>
@@ -154,7 +154,7 @@ export default function ImportPage() {
                 {circuit.operations.map((op) => (
                   <span
                     key={op.id}
-                    className="rounded-md border border-[var(--color-border)] bg-white px-2 py-1 font-mono text-xs"
+                    className="rounded-md border border-[var(--color-border)] bg-[var(--color-secondary)] px-2 py-1 font-mono text-xs"
                   >
                     {op.label}
                     {op.parameters?.[0]?.display

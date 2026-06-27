@@ -61,7 +61,7 @@ export function CodeEditor({
           padding: { top: 12 },
           automaticLayout: true,
         }}
-        theme="vs"
+        theme="vs-dark"
       />
     </div>
   );

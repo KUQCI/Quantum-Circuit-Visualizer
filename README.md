@@ -9,6 +9,8 @@ A full-stack quantum circuit editor and converter that bidirectionally transform
 - **Qiskit Export** — Generate Qiskit Python code from visual circuits in real time
 - **JSON Sync Layer** — Unified circuit schema connects editor, import, and export
 - **Project Management** — Save, rename, duplicate, and delete circuits via localStorage
+- **Probabilities Chart** — Real-time bar chart of measurement outcome distribution
+- **Q-sphere Visualization** — Interactive quantum state sphere with phase coloring
 - **Sample Circuits** — Bell State, GHZ State, Simple Superposition, Quantum Teleportation
 
 ## Tech Stack

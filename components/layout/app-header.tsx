@@ -18,9 +18,12 @@ export function AppHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-card)]/90">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-[var(--color-primary)]">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-semibold text-[var(--color-accent-foreground)]"
+        >
           <Atom className="h-5 w-5" />
           <span>Qiskit Visualizer</span>
         </Link>
@@ -30,10 +33,10 @@ export function AppHeader() {
               key={item.href}
               href={item.href}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                "rounded px-3 py-1.5 text-sm font-medium transition-colors",
                 pathname === item.href
-                  ? "bg-[var(--color-accent)] text-[var(--color-accent-foreground)]"
-                  : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+                  ? "bg-[var(--color-secondary)] text-[var(--color-accent-foreground)]"
+                  : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
               )}
             >
               {item.label}

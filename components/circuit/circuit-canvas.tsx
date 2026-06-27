@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCircuitStore, createOperationFromGateType } from "@/store/circuit-store";
 import { GateLibrary } from "@/components/gates/gate-library";
-import { getGateByType } from "@/components/gates/gate-definitions";
+import { getGateByType, getGateColorByType } from "@/components/gates/gate-definitions";
 import {
   COLUMN_WIDTH,
   WIRE_HEIGHT,
@@ -23,6 +23,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
+import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
 import type { Operation } from "@/lib/circuit-schema";
 
 function GateBlock({
@@ -60,8 +61,8 @@ function GateBlock({
       >
         <div
           className={cn(
-            "h-full w-1 rounded-full bg-slate-400",
-            isSelected && "ring-2 ring-indigo-400"
+            "h-full w-1 rounded-full bg-[var(--color-gate-barrier)]",
+            isSelected && "ring-2 ring-[var(--color-ring)]"
           )}
         />
       </div>
@@ -88,7 +89,7 @@ function GateBlock({
     >
       {isControl && isControlQubit && operation.targets.length > 0 && (
         <div
-          className="absolute w-0.5 bg-violet-400"
+          className="absolute w-0.5 bg-[var(--color-gate-two)]"
           style={{
             height:
               Math.abs(
@@ -113,14 +114,10 @@ function GateBlock({
           !["cx", "cz", "swap"].includes(operation.type))) && (
         <div
           className={cn(
-            "relative flex h-9 w-9 flex-col items-center justify-center rounded-md border text-xs font-bold shadow-sm transition-all",
-            isMeasure
-              ? "border-sky-300 bg-sky-100 text-sky-700"
-              : isControl
-                ? "border-violet-300 bg-violet-100 text-violet-700"
-                : "border-indigo-300 bg-indigo-100 text-indigo-700",
-            isSelected && "ring-2 ring-indigo-500 ring-offset-1",
-            "cursor-pointer hover:shadow-md"
+            "relative flex h-9 w-9 flex-col items-center justify-center rounded border text-xs font-bold shadow-sm transition-all",
+            getGateColorByType(operation.type),
+            isSelected && "ring-2 ring-[var(--color-ring)] ring-offset-1 ring-offset-[var(--color-card)]",
+            "cursor-pointer hover:brightness-110"
           )}
         >
           {operation.label}
@@ -132,7 +129,7 @@ function GateBlock({
         </div>
       )}
       {isControlQubit && isControl && !isTarget && (
-        <div className="h-3 w-3 rounded-full border-2 border-violet-600 bg-white" />
+        <div className="h-3 w-3 rounded-full border-2 border-[var(--color-gate-two)] bg-[var(--color-card)]" />
       )}
       {isSelected && (
         <button
@@ -313,7 +310,7 @@ export function CircuitCanvas() {
       </div>
 
       {validationWarnings.length > 0 && (
-        <div className="mx-4 mt-2 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="mx-4 mt-2 flex items-start gap-2 rounded-md border border-amber-700/50 bg-amber-900/20 px-3 py-2 text-xs text-amber-200">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <div>
             {validationWarnings.map((w, i) => (
@@ -326,7 +323,7 @@ export function CircuitCanvas() {
       <div className="flex-1 overflow-auto p-4">
         <div
           ref={canvasRef}
-          className="relative min-w-max rounded-lg border border-[var(--color-border)] bg-white"
+          className="relative min-w-max rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]"
           style={{
             width: WIRE_LABEL_WIDTH + numColumns * COLUMN_WIDTH + 40,
           }}
@@ -335,7 +332,7 @@ export function CircuitCanvas() {
           {Array.from({ length: numColumns }).map((_, col) => (
             <div
               key={col}
-              className="absolute top-0 border-l border-dashed border-slate-100"
+              className="absolute top-0 border-l border-dashed border-[var(--color-border)]/60"
               style={{
                 left: WIRE_LABEL_WIDTH + col * COLUMN_WIDTH,
                 height:
@@ -362,13 +359,13 @@ export function CircuitCanvas() {
                 {qubit.label}
               </div>
               <div className="relative flex-1">
-                <div className="absolute left-0 right-0 top-1/2 h-px bg-slate-300" />
+                <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-border)]" />
               </div>
             </div>
           ))}
 
           {circuit.classicalBits.length > 0 && (
-            <div className="border-t border-dashed border-slate-200" />
+            <div className="border-t border-dashed border-[var(--color-border)]" />
           )}
           {circuit.classicalBits.map((bit) => (
             <div
@@ -384,8 +381,7 @@ export function CircuitCanvas() {
               </div>
               <div className="relative flex-1">
                 <div
-                  className="absolute left-0 right-0 top-1/2 h-px bg-slate-400"
-                  style={{ borderTop: "2px double #94a3b8" }}
+                  className="absolute left-0 right-0 top-1/2 h-px border-t-2 border-double border-[var(--color-muted-foreground)]"
                 />
               </div>
             </div>
@@ -466,7 +462,7 @@ export function CircuitCanvas() {
 }
 
 export function EditorLayout() {
-  const { getGeneratedCode, resetCircuit } = useCircuitStore();
+  const { circuit, getGeneratedCode, resetCircuit } = useCircuitStore();
   const [code, setCode] = useState("");
 
   const refreshCode = useCallback(() => {
@@ -480,13 +476,16 @@ export function EditorLayout() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      <aside className="w-52 shrink-0 border-r border-[var(--color-border)] bg-white">
+      <aside className="w-52 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-card)]">
         <GateLibrary onDragStart={() => {}} />
       </aside>
-      <div className="flex-1 overflow-hidden bg-[var(--color-muted)]">
-        <CircuitCanvas />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--color-surface)]">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <CircuitCanvas />
+        </div>
+        <VisualizationPanels circuit={circuit} />
       </div>
-      <aside className="flex w-80 shrink-0 flex-col border-l border-[var(--color-border)] bg-white">
+      <aside className="flex w-80 shrink-0 flex-col border-l border-[var(--color-border)] bg-[var(--color-card)]">
         <div className="border-b border-[var(--color-border)] px-4 py-3">
           <h2 className="text-sm font-semibold">Qiskit Code</h2>
           <p className="text-xs text-[var(--color-muted-foreground)]">
@@ -494,7 +493,7 @@ export function EditorLayout() {
           </p>
         </div>
         <div className="min-h-0 flex-1 overflow-hidden p-3">
-          <CodeEditor value={code} readOnly height="calc(100vh - 220px)" />
+          <CodeEditor value={code} readOnly height="calc(100vh - 280px)" />
         </div>
         <div className="flex flex-wrap gap-2 border-t border-[var(--color-border)] p-3">
           <CodePanelActions code={code} />

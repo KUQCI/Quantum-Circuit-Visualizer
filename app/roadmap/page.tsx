@@ -37,14 +37,14 @@ const phases = [
   },
   {
     phase: 3,
-    title: "Execution & Result Visualization",
+    title: "Execution & Advanced Visualization",
     status: "planned" as const,
     description:
-      "Run circuits on quantum simulators or hardware and visualize measurement results, state vectors, and probability distributions.",
+      "Run circuits on quantum simulators and visualize measurement results. Basic probability and Q-sphere visualizations are available in the editor.",
     features: [
-      "Simulator integration",
-      "Measurement result charts",
-      "State vector visualization",
+      "Simulator integration (backend execution)",
+      "Measurement result histograms",
+      "Enhanced state vector display",
       "Backend selection",
     ],
   },
@@ -80,7 +80,7 @@ export default function RoadmapPage() {
           <p className="mt-4">
             The existing Python translator (ported to TypeScript) handles
             OpenQASM 2.0 parsing, mathematical expression evaluation (e.g.{" "}
-            <code className="rounded bg-slate-100 px-1">pi/2</code>), and
+            <code className="rounded bg-[var(--color-secondary)] px-1">pi/2</code>), and
             gate library mapping — ensuring consistent bidirectional conversion.
           </p>
         </CardContent>
@@ -103,8 +103,8 @@ export default function RoadmapPage() {
                 <span
                   className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium ${
                     phase.status === "complete"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-slate-100 text-slate-600"
+                      ? "bg-green-900/40 text-green-300"
+                      : "bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
                   }`}
                 >
                   {phase.status === "complete" ? "Complete" : "Planned"}

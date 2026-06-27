@@ -34,8 +34,8 @@ export function GateLibrary({ onDragStart }: GateLibraryProps) {
                     }}
                     title={gate.description}
                     className={cn(
-                      "flex h-10 cursor-grab items-center justify-center rounded-md border text-xs font-semibold transition-shadow active:cursor-grabbing hover:shadow-md",
-                      getGateColor(gate.category)
+                      "flex h-10 cursor-grab items-center justify-center rounded border text-xs font-semibold transition-all active:cursor-grabbing hover:brightness-110",
+                      getGateColor(gate)
                     )}
                   >
                     {gate.label}
