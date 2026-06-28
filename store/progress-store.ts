@@ -5,6 +5,12 @@ import { persist } from "zustand/middleware";
 import { evaluateAchievements } from "@/lib/learning/achievements";
 import { getLevelFromXp, updateStreak } from "@/lib/learning/progress";
 import type { SkillTag } from "@/lib/learning/types";
+import {
+  asBoolean,
+  asNumber,
+  asStringArray,
+  createSafeJsonStorage,
+} from "@/lib/safe-persist";
 
 interface ProgressState {
   totalXp: number;
@@ -181,6 +187,55 @@ export const useProgressStore = create<ProgressState>()(
     }),
     {
       name: "qiskit-visualizer-progress",
+      storage: createSafeJsonStorage<
+        Pick<
+          ProgressState,
+          | "totalXp"
+          | "completedLessons"
+          | "completedChallenges"
+          | "unlockedAchievements"
+          | "currentStreak"
+          | "lastActiveDate"
+          | "skillXp"
+          | "exportActionCount"
+          | "importActionCount"
+          | "projectSaved"
+          | "hasEverPlacedGate"
+          | "hasEverUsedControlledGate"
+        >
+      >(),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<ProgressState> | undefined;
+        if (!saved) return current;
+
+        const skillXp = { ...current.skillXp };
+        if (saved.skillXp && typeof saved.skillXp === "object") {
+          for (const key of Object.keys(skillXp) as SkillTag[]) {
+            const value = (saved.skillXp as Record<string, unknown>)[key];
+            skillXp[key] = asNumber(value, skillXp[key]);
+          }
+        }
+
+        return {
+          ...current,
+          totalXp: asNumber(saved.totalXp, current.totalXp),
+          completedLessons: asStringArray(saved.completedLessons),
+          completedChallenges: asStringArray(saved.completedChallenges),
+          unlockedAchievements: asStringArray(saved.unlockedAchievements),
+          currentStreak: asNumber(saved.currentStreak, current.currentStreak),
+          lastActiveDate:
+            typeof saved.lastActiveDate === "string" ? saved.lastActiveDate : null,
+          skillXp,
+          exportActionCount: asNumber(saved.exportActionCount, current.exportActionCount),
+          importActionCount: asNumber(saved.importActionCount, current.importActionCount),
+          projectSaved: asBoolean(saved.projectSaved, current.projectSaved),
+          hasEverPlacedGate: asBoolean(saved.hasEverPlacedGate, current.hasEverPlacedGate),
+          hasEverUsedControlledGate: asBoolean(
+            saved.hasEverUsedControlledGate,
+            current.hasEverUsedControlledGate
+          ),
+        };
+      },
     }
   )
 );

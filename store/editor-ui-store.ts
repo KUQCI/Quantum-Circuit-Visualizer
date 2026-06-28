@@ -3,6 +3,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CodeLanguageId } from "@/lib/code-adapters";
+import { CODE_LANGUAGES } from "@/lib/code-adapters";
+import { asBoolean, createSafeJsonStorage } from "@/lib/safe-persist";
 
 export type AlignmentMode = "freeform" | "left" | "layers";
 
@@ -67,6 +69,54 @@ export const useEditorUiStore = create<EditorUiState>()(
     }),
     {
       name: "qiskit-visualizer-editor-ui",
+      storage: createSafeJsonStorage<
+        Pick<
+          EditorUiState,
+          | "alignmentMode"
+          | "codePanelLanguage"
+          | "showCodePanel"
+          | "showVizPanels"
+          | "showPhaseDisks"
+          | "vizPanels"
+        >
+      >(),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<EditorUiState> | undefined;
+        if (!saved) return current;
+
+        const validLanguage = CODE_LANGUAGES.some((l) => l.id === saved.codePanelLanguage)
+          ? saved.codePanelLanguage
+          : current.codePanelLanguage;
+
+        return {
+          ...current,
+          alignmentMode:
+            saved.alignmentMode === "freeform" ||
+            saved.alignmentMode === "left" ||
+            saved.alignmentMode === "layers"
+              ? saved.alignmentMode
+              : current.alignmentMode,
+          codePanelLanguage: validLanguage as CodeLanguageId,
+          showCodePanel: asBoolean(saved.showCodePanel, current.showCodePanel),
+          showVizPanels: asBoolean(saved.showVizPanels, current.showVizPanels),
+          showPhaseDisks: asBoolean(saved.showPhaseDisks, current.showPhaseDisks),
+          vizPanels: {
+            probabilities: asBoolean(
+              saved.vizPanels?.probabilities,
+              current.vizPanels.probabilities
+            ),
+            qsphere: asBoolean(saved.vizPanels?.qsphere, current.vizPanels.qsphere),
+            statevector: asBoolean(
+              saved.vizPanels?.statevector,
+              current.vizPanels.statevector
+            ),
+            histogram: asBoolean(
+              saved.vizPanels?.histogram,
+              current.vizPanels.histogram
+            ),
+          },
+        };
+      },
       partialize: (state) => ({
         alignmentMode: state.alignmentMode,
         codePanelLanguage: state.codePanelLanguage,

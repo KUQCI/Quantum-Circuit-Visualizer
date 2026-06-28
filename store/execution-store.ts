@@ -3,10 +3,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { BackendId } from "@/lib/backends";
-import { getBackend } from "@/lib/backends";
+import { BACKENDS, getBackend } from "@/lib/backends";
 import type { ExecutionResult } from "@/lib/shot-simulator";
 import { runCircuitShots } from "@/lib/shot-simulator";
 import type { Circuit } from "@/lib/circuit-schema";
+import { asNumber, createSafeJsonStorage } from "@/lib/safe-persist";
 
 interface ExecutionState {
   backendId: BackendId;
@@ -87,6 +88,21 @@ export const useExecutionStore = create<ExecutionState>()(
     }),
     {
       name: "qiskit-visualizer-execution",
+      storage: createSafeJsonStorage<Pick<ExecutionState, "backendId" | "shots">>(),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<ExecutionState> | undefined;
+        if (!saved) return current;
+
+        const backendId = BACKENDS.some((b) => b.id === saved.backendId)
+          ? saved.backendId!
+          : current.backendId;
+
+        return {
+          ...current,
+          backendId,
+          shots: asNumber(saved.shots, current.shots),
+        };
+      },
       partialize: (state) => ({
         backendId: state.backendId,
         shots: state.shots,

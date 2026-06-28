@@ -10,9 +10,14 @@ import {
   getGateLabel,
 } from "@/lib/circuit-schema";
 import { generateQiskitCode } from "@/lib/qiskit-generator";
-import { validateCircuitPlacement } from "@/lib/validation";
+import { validateCircuit, validateCircuitPlacement } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
 import { useProgressStore } from "@/store/progress-store";
+import {
+  asNumber,
+  createSafeJsonStorage,
+  sanitizeCircuit,
+} from "@/lib/safe-persist";
 
 export interface Project {
   id: string;
@@ -87,7 +92,32 @@ function loadProjectsFromStorage(): Project[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(PROJECTS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    const projects: Project[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") continue;
+      const record = item as Partial<Project>;
+      if (typeof record.id !== "string" || typeof record.name !== "string") continue;
+      const circuitResult = validateCircuit(record.circuit);
+      if (!circuitResult.valid) continue;
+      projects.push({
+        id: record.id,
+        name: record.name,
+        circuit: circuitResult.circuit,
+        createdAt:
+          typeof record.createdAt === "string"
+            ? record.createdAt
+            : new Date().toISOString(),
+        updatedAt:
+          typeof record.updatedAt === "string"
+            ? record.updatedAt
+            : new Date().toISOString(),
+      });
+    }
+    return projects;
   } catch {
     return [];
   }
@@ -456,6 +486,33 @@ export const useCircuitStore = create<CircuitState>()(
     }),
     {
       name: "qiskit-visualizer-circuit",
+      storage: createSafeJsonStorage<
+        Pick<CircuitState, "circuit" | "currentProjectId" | "history" | "historyIndex">
+      >(),
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<CircuitState> | undefined;
+        if (!saved) return current;
+
+        const circuit = sanitizeCircuit(saved.circuit ?? current.circuit);
+        const history = Array.isArray(saved.history)
+          ? saved.history.map((entry) => ({
+              circuit: sanitizeCircuit(entry?.circuit),
+            }))
+          : current.history;
+        const historyIndex = asNumber(saved.historyIndex, current.historyIndex);
+
+        return {
+          ...current,
+          circuit,
+          currentProjectId:
+            typeof saved.currentProjectId === "string" ? saved.currentProjectId : null,
+          history: history.length > 0 ? history : [{ circuit }],
+          historyIndex: Math.min(
+            Math.max(0, historyIndex),
+            Math.max(0, history.length - 1)
+          ),
+        };
+      },
       partialize: (state) => ({
         circuit: state.circuit,
         currentProjectId: state.currentProjectId,

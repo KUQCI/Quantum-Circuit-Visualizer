@@ -52,7 +52,7 @@ export function ContinueWhereYouLeftOff({
     });
   }
 
-  if (showProject && targets.project) {
+  if (showProject && targets.project?.circuit?.qubits && targets.project?.circuit?.operations) {
     cards.push({
       badge: "Continue Building",
       title: targets.project.name,

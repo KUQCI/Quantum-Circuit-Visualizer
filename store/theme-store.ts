@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createSafeJsonStorage } from "@/lib/safe-persist";
 
 export type Theme = "light" | "dark";
 
@@ -19,7 +20,7 @@ export const useThemeStore = create<ThemeState>()(
       toggleTheme: () =>
         set({ theme: get().theme === "dark" ? "light" : "dark" }),
     }),
-    { name: "qiskit-visualizer-theme" }
+    { name: "qiskit-visualizer-theme", storage: createSafeJsonStorage<Pick<ThemeState, "theme">>() }
   )
 );
 
