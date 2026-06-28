@@ -101,7 +101,7 @@ export function ComposerEditorLayout() {
             />
           </div>
           {showVizPanels && (
-            <div className="min-h-[160px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[180px]">
+            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[220px] lg:min-h-[260px]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}

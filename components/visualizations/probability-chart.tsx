@@ -19,13 +19,14 @@ export function ProbabilityChart({
     [probabilities]
   );
 
-  const chartWidth = Math.max(320, probabilities.length * 36);
   const chartHeight = 160;
   const padding = { top: 16, right: 12, bottom: 36, left: 44 };
-  const innerW = chartWidth - padding.left - padding.right;
+  const innerW = Math.max(probabilities.length * 36, 120);
   const innerH = chartHeight - padding.top - padding.bottom;
+  const chartWidth = padding.left + innerW + padding.right;
   const barWidth = Math.min(40, innerW / Math.max(probabilities.length, 1) - 4);
   const probSum = probabilities.reduce((s, p) => s + p.probability, 0);
+  const scrollable = probabilities.length > 16;
 
   if (error) {
     return (
@@ -44,13 +45,16 @@ export function ProbabilityChart({
   }
 
   return (
-    <div className="h-full overflow-x-auto">
-      <svg
-        width={chartWidth}
-        height={chartHeight}
-        className="min-w-full"
-        aria-label="Probability distribution chart"
-      >
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className={`min-h-0 flex-1 ${scrollable ? "overflow-x-auto" : ""}`}>
+        <svg
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          width="100%"
+          height="100%"
+          preserveAspectRatio="xMidYMid meet"
+          className="min-h-[100px]"
+          aria-label="Probability distribution chart"
+        >
         {/* Y-axis */}
         <line
           x1={padding.left}
@@ -164,6 +168,7 @@ export function ProbabilityChart({
           stroke="var(--color-border)"
         />
       </svg>
+      </div>
       {visible.length === 1 && (
         <p className="mt-1 text-center text-[10px] text-[var(--color-muted-foreground)]">
           State: {visible[0].label} — {visible[0].percentage.toFixed(1)}%

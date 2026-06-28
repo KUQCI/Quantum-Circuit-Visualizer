@@ -64,7 +64,7 @@ export function StatevectorChart({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="mb-2 flex shrink-0 gap-1">
+      <div className="mb-1 flex shrink-0 gap-1">
         {(["table", "bars"] as const).map((v) => (
           <button
             key={v}
@@ -167,7 +167,7 @@ export function StatevectorChart({
         </div>
       )}
 
-      <p className="mt-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
+      <p className="mt-0.5 shrink-0 truncate text-[10px] text-[var(--color-muted-foreground)]">
         {visibleRows.length} non-zero amplitudes · Σ|ψ|² ={" "}
         {rows.reduce((s, r) => s + r.prob, 0).toFixed(4)}
       </p>
