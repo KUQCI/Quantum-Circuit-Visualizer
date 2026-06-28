@@ -31,14 +31,14 @@ const OPENQASM_SNIPPETS = [
 
 function gateInsertText(example: string): string {
   const match = example.match(/^qc\.(\w+)\((.*)\)$/);
-  if (!match) return example;
+  if (!match) return example.replace(/^qc\./, "");
 
   const [, gate, args] = match;
-  if (!args) return `qc.${gate}()`;
+  if (!args) return `${gate}()`;
 
   const parts = args.split(",").map((part) => part.trim());
   const placeholders = parts.map((part, index) => `\${${index + 1}:${part}}`);
-  return `qc.${gate}(${placeholders.join(", ")})`;
+  return `${gate}(${placeholders.join(", ")})`;
 }
 
 function completionRange(model: editor.ITextModel, position: Position) {
@@ -49,6 +49,23 @@ function completionRange(model: editor.ITextModel, position: Position) {
     startColumn: word.startColumn,
     endColumn: position.column,
   };
+}
+
+/** After `qc.` the word range is empty — insert only the gate suffix at the cursor */
+function qiskitDotCompletionRange(
+  model: editor.ITextModel,
+  position: Position,
+  linePrefix: string
+) {
+  if (/(?:qc|circuit)\.$/.test(linePrefix)) {
+    return {
+      startLineNumber: position.lineNumber,
+      endLineNumber: position.lineNumber,
+      startColumn: position.column,
+      endColumn: position.column,
+    };
+  }
+  return completionRange(model, position);
 }
 
 function registerQiskitCompletions(monaco: Monaco) {
@@ -65,7 +82,7 @@ function registerQiskitCompletions(monaco: Monaco) {
         endColumn: position.column,
       });
 
-      const range = completionRange(model, position);
+      const range = qiskitDotCompletionRange(model, position, linePrefix);
       const suggestions: languages.CompletionItem[] = [];
 
       if (/(?:qc|circuit)\.$/.test(linePrefix)) {
@@ -79,10 +96,15 @@ function registerQiskitCompletions(monaco: Monaco) {
               monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             detail: gate.fullName,
             documentation: gate.description,
+            filterText: gate.type,
+            sortText: `0_${gate.type}`,
             range,
           });
         }
-      } else if (/^\s*(?:from qiskit|import|qc\s*=)/.test(linePrefix) || linePrefix.trim().length <= 3) {
+      } else if (
+        /^\s*(?:from qiskit|import|qc\s*=)/.test(linePrefix) ||
+        (linePrefix.trim().length <= 3 && !/(?:qc|circuit)\./.test(linePrefix))
+      ) {
         for (const snippet of QISKIT_SNIPPETS) {
           suggestions.push({
             label: snippet.label,
@@ -190,9 +212,9 @@ export function getMonacoEditorOptions(readOnly: boolean) {
       strings: true,
     },
     suggestOnTriggerCharacters: true,
-    wordBasedSuggestions: "matchingDocuments" as const,
+    wordBasedSuggestions: "off" as const,
     acceptSuggestionOnEnter: "on" as const,
-    tabCompletion: "on" as const,
+    tabCompletion: "onlySnippets" as const,
     suggest: {
       showMethods: true,
       showFunctions: true,
