@@ -10,6 +10,7 @@ import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaHint } from "@/components/mascot/QuantaHint";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
+import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { checkCircuit } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
 import { useCircuitStore } from "@/store/circuit-store";
@@ -220,7 +221,12 @@ export function LearningPlayer({
         </div>
       </div>
 
-      {/* Main 4-column workspace (desktop) */}
+      {/* Main workspace */}
+      <FeatureErrorBoundary
+        title="Lesson workspace error"
+        description="This lesson view hit an unexpected error. You can retry or reset saved browser data."
+        resetHref={backHref}
+      >
       <div
         className={cn(
           "learning-player-grid min-h-0 flex-1",
@@ -311,6 +317,7 @@ export function LearningPlayer({
           onImportSync={handleImportSync}
         />
       </div>
+      </FeatureErrorBoundary>
 
       {/* Bottom actions */}
       <div className="shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4">

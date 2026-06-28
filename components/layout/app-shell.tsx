@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { AppHeader } from "@/components/layout/app-header";
+import { AppBootstrap } from "@/components/layout/app-bootstrap";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider>
+      <AppBootstrap />
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>

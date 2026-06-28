@@ -1,6 +1,6 @@
 import { createJSONStorage, type StateStorage } from "zustand/middleware";
-import { createEmptyCircuit, type Circuit } from "./circuit-schema";
-import { validateCircuit, repairCircuit } from "./validation";
+import type { Circuit } from "./circuit-schema";
+import { prepareCircuit } from "./circuit-guard";
 
 function createSafeStateStorage(): StateStorage {
   return {
@@ -43,7 +43,5 @@ export function asBoolean(value: unknown, fallback: boolean): boolean {
 }
 
 export function sanitizeCircuit(value: unknown): Circuit {
-  const result = validateCircuit(value);
-  if (result.valid) return repairCircuit(result.circuit);
-  return createEmptyCircuit("Untitled circuit", 2, 0);
+  return prepareCircuit(value);
 }

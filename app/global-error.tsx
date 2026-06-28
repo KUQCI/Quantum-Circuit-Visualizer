@@ -2,15 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-
-const STORAGE_KEYS = [
-  "qiskit-visualizer-circuit",
-  "qiskit-visualizer-progress",
-  "qiskit-visualizer-theme",
-  "qiskit-visualizer-editor-ui",
-  "qiskit-visualizer-execution",
-  "qiskit-visualizer-projects",
-];
+import { clearAllAppStorage } from "@/lib/app-storage";
 
 export default function GlobalError({
   error,
@@ -24,9 +16,7 @@ export default function GlobalError({
   }, [error]);
 
   const clearSavedData = () => {
-    for (const key of STORAGE_KEYS) {
-      localStorage.removeItem(key);
-    }
+    clearAllAppStorage();
     reset();
   };
 

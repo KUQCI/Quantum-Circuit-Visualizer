@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { clearAllAppStorage } from "@/lib/app-storage";
 
 export default function Error({
   error,
@@ -28,8 +29,14 @@ export default function Error({
         <Button asChild variant="outline">
           <Link href="/">Home</Link>
         </Button>
-        <Button asChild variant="ghost">
-          <Link href="/editor">Open Build</Link>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            clearAllAppStorage();
+            reset();
+          }}
+        >
+          Clear saved data
         </Button>
       </div>
     </div>

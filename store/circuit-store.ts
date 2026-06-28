@@ -10,13 +10,14 @@ import {
   getGateLabel,
 } from "@/lib/circuit-schema";
 import { generateQiskitCode } from "@/lib/qiskit-generator";
-import { validateCircuit, validateCircuitPlacement, repairCircuit } from "@/lib/validation";
+import { prepareCircuit, prepareHistory } from "@/lib/circuit-guard";
+import { runAppStorageMigrations } from "@/lib/app-storage";
+import { validateCircuit, validateCircuitPlacement } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
 import { useProgressStore } from "@/store/progress-store";
 import {
   asNumber,
   createSafeJsonStorage,
-  sanitizeCircuit,
 } from "@/lib/safe-persist";
 
 export interface Project {
@@ -77,6 +78,10 @@ interface CircuitState {
 
 const PROJECTS_KEY = "qiskit-visualizer-projects";
 
+if (typeof window !== "undefined") {
+  runAppStorageMigrations();
+}
+
 function pushHistory(state: CircuitState): Partial<CircuitState> {
   const newHistory = state.history.slice(0, state.historyIndex + 1);
   newHistory.push({ circuit: structuredClone(state.circuit) });
@@ -106,7 +111,7 @@ function loadProjectsFromStorage(): Project[] {
       projects.push({
         id: record.id,
         name: record.name,
-        circuit: repairCircuit(circuitResult.circuit),
+        circuit: prepareCircuit(circuitResult.circuit),
         createdAt:
           typeof record.createdAt === "string"
             ? record.createdAt
@@ -150,9 +155,10 @@ export const useCircuitStore = create<CircuitState>()(
       projects: [],
 
       setCircuit: (circuit) => {
+        const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
         set((state) => ({
-          circuit,
-          ...pushHistory({ ...state, circuit }),
+          circuit: safe,
+          ...pushHistory({ ...state, circuit: safe }),
         }));
       },
 
@@ -372,10 +378,11 @@ export const useCircuitStore = create<CircuitState>()(
         const { historyIndex, history } = get();
         if (historyIndex > 0) {
           const newIndex = historyIndex - 1;
+          const circuit = prepareCircuit(history[newIndex].circuit);
           set({
             historyIndex: newIndex,
-            circuit: structuredClone(history[newIndex].circuit),
-            validationWarnings: validateCircuitPlacement(history[newIndex].circuit),
+            circuit,
+            validationWarnings: validateCircuitPlacement(circuit),
           });
         }
       },
@@ -384,10 +391,11 @@ export const useCircuitStore = create<CircuitState>()(
         const { historyIndex, history } = get();
         if (historyIndex < history.length - 1) {
           const newIndex = historyIndex + 1;
+          const circuit = prepareCircuit(history[newIndex].circuit);
           set({
             historyIndex: newIndex,
-            circuit: structuredClone(history[newIndex].circuit),
-            validationWarnings: validateCircuitPlacement(history[newIndex].circuit),
+            circuit,
+            validationWarnings: validateCircuitPlacement(circuit),
           });
         }
       },
@@ -493,12 +501,10 @@ export const useCircuitStore = create<CircuitState>()(
         const saved = persisted as Partial<CircuitState> | undefined;
         if (!saved) return current;
 
-        const circuit = sanitizeCircuit(saved.circuit ?? current.circuit);
-        const history = Array.isArray(saved.history)
-          ? saved.history.map((entry) => ({
-              circuit: sanitizeCircuit(entry?.circuit),
-            }))
-          : current.history;
+        const circuit = prepareCircuit(saved.circuit ?? current.circuit);
+        const history = prepareHistory(
+          Array.isArray(saved.history) ? saved.history : current.history
+        );
         const historyIndex = asNumber(saved.historyIndex, current.historyIndex);
 
         return {

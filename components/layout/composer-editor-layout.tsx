@@ -8,6 +8,7 @@ import { GateLibrary } from "@/components/gates/gate-library";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
 import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-panel";
 import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
+import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
@@ -33,6 +34,11 @@ export function ComposerEditorLayout() {
 
       <ComposerToolbar />
 
+      <FeatureErrorBoundary
+        title="Build workspace error"
+        description="The circuit editor hit an unexpected error. Your saved data may need repair."
+        resetHref="/"
+      >
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         {!operationsPanelCollapsed && (
           <>
@@ -130,6 +136,7 @@ export function ComposerEditorLayout() {
           </>
         )}
       </div>
+      </FeatureErrorBoundary>
 
       <ComposerFooter />
     </div>
