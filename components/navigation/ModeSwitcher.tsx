@@ -22,12 +22,11 @@ export function ModeSwitcher({ className, size = "default" }: ModeSwitcherProps)
   const pathname = usePathname();
 
   return (
-    <div
+    <nav
       className={cn(
         "inline-flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/50 p-0.5",
         className
       )}
-      role="tablist"
       aria-label="App mode"
     >
       {modes.map((mode) => {
@@ -37,8 +36,7 @@ export function ModeSwitcher({ className, size = "default" }: ModeSwitcherProps)
           <Link
             key={mode.href}
             href={mode.href}
-            role="tab"
-            aria-selected={active}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-md font-medium transition-colors",
               size === "sm" ? "px-2 py-1 text-xs" : "px-2.5 py-1.5 text-sm",
@@ -52,6 +50,6 @@ export function ModeSwitcher({ className, size = "default" }: ModeSwitcherProps)
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

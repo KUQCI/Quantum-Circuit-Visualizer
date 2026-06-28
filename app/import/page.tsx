@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { CodeEditor } from "@/components/code/code-editor";
 import { useCircuitStore } from "@/store/circuit-store";
+import { useProgressStore } from "@/store/progress-store";
 import { PageActions } from "@/components/navigation/PageActions";
 import { validateCircuit } from "@/lib/validation";
 import {
@@ -38,7 +39,8 @@ const EXAMPLES: Record<CodeLanguageId, string> = {
 
 export default function ImportPage() {
   const router = useRouter();
-  const { setCircuit } = useCircuitStore();
+  const { setActivityCircuit } = useCircuitStore();
+  const recordImport = useProgressStore((s) => s.recordImport);
   const [language, setLanguage] = useState<CodeLanguageId>("qiskit");
   const [code, setCode] = useState(bellStateQiskitCode);
   const [loading, setLoading] = useState(false);
@@ -85,7 +87,8 @@ export default function ImportPage() {
 
   const handleOpenInEditor = () => {
     if (result?.success && result.circuit) {
-      setCircuit(result.circuit);
+      setActivityCircuit(result.circuit);
+      recordImport();
       router.push("/editor");
     }
   };

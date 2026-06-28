@@ -12,6 +12,7 @@ import { useCircuitStore } from "@/store/circuit-store";
 export function AppBootstrap() {
   useEffect(() => {
     runAppStorageMigrations();
+    useCircuitStore.getState().loadProjects();
 
     const { circuit, history, historyIndex } = useCircuitStore.getState();
     const nextCircuit = prepareCircuit(circuit);

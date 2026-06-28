@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -64,7 +62,6 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
   };
 
   const fileItems = [
-    { label: "Home", action: () => router.push("/") },
     { label: "New circuit", action: handleNewCircuit },
     { label: "Save file", action: () => saveProject() },
     { label: "Open projects", action: () => router.push("/projects") },
@@ -92,24 +89,6 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
     <>
       <div className="composer-toolbar flex h-9 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          {immersive && (
-            <Link
-              href="/"
-              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
-              title="Home"
-            >
-              <Image
-                src="https://kuqci.github.io/logo.png"
-                alt=""
-                width={18}
-                height={18}
-                className="rounded"
-                unoptimized
-                aria-hidden
-              />
-              <span className="hidden text-xs font-medium sm:inline">Home</span>
-            </Link>
-          )}
           <Input
             value={circuit.name}
             onChange={(e) =>

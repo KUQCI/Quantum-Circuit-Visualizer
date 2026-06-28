@@ -8,11 +8,13 @@ import { Copy, Download, Check } from "lucide-react";
 interface CodePanelActionsProps {
   code: string;
   filename?: string;
+  onExport?: () => void;
 }
 
 export function CodePanelActions({
   code,
   filename = "circuit.py",
+  onExport,
 }: CodePanelActionsProps) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
@@ -20,6 +22,7 @@ export function CodePanelActions({
   const handleCopy = async () => {
     try {
       await copyToClipboard(code);
+      onExport?.();
       setCopied(true);
       setCopyError(false);
       setTimeout(() => setCopied(false), 2000);
@@ -42,7 +45,10 @@ export function CodePanelActions({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => downloadTextFile(code, filename)}
+        onClick={() => {
+          downloadTextFile(code, filename);
+          onExport?.();
+        }}
       >
         <Download className="h-3.5 w-3.5" />
         Download

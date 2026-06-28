@@ -14,6 +14,7 @@ import {
   isChallengeUnlockedByTier,
   useProgressStore,
 } from "@/store/progress-store";
+import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
 import { BarChart3, Award, GraduationCap } from "lucide-react";
 
 export default function ChallengesPage() {
@@ -58,69 +59,71 @@ export default function ChallengesPage() {
         />
       </div>
 
-      <ProgressSummary compact />
+      <ProgressHydrationGate>
+        <ProgressSummary compact />
 
-      {allComplete && (
-        <NextStepCard
+        {allComplete && (
+          <NextStepCard
+            className="my-6"
+            badge="All challenges complete"
+            title="Quantum champion!"
+            description="You have finished every challenge. Review achievements or keep building circuits."
+            href="/achievements"
+            ctaLabel="View Achievements"
+            secondaryHref="/editor"
+            secondaryLabel="Open Build"
+          />
+        )}
+
+        {nextChallenge && !allComplete && (
+          <NextStepCard
+            className="my-6"
+            badge="Continue Challenge"
+            title={nextChallenge.title}
+            description={nextChallenge.description}
+            href={`/challenges/${nextChallenge.id}`}
+            ctaLabel="Continue"
+            secondaryHref="/progress"
+            secondaryLabel="View Progress"
+          />
+        )}
+
+        <ContinueWhereYouLeftOff className="my-6" showProject={false} />
+
+        <QuantaMessage
+          title="Quanta's tip"
+          message={quantaMessages.challengesTip}
           className="my-6"
-          badge="All challenges complete"
-          title="Quantum champion!"
-          description="You have finished every challenge. Review achievements or keep building circuits."
-          href="/achievements"
-          ctaLabel="View Achievements"
-          secondaryHref="/editor"
-          secondaryLabel="Open Build"
         />
-      )}
 
-      {nextChallenge && !allComplete && (
-        <NextStepCard
-          className="my-6"
-          badge="Continue Challenge"
-          title={nextChallenge.title}
-          description={nextChallenge.description}
-          href={`/challenges/${nextChallenge.id}`}
-          ctaLabel="Continue"
-          secondaryHref="/progress"
-          secondaryLabel="View Progress"
-        />
-      )}
-
-      <ContinueWhereYouLeftOff className="my-6" showProject={false} />
-
-      <QuantaMessage
-        title="Quanta's tip"
-        message={quantaMessages.challengesTip}
-        className="my-6"
-      />
-
-      <div className="space-y-8">
-        {tiers.map((tier) => {
-          const items = getChallengesByDifficulty(tier);
-          const unlocked = isChallengeUnlockedByTier(
-            tier,
-            completedLessons,
-            completedChallenges
-          );
-          return (
-            <section key={tier}>
-              <h2 className="mb-3 text-sm font-semibold capitalize text-[var(--color-foreground)]">
-                {tier}
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {items.map((c) => (
-                  <ChallengeCard
-                    key={c.id}
-                    challenge={c}
-                    unlocked={unlocked}
-                    completed={completedChallenges.includes(c.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+        <div className="space-y-8">
+          {tiers.map((tier) => {
+            const items = getChallengesByDifficulty(tier);
+            const unlocked = isChallengeUnlockedByTier(
+              tier,
+              completedLessons,
+              completedChallenges
+            );
+            return (
+              <section key={tier}>
+                <h2 className="mb-3 text-sm font-semibold capitalize text-[var(--color-foreground)]">
+                  {tier}
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {items.map((c) => (
+                    <ChallengeCard
+                      key={c.id}
+                      challenge={c}
+                      unlocked={unlocked}
+                      completed={completedChallenges.includes(c.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </ProgressHydrationGate>
     </div>
   );
 }

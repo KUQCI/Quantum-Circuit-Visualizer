@@ -253,6 +253,8 @@ body {
 
 .workspace-main--player {
   min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* IBM Composer–style editor workspace: top row + full-width viz band */
@@ -618,6 +620,7 @@ body {
 .learning-panel-code-mobile {
   grid-column: 1;
   grid-row: 4;
+  max-height: min(220px, 32dvh);
 }
 
 @media (min-width: 768px) {

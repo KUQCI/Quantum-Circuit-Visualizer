@@ -5,6 +5,7 @@ import { QuantaDuck } from "@/components/mascot/QuantaDuck";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { LessonPath } from "@/components/learning/LessonPath";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
+import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
 import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
@@ -67,46 +68,48 @@ export default function LearnPage() {
 
       <ContinueWhereYouLeftOff className="mb-8" showProject={false} />
 
-      {beginnerChallenge && (
-        <NextStepCard
+      <ProgressHydrationGate>
+        {beginnerChallenge && (
+          <NextStepCard
+            className="mb-8"
+            badge="Recommended Challenge"
+            title={beginnerChallenge.title}
+            description={beginnerChallenge.description}
+            href={`/challenges/${beginnerChallenge.id}`}
+            ctaLabel="Start Challenge"
+            secondaryHref="/achievements"
+            secondaryLabel="View Achievements"
+          />
+        )}
+
+        <QuantaMessage
+          title="Welcome to Quantum Academy"
+          message={quantaMessages.welcome}
           className="mb-8"
-          badge="Recommended Challenge"
-          title={beginnerChallenge.title}
-          description={beginnerChallenge.description}
-          href={`/challenges/${beginnerChallenge.id}`}
-          ctaLabel="Start Challenge"
-          secondaryHref="/achievements"
-          secondaryLabel="View Achievements"
         />
-      )}
 
-      <QuantaMessage
-        title="Welcome to Quantum Academy"
-        message={quantaMessages.welcome}
-        className="mb-8"
-      />
+        <section className="mb-8">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            Your Progress
+          </h2>
+          <ProgressSummary />
+          <PageActions
+            className="mt-4"
+            secondary={[
+              { label: "View Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
+              { label: "Achievements", href: "/achievements", icon: <Award className="h-4 w-4" /> },
+              { label: "Challenges", href: "/challenges", icon: <Swords className="h-4 w-4" /> },
+            ]}
+          />
+        </section>
 
-      <section className="mb-8">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
-          Your Progress
-        </h2>
-        <ProgressSummary />
-        <PageActions
-          className="mt-4"
-          secondary={[
-            { label: "View Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
-            { label: "Achievements", href: "/achievements", icon: <Award className="h-4 w-4" /> },
-            { label: "Challenges", href: "/challenges", icon: <Swords className="h-4 w-4" /> },
-          ]}
-        />
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
-          Learning Path
-        </h2>
-        <LessonPath />
-      </section>
+        <section>
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            Learning Path
+          </h2>
+          <LessonPath />
+        </section>
+      </ProgressHydrationGate>
     </div>
   );
 }
