@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { COMPACT_VIEWPORT_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { AlertTriangle } from "lucide-react";
 
 /** Handles ?project=id query param and mobile-friendly default panel state. */
@@ -11,9 +12,11 @@ export function EditorBootstrap() {
   const searchParams = useSearchParams();
   const openProject = useCircuitStore((s) => s.openProject);
   const loadProjects = useCircuitStore((s) => s.loadProjects);
+  const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
   const {
     setShowCodePanel,
     setShowVizPanels,
+    setOperationsPanelCollapsed,
   } = useEditorUiStore();
   const [projectLoadError, setProjectLoadError] = useState<string | null>(null);
 
@@ -39,13 +42,21 @@ export function EditorBootstrap() {
     }
   }, [searchParams, openProject, loadProjects]);
 
+  const initializedCompact = useRef(false);
+
   useEffect(() => {
-    const isCompact = window.matchMedia("(max-width: 1024px)").matches;
-    if (isCompact) {
-      setShowCodePanel(false);
-      setShowVizPanels(false);
-    }
-  }, [setShowCodePanel, setShowVizPanels]);
+    if (!isCompact) return;
+    setOperationsPanelCollapsed(true);
+    if (initializedCompact.current) return;
+    setShowCodePanel(false);
+    setShowVizPanels(false);
+    initializedCompact.current = true;
+  }, [
+    isCompact,
+    setShowCodePanel,
+    setShowVizPanels,
+    setOperationsPanelCollapsed,
+  ]);
 
   if (!projectLoadError) return null;
 

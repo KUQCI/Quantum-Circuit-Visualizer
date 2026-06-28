@@ -728,11 +728,11 @@ export function CircuitCanvas({
   return (
     <TooltipProvider delayDuration={400}>
       <div className="flex h-full flex-col bg-[var(--color-canvas)]">
-        <div className="flex h-9 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-3">
-          <div className="flex items-center gap-0.5">
+        <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
+          <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
             <button
               type="button"
-              className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+              className="composer-toolbar-btn touch-target-sm flex shrink-0 items-center justify-center rounded"
               onClick={undo}
               disabled={!canUndo()}
               title="Undo"
@@ -742,7 +742,7 @@ export function CircuitCanvas({
             </button>
             <button
               type="button"
-              className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+              className="composer-toolbar-btn touch-target-sm flex shrink-0 items-center justify-center rounded"
               onClick={redo}
               disabled={!canRedo()}
               title="Redo"
@@ -750,10 +750,10 @@ export function CircuitCanvas({
             >
               <Redo2 className="h-3.5 w-3.5" />
             </button>
-            <div className="mx-1.5 h-4 w-px bg-[var(--color-border)]" />
+            <div className="mx-1.5 h-4 w-px shrink-0 bg-[var(--color-border)]" />
             <button
               type="button"
-              className="composer-toolbar-btn flex items-center gap-1 rounded px-2 py-1 text-xs"
+              className="composer-toolbar-btn flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs"
               title="Compact columns (left alignment)"
               onClick={() => alignOperationsLeft()}
             >
@@ -763,7 +763,7 @@ export function CircuitCanvas({
             <button
               type="button"
               className={cn(
-                "composer-toolbar-btn flex items-center gap-1 rounded px-2 py-1 text-xs",
+                "composer-toolbar-btn flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs",
                 inspectMode &&
                   "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
               )}
@@ -783,7 +783,7 @@ export function CircuitCanvas({
               <>
                 <button
                   type="button"
-                  className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+                  className="composer-toolbar-btn touch-target-sm flex shrink-0 items-center justify-center rounded"
                   disabled={inspectStep <= 0}
                   onClick={() => setInspectStep(inspectStep - 1)}
                   title="Previous layer"
@@ -791,12 +791,12 @@ export function CircuitCanvas({
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                 </button>
-                <span className="text-[10px] text-[var(--color-muted-foreground)]">
+                <span className="shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
                   {inspectStep}/{maxInspectStep}
                 </span>
                 <button
                   type="button"
-                  className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
+                  className="composer-toolbar-btn touch-target-sm flex shrink-0 items-center justify-center rounded"
                   disabled={inspectStep >= maxInspectStep}
                   onClick={() => setInspectStep(inspectStep + 1)}
                   title="Next layer"
@@ -807,28 +807,30 @@ export function CircuitCanvas({
               </>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1 overflow-x-auto">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-xs"
+              className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
               onClick={addQubit}
             >
-              <Plus className="h-3 w-3" /> Qubit
+              <Plus className="h-3 w-3" />
+              <span className="hidden min-[400px]:inline">Qubit</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-xs"
+              className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
               onClick={addClassicalBit}
             >
-              <Plus className="h-3 w-3" /> Classical
+              <Plus className="h-3 w-3" />
+              <span className="hidden min-[400px]:inline">Classical</span>
             </Button>
             {circuit.qubits.length > 1 && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1 text-xs"
+                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
                 onClick={() => removeQubit(`q${circuit.qubits.length - 1}`)}
               >
                 <Minus className="h-3 w-3" />
