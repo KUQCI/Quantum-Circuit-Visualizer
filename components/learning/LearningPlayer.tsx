@@ -15,6 +15,8 @@ import { checkCircuit } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
+import { useEditorUiStore } from "@/store/editor-ui-store";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -54,7 +56,8 @@ export function LearningPlayer({
 }: LearningPlayerProps) {
   const router = useRouter();
   const circuit = useCircuitStore((s) => s.circuit);
-  const setCircuit = useCircuitStore((s) => s.setCircuit);
+  const setActivityCircuit = useCircuitStore((s) => s.setActivityCircuit);
+  const isWideLayout = useMediaQuery("(min-width: 1280px)");
 
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const completeChallenge = useProgressStore((s) => s.completeChallenge);
@@ -85,13 +88,27 @@ export function LearningPlayer({
   const [importDone, setImportDone] = useState(false);
 
   useEffect(() => {
-    setCircuit(structuredClone(activity.starterCircuit));
-    recordActivity();
-    setFeedbackStatus("idle");
-    setShowHint(false);
-    setExportDone(false);
-    setImportDone(false);
-  }, [activity.id, activity.starterCircuit, setCircuit, recordActivity]);
+    let cancelled = false;
+
+    const loadStarter = () => {
+      if (cancelled) return;
+      setActivityCircuit(structuredClone(activity.starterCircuit));
+      recordActivity();
+      setFeedbackStatus("idle");
+      setShowHint(false);
+      setExportDone(false);
+      setImportDone(false);
+      useEditorUiStore.getState().setInspectMode(false);
+    };
+
+    loadStarter();
+    const unsub = useCircuitStore.persist.onFinishHydration(loadStarter);
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, [activity.id, activity.starterCircuit, setActivityCircuit, recordActivity]);
 
   useEffect(() => {
     if (circuit.operations.length > 0) {
@@ -108,7 +125,7 @@ export function LearningPlayer({
   }, [activity]);
 
   const handleReset = () => {
-    setCircuit(structuredClone(activity.starterCircuit));
+    setActivityCircuit(structuredClone(activity.starterCircuit));
     setFeedbackStatus("idle");
     setShowHint(false);
   };
@@ -152,7 +169,7 @@ export function LearningPlayer({
   };
 
   const handleOpenInBuild = () => {
-    setCircuit(structuredClone(circuit));
+    setActivityCircuit(structuredClone(circuit));
     router.push("/editor");
   };
 
@@ -307,22 +324,25 @@ export function LearningPlayer({
           />
         </main>
 
-        {/* Code editor */}
-        <aside className="learning-panel learning-panel-code hidden min-h-0 flex-col border-t border-[var(--color-border)] xl:flex xl:min-h-0 xl:border-t-0 xl:border-l">
+        {/* Code editor — single instance to avoid duplicate Monaco/sync */}
+        {isWideLayout ? (
+          <aside className="learning-panel learning-panel-code flex min-h-0 flex-col border-l border-[var(--color-border)]">
+            <LearningCodePanel
+              onExport={handleExportAction}
+              onImportSync={handleImportSync}
+            />
+          </aside>
+        ) : null}
+      </div>
+
+      {!isWideLayout && (
+        <div className="learning-panel-code-mobile max-h-[280px] shrink-0 border-t border-[var(--color-border)]">
           <LearningCodePanel
             onExport={handleExportAction}
             onImportSync={handleImportSync}
           />
-        </aside>
-      </div>
-
-      {/* Mobile code panel (below canvas on smaller screens) */}
-      <div className="learning-panel-code-mobile max-h-[280px] shrink-0 border-t border-[var(--color-border)] xl:hidden">
-        <LearningCodePanel
-          onExport={handleExportAction}
-          onImportSync={handleImportSync}
-        />
-      </div>
+        </div>
+      )}
       </FeatureErrorBoundary>
 
       {/* Bottom actions */}

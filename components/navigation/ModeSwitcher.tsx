@@ -4,21 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PenLine, GraduationCap, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isPathActive } from "@/lib/routes";
 
 const modes = [
-  { href: "/editor", label: "Build", icon: PenLine, match: (p: string) => p === "/editor" },
-  {
-    href: "/learn",
-    label: "Learn",
-    icon: GraduationCap,
-    match: (p: string) => p.startsWith("/learn"),
-  },
-  {
-    href: "/challenges",
-    label: "Challenges",
-    icon: Swords,
-    match: (p: string) => p.startsWith("/challenges"),
-  },
+  { href: "/editor", label: "Build", icon: PenLine },
+  { href: "/learn", label: "Learn", icon: GraduationCap },
+  { href: "/challenges", label: "Challenges", icon: Swords },
 ] as const;
 
 interface ModeSwitcherProps {
@@ -40,7 +31,7 @@ export function ModeSwitcher({ className, size = "default" }: ModeSwitcherProps)
     >
       {modes.map((mode) => {
         const Icon = mode.icon;
-        const active = mode.match(pathname);
+        const active = isPathActive(pathname, mode.href);
         return (
           <Link
             key={mode.href}

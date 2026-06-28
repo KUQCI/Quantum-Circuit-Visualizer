@@ -42,6 +42,8 @@ interface CircuitState {
   historyIndex: number;
 
   setCircuit: (circuit: Circuit) => void;
+  /** Load a lesson/challenge circuit without binding to a saved project. */
+  setActivityCircuit: (circuit: Circuit) => void;
   resetCircuit: () => void;
   setSelectedOperation: (id: string | null) => void;
 
@@ -130,7 +132,11 @@ function loadProjectsFromStorage(): Project[] {
 
 function saveProjectsToStorage(projects: Project[]) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  try {
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  } catch {
+    /* QuotaExceeded — fail silently */
+  }
 }
 
 export function circuitHasContent(circuit: Circuit): boolean {
@@ -158,6 +164,16 @@ export const useCircuitStore = create<CircuitState>()(
         const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
         set((state) => ({
           circuit: safe,
+          ...pushHistory({ ...state, circuit: safe }),
+        }));
+      },
+
+      setActivityCircuit: (circuit) => {
+        const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
+        set((state) => ({
+          circuit: safe,
+          currentProjectId: null,
+          selectedOperationId: null,
           ...pushHistory({ ...state, circuit: safe }),
         }));
       },
@@ -347,12 +363,13 @@ export const useCircuitStore = create<CircuitState>()(
         const { clipboard, circuit } = get();
         if (!clipboard) return;
 
+        const wireIds = [...clipboard.targets, ...clipboard.controls];
+        if (wireIds.length === 0) return;
+
         const offsetQubit = (id: string): string => {
           const origIdx = parseInt(id.replace("q", ""), 10);
           const minIdx = Math.min(
-            ...[...clipboard.targets, ...clipboard.controls].map((q) =>
-              parseInt(q.replace("q", ""), 10)
-            )
+            ...wireIds.map((q) => parseInt(q.replace("q", ""), 10))
           );
           const newIdx = qubitIndex + (origIdx - minIdx);
           return `q${Math.max(0, Math.min(circuit.qubits.length - 1, newIdx))}`;

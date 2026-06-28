@@ -17,10 +17,20 @@ function createSafeStateStorage(): StateStorage {
       }
     },
     setItem: (name, value) => {
-      localStorage.setItem(name, value);
+      if (typeof window === "undefined") return;
+      try {
+        localStorage.setItem(name, value);
+      } catch {
+        /* QuotaExceeded or private browsing — fail silently */
+      }
     },
     removeItem: (name) => {
-      localStorage.removeItem(name);
+      if (typeof window === "undefined") return;
+      try {
+        localStorage.removeItem(name);
+      } catch {
+        /* ignore */
+      }
     },
   };
 }

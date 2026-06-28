@@ -28,7 +28,11 @@ function readJson(key: string): unknown | null {
 
 function writeJson(key: string, value: unknown) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* QuotaExceeded — fail silently */
+  }
 }
 
 function repairCircuitPersistBlob() {
@@ -146,7 +150,11 @@ export function runAppStorageMigrations(): void {
     MIGRATIONS[version]?.();
   }
 
-  localStorage.setItem(APP_STORAGE_VERSION_KEY, String(APP_STORAGE_VERSION));
+  try {
+    localStorage.setItem(APP_STORAGE_VERSION_KEY, String(APP_STORAGE_VERSION));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function clearAllAppStorage(): void {

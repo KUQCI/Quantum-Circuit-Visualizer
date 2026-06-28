@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Build static site
-        run: npm run build
+        run: npm run build:pages
         env:
           GITHUB_PAGES: "true"
           GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name }}

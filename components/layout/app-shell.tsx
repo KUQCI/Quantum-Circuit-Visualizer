@@ -51,21 +51,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const breadcrumbs = getContentBreadcrumbs(path);
 
   useEffect(() => {
-    if (!isFullWorkspace) {
+    const clearWorkspaceAttrs = () => {
       document.documentElement.removeAttribute("data-workspace");
       document.documentElement.removeAttribute("data-composer");
-      return;
+    };
+
+    if (!isFullWorkspace) {
+      clearWorkspaceAttrs();
+      return clearWorkspaceAttrs;
     }
+
     document.documentElement.setAttribute("data-workspace", "true");
     if (isComposer) {
       document.documentElement.setAttribute("data-composer", "true");
     } else {
       document.documentElement.removeAttribute("data-composer");
     }
-    return () => {
-      document.documentElement.removeAttribute("data-workspace");
-      document.documentElement.removeAttribute("data-composer");
-    };
+    return clearWorkspaceAttrs;
   }, [isFullWorkspace, isComposer]);
 
   return (

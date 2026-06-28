@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { getLessonBreadcrumbs } from "@/lib/navigation/flow";
 import { LESSONS } from "@/lib/learning/lessons";
 import { isLessonUnlockedByOrder, useProgressStore } from "@/store/progress-store";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 export function LessonPlayerClient({
   lesson,
@@ -22,7 +23,17 @@ export function LessonPlayerClient({
   relatedLabel?: string;
 }) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
   const allIds = LESSONS.map((l) => ({ id: l.id, order: l.order }));
+
+  if (!progressHydrated) {
+    return (
+      <div className="learning-workspace-shell flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-[var(--color-muted-foreground)]">
+        Loading lesson…
+      </div>
+    );
+  }
+
   const unlocked = isLessonUnlockedByOrder(
     lesson.id,
     lesson.order,

@@ -6,6 +6,7 @@ import { LockedActivityState } from "@/components/learning/LockedActivityState";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { getChallengeBreadcrumbs } from "@/lib/navigation/flow";
 import { isChallengeUnlockedByTier, useProgressStore } from "@/store/progress-store";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 export function ChallengePlayerClient({
   challenge,
@@ -22,6 +23,16 @@ export function ChallengePlayerClient({
 }) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
+
+  if (!progressHydrated) {
+    return (
+      <div className="learning-workspace-shell flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-[var(--color-muted-foreground)]">
+        Loading challenge…
+      </div>
+    );
+  }
+
   const unlocked = isChallengeUnlockedByTier(
     challenge.difficulty,
     completedLessons,
