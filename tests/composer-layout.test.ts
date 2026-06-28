@@ -6,7 +6,7 @@ describe("composer-layout", () => {
     expect(getLayoutTier(390, 844)).toBe("mobile");
     expect(getLayoutTier(800, 700)).toBe("tablet");
     expect(getLayoutTier(1440, 900)).toBe("desktop");
-    expect(getLayoutTier(1200, 500)).toBe("mobile");
+    expect(getLayoutTier(1200, 460)).toBe("mobile");
   });
 
   it("fits top and viz bands inside measured workspace height", () => {
@@ -17,8 +17,8 @@ describe("composer-layout", () => {
     });
 
     expect(layout.topHeightPx + layout.vizHeightPx).toBe(720);
-    expect(layout.vizHeightPx).toBeGreaterThanOrEqual(188);
-    expect(layout.topHeightPx).toBeGreaterThanOrEqual(280);
+    expect(layout.vizHeightPx).toBeGreaterThanOrEqual(160);
+    expect(layout.topHeightPx).toBeGreaterThanOrEqual(180);
     expect(layout.useVizTabs).toBe(false);
   });
 
@@ -44,5 +44,15 @@ describe("composer-layout", () => {
     expect(layout.useVizTabs).toBe(true);
     expect(layout.useOverlayPanels).toBe(true);
     expect(layout.topHeightPx + layout.vizHeightPx).toBe(700);
+  });
+
+  it("never exceeds workspace on short screens", () => {
+    const layout = computeComposerLayout({
+      width: 1280,
+      height: 420,
+      showVizPanels: true,
+    });
+
+    expect(layout.topHeightPx + layout.vizHeightPx).toBe(420);
   });
 });

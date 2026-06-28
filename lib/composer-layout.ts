@@ -21,14 +21,14 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export function getLayoutTier(width: number, height: number): LayoutTier {
-  if (width < 640 || height < 520) return "mobile";
+  if (width < 640 || height < 480) return "mobile";
   if (width < 1024) return "tablet";
   return "desktop";
 }
 
 /**
- * Compute IBM Composer–style panel sizes from the measured workspace box
- * (area between composer toolbar and footer).
+ * Split measured workspace height between circuit row and viz band.
+ * Always returns top + viz === height (no page overflow).
  */
 export function computeComposerLayout(input: ComposerLayoutInput): ComposerLayout {
   const { width, height, showVizPanels } = input;
@@ -38,12 +38,12 @@ export function computeComposerLayout(input: ComposerLayoutInput): ComposerLayou
 
   const opsPanelWidthPx =
     tier === "desktop"
-      ? clamp(Math.round(width * 0.13), 212, 252)
+      ? clamp(Math.round(width * 0.13), 200, 248)
       : clamp(Math.round(width * 0.88), 240, 320);
 
   const codePanelWidthPx =
     tier === "desktop"
-      ? clamp(Math.round(width * 0.21), 280, 360)
+      ? clamp(Math.round(width * 0.21), 272, 352)
       : clamp(Math.round(width * 0.92), 280, 380);
 
   if (!showVizPanels || height <= 0) {
@@ -58,22 +58,23 @@ export function computeComposerLayout(input: ComposerLayoutInput): ComposerLayou
     };
   }
 
-  const vizRatio = tier === "mobile" ? 0.44 : tier === "tablet" ? 0.4 : 0.38;
-  const minViz = tier === "mobile" ? 148 : tier === "tablet" ? 168 : 188;
-  const maxViz =
-    tier === "desktop"
-      ? clamp(Math.round(height * 0.46), 220, 440)
-      : clamp(Math.round(height * 0.48), 160, 320);
+  const vizRatio = tier === "mobile" ? 0.4 : tier === "tablet" ? 0.38 : 0.36;
+  const minTop =
+    tier === "mobile" ? 140 : tier === "tablet" ? 160 : 180;
+  const minViz =
+    tier === "mobile" ? 120 : tier === "tablet" ? 140 : 160;
 
-  let vizHeightPx = clamp(Math.round(height * vizRatio), minViz, maxViz);
+  const maxViz = Math.max(0, height - minTop);
+  let vizHeightPx = Math.round(height * vizRatio);
+  vizHeightPx = clamp(vizHeightPx, 0, maxViz);
 
-  // On very short workspaces, cap viz so the circuit row stays usable.
-  const minTop = tier === "mobile" ? 200 : tier === "tablet" ? 240 : 280;
-  if (height - vizHeightPx < minTop) {
-    vizHeightPx = Math.max(minViz, height - minTop);
+  if (maxViz >= minViz) {
+    vizHeightPx = clamp(vizHeightPx, minViz, maxViz);
+  } else {
+    vizHeightPx = maxViz;
   }
 
-  const topHeightPx = Math.max(0, height - vizHeightPx);
+  const topHeightPx = height - vizHeightPx;
 
   return {
     tier,

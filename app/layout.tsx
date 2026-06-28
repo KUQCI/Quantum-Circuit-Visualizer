@@ -40,7 +40,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen antialiased font-sans">
+      <body className="min-h-0 antialiased font-sans">
         <AppShell>{children}</AppShell>
       </body>
     </html>

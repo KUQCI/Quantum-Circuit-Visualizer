@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dialog";
@@ -32,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function ComposerToolbar() {
+export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) {
   const router = useRouter();
   const { circuit, saveProject, resetCircuit, undo, redo, canUndo, canRedo } =
     useCircuitStore();
@@ -86,8 +89,24 @@ export function ComposerToolbar() {
 
   return (
     <>
-      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
+      <div className="composer-toolbar flex h-9 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          {immersive && (
+            <Link
+              href="/"
+              className="flex shrink-0 items-center gap-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-brand)]"
+              title="Home"
+            >
+              <Image
+                src="https://kuqci.github.io/logo.png"
+                alt="KUQCI"
+                width={18}
+                height={18}
+                className="rounded"
+                unoptimized
+              />
+            </Link>
+          )}
           <Input
             value={circuit.name}
             onChange={(e) =>
@@ -299,6 +318,7 @@ export function ComposerToolbar() {
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {immersive && <ModeSwitcher size="sm" className="hidden sm:inline-flex" />}
           <Button
             variant="outline"
             size="sm"

@@ -59,11 +59,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isFullWorkspace) {
       document.documentElement.removeAttribute("data-workspace");
+      document.documentElement.removeAttribute("data-composer");
       return;
     }
     document.documentElement.setAttribute("data-workspace", "true");
-    return () => document.documentElement.removeAttribute("data-workspace");
-  }, [isFullWorkspace]);
+    if (isComposer) {
+      document.documentElement.setAttribute("data-composer", "true");
+    } else {
+      document.documentElement.removeAttribute("data-composer");
+    }
+    return () => {
+      document.documentElement.removeAttribute("data-workspace");
+      document.documentElement.removeAttribute("data-composer");
+    };
+  }, [isFullWorkspace, isComposer]);
 
   return (
     <ThemeProvider>
@@ -71,8 +80,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
-      <div className={cn(isFullWorkspace && "workspace-shell")}>
-        <AppHeader />
+      <div
+        className={cn(
+          isFullWorkspace && "workspace-shell",
+          isComposer && "workspace-shell--composer"
+        )}
+      >
+        {!isComposer && <AppHeader />}
         <main
           id="main-content"
           className={cn(
