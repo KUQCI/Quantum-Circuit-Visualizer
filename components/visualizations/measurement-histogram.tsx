@@ -33,27 +33,31 @@ export function MeasurementHistogram({
     );
   }
 
-  const chartWidth = Math.max(320, histogram.length * 40);
   const chartHeight = 160;
   const padding = { top: 16, right: 12, bottom: 36, left: 44 };
-  const innerW = chartWidth - padding.left - padding.right;
+  const innerW = Math.max(histogram.length * 40, 120);
   const innerH = chartHeight - padding.top - padding.bottom;
+  const chartWidth = padding.left + innerW + padding.right;
   const barWidth = Math.min(48, innerW / histogram.length - 4);
   const maxPct = Math.max(...histogram.map((h) => h.percentage), 1);
+  const scrollable = histogram.length > 16;
 
   return (
-    <div className="h-full overflow-x-auto">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {registerLabel && (
-        <p className="mb-1 text-[10px] text-[var(--color-muted-foreground)]">
+        <p className="mb-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
           Register: {registerLabel} · {shots.toLocaleString()} shots
         </p>
       )}
-      <svg
-        width={chartWidth}
-        height={chartHeight}
-        className="min-w-full"
-        aria-label="Measurement histogram"
-      >
+      <div className={`min-h-0 flex-1 ${scrollable ? "overflow-x-auto" : ""}`}>
+        <svg
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          width="100%"
+          height="100%"
+          preserveAspectRatio="xMidYMid meet"
+          className="min-h-[100px]"
+          aria-label="Measurement histogram"
+        >
         <line
           x1={padding.left}
           y1={padding.top}
@@ -161,6 +165,7 @@ export function MeasurementHistogram({
           stroke="var(--color-border)"
         />
       </svg>
+      </div>
     </div>
   );
 }

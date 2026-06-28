@@ -66,7 +66,7 @@ export function ComposerEditorLayout() {
 
         <button
           type="button"
-          className="relative z-20 flex w-5 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
+          className="relative z-20 flex w-10 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)] lg:w-5"
           onClick={() => setOperationsPanelCollapsed(!operationsPanelCollapsed)}
           title={
             operationsPanelCollapsed
@@ -101,7 +101,7 @@ export function ComposerEditorLayout() {
             />
           </div>
           {showVizPanels && (
-            <div className="min-h-[160px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[180px]">
+            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[220px] lg:min-h-[260px]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}

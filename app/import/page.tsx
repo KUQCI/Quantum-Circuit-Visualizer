@@ -143,7 +143,7 @@ export default function ImportPage() {
             completionProfile={language}
             height="320px"
           />
-          <div className="mt-4 flex gap-3">
+          <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={handleParse} disabled={loading}>
               {loading ? "Parsing..." : `Parse ${adapter.label}`}
             </Button>

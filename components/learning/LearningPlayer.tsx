@@ -71,6 +71,12 @@ export function LearningPlayer({
   const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [lessonPanelOpen, setLessonPanelOpen] = useState(true);
+
+  useEffect(() => {
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      setLessonPanelOpen(false);
+    }
+  }, []);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "success" | "error">("idle");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [quantaFeedback, setQuantaFeedback] = useState("");

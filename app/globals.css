@@ -159,7 +159,13 @@ body {
 .page-container {
   margin-inline: auto;
   max-width: 56rem;
-  padding: 2rem 1rem;
+  padding: 1.25rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .page-container {
+    padding: 2rem 1rem;
+  }
 }
 
 .page-header {
@@ -198,6 +204,10 @@ body {
   height: 100dvh;
   flex-direction: column;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 .workspace-main {
@@ -235,6 +245,17 @@ body {
 .composer-toolbar-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* Minimum touch targets for mobile toolbars and tabs */
+.touch-target-sm {
+  min-height: 2.25rem;
+  min-width: 2.25rem;
+}
+
+.touch-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
 }
 
 /* ── Navigation links ── */
@@ -473,6 +494,8 @@ body {
 .learning-panel-lesson {
   grid-column: 1;
   grid-row: 1;
+  max-height: min(38dvh, 260px);
+  overflow: hidden;
 }
 
 .learning-panel-ops {
@@ -496,6 +519,10 @@ body {
   .learning-player-grid {
     grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) minmax(320px, 1fr);
+  }
+
+  .learning-panel-lesson {
+    max-height: none;
   }
 
   .learning-panel-lesson {
