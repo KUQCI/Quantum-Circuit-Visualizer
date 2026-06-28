@@ -6,55 +6,49 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppBootstrap } from "@/components/layout/app-bootstrap";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
-import { useAppViewportHeight } from "@/lib/use-app-viewport";
+import {
+  isEditorPath,
+  isFullWorkspacePath,
+  isWorkspacePlayerPath,
+  normalizePath,
+} from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
-function isWorkspacePlayerRoute(pathname: string) {
-  return (
-    /^\/learn\/[^/]+$/.test(pathname) ||
-    /^\/challenges\/[^/]+$/.test(pathname)
-  );
-}
-
-function isFullWorkspaceRoute(pathname: string) {
-  return pathname === "/editor" || isWorkspacePlayerRoute(pathname);
-}
-
 function getContentBreadcrumbs(pathname: string) {
-  if (pathname === "/") return [];
-  if (pathname === "/editor") return [];
-  if (pathname === "/learn") return [{ label: "Home", href: "/" }, { label: "Learn" }];
-  if (pathname === "/challenges")
+  const path = normalizePath(pathname);
+  if (path === "/") return [];
+  if (isEditorPath(path)) return [];
+  if (path === "/learn") return [{ label: "Home", href: "/" }, { label: "Learn" }];
+  if (path === "/challenges")
     return [{ label: "Home", href: "/" }, { label: "Challenges" }];
-  if (pathname === "/progress")
+  if (path === "/progress")
     return [{ label: "Home", href: "/" }, { label: "Progress" }];
-  if (pathname === "/achievements")
+  if (path === "/achievements")
     return [{ label: "Home", href: "/" }, { label: "Achievements" }];
-  if (pathname === "/projects")
+  if (path === "/projects")
     return [{ label: "Home", href: "/" }, { label: "Projects" }];
-  if (pathname === "/import")
+  if (path === "/import")
     return [{ label: "Home", href: "/" }, { label: "Import" }];
-  if (pathname === "/export")
+  if (path === "/export")
     return [{ label: "Home", href: "/" }, { label: "Export" }];
-  if (pathname === "/roadmap")
+  if (path === "/roadmap")
     return [{ label: "Home", href: "/" }, { label: "Roadmap" }];
-  if (pathname.startsWith("/docs"))
+  if (path.startsWith("/docs"))
     return [
       { label: "Home", href: "/" },
       { label: "Docs", href: "/docs/composer" },
-      { label: pathname.includes("/api") ? "API Reference" : "Composer Guide" },
+      { label: path.includes("/api") ? "API Reference" : "Composer Guide" },
     ];
   return [{ label: "Home", href: "/" }];
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isComposer = pathname === "/editor";
-  const isFullWorkspace = isFullWorkspaceRoute(pathname);
-  const isPlayer = isWorkspacePlayerRoute(pathname);
-  const breadcrumbs = getContentBreadcrumbs(pathname);
-
-  useAppViewportHeight(isFullWorkspace);
+  const path = normalizePath(pathname);
+  const isComposer = isEditorPath(path);
+  const isFullWorkspace = isFullWorkspacePath(path);
+  const isPlayer = isWorkspacePlayerPath(path);
+  const breadcrumbs = getContentBreadcrumbs(path);
 
   useEffect(() => {
     if (!isFullWorkspace) {

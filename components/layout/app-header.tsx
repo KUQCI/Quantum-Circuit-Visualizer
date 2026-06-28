@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { isEditorPath } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
 import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
 import { Button } from "@/components/ui/button";
@@ -75,9 +76,9 @@ function isActive(pathname: string, match: (p: string) => boolean) {
 export function AppHeader() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
-  const isComposer = pathname === "/editor";
+  const isComposer = isEditorPath(pathname);
   const showModeSwitcher =
-    pathname === "/editor" ||
+    isEditorPath(pathname) ||
     pathname.startsWith("/learn") ||
     pathname.startsWith("/challenges");
 
