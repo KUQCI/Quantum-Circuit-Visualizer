@@ -14,6 +14,7 @@ import { CodeEditor } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
 import { PageActions } from "@/components/navigation/PageActions";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
+import { useProgressStore } from "@/store/progress-store";
 import { getCircuitSummary } from "@/lib/qiskit-generator";
 import {
   CODE_LANGUAGES,
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 export default function ExportPage() {
   const { circuit } = useCircuitStore();
+  const recordExport = useProgressStore((s) => s.recordExport);
   const [language, setLanguage] = useState<CodeLanguageId>("qiskit");
   const [code, setCode] = useState("");
 
@@ -139,7 +141,11 @@ export default function ExportPage() {
             height="360px"
           />
           <div className="mt-4 flex flex-wrap gap-3">
-            <CodePanelActions code={code} filename={filename} />
+            <CodePanelActions
+              code={code}
+              filename={filename}
+              onExport={recordExport}
+            />
             <Button asChild variant="outline">
               <Link href="/editor">
                 <PenLine className="h-4 w-4" />

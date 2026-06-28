@@ -36,12 +36,6 @@ interface ProgressState {
   isLessonComplete: (id: string) => boolean;
   isChallengeComplete: (id: string) => boolean;
   isAchievementUnlocked: (id: string) => boolean;
-  isLessonUnlocked: (lessonId: string, order: number) => boolean;
-  isChallengeUnlocked: (
-    challengeId: string,
-    difficulty: "beginner" | "intermediate" | "advanced",
-    order: number
-  ) => boolean;
   getLevel: () => number;
 }
 
@@ -166,22 +160,6 @@ export const useProgressStore = create<ProgressState>()(
       isChallengeComplete: (id) => get().completedChallenges.includes(id),
 
       isAchievementUnlocked: (id) => get().unlockedAchievements.includes(id),
-
-      isLessonUnlocked: (_lessonId, order) => {
-        if (order <= 1) return true;
-        const prev = get().completedLessons;
-        const lessons = order - 1;
-        return prev.length >= lessons - 1 || order <= prev.length + 1;
-      },
-
-      isChallengeUnlocked: (_id, difficulty, order) => {
-        const state = get();
-        if (difficulty === "beginner") return true;
-        if (difficulty === "intermediate") {
-          return state.completedLessons.length >= 3 || order <= 2;
-        }
-        return state.completedLessons.length >= 6 || state.completedChallenges.length >= 4;
-      },
 
       getLevel: () => getLevelFromXp(get().totalXp),
     }),

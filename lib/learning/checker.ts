@@ -51,7 +51,7 @@ function checkSingle(
         : {
             success: false,
             message: "Paste the Qiskit code and sync it to the canvas.",
-            hint: "Paste code in the editor and click Sync, or use Import from the nav.",
+            hint: "Paste code in the editor and click Mark Import Done, or use Import from the nav.",
           };
 
     case "hasGate": {

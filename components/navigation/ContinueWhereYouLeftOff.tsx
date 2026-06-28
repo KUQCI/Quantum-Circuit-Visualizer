@@ -5,6 +5,7 @@ import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { getContinueTargets } from "@/lib/navigation/flow";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
+import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
 
 interface ContinueWhereYouLeftOffProps {
   className?: string;
@@ -15,6 +16,18 @@ export function ContinueWhereYouLeftOff({
   className,
   showProject = true,
 }: ContinueWhereYouLeftOffProps) {
+  return (
+    <div className={className}>
+      <ProgressHydrationGate>
+        <ContinueWhereYouLeftOffContent showProject={showProject} />
+      </ProgressHydrationGate>
+    </div>
+  );
+}
+
+function ContinueWhereYouLeftOffContent({
+  showProject = true,
+}: Pick<ContinueWhereYouLeftOffProps, "showProject">) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
   const { projects, currentProjectId, loadProjects } = useCircuitStore();
@@ -79,7 +92,6 @@ export function ContinueWhereYouLeftOff({
   if (cards.length === 0) {
     return (
       <NextStepCard
-        className={className}
         badge="Get Started"
         title="Start your quantum journey"
         description="Build a circuit from scratch or begin with the first lesson."
@@ -92,9 +104,8 @@ export function ContinueWhereYouLeftOff({
   }
 
   return (
-    <div className={className}>
-      <div className="space-y-4">
-        {cards.map((card) => (
+    <div className="space-y-4">
+      {cards.map((card) => (
           <NextStepCard
             key={card.href}
             badge={card.badge}
@@ -106,7 +117,6 @@ export function ContinueWhereYouLeftOff({
             secondaryLabel={card.secondaryLabel}
           />
         ))}
-      </div>
     </div>
   );
 }

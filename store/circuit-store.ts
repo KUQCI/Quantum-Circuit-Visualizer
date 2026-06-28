@@ -506,7 +506,10 @@ export const useCircuitStore = create<CircuitState>()(
       deleteProject: (id) => {
         const projects = get().projects.filter((p) => p.id !== id);
         saveProjectsToStorage(projects);
-        set({ projects });
+        set({
+          projects,
+          ...(get().currentProjectId === id ? { currentProjectId: null } : {}),
+        });
       },
     }),
     {

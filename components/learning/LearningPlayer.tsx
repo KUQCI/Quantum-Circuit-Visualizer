@@ -16,13 +16,13 @@ import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { useMediaQuery } from "@/lib/use-media-query";
+import { useMediaQuery, COMPACT_VIEWPORT_QUERY } from "@/lib/use-media-query";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   CheckCircle,
   ChevronRight,
-  Home,
   Lightbulb,
   PanelLeftClose,
   PanelLeftOpen,
@@ -58,7 +58,9 @@ export function LearningPlayer({
   const router = useRouter();
   const circuit = useCircuitStore((s) => s.circuit);
   const setActivityCircuit = useCircuitStore((s) => s.setActivityCircuit);
+  const circuitHydrated = usePersistHydrated(useCircuitStore.persist);
   const isWideLayout = useMediaQuery("(min-width: 1280px)");
+  const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
 
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const completeChallenge = useProgressStore((s) => s.completeChallenge);
@@ -74,13 +76,15 @@ export function LearningPlayer({
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
   const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
-  const [lessonPanelOpen, setLessonPanelOpen] = useState(true);
+  const [lessonPanelOpen, setLessonPanelOpen] = useState(() =>
+    typeof window !== "undefined"
+      ? !window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
+      : true
+  );
 
   useEffect(() => {
-    if (window.matchMedia("(max-width: 1023px)").matches) {
-      setLessonPanelOpen(false);
-    }
-  }, []);
+    setLessonPanelOpen(!isCompact);
+  }, [isCompact]);
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "success" | "error">("idle");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [quantaFeedback, setQuantaFeedback] = useState("");
@@ -186,17 +190,19 @@ export function LearningPlayer({
           : "",
       ].join("");
 
+  if (!circuitHydrated) {
+    return (
+      <div className="learning-player flex h-full min-h-0 w-full items-center justify-center border-y border-[var(--color-border)] bg-[var(--color-background)] p-8 text-sm text-[var(--color-muted-foreground)]">
+        Loading {mode}…
+      </div>
+    );
+  }
+
   return (
     <div className="learning-player flex h-full min-h-0 w-full flex-col overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-background)]">
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
-          <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-sm">
-            <Link href="/" title="Home">
-              <Home className="h-4 w-4" />
-              <span className="hidden sm:inline">Home</span>
-            </Link>
-          </Button>
           <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-sm">
             <Link href={backHref}>
               <ArrowLeft className="h-4 w-4" />

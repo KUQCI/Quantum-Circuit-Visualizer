@@ -50,15 +50,22 @@ export function EditorBootstrap() {
       return;
     }
 
-    loadProjects();
-    const loaded = openProject(projectId);
-    if (!loaded) {
+    const tryOpen = () => {
+      loadProjects();
+      const loaded = openProject(projectId);
       setProjectLoadError(
-        "The requested project could not be found. It may have been deleted."
+        loaded
+          ? null
+          : "The requested project could not be found. It may have been deleted."
       );
-    } else {
-      setProjectLoadError(null);
+    };
+
+    if (useCircuitStore.persist.hasHydrated()) {
+      tryOpen();
+      return;
     }
+
+    return useCircuitStore.persist.onFinishHydration(tryOpen);
   }, [searchParams, openProject, loadProjects]);
 
   const initializedCompact = useRef(false);
