@@ -43,14 +43,23 @@ export function EditorBootstrap() {
   }, [searchParams, openProject, loadProjects]);
 
   const initializedCompact = useRef(false);
+  const initializedDesktop = useRef(false);
 
   useEffect(() => {
-    if (!isCompact) return;
-    setOperationsPanelCollapsed(true);
-    if (initializedCompact.current) return;
-    setShowCodePanel(false);
-    setShowVizPanels(false);
-    initializedCompact.current = true;
+    if (isCompact) {
+      setOperationsPanelCollapsed(true);
+      if (initializedCompact.current) return;
+      setShowCodePanel(false);
+      setShowVizPanels(false);
+      initializedCompact.current = true;
+      return;
+    }
+
+    if (initializedDesktop.current) return;
+    setOperationsPanelCollapsed(false);
+    setShowCodePanel(true);
+    setShowVizPanels(true);
+    initializedDesktop.current = true;
   }, [
     isCompact,
     setShowCodePanel,

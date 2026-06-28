@@ -191,7 +191,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         ? "grid-cols-1 sm:grid-cols-2"
         : activePanels.length === 3
           ? "grid-cols-1 md:grid-cols-3"
-          : "grid-cols-1 sm:grid-cols-2 min-[1400px]:grid-cols-4";
+          : "grid-cols-2 lg:grid-cols-4";
 
   return (
     <div
@@ -201,7 +201,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
       )}
     >
       {vizPanels.probabilities && (
-        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
           <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Probabilities
           </h3>
@@ -209,7 +209,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.qsphere && (
-        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
           <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Q-sphere
           </h3>
@@ -217,7 +217,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.statevector && (
-        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
           <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Statevector
           </h3>
@@ -225,7 +225,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.histogram && (
-        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
           <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Measurement results
           </h3>

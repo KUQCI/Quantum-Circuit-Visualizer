@@ -11,7 +11,7 @@ import { VisualizationPanels } from "@/components/visualizations/visualization-p
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ComposerEditorLayout() {
@@ -27,7 +27,7 @@ export function ComposerEditorLayout() {
   } = useEditorUiStore();
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-background)]">
+    <div className="composer-shell flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-background)]">
       <Suspense fallback={null}>
         <EditorBootstrap />
       </Suspense>
@@ -39,103 +39,128 @@ export function ComposerEditorLayout() {
         description="The circuit editor hit an unexpected error. Your saved data may need repair."
         resetHref="/"
       >
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        {!operationsPanelCollapsed && (
-          <>
+        <div
+          className={cn(
+            "composer-workspace min-h-0 flex-1",
+            showVizPanels && "composer-workspace--with-viz"
+          )}
+        >
+          {/* Top row: operations | circuit | code (IBM Composer layout) */}
+          <div className="composer-workspace-top relative flex min-h-0 overflow-hidden">
+            {!operationsPanelCollapsed && (
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-20 bg-black/40 lg:hidden"
+                  aria-label="Close operations panel"
+                  onClick={() => setOperationsPanelCollapsed(true)}
+                />
+                <aside
+                  className={cn(
+                    "composer-panel composer-panel-ops shrink-0 overflow-hidden border-r",
+                    "absolute inset-y-0 left-0 z-30 w-[min(248px,88vw)] lg:relative lg:z-auto lg:w-[232px] xl:w-[248px]"
+                  )}
+                >
+                  <GateLibrary
+                    selectedGate={selectedGate}
+                    onGateSelect={setSelectedGate}
+                    onDragStart={setDraggingGate}
+                    onDragEnd={() => setDraggingGate(null)}
+                  />
+                </aside>
+              </>
+            )}
+
             <button
               type="button"
-              className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-              aria-label="Close operations panel"
-              onClick={() => setOperationsPanelCollapsed(true)}
-            />
-            <aside
-              className={cn(
-                "composer-panel shrink-0 overflow-hidden border-r",
-                "absolute inset-y-0 left-0 z-30 w-[min(240px,85vw)] lg:relative lg:z-auto lg:w-[220px] xl:w-[240px]"
-              )}
+              className="composer-panel-rail relative z-20 shrink-0"
+              onClick={() => setOperationsPanelCollapsed(!operationsPanelCollapsed)}
+              title={
+                operationsPanelCollapsed
+                  ? "Expand operations catalog"
+                  : "Collapse operations catalog"
+              }
+              aria-label={
+                operationsPanelCollapsed
+                  ? "Expand operations catalog"
+                  : "Collapse operations catalog"
+              }
             >
-              <GateLibrary
-                selectedGate={selectedGate}
-                onGateSelect={setSelectedGate}
-                onDragStart={setDraggingGate}
+              {operationsPanelCollapsed ? (
+                <PanelLeftOpen className="h-3.5 w-3.5" />
+              ) : (
+                <PanelLeftClose className="h-3.5 w-3.5" />
+              )}
+            </button>
+
+            <div className="composer-canvas-column min-w-0 flex-1 overflow-hidden bg-[var(--color-canvas)]">
+              <CircuitCanvas
+                draggingGate={draggingGate}
                 onDragEnd={() => setDraggingGate(null)}
+                placementGate={selectedGate}
+                onPlacementComplete={() => setSelectedGate(null)}
               />
-            </aside>
-          </>
-        )}
+            </div>
 
-        <button
-          type="button"
-          className="relative z-20 flex w-10 shrink-0 items-center justify-center border-r border-[var(--color-border)] bg-[var(--color-toolbar)] text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)] lg:w-5"
-          onClick={() => setOperationsPanelCollapsed(!operationsPanelCollapsed)}
-          title={
-            operationsPanelCollapsed
-              ? "Expand operations catalog"
-              : "Collapse operations catalog"
-          }
-          aria-label={
-            operationsPanelCollapsed
-              ? "Expand operations catalog"
-              : "Collapse operations catalog"
-          }
-        >
-          {operationsPanelCollapsed ? (
-            <PanelLeftOpen className="h-3.5 w-3.5" />
-          ) : (
-            <PanelLeftClose className="h-3.5 w-3.5" />
-          )}
-        </button>
-
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--color-canvas)]">
-          <div
-            className={cn(
-              "min-h-0 overflow-hidden",
-              showVizPanels ? "flex-[3]" : "flex-1"
+            {showCodePanel ? (
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-20 bg-black/40 lg:hidden"
+                  aria-label="Close code panel"
+                  onClick={() => setShowCodePanel(false)}
+                />
+                <aside
+                  className={cn(
+                    "composer-panel composer-panel-code flex shrink-0 flex-col overflow-hidden border-l",
+                    "absolute inset-y-0 right-0 z-30 w-[min(340px,92vw)] lg:relative lg:z-auto lg:w-[300px] xl:w-[340px]"
+                  )}
+                >
+                  <button
+                    type="button"
+                    className="flex h-8 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-brand)] lg:hidden"
+                    onClick={() => setShowCodePanel(false)}
+                    aria-label="Close code panel"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <div className="min-h-0 flex-1">
+                    <MultiLanguageCodePanel />
+                  </div>
+                </aside>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="composer-panel-rail relative z-20 shrink-0 border-l"
+                onClick={() => setShowCodePanel(true)}
+                title="Expand code editor"
+                aria-label="Expand code editor"
+              >
+                <PanelRightOpen className="h-3.5 w-3.5" />
+              </button>
             )}
-          >
-            <CircuitCanvas
-              draggingGate={draggingGate}
-              onDragEnd={() => setDraggingGate(null)}
-              placementGate={selectedGate}
-              onPlacementComplete={() => setSelectedGate(null)}
-            />
+
+            {showCodePanel && (
+              <button
+                type="button"
+                className="composer-panel-rail relative z-20 hidden shrink-0 lg:flex"
+                onClick={() => setShowCodePanel(false)}
+                title="Collapse code editor"
+                aria-label="Collapse code editor"
+              >
+                <PanelRightClose className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
+
+          {/* Bottom band: visualizations span full workspace width */}
           {showVizPanels && (
-            <div className="min-h-[200px] flex-[2] shrink-0 overflow-hidden border-t border-[var(--color-border)] sm:min-h-[220px] lg:min-h-[260px]">
+            <div className="composer-viz-band min-h-0 overflow-hidden border-t border-[var(--color-border)]">
               <VisualizationPanels circuit={circuit} />
             </div>
           )}
         </div>
-
-        {showCodePanel && (
-          <>
-            <button
-              type="button"
-              className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-              aria-label="Close code panel"
-              onClick={() => setShowCodePanel(false)}
-            />
-            <aside
-              className={cn(
-                "composer-panel flex shrink-0 flex-col overflow-hidden border-l",
-                "absolute inset-y-0 right-0 z-30 w-[min(320px,92vw)] lg:relative lg:z-auto lg:w-[280px] xl:w-[320px]"
-              )}
-            >
-              <button
-                type="button"
-                className="flex h-8 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-brand)] lg:hidden"
-                onClick={() => setShowCodePanel(false)}
-                aria-label="Close code panel"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <div className="min-h-0 flex-1">
-                <MultiLanguageCodePanel />
-              </div>
-            </aside>
-          </>
-        )}
-      </div>
       </FeatureErrorBoundary>
 
       <ComposerFooter />

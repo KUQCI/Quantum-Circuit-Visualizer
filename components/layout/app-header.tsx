@@ -75,14 +75,25 @@ function isActive(pathname: string, match: (p: string) => boolean) {
 export function AppHeader() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
+  const isComposer = pathname === "/editor";
   const showModeSwitcher =
     pathname === "/editor" ||
     pathname.startsWith("/learn") ||
     pathname.startsWith("/challenges");
 
   return (
-    <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
-      <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-4">
+    <header
+      className={cn(
+        "glass-nav-compact sticky top-0 z-40 shrink-0",
+        isComposer && "workspace-header--composer"
+      )}
+    >
+      <div
+        className={cn(
+          "app-header-inner flex items-center gap-2 px-3 sm:gap-3 sm:px-4",
+          isComposer ? "h-10" : "h-14"
+        )}
+      >
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <Image
             src="https://kuqci.github.io/logo.png"
@@ -97,8 +108,13 @@ export function AppHeader() {
           </span>
         </Link>
 
-        {/* Desktop primary nav */}
-        <nav className="hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
+        {/* Desktop primary nav — hidden in composer to maximize canvas space */}
+        <nav
+          className={cn(
+            "hidden min-w-0 flex-1 items-center gap-0.5",
+            !isComposer && "md:flex"
+          )}
+        >
           {primaryNav.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.match);
@@ -123,7 +139,7 @@ export function AppHeader() {
 
         <div className="ml-auto flex items-center gap-2">
           {showModeSwitcher && (
-            <ModeSwitcher size="sm" className="hidden sm:inline-flex" />
+            <ModeSwitcher size="sm" className="inline-flex" />
           )}
 
           {/* More menu — desktop/tablet */}
@@ -132,7 +148,10 @@ export function AppHeader() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="hidden h-8 gap-1.5 px-2 text-sm md:inline-flex"
+                className={cn(
+                  "h-8 gap-1.5 px-2 text-sm",
+                  isComposer ? "inline-flex" : "hidden md:inline-flex"
+                )}
                 aria-label="More navigation"
               >
                 <MoreHorizontal className="h-4 w-4" />

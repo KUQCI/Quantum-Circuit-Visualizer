@@ -223,6 +223,73 @@ body {
   min-height: 0;
 }
 
+/* IBM Composer–style editor workspace: top row + full-width viz band */
+.composer-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+.composer-workspace {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.composer-workspace--with-viz {
+  grid-template-rows: minmax(0, 1fr) clamp(200px, 36vh, 420px);
+}
+
+.composer-workspace-top {
+  min-height: 0;
+}
+
+.composer-canvas-column {
+  min-height: 0;
+}
+
+.composer-viz-band {
+  min-height: 0;
+  background: var(--color-background);
+}
+
+.composer-panel-rail {
+  display: flex;
+  width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-toolbar);
+  color: var(--color-muted-foreground);
+  transition: color 0.15s, background 0.15s;
+}
+
+.composer-panel-rail:hover {
+  color: var(--color-brand);
+  background: var(--color-brand-hover);
+}
+
+@media (min-width: 1024px) {
+  .composer-panel-rail {
+    width: 1rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .composer-panel-rail {
+    width: 2.5rem;
+    min-width: 2.5rem;
+  }
+}
+
+.workspace-header--composer {
+  --app-header-height: 2.5rem;
+}
+
+.workspace-header--composer .app-header-inner {
+  height: 2.5rem;
+}
+
 .shadow-card {
   box-shadow: var(--shadow-card);
 }
