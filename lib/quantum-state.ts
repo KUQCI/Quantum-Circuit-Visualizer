@@ -39,13 +39,17 @@ function c(re: number, im = 0): Complex {
 }
 
 function cAdd(a: Complex, b: Complex): Complex {
-  return { re: a.re + b.re, im: a.im + b.im };
+  const left = a ?? c(0);
+  const right = b ?? c(0);
+  return { re: left.re + right.re, im: left.im + right.im };
 }
 
 function cMul(a: Complex, b: Complex): Complex {
+  const left = a ?? c(0);
+  const right = b ?? c(0);
   return {
-    re: a.re * b.re - a.im * b.im,
-    im: a.re * b.im + a.im * b.re,
+    re: left.re * right.re - left.im * right.im,
+    im: left.re * right.im + left.im * right.re,
   };
 }
 
@@ -414,11 +418,26 @@ function paramValues(op: Operation): number[] {
   return op.parameters?.map((p) => p.value) ?? [];
 }
 
+function isQubitIndexValid(index: number, numQubits: number): boolean {
+  return Number.isInteger(index) && index >= 0 && index < numQubits;
+}
+
+function operationUsesValidQubits(op: Operation, numQubits: number): boolean {
+  const qubits = [...op.targets, ...op.controls];
+  return qubits.every((id) =>
+    isQubitIndexValid(qubitIndexFromId(id), numQubits)
+  );
+}
+
 function applyOperation(
   state: Complex[],
   op: Operation,
   numQubits: number
 ): Complex[] | null {
+  if (!operationUsesValidQubits(op, numQubits)) {
+    return null;
+  }
+
   if (op.type === "barrier" || op.type === "measure" || op.type === "reset") {
     return state;
   }
@@ -523,6 +542,21 @@ export function sampleFromStatevector(
 }
 
 export function simulateCircuit(circuit: Circuit): QuantumStateResult {
+  try {
+    return simulateCircuitInternal(circuit);
+  } catch (err) {
+    return {
+      numQubits: circuit.qubits.length,
+      amplitudes: [],
+      probabilities: [],
+      qSpherePoints: [],
+      blochVector: null,
+      error: err instanceof Error ? err.message : "Simulation failed",
+    };
+  }
+}
+
+function simulateCircuitInternal(circuit: Circuit): QuantumStateResult {
   const numQubits = circuit.qubits.length;
 
   if (numQubits === 0) {

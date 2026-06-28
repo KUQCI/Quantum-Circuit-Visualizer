@@ -18,6 +18,24 @@ function probSum(result: ReturnType<typeof simulateCircuit>) {
 }
 
 describe("Quantum State Simulation", () => {
+  it("does not throw for gates on out-of-range qubits", () => {
+    const circuit = createEmptyCircuit("Bad", 2, 0);
+    circuit.operations = [
+      {
+        id: "op_bad",
+        type: "h",
+        label: "H",
+        targets: ["q99"],
+        controls: [],
+        classicalTargets: [],
+        column: 0,
+      },
+    ];
+
+    const result = simulateCircuit(circuit);
+    expect(result.error).toContain("Unsupported gate");
+  });
+
   it("returns |0⟩ for empty circuit", () => {
     const circuit = createEmptyCircuit("Empty", 1);
     const result = simulateCircuit(circuit);

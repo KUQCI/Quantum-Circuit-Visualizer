@@ -10,7 +10,7 @@ import {
   getGateLabel,
 } from "@/lib/circuit-schema";
 import { generateQiskitCode } from "@/lib/qiskit-generator";
-import { validateCircuit, validateCircuitPlacement } from "@/lib/validation";
+import { validateCircuit, validateCircuitPlacement, repairCircuit } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
 import { useProgressStore } from "@/store/progress-store";
 import {
@@ -106,7 +106,7 @@ function loadProjectsFromStorage(): Project[] {
       projects.push({
         id: record.id,
         name: record.name,
-        circuit: circuitResult.circuit,
+        circuit: repairCircuit(circuitResult.circuit),
         createdAt:
           typeof record.createdAt === "string"
             ? record.createdAt

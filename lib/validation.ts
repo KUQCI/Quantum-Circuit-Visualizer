@@ -1,4 +1,4 @@
-import { CircuitSchema, Circuit } from "./circuit-schema";
+import { CircuitSchema, Circuit, Operation, qubitIndexFromId, classicalBitIndexFromId } from "./circuit-schema";
 import { ZodError } from "zod";
 
 export interface ValidationResult {
@@ -24,6 +24,36 @@ export function validateCircuit(data: unknown): ValidationResult | ValidationErr
     }
     return { valid: false, errors: ["Unknown validation error"] };
   }
+}
+
+export function isOperationValidForCircuit(op: Operation, circuit: Circuit): boolean {
+  const maxQ = circuit.qubits.length;
+  const maxC = circuit.classicalBits.length;
+  const qubitIds = new Set(circuit.qubits.map((q) => q.id));
+  const classicalIds = new Set(circuit.classicalBits.map((c) => c.id));
+
+  for (const id of [...op.targets, ...op.controls]) {
+    if (!qubitIds.has(id)) return false;
+    const idx = qubitIndexFromId(id);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= maxQ) return false;
+  }
+
+  for (const id of op.classicalTargets) {
+    if (!classicalIds.has(id)) return false;
+    const idx = classicalBitIndexFromId(id);
+    if (!Number.isInteger(idx) || idx < 0 || idx >= maxC) return false;
+  }
+
+  return true;
+}
+
+export function repairCircuit(circuit: Circuit): Circuit {
+  return {
+    ...circuit,
+    operations: circuit.operations.filter((op) =>
+      isOperationValidForCircuit(op, circuit)
+    ),
+  };
 }
 
 export function validateCircuitPlacement(circuit: Circuit): string[] {
