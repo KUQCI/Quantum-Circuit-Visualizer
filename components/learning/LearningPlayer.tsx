@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   CheckCircle,
   ChevronRight,
+  Home,
   Lightbulb,
   PanelLeftClose,
   PanelLeftOpen,
@@ -190,6 +191,12 @@ export function LearningPlayer({
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
+          <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-sm">
+            <Link href="/" title="Home">
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
+          </Button>
           <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-sm">
             <Link href={backHref}>
               <ArrowLeft className="h-4 w-4" />

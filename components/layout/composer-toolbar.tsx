@@ -64,6 +64,7 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
   };
 
   const fileItems = [
+    { label: "Home", action: () => router.push("/") },
     { label: "New circuit", action: handleNewCircuit },
     { label: "Save file", action: () => saveProject() },
     { label: "Open projects", action: () => router.push("/projects") },
@@ -94,17 +95,19 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
           {immersive && (
             <Link
               href="/"
-              className="flex shrink-0 items-center gap-1.5 text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-brand)]"
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
               title="Home"
             >
               <Image
                 src="https://kuqci.github.io/logo.png"
-                alt="KUQCI"
+                alt=""
                 width={18}
                 height={18}
                 className="rounded"
                 unoptimized
+                aria-hidden
               />
+              <span className="hidden text-xs font-medium sm:inline">Home</span>
             </Link>
           )}
           <Input
@@ -318,7 +321,7 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {immersive && <ModeSwitcher size="sm" className="hidden sm:inline-flex" />}
+          {immersive && <ModeSwitcher size="sm" className="inline-flex" />}
           <Button
             variant="outline"
             size="sm"
