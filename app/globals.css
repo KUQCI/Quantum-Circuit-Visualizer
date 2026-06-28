@@ -211,7 +211,8 @@ body {
 
 .workspace-shell {
   display: flex;
-  height: 100dvh;
+  height: var(--app-vh, 100dvh);
+  max-height: var(--app-vh, 100dvh);
   flex-direction: column;
   overflow: hidden;
   padding-top: env(safe-area-inset-top, 0px);
@@ -240,15 +241,8 @@ body {
 }
 
 .composer-workspace {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
-}
-
-.composer-workspace--with-viz {
-  /* Split remaining height ~62/38 like IBM Composer (no viewport vh — avoids page scroll) */
-  grid-template-rows: minmax(0, 1.65fr) minmax(0, 1fr);
 }
 
 .composer-workspace-top {

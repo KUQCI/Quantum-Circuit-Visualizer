@@ -4,21 +4,40 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { COMPACT_VIEWPORT_QUERY, useMediaQuery } from "@/lib/use-media-query";
+import { getLayoutTier } from "@/lib/composer-layout";
 import { AlertTriangle } from "lucide-react";
 
-/** Handles ?project=id query param and mobile-friendly default panel state. */
+function readViewportTier() {
+  if (typeof window === "undefined") return "desktop" as const;
+  const w = window.innerWidth;
+  const h = window.visualViewport?.height ?? window.innerHeight;
+  return getLayoutTier(w, h);
+}
+
+/** Handles ?project=id query param and viewport-aware default panel state. */
 export function EditorBootstrap() {
   const searchParams = useSearchParams();
   const openProject = useCircuitStore((s) => s.openProject);
   const loadProjects = useCircuitStore((s) => s.loadProjects);
-  const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
+  const [tier, setTier] = useState(readViewportTier);
+  const isCompact = tier !== "desktop";
   const {
     setShowCodePanel,
     setShowVizPanels,
     setOperationsPanelCollapsed,
   } = useEditorUiStore();
   const [projectLoadError, setProjectLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updateTier = () => setTier(readViewportTier());
+    updateTier();
+    window.addEventListener("resize", updateTier);
+    window.visualViewport?.addEventListener("resize", updateTier);
+    return () => {
+      window.removeEventListener("resize", updateTier);
+      window.visualViewport?.removeEventListener("resize", updateTier);
+    };
+  }, []);
 
   useEffect(() => {
     loadProjects();

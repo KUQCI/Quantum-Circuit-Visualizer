@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/layout/theme-provider";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppBootstrap } from "@/components/layout/app-bootstrap";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { useAppViewportHeight } from "@/lib/use-app-viewport";
 import { cn } from "@/lib/utils";
 
 function isWorkspacePlayerRoute(pathname: string) {
@@ -52,6 +53,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isFullWorkspace = isFullWorkspaceRoute(pathname);
   const isPlayer = isWorkspacePlayerRoute(pathname);
   const breadcrumbs = getContentBreadcrumbs(pathname);
+
+  useAppViewportHeight(isFullWorkspace);
 
   useEffect(() => {
     if (!isFullWorkspace) {

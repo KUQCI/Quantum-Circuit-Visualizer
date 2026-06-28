@@ -5,9 +5,9 @@ import type { Circuit } from "@/lib/circuit-schema";
 import { simulateCircuit } from "@/lib/quantum-state";
 import type { QuantumStateResult } from "@/lib/quantum-state";
 import { getOperationsUpToStep } from "@/lib/circuit-layout";
+import type { LayoutTier } from "@/lib/composer-layout";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { useExecutionStore } from "@/store/execution-store";
-import { COMPACT_VIEWPORT_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { ProbabilityChart } from "./probability-chart";
 import { QSphere } from "./q-sphere";
 import { StatevectorChart } from "./statevector-chart";
@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils";
 
 interface VisualizationPanelsProps {
   circuit: Circuit;
+  /** When true, show one viz panel at a time (narrow / short workspaces). */
+  useVizTabs?: boolean;
+  layoutTier?: LayoutTier;
 }
 
 type VizPanelId = "probabilities" | "qsphere" | "statevector" | "histogram";
@@ -93,10 +96,13 @@ function PanelBody({
   }
 }
 
-export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
+export function VisualizationPanels({
+  circuit,
+  useVizTabs = false,
+  layoutTier = "desktop",
+}: VisualizationPanelsProps) {
   const { vizPanels, inspectMode, inspectStep } = useEditorUiStore();
   const lastResult = useExecutionStore((s) => s.lastResult);
-  const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
 
   const effectiveCircuit = useMemo(() => {
     if (!inspectMode) return circuit;
@@ -144,7 +150,7 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
     );
   }
 
-  if (isCompact && activePanels.length > 1) {
+  if (useVizTabs && activePanels.length > 1) {
     return (
       <div className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
         <div
@@ -188,10 +194,12 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
     activePanels.length === 1
       ? "grid-cols-1"
       : activePanels.length === 2
-        ? "grid-cols-1 sm:grid-cols-2"
+        ? "grid-cols-2"
         : activePanels.length === 3
-          ? "grid-cols-1 md:grid-cols-3"
-          : "grid-cols-2 lg:grid-cols-4";
+          ? "grid-cols-3"
+          : layoutTier === "desktop"
+            ? "grid-cols-4"
+            : "grid-cols-2";
 
   return (
     <div
