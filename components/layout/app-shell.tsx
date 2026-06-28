@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { AppHeader } from "@/components/layout/app-header";
@@ -20,7 +21,7 @@ function isFullWorkspaceRoute(pathname: string) {
 
 function getContentBreadcrumbs(pathname: string) {
   if (pathname === "/") return [];
-  if (pathname === "/editor") return [{ label: "Home", href: "/" }, { label: "Build" }];
+  if (pathname === "/editor") return [];
   if (pathname === "/learn") return [{ label: "Home", href: "/" }, { label: "Learn" }];
   if (pathname === "/challenges")
     return [{ label: "Home", href: "/" }, { label: "Challenges" }];
@@ -47,9 +48,19 @@ function getContentBreadcrumbs(pathname: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isComposer = pathname === "/editor";
   const isFullWorkspace = isFullWorkspaceRoute(pathname);
   const isPlayer = isWorkspacePlayerRoute(pathname);
   const breadcrumbs = getContentBreadcrumbs(pathname);
+
+  useEffect(() => {
+    if (!isFullWorkspace) {
+      document.documentElement.removeAttribute("data-workspace");
+      return;
+    }
+    document.documentElement.setAttribute("data-workspace", "true");
+    return () => document.documentElement.removeAttribute("data-workspace");
+  }, [isFullWorkspace]);
 
   return (
     <ThemeProvider>
@@ -63,7 +74,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           id="main-content"
           className={cn(
             isFullWorkspace ? "workspace-main" : "min-h-[calc(100dvh-3.5rem)]",
-            isPlayer && "workspace-main--player"
+            isPlayer && "workspace-main--player",
+            isComposer && "workspace-main--composer"
           )}
         >
           {!isPlayer && breadcrumbs.length > 0 && (

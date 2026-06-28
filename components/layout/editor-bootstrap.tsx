@@ -43,23 +43,38 @@ export function EditorBootstrap() {
   }, [searchParams, openProject, loadProjects]);
 
   const initializedCompact = useRef(false);
-  const initializedDesktop = useRef(false);
 
-  useEffect(() => {
+  const applyViewportPanelDefaults = () => {
     if (isCompact) {
       setOperationsPanelCollapsed(true);
-      if (initializedCompact.current) return;
-      setShowCodePanel(false);
-      setShowVizPanels(false);
-      initializedCompact.current = true;
+      if (!initializedCompact.current) {
+        setShowCodePanel(false);
+        setShowVizPanels(false);
+        initializedCompact.current = true;
+      }
       return;
     }
 
-    if (initializedDesktop.current) return;
     setOperationsPanelCollapsed(false);
-    setShowCodePanel(true);
-    setShowVizPanels(true);
-    initializedDesktop.current = true;
+
+    const { showCodePanel, showVizPanels, operationsPanelCollapsed } =
+      useEditorUiStore.getState();
+    const looksLikeMobilePersist =
+      operationsPanelCollapsed && !showCodePanel && !showVizPanels;
+    if (looksLikeMobilePersist) {
+      setShowCodePanel(true);
+      setShowVizPanels(true);
+    }
+  };
+
+  useEffect(() => {
+    applyViewportPanelDefaults();
+
+    const unsub = useEditorUiStore.persist.onFinishHydration(() => {
+      applyViewportPanelDefaults();
+    });
+
+    return unsub;
   }, [
     isCompact,
     setShowCodePanel,

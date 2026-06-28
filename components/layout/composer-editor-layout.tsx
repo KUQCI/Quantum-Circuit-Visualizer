@@ -27,7 +27,7 @@ export function ComposerEditorLayout() {
   } = useEditorUiStore();
 
   return (
-    <div className="composer-shell flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-background)]">
+    <div className="composer-shell flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-background)]">
       <Suspense fallback={null}>
         <EditorBootstrap />
       </Suspense>

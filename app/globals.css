@@ -139,6 +139,16 @@ html {
   color-scheme: dark;
 }
 
+html[data-workspace="true"] {
+  overflow: hidden;
+  height: 100%;
+}
+
+html[data-workspace="true"] body {
+  overflow: hidden;
+  height: 100%;
+}
+
 html[data-theme="light"] {
   color-scheme: light;
 }
@@ -237,7 +247,8 @@ body {
 }
 
 .composer-workspace--with-viz {
-  grid-template-rows: minmax(0, 1fr) clamp(200px, 36vh, 420px);
+  /* Split remaining height ~62/38 like IBM Composer (no viewport vh — avoids page scroll) */
+  grid-template-rows: minmax(0, 1.65fr) minmax(0, 1fr);
 }
 
 .composer-workspace-top {
@@ -288,6 +299,14 @@ body {
 
 .workspace-header--composer .app-header-inner {
   height: 2.5rem;
+}
+
+.workspace-main--composer {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .shadow-card {

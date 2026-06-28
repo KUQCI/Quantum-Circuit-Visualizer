@@ -18,7 +18,7 @@ export function ComposerFooter() {
   const { theme, setTheme } = useThemeStore();
 
   return (
-    <footer className="flex h-9 shrink-0 items-center justify-between gap-2 border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 text-[10px] text-[var(--color-muted-foreground)] sm:h-8 sm:px-4">
+    <footer className="flex h-7 shrink-0 items-center justify-between gap-2 border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 text-[10px] text-[var(--color-muted-foreground)] sm:px-4">
       <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ExternalAnchor
           href={KUQCI_HOME_URL}
