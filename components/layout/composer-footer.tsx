@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { ExternalAnchor, KUQCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { useThemeStore } from "@/store/theme-store";
-import { Sun, Moon, ExternalLink, PenLine, GraduationCap, Download, FolderOpen } from "lucide-react";
+import { Sun, Moon, ExternalLink, Home, PenLine, GraduationCap, Download, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const footerLinks = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/editor", label: "Build", icon: PenLine },
   { href: "/learn", label: "Learn", icon: GraduationCap },
   { href: "/export", label: "Export", icon: Download },
