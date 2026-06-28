@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
+import { ExternalAnchor, KUQCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { PageActions } from "@/components/navigation/PageActions";
 import { useCircuitStore } from "@/store/circuit-store";
 import { formatDate } from "@/lib/utils";
@@ -38,10 +39,8 @@ export default function HomePage() {
   return (
     <div className="page-container max-w-5xl">
       <div className="mb-8 text-center">
-        <Link
-          href="https://kuqci.github.io/"
-          target="_blank"
-          rel="noopener noreferrer"
+        <ExternalAnchor
+          href={KUQCI_HOME_URL}
           className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-brand)]"
         >
           <Image
@@ -54,7 +53,7 @@ export default function HomePage() {
           />
           Khalifa University Quantum Computing Initiative
           <ExternalLink className="h-3 w-3" />
-        </Link>
+        </ExternalAnchor>
 
         <h1 className="text-4xl font-bold tracking-tight text-[var(--color-foreground)] sm:text-5xl">
           Quantum Circuit{" "}
