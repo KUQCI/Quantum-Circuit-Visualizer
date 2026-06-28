@@ -130,7 +130,7 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
                 Qiskit Runtime code and submit with your API token.
               </p>
               <Button asChild variant="outline" size="sm" className="mt-3">
-                <Link href="/docs/api" target="_blank">
+                <Link href="/docs/api">
                   IBM API docs
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Link>

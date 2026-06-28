@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { isEditorPath } from "@/lib/routes";
+import { isEditorPath, isPathActive, normalizePath } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
 import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
 import { Button } from "@/components/ui/button";
@@ -33,31 +33,11 @@ import {
 } from "lucide-react";
 
 const primaryNav = [
-  { href: "/", label: "Home", icon: Home, match: (p: string) => p === "/" },
-  {
-    href: "/editor",
-    label: "Build",
-    icon: PenLine,
-    match: (p: string) => p === "/editor",
-  },
-  {
-    href: "/learn",
-    label: "Learn",
-    icon: GraduationCap,
-    match: (p: string) => p.startsWith("/learn"),
-  },
-  {
-    href: "/challenges",
-    label: "Challenges",
-    icon: Swords,
-    match: (p: string) => p.startsWith("/challenges"),
-  },
-  {
-    href: "/projects",
-    label: "Projects",
-    icon: FolderOpen,
-    match: (p: string) => p === "/projects",
-  },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/editor", label: "Build", icon: PenLine },
+  { href: "/learn", label: "Learn", icon: GraduationCap },
+  { href: "/challenges", label: "Challenges", icon: Swords },
+  { href: "/projects", label: "Projects", icon: FolderOpen },
 ] as const;
 
 const secondaryNav = [
@@ -69,18 +49,17 @@ const secondaryNav = [
   { href: "/roadmap", label: "Roadmap", icon: BookOpen },
 ] as const;
 
-function isActive(pathname: string, match: (p: string) => boolean) {
-  return match(pathname);
-}
-
 export function AppHeader() {
   const pathname = usePathname();
+  const path = normalizePath(pathname);
   const { theme, toggleTheme } = useThemeStore();
-  const isComposer = isEditorPath(pathname);
+  const isComposer = isEditorPath(path);
   const showModeSwitcher =
-    isEditorPath(pathname) ||
-    pathname.startsWith("/learn") ||
-    pathname.startsWith("/challenges");
+    isEditorPath(path) ||
+    path === "/learn" ||
+    path.startsWith("/learn/") ||
+    path === "/challenges" ||
+    path.startsWith("/challenges/");
 
   return (
     <header
@@ -118,7 +97,7 @@ export function AppHeader() {
         >
           {primaryNav.map((item) => {
             const Icon = item.icon;
-            const active = isActive(pathname, item.match);
+            const active = isPathActive(pathname, item.href);
             return (
               <Link
                 key={item.href}
@@ -162,7 +141,7 @@ export function AppHeader() {
             <DropdownMenuContent align="end" className="w-48">
               {secondaryNav.map((item) => {
                 const Icon = item.icon;
-                const active = pathname === item.href || pathname.startsWith(item.href);
+                const active = isPathActive(pathname, item.href);
                 return (
                   <DropdownMenuItem key={item.href} asChild>
                     <Link
@@ -210,10 +189,7 @@ export function AppHeader() {
             <DropdownMenuContent align="end" className="w-52">
               {[...primaryNav, ...secondaryNav].map((item) => {
                 const Icon = item.icon;
-                const active =
-                  "match" in item
-                    ? item.match(pathname)
-                    : pathname === item.href || pathname.startsWith(item.href);
+                const active = isPathActive(pathname, item.href);
                 return (
                   <DropdownMenuItem key={item.href} asChild>
                     <Link

@@ -81,6 +81,12 @@ export function useCodeSync() {
     }, 600);
   }, [parseCode]);
 
+  useEffect(() => {
+    return () => {
+      parseGenerationRef.current += 1;
+    };
+  }, []);
+
   // Canvas edits (or language switch via adapter change) → refresh editor text
   useEffect(() => {
     if (skipNextCircuitToCodeSyncRef.current) {

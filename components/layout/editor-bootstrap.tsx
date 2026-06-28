@@ -74,6 +74,7 @@ export function EditorBootstrap() {
       return;
     }
 
+    initializedCompact.current = false;
     setOperationsPanelCollapsed(false);
 
     const { showCodePanel, showVizPanels, operationsPanelCollapsed } =

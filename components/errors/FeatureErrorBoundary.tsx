@@ -4,6 +4,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { clearAllAppStorage } from "@/lib/app-storage";
+import { withBasePath } from "@/lib/routes";
 
 interface FeatureErrorBoundaryProps {
   children: ReactNode;
@@ -37,7 +38,7 @@ export class FeatureErrorBoundary extends Component<
   private handleClearData = () => {
     clearAllAppStorage();
     this.setState({ error: null });
-    window.location.assign(this.props.resetHref ?? "/");
+    window.location.assign(withBasePath(this.props.resetHref ?? "/"));
   };
 
   render() {

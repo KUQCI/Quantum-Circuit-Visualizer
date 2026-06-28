@@ -536,6 +536,10 @@ export function CircuitCanvas({
       }
 
       if (gateType === "measure") {
+        const classicalIdx =
+          circuit.classicalBits.length === 0
+            ? 0
+            : Math.min(qubitIndex, circuit.classicalBits.length - 1);
         if (circuit.classicalBits.length === 0) addClassicalBit();
         addOperation(
           createOperationFromGateType(
@@ -543,7 +547,7 @@ export function CircuitCanvas({
             [`q${qubitIndex}`],
             [],
             column,
-            [`c${Math.min(qubitIndex, circuit.classicalBits.length - 1)}`]
+            [`c${classicalIdx}`]
           )
         );
         if (alignmentMode !== "freeform") alignOperationsLeft();
