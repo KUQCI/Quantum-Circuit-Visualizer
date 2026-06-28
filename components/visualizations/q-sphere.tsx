@@ -46,15 +46,15 @@ export function QSphere({
   }
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="relative min-h-[180px] flex-1">
+    <div className="flex h-full w-full min-h-0 flex-col">
+      <div className="relative min-h-0 flex-1">
         <QSphere3D
           points={points}
           blochVector={blochVector}
           numQubits={numQubits}
         />
       </div>
-      <div className="mt-1 flex items-center justify-center gap-3 px-2">
+      <div className="mt-1 flex shrink-0 items-center justify-center gap-3 px-2">
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] text-[var(--color-muted-foreground)]">
             Phase
@@ -67,7 +67,7 @@ export function QSphere({
             }}
           />
         </div>
-        <span className="text-[10px] text-[var(--color-muted-foreground)]">
+        <span className="hidden text-[10px] text-[var(--color-muted-foreground)] sm:inline">
           Drag to rotate
         </span>
       </div>

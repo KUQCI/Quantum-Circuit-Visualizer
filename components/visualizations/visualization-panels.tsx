@@ -55,10 +55,10 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
     activePanels.length === 1
       ? "grid-cols-1"
       : activePanels.length === 2
-        ? "grid-cols-1 lg:grid-cols-2"
+        ? "grid-cols-1 sm:grid-cols-2"
         : activePanels.length === 3
-          ? "grid-cols-1 lg:grid-cols-3"
-          : "grid-cols-1 lg:grid-cols-2 xl:grid-cols-4";
+          ? "grid-cols-1 sm:grid-cols-3"
+          : "grid-cols-1 sm:grid-cols-2 min-[1400px]:grid-cols-4";
 
   return (
     <div
@@ -68,11 +68,11 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
       )}
     >
       {vizPanels.probabilities && (
-        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
-          <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Probabilities
           </h3>
-          <p className="mb-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
+          <p className="mb-1 shrink-0 text-[10px] leading-tight text-[var(--color-muted-foreground)]">
             Ideal |ψ|² (live, ignores measurements)
           </p>
           <div className="min-h-0 flex-1">
@@ -85,8 +85,8 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.qsphere && (
-        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
-          <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Q-sphere
           </h3>
           <div className="min-h-0 flex-1">
@@ -100,8 +100,8 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.statevector && (
-        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
-          <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Statevector
           </h3>
           <div className="min-h-0 flex-1">
@@ -114,11 +114,11 @@ export function VisualizationPanels({ circuit }: VisualizationPanelsProps) {
         </div>
       )}
       {vizPanels.histogram && (
-        <div className="flex min-h-[160px] flex-col overflow-hidden p-3">
-          <h3 className="mb-2 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+        <div className="flex min-h-[140px] flex-col overflow-hidden p-2 sm:p-3">
+          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             Measurement results
           </h3>
-          <p className="mb-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
+          <p className="mb-1 shrink-0 text-[10px] leading-tight text-[var(--color-muted-foreground)]">
             Shot counts from Run circuit
           </p>
           <div className="min-h-0 flex-1">

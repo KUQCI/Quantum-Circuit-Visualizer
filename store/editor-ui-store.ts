@@ -41,7 +41,7 @@ export const useEditorUiStore = create<EditorUiState>()(
       alignmentMode: "freeform",
       codePanelLanguage: "qiskit" as CodeLanguageId,
       showCodePanel: true,
-      showVizPanels: false,
+      showVizPanels: true,
       showPhaseDisks: true,
       vizPanels: {
         probabilities: true,
