@@ -26,6 +26,7 @@ describe("routes", () => {
   });
 
   it("matches active nav paths with trailing slashes", () => {
+    expect(isPathActive("/", "/")).toBe(true);
     expect(isPathActive("/editor/", "/editor")).toBe(true);
     expect(isPathActive("/projects/", "/projects")).toBe(true);
     expect(isPathActive("/learn/foo/", "/learn")).toBe(true);

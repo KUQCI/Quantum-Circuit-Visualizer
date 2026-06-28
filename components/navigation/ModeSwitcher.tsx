@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PenLine, GraduationCap, Swords } from "lucide-react";
+import { PenLine, GraduationCap, Swords, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPathActive } from "@/lib/routes";
 
 const modes = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/editor", label: "Build", icon: PenLine },
   { href: "/learn", label: "Learn", icon: GraduationCap },
   { href: "/challenges", label: "Challenges", icon: Swords },
