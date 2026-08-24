@@ -109,6 +109,28 @@ export function EditorBootstrap() {
     setOperationsPanelCollapsed,
   ]);
 
+  // Sanitize leftover lesson/challenge titles when opening free Build mode
+  useEffect(() => {
+    const sanitize = () => {
+      const { circuit } = useCircuitStore.getState();
+      const name = circuit.name ?? "";
+      if (/^(Lesson|Challenge):\s*/i.test(name)) {
+        const cleaned = name.replace(/^(Lesson|Challenge):\s*/i, "").trim();
+        useCircuitStore.setState({
+          circuit: {
+            ...circuit,
+            name: cleaned || "Untitled Circuit",
+          },
+        });
+      }
+    };
+    if (useCircuitStore.persist.hasHydrated()) {
+      sanitize();
+      return;
+    }
+    return useCircuitStore.persist.onFinishHydration(sanitize);
+  }, []);
+
   if (!projectLoadError) return null;
 
   return (

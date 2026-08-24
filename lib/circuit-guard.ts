@@ -16,7 +16,7 @@ export function prepareCircuit(
   input: unknown,
   options: PrepareCircuitOptions = {}
 ): Circuit {
-  const fallbackName = options.fallbackName ?? "Untitled circuit";
+  const fallbackName = options.fallbackName ?? "Untitled Circuit";
   const minQubits = Math.max(1, options.minQubits ?? 2);
 
   const validated = validateCircuit(input);

@@ -27,7 +27,7 @@
   --color-secondary: rgba(125, 211, 252, 0.1);
   --color-secondary-foreground: #7dd3fc;
   --color-muted: #0b1628;
-  --color-muted-foreground: #94a3b8;
+  --color-muted-foreground: #a8b4c4;
   --color-accent: rgba(125, 211, 252, 0.12);
   --color-accent-foreground: #7dd3fc;
   --color-border: rgba(125, 211, 252, 0.14);
@@ -89,7 +89,7 @@
   --color-secondary: rgba(47, 128, 237, 0.08);
   --color-secondary-foreground: #1d4ed8;
   --color-muted: #eef2f8;
-  --color-muted-foreground: #64748b;
+  --color-muted-foreground: #5b6b7f;
   --color-accent: rgba(47, 128, 237, 0.08);
   --color-accent-foreground: #2f80ed;
   --color-border: rgba(15, 23, 42, 0.1);
@@ -581,6 +581,28 @@ html[data-theme="light"] .glass-nav-compact {
 :focus-visible {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .quanta-bob,
+  [data-quanta-animated] {
+    animation: none !important;
+  }
 }
 
 .skip-link {

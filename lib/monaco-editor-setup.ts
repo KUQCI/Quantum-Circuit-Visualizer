@@ -199,7 +199,7 @@ export function getMonacoEditorOptions(readOnly: boolean) {
     fontSize: 13,
     lineNumbers: "on" as const,
     scrollBeyondLastLine: false,
-    wordWrap: "on" as const,
+    wordWrap: "off" as const,
     padding: { top: 12, bottom: 12 },
     automaticLayout: true,
     tabSize: 4,

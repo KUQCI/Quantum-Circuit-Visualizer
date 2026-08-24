@@ -13,8 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageActions } from "@/components/navigation/PageActions";
-import { useCircuitStore } from "@/store/circuit-store";
+import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
+import { PROJECT_TEMPLATES } from "@/lib/project-templates";
 import { formatDate } from "@/lib/utils";
 import {
   Plus,
@@ -25,6 +27,8 @@ import {
   Save,
   GraduationCap,
   Download,
+  Upload,
+  Sparkles,
 } from "lucide-react";
 
 export default function ProjectsPage() {
@@ -38,6 +42,7 @@ export default function ProjectsPage() {
     duplicateProject,
     deleteProject,
     resetCircuit,
+    setCircuit,
     circuit,
   } = useCircuitStore();
 
@@ -66,7 +71,7 @@ export default function ProjectsPage() {
 
   const handleNewProject = () => {
     resetCircuit();
-    const name = `New Circuit ${projects.length + 1}`;
+    const name = `Untitled Circuit`;
     useCircuitStore.setState({
       circuit: createEmptyCircuit(name, 2, 0),
     });
@@ -74,40 +79,124 @@ export default function ProjectsPage() {
     router.push("/editor");
   };
 
+  const handleOpenTemplate = (templateId: string) => {
+    const tpl = PROJECT_TEMPLATES.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setCircuit(structuredClone(tpl.circuit));
+    router.push("/editor");
+  };
+
+  const canSaveCurrent = circuitHasContent(circuit);
+
   return (
-    <div className="page-container">
+    <div className="page-container max-w-6xl">
       <div className="page-header mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="page-title">Projects</h1>
           <p className="page-description">
-            Manage saved circuits stored in your browser
+            Saved circuits stay in this browser — start from a template or a
+            blank canvas
           </p>
         </div>
         <PageActions
           primary={[
-            { label: "New Project", onClick: handleNewProject, icon: <Plus className="h-4 w-4" /> },
+            {
+              label: "Start Blank Circuit",
+              onClick: handleNewProject,
+              icon: <Plus className="h-4 w-4" />,
+            },
           ]}
           secondary={[
-            { label: "Save Current", onClick: () => saveProject(circuit.name), icon: <Save className="h-4 w-4" /> },
-            { label: "Export", href: "/export", icon: <Download className="h-4 w-4" /> },
-            { label: "Continue Learning", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+            {
+              label: "Save Project",
+              onClick: () => saveProject(circuit.name),
+              icon: <Save className="h-4 w-4" />,
+              disabled: !canSaveCurrent,
+              title: canSaveCurrent
+                ? "Save the current circuit to Projects"
+                : "No active circuit to save — open Build first",
+            },
+            {
+              label: "Import Qiskit",
+              href: "/import",
+              icon: <Upload className="h-4 w-4" />,
+            },
+            {
+              label: "Export",
+              href: "/export",
+              icon: <Download className="h-4 w-4" />,
+            },
+            {
+              label: "Continue Learning",
+              href: "/learn",
+              icon: <GraduationCap className="h-4 w-4" />,
+            },
           ]}
         />
       </div>
 
       {projects.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-[var(--color-muted-foreground)]">
-              No projects yet. Build a circuit in the editor and save it here.
+        <div className="space-y-8">
+          <div className="technical-panel space-y-4 p-6">
+            <QuantaMessage
+              title="Quanta"
+              message="No saved circuits yet. Open a template below, import Qiskit, or start from a blank canvas."
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => handleOpenTemplate("tpl-bell")}>
+                <Sparkles className="h-4 w-4" />
+                Open Bell State Template
+              </Button>
+              <Button variant="outline" onClick={() => router.push("/import")}>
+                <Upload className="h-4 w-4" />
+                Import Qiskit
+              </Button>
+              <Button variant="outline" onClick={handleNewProject}>
+                <Plus className="h-4 w-4" />
+                Start Blank Circuit
+              </Button>
+            </div>
+          </div>
+
+          <section>
+            <h2 className="mb-1 text-lg font-semibold text-[var(--color-foreground)]">
+              Sample circuits
+            </h2>
+            <p className="mb-4 text-sm text-[var(--color-muted-foreground)]">
+              Open a template in Build — save it anytime to keep it in Projects.
             </p>
-            <Button className="mt-4" onClick={() => router.push("/editor")}>
-              Open Build
-            </Button>
-          </CardContent>
-        </Card>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {PROJECT_TEMPLATES.map((tpl) => (
+                <Card
+                  key={tpl.id}
+                  className="transition-all hover:border-[var(--color-brand-border)]"
+                >
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{tpl.name}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {tpl.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 text-sm text-[var(--color-muted-foreground)]">
+                      {tpl.qubits} qubits · {tpl.operations} operations
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={() => handleOpenTemplate(tpl.id)}
+                      aria-label={`Open ${tpl.name} template`}
+                    >
+                      <FolderOpen className="h-3.5 w-3.5" />
+                      Open Template
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           {projects.map((project) => (
             <Card
               key={project.id}
@@ -141,15 +230,17 @@ export default function ProjectsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 flex gap-4 text-sm text-[var(--color-muted-foreground)]">
+                <div className="mb-4 flex flex-wrap gap-4 text-sm text-[var(--color-muted-foreground)]">
                   <span>{project.circuit.qubits.length} qubits</span>
-                  <span>{project.circuit.operations.length} gates</span>
-                  <span>{project.circuit.classicalBits.length} classical bits</span>
+                  <span>{project.circuit.operations.length} operations</span>
+                  <span>
+                    {project.circuit.classicalBits.length} classical bits
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => handleOpen(project.id)}>
                     <FolderOpen className="h-3.5 w-3.5" />
-                    Open
+                    Open in Build
                   </Button>
                   <Button
                     size="sm"
@@ -199,20 +290,19 @@ export default function ProjectsPage() {
       )}
 
       <ConfirmDialog
-        open={deleteTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null);
-        }}
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Delete project?"
         description={
           deleteTarget
-            ? `"${deleteTarget.name}" will be permanently removed from your browser storage.`
+            ? `“${deleteTarget.name}” will be removed from this browser.`
             : ""
         }
         confirmLabel="Delete"
         destructive
         onConfirm={() => {
           if (deleteTarget) deleteProject(deleteTarget.id);
+          setDeleteTarget(null);
         }}
       />
     </div>

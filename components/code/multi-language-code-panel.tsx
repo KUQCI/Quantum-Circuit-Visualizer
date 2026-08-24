@@ -69,9 +69,12 @@ export function MultiLanguageCodePanel() {
       </div>
 
       {parseError && (
-        <div className="mx-2 mt-1.5 flex items-start gap-1.5 rounded border border-[var(--color-destructive)]/40 bg-[var(--color-destructive)]/10 px-2 py-1.5 text-[10px] text-[var(--color-destructive)]">
-          <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
-          <span className="line-clamp-3">{parseError}</span>
+        <div
+          role="alert"
+          className="mx-2 mt-1.5 flex items-start gap-1.5 rounded border border-[var(--color-destructive)]/40 bg-[var(--color-destructive)]/10 px-2 py-2 text-xs leading-relaxed text-[var(--color-destructive)] sm:text-sm"
+        >
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{parseError}</span>
         </div>
       )}
 

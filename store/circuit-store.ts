@@ -140,9 +140,10 @@ function saveProjectsToStorage(projects: Project[]) {
 }
 
 export function circuitHasContent(circuit: Circuit): boolean {
+  const blankName = /^untitled circuit$/i.test(circuit.name.trim());
   return (
     circuit.operations.length > 0 ||
-    circuit.name.trim() !== "Untitled circuit" ||
+    !blankName ||
     circuit.qubits.length !== 2 ||
     circuit.classicalBits.length > 0
   );
@@ -151,12 +152,12 @@ export function circuitHasContent(circuit: Circuit): boolean {
 export const useCircuitStore = create<CircuitState>()(
   persist(
     (set, get) => ({
-      circuit: createEmptyCircuit("Untitled circuit", 2, 0),
+      circuit: createEmptyCircuit("Untitled Circuit", 2, 0),
       currentProjectId: null,
       selectedOperationId: null,
       clipboard: null,
       validationWarnings: [],
-      history: [{ circuit: createEmptyCircuit("Untitled circuit", 2, 0) }],
+      history: [{ circuit: createEmptyCircuit("Untitled Circuit", 2, 0) }],
       historyIndex: 0,
       projects: [],
 
@@ -179,7 +180,7 @@ export const useCircuitStore = create<CircuitState>()(
       },
 
       resetCircuit: () => {
-        const circuit = createEmptyCircuit("Untitled circuit", 2, 0);
+        const circuit = createEmptyCircuit("Untitled Circuit", 2, 0);
         set((state) => ({
           circuit,
           currentProjectId: null,

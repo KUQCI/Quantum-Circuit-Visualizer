@@ -67,6 +67,9 @@ export interface ChallengeDefinition {
   difficulty: Difficulty;
   xpReward: number;
   challengeType: ChallengeType;
+  estimatedMinutes: number;
+  /** Plain-language success criteria shown on challenge cards. */
+  successCriteria: string;
   starterCircuit: Circuit;
   targetCircuit?: Circuit;
   importCode?: string;
