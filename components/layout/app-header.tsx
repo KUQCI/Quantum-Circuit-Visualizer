@@ -4,9 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { isEditorPath, isPathActive, normalizePath } from "@/lib/routes";
+import { isPathActive } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
-import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
 import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,27 +53,16 @@ const secondaryNav = [
   { href: "/export", label: "Export", icon: Download },
 ] as const;
 
+/**
+ * Site-wide global navbar — identical on Home, Build, Learn, Challenges, etc.
+ */
 export function AppHeader() {
   const pathname = usePathname();
-  const path = normalizePath(pathname);
   const { theme, toggleTheme } = useThemeStore();
-  const isComposer = isEditorPath(path);
-  /** Mode switcher only on Build — primary nav already covers Learn/Challenges. */
-  const showModeSwitcher = isComposer;
 
   return (
-    <header
-      className={cn(
-        "glass-nav-compact sticky top-0 z-40 shrink-0",
-        isComposer && "workspace-header--composer"
-      )}
-    >
-      <div
-        className={cn(
-          "app-header-inner mx-auto flex w-full max-w-[1600px] items-center gap-2 px-3 sm:gap-3 sm:px-4",
-          isComposer ? "h-10" : "h-14"
-        )}
-      >
+    <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
+      <div className="app-header-inner mx-auto flex h-14 w-full max-w-[1600px] items-center gap-2 px-3 sm:gap-3 sm:px-4">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2.5"
@@ -100,10 +88,7 @@ export function AppHeader() {
         </Link>
 
         <nav
-          className={cn(
-            "hidden min-w-0 flex-1 items-center gap-0.5",
-            !isComposer && "md:flex"
-          )}
+          className="hidden min-w-0 flex-1 items-center gap-0.5 md:flex"
           aria-label="Primary"
         >
           {primaryNav.map((item) => {
@@ -129,19 +114,12 @@ export function AppHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {showModeSwitcher && (
-            <ModeSwitcher size="sm" className="inline-flex" />
-          )}
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn(
-                  "h-8 gap-1.5 px-2 text-sm",
-                  isComposer ? "inline-flex" : "hidden md:inline-flex"
-                )}
+                className="hidden h-8 gap-1.5 px-2 text-sm md:inline-flex"
                 aria-label="More navigation"
               >
                 <MoreHorizontal className="h-4 w-4" aria-hidden />
@@ -253,3 +231,6 @@ export function AppHeader() {
     </header>
   );
 }
+
+/** Alias for shared global navbar */
+export const GlobalNavbar = AppHeader;

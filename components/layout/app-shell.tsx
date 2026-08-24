@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           !isFullWorkspace && "flex min-h-dvh flex-col"
         )}
       >
-        {!isComposer && <AppHeader />}
+        <AppHeader />
         <main
           id="main-content"
           className={cn(

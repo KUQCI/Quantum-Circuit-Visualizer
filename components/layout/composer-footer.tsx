@@ -6,27 +6,12 @@ import {
   QCI_HOME_URL,
 } from "@/components/navigation/ExternalAnchor";
 import { useThemeStore } from "@/store/theme-store";
-import {
-  Sun,
-  Moon,
-  ExternalLink,
-  Home,
-  PenLine,
-  GraduationCap,
-  Swords,
-  FolderOpen,
-} from "lucide-react";
+import { Sun, Moon, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const footerLinks = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/editor", label: "Build", icon: PenLine },
-  { href: "/learn", label: "Learn", icon: GraduationCap },
-  { href: "/challenges", label: "Challenges", icon: Swords },
-  { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/docs/composer", label: "Docs" },
-] as const;
-
+/**
+ * Compact Build footer — no duplicate site nav (global navbar owns that).
+ */
 export function ComposerFooter() {
   const { theme, setTheme } = useThemeStore();
 
@@ -40,22 +25,15 @@ export function ComposerFooter() {
           Back to QCI
           <ExternalLink className="h-2.5 w-2.5" />
         </ExternalAnchor>
-        <span className="hidden shrink-0 text-[var(--color-muted-foreground)]/70 lg:inline">
-          A Khalifa University Quantum Computing Initiative R&amp;D project.
+        <span className="hidden shrink-0 text-[var(--color-muted-foreground)]/70 sm:inline">
+          A QCI R&amp;D project.
         </span>
-        {footerLinks.map((item) => {
-          const Icon = "icon" in item ? item.icon : undefined;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap transition-colors hover:text-[var(--color-brand)]"
-            >
-              {Icon && <Icon className="h-2.5 w-2.5" />}
-              {item.label}
-            </Link>
-          );
-        })}
+        <Link
+          href="/docs/composer"
+          className="inline-flex shrink-0 items-center whitespace-nowrap transition-colors hover:text-[var(--color-brand)]"
+        >
+          Docs
+        </Link>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <ThemeButton

@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dialog";
@@ -36,7 +35,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) {
+/**
+ * Build-only secondary toolbar (below the global navbar).
+ * Editor actions only — no site navigation.
+ */
+export function ComposerToolbar() {
   const router = useRouter();
   const { circuit, saveProject, resetCircuit, undo, redo, canUndo, canRedo } =
     useCircuitStore();
@@ -108,7 +111,11 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
 
   return (
     <>
-      <div className="composer-toolbar flex h-9 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
+      <div
+        className="editor-toolbar composer-toolbar flex h-10 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3"
+        role="toolbar"
+        aria-label="Circuit editor"
+      >
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Input
             value={circuit.name}
@@ -322,7 +329,6 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          {immersive && <ModeSwitcher size="sm" className="inline-flex" />}
           <Button
             variant="outline"
             size="sm"
@@ -371,6 +377,9 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
     </>
   );
 }
+
+/** Alias matching product language for the Build secondary toolbar */
+export const EditorToolbar = ComposerToolbar;
 
 function ToolbarMenu({
   label,
