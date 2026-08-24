@@ -1,9 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalAnchor, KUQCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
+import {
+  ExternalAnchor,
+  QCI_HOME_URL,
+} from "@/components/navigation/ExternalAnchor";
 import { useThemeStore } from "@/store/theme-store";
-import { Sun, Moon, ExternalLink, Home, PenLine, GraduationCap, Swords, Download, FolderOpen } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  ExternalLink,
+  Home,
+  PenLine,
+  GraduationCap,
+  Swords,
+  FolderOpen,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const footerLinks = [
@@ -11,7 +23,6 @@ const footerLinks = [
   { href: "/editor", label: "Build", icon: PenLine },
   { href: "/learn", label: "Learn", icon: GraduationCap },
   { href: "/challenges", label: "Challenges", icon: Swords },
-  { href: "/export", label: "Export", icon: Download },
   { href: "/projects", label: "Projects", icon: FolderOpen },
   { href: "/docs/composer", label: "Docs" },
 ] as const;
@@ -20,15 +31,18 @@ export function ComposerFooter() {
   const { theme, setTheme } = useThemeStore();
 
   return (
-    <footer className="flex h-7 shrink-0 items-center justify-between gap-2 border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 text-[10px] text-[var(--color-muted-foreground)] sm:px-4">
+    <footer className="flex h-8 shrink-0 items-center justify-between gap-2 border-t border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 text-[10px] text-[var(--color-muted-foreground)] sm:px-4">
       <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ExternalAnchor
-          href={KUQCI_HOME_URL}
-          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap transition-colors hover:text-[var(--color-brand)]"
+          href={QCI_HOME_URL}
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-medium text-[var(--color-brand)] transition-colors hover:text-[var(--color-gold-duck)]"
         >
-          KUQCI
+          Back to QCI
           <ExternalLink className="h-2.5 w-2.5" />
         </ExternalAnchor>
+        <span className="hidden shrink-0 text-[var(--color-muted-foreground)]/70 lg:inline">
+          A Khalifa University Quantum Computing Initiative R&amp;D project.
+        </span>
         {footerLinks.map((item) => {
           const Icon = "icon" in item ? item.icon : undefined;
           return (
@@ -42,9 +56,6 @@ export function ComposerFooter() {
             </Link>
           );
         })}
-        <span className="hidden shrink-0 whitespace-nowrap xl:inline">
-          Circuit Visualizer v1.0
-        </span>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <ThemeButton

@@ -2,8 +2,7 @@
 
 @theme {
   --radius: 1rem;
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
+  --font-sans: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "Source Code Pro",
     Menlo, monospace;
 }
@@ -61,8 +60,9 @@
   --color-gate-measure-fg: #f4f4f4;
   --color-gate-nonunitary: #525252;
   --color-gate-barrier: #393939;
-  --shadow-card: 0 0 24px rgba(47, 128, 237, 0.08), 0 2px 12px rgba(0, 0, 0, 0.28);
-  --shadow-nav: 0 1px 0 rgba(125, 211, 252, 0.08), 0 2px 8px rgba(0, 0, 0, 0.18);
+  --shadow-card: 0 0 28px rgba(47, 128, 237, 0.1), 0 2px 12px rgba(0, 0, 0, 0.32);
+  --shadow-nav: 0 1px 0 rgba(125, 211, 252, 0.06);
+  --shadow-blue-glow: 0 0 32px rgba(47, 128, 237, 0.14), 0 0 12px rgba(125, 211, 252, 0.06);
   --app-header-height: 3.5rem;
   --color-gate-label: #161616;
   --color-viz-wire: #484f58;
@@ -123,7 +123,8 @@
   --color-gate-nonunitary: #6f6f6f;
   --color-gate-barrier: #525252;
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(47, 128, 237, 0.06);
-  --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06), 0 1px 4px rgba(15, 23, 42, 0.04);
+  --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06);
+  --shadow-blue-glow: 0 0 24px rgba(47, 128, 237, 0.1);
   --app-header-height: 3.5rem;
   --color-gate-label: #0f172a;
   --color-viz-wire: #94a3b8;
@@ -174,6 +175,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Atmospheric QCI backdrop (content pages; workspace keeps solid fill) */
+body:not([data-workspace-body]) {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(47, 128, 237, 0.16), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(125, 211, 252, 0.08), transparent 50%),
+    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(246, 196, 83, 0.04), transparent 55%);
+  background-attachment: fixed;
+}
+
+html[data-workspace="true"] body {
+  background-image: none;
+}
+
 .font-mono {
   font-family: var(--font-mono);
 }
@@ -217,9 +231,103 @@ body {
 
 .glass-nav-compact {
   border-bottom: 1px solid var(--color-border);
-  background: var(--color-toolbar);
-  box-shadow: none;
-  backdrop-filter: none;
+  background: color-mix(in srgb, var(--color-ink) 88%, transparent);
+  box-shadow: var(--shadow-nav);
+  backdrop-filter: blur(10px);
+}
+
+html[data-theme="light"] .glass-nav-compact {
+  background: color-mix(in srgb, var(--color-toolbar) 92%, transparent);
+}
+
+/* ── QCI brand utilities (aligned with qcinit.tech) ── */
+.mono-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qci-section {
+  padding-block: 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .qci-section {
+    padding-block: 3.5rem;
+  }
+}
+
+.qci-section-eyebrow {
+  margin-bottom: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-cyan-quantum) 80%, transparent);
+}
+
+.qci-section-title {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+  line-height: 1.2;
+}
+
+.qci-section-lead {
+  margin-top: 0.875rem;
+  max-width: 40rem;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--color-muted-foreground);
+}
+
+.technical-panel {
+  border: 1px solid color-mix(in srgb, var(--color-cyan-quantum) 16%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  box-shadow: var(--shadow-blue-glow);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.technical-panel:hover {
+  border-color: color-mix(in srgb, var(--color-cyan-quantum) 35%, transparent);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #a855f7 30%, transparent);
+  padding: 0.2rem 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c084fc;
+}
+
+.status-pill--prototyping {
+  border-color: color-mix(in srgb, #a855f7 30%, transparent);
+  color: #c084fc;
+}
+
+.status-pill--completed {
+  border-color: color-mix(in srgb, #22c55e 30%, transparent);
+  color: #4ade80;
+}
+
+.qci-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-cyan-quantum) 35%, transparent),
+    transparent
+  );
 }
 
 .workspace-shell {
@@ -337,7 +445,7 @@ body {
 /* ── Panels ── */
 .composer-panel {
   background: var(--color-surface);
-  border-color: var(--color-border);
+  border-color: color-mix(in srgb, var(--color-cyan-quantum) 14%, transparent);
 }
 
 .composer-toolbar-btn {
@@ -505,22 +613,23 @@ body {
 
 /* ── Quantum Academy ── */
 .academy-hero {
-  background: linear-gradient(
-    135deg,
-    rgba(69, 137, 255, 0.08) 0%,
-    rgba(167, 139, 250, 0.06) 50%,
-    transparent 100%
-  );
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(47, 128, 237, 0.14), transparent 55%),
+    radial-gradient(ellipse at 100% 100%, rgba(246, 196, 83, 0.08), transparent 50%),
+    linear-gradient(135deg, rgba(8, 17, 31, 0.9) 0%, rgba(5, 9, 20, 0.6) 100%);
 }
 
 .academy-xp-pill {
   display: inline-flex;
   align-items: center;
   padding: 0.125rem 0.5rem;
-  background: linear-gradient(90deg, rgba(69, 137, 255, 0.15), rgba(167, 139, 250, 0.15));
+  background: linear-gradient(90deg, rgba(47, 128, 237, 0.15), rgba(125, 211, 252, 0.12));
   color: var(--color-brand);
   border: 1px solid var(--color-brand-border);
   border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
 }
 
 .academy-level-badge {

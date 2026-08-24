@@ -25,4 +25,13 @@ export function ExternalAnchor({
   );
 }
 
-export const KUQCI_HOME_URL = "https://kuqci.github.io/";
+/** Main Quantum Computing Initiative site (qcinit.tech). */
+export const QCI_HOME_URL = "https://qcinit.tech/";
+
+/** @deprecated Prefer QCI_HOME_URL — kept for any remaining imports. */
+export const KUQCI_HOME_URL = QCI_HOME_URL;
+
+export const QCI_RD_URL = "https://qcinit.tech/rd";
+export const QCI_GITHUB_ORG = "https://github.com/KUQCI";
+export const QCI_VISUALIZER_REPO =
+  "https://github.com/KUQCI/Quantum-Circuit-Visualizer";
