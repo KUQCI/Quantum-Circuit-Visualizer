@@ -12,13 +12,19 @@ import { ProbabilityChart } from "./probability-chart";
 import { QSphere } from "./q-sphere";
 import { StatevectorChart } from "./statevector-chart";
 import { MeasurementHistogram } from "./measurement-histogram";
+import {
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+} from "react-resizable-panels";
 import { cn } from "@/lib/utils";
 
 interface VisualizationPanelsProps {
   circuit: Circuit;
-  /** When true, show one viz panel at a time (narrow / short workspaces). */
   useVizTabs?: boolean;
   layoutTier?: LayoutTier;
+  resizable?: boolean;
+  layoutResetKey?: number;
 }
 
 type VizPanelId = "probabilities" | "qsphere" | "statevector" | "histogram";
@@ -96,10 +102,77 @@ function PanelBody({
   }
 }
 
+function VizPanelShell({
+  panelId,
+  result,
+  lastResult,
+}: {
+  panelId: VizPanelId;
+  result: QuantumStateResult;
+  lastResult: ReturnType<typeof useExecutionStore.getState>["lastResult"];
+}) {
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-background)] p-2 sm:p-3">
+      <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+        {PANEL_LABELS[panelId]}
+      </h3>
+      <PanelBody panelId={panelId} result={result} lastResult={lastResult} />
+    </div>
+  );
+}
+
+function ResizableVizRow({
+  activePanels,
+  result,
+  lastResult,
+  layoutResetKey,
+}: {
+  activePanels: VizPanelId[];
+  result: QuantumStateResult;
+  lastResult: ReturnType<typeof useExecutionStore.getState>["lastResult"];
+  layoutResetKey: number;
+}) {
+  const defaultSize = Math.floor(100 / activePanels.length);
+
+  return (
+    <PanelGroup
+      key={`viz-${layoutResetKey}-${activePanels.join("-")}`}
+      direction="horizontal"
+      autoSaveId="react-resizable-panels:qci-composer-viz"
+      className="h-full min-h-0 divide-x divide-[var(--color-border)]"
+    >
+      {activePanels.flatMap((panelId, index) => {
+        const nodes = [
+          <Panel
+            key={panelId}
+            id={`viz-${panelId}`}
+            order={index}
+            defaultSize={defaultSize}
+            minSize={12}
+          >
+            <VizPanelShell panelId={panelId} result={result} lastResult={lastResult} />
+          </Panel>,
+        ];
+        if (index < activePanels.length - 1) {
+          nodes.push(
+            <PanelResizeHandle
+              key={`handle-${panelId}`}
+              className="composer-resize-handle composer-resize-handle--horizontal"
+            />
+          );
+        }
+        return nodes;
+      })}
+    </PanelGroup>
+  );
+}
+
 export function VisualizationPanels({
   circuit,
   useVizTabs = false,
   layoutTier = "desktop",
+  resizable = false,
+  layoutResetKey = 0,
 }: VisualizationPanelsProps) {
   const { vizPanels, inspectMode, inspectStep } = useEditorUiStore();
   const lastResult = useExecutionStore((s) => s.lastResult);
@@ -190,6 +263,17 @@ export function VisualizationPanels({
     );
   }
 
+  if (resizable && activePanels.length > 1) {
+    return (
+      <ResizableVizRow
+        activePanels={activePanels}
+        result={result}
+        lastResult={lastResult}
+        layoutResetKey={layoutResetKey}
+      />
+    );
+  }
+
   const gridCols =
     activePanels.length === 1
       ? "grid-cols-1"
@@ -209,36 +293,24 @@ export function VisualizationPanels({
       )}
     >
       {vizPanels.probabilities && (
-        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
-          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
-            Probabilities
-          </h3>
-          <PanelBody panelId="probabilities" result={result} lastResult={lastResult} />
-        </div>
+        <VizPanelShell
+          panelId="probabilities"
+          result={result}
+          lastResult={lastResult}
+        />
       )}
       {vizPanels.qsphere && (
-        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
-          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
-            Q-sphere
-          </h3>
-          <PanelBody panelId="qsphere" result={result} lastResult={lastResult} />
-        </div>
+        <VizPanelShell panelId="qsphere" result={result} lastResult={lastResult} />
       )}
       {vizPanels.statevector && (
-        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
-          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
-            Statevector
-          </h3>
-          <PanelBody panelId="statevector" result={result} lastResult={lastResult} />
-        </div>
+        <VizPanelShell
+          panelId="statevector"
+          result={result}
+          lastResult={lastResult}
+        />
       )}
       {vizPanels.histogram && (
-        <div className="flex min-h-0 flex-col overflow-hidden p-2 sm:p-3">
-          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
-            Measurement results
-          </h3>
-          <PanelBody panelId="histogram" result={result} lastResult={lastResult} />
-        </div>
+        <VizPanelShell panelId="histogram" result={result} lastResult={lastResult} />
       )}
     </div>
   );

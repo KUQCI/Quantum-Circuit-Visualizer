@@ -11,6 +11,7 @@ import { RunCircuitDialog } from "@/components/execution/run-circuit-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getCodeLanguage } from "@/lib/code-adapters";
 import { downloadTextFile } from "@/lib/utils";
+import { sampleCircuitsMap } from "@/lib/sample-circuits";
 import {
   Save,
   Play,
@@ -41,23 +42,41 @@ import {
  */
 export function ComposerToolbar() {
   const router = useRouter();
-  const { circuit, saveProject, resetCircuit, undo, redo, canUndo, canRedo } =
-    useCircuitStore();
+  const {
+    circuit,
+    saveProject,
+    resetCircuit,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clearCircuit,
+    loadSampleCircuit,
+    selectedOperationId,
+    removeOperation,
+    duplicateOperation,
+  } = useCircuitStore();
   const [registersOpen, setRegistersOpen] = useState(false);
   const [runOpen, setRunOpen] = useState(false);
   const [confirmNewOpen, setConfirmNewOpen] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const {
     showCodePanel,
     showVizPanels,
     showPhaseDisks,
+    showInspector,
+    operationsPanelCollapsed,
     vizPanels,
     alignmentMode,
     codePanelLanguage,
     setShowCodePanel,
     setShowVizPanels,
     setShowPhaseDisks,
+    setShowInspector,
     setVizPanel,
     setAlignmentMode,
+    setOperationsPanelCollapsed,
+    resetLayout,
   } = useEditorUiStore();
 
   const handleNewCircuit = () => {
@@ -85,16 +104,34 @@ export function ComposerToolbar() {
 
   const fileItems = [
     { label: "New circuit", action: handleNewCircuit },
-    { label: "Save Project", action: handleSaveProject },
-    { label: "Download File", action: handleDownloadFile },
     { label: "Open projects", action: () => router.push("/projects") },
-    { label: "Import circuit", action: () => router.push("/import") },
-    { label: "Export Qiskit", action: () => router.push("/export") },
+    { label: "Import Qiskit", action: () => router.push("/import") },
+    { label: "Export code", action: () => router.push("/export") },
+    { label: "Download .py", action: handleDownloadFile },
+    { label: "Save project", action: handleSaveProject },
+  ];
+
+  const sampleItems = [
+    { label: "Bell state", key: "bell" as const },
+    { label: "GHZ state", key: "ghz" as const },
+    { label: "Superposition", key: "superposition" as const },
+    { label: "Teleportation demo", key: "teleportation" as const },
   ];
 
   const editItems = [
     { label: "Undo", action: undo, disabled: !canUndo() },
     { label: "Redo", action: redo, disabled: !canRedo() },
+    {
+      label: "Duplicate gate",
+      action: () => selectedOperationId && duplicateOperation(selectedOperationId),
+      disabled: !selectedOperationId,
+    },
+    {
+      label: "Delete gate",
+      action: () => selectedOperationId && removeOperation(selectedOperationId),
+      disabled: !selectedOperationId,
+    },
+    { label: "Clear circuit", action: () => setConfirmClearOpen(true) },
     { label: "Manage registers", action: () => setRegistersOpen(true) },
     {
       label: "Left alignment",
@@ -103,10 +140,10 @@ export function ComposerToolbar() {
   ];
 
   const helpItems = [
+    { label: "Supported gates", action: () => router.push("/docs/composer#gates") },
+    { label: "Keyboard shortcuts", action: () => router.push("/docs/composer#shortcuts") },
+    { label: "Translator limitations", action: () => router.push("/docs/debug") },
     { label: "Composer guide", action: () => router.push("/docs/composer") },
-    { label: "Translator debug", action: () => router.push("/docs/debug") },
-    { label: "API reference", action: () => router.push("/docs/api") },
-    { label: "Roadmap", action: () => router.push("/roadmap") },
   ];
 
   return (
@@ -148,6 +185,21 @@ export function ComposerToolbar() {
                       {item.label}
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="text-xs">Load sample</DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {sampleItems.map((item) => (
+                        <DropdownMenuItem
+                          key={item.key}
+                          className="text-xs"
+                          onClick={() => loadSampleCircuit(sampleCircuitsMap[item.key])}
+                        >
+                          {item.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuSub>
@@ -166,6 +218,13 @@ export function ComposerToolbar() {
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
               <DropdownMenuCheckboxItem
+                checked={!operationsPanelCollapsed}
+                onCheckedChange={(v) => setOperationsPanelCollapsed(!v)}
+                className="text-xs"
+              >
+                Operations panel
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
                 checked={showCodePanel}
                 onCheckedChange={setShowCodePanel}
                 className="text-xs"
@@ -177,7 +236,14 @@ export function ComposerToolbar() {
                 onCheckedChange={setShowVizPanels}
                 className="text-xs"
               >
-                Visualizations panel
+                Results panel
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showInspector}
+                onCheckedChange={setShowInspector}
+                className="text-xs"
+              >
+                Inspector panel
               </DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem
                 checked={showPhaseDisks}
@@ -231,6 +297,26 @@ export function ComposerToolbar() {
           {/* Desktop menus */}
           <nav className="hidden items-center gap-0.5 sm:flex">
             <ToolbarMenu label="File" icon={FileText} items={fileItems} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="composer-toolbar-btn hidden items-center gap-1 rounded px-2 py-1 text-xs sm:flex">
+                  <FileText className="h-3 w-3 opacity-60" />
+                  Samples
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[160px]">
+                {sampleItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.key}
+                    className="text-xs"
+                    onClick={() => loadSampleCircuit(sampleCircuitsMap[item.key])}
+                  >
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ToolbarMenu label="Edit" icon={Edit3} items={editItems} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -245,6 +331,13 @@ export function ComposerToolbar() {
                   <DropdownMenuSubTrigger className="text-xs">Panels</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     <DropdownMenuCheckboxItem
+                      checked={!operationsPanelCollapsed}
+                      onCheckedChange={(v) => setOperationsPanelCollapsed(!v)}
+                      className="text-xs"
+                    >
+                      Operations
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
                       checked={showCodePanel}
                       onCheckedChange={setShowCodePanel}
                       className="text-xs"
@@ -256,7 +349,14 @@ export function ComposerToolbar() {
                       onCheckedChange={setShowVizPanels}
                       className="text-xs"
                     >
-                      Visualizations
+                      Results
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={showInspector}
+                      onCheckedChange={setShowInspector}
+                      className="text-xs"
+                    >
+                      Inspector
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem
                       checked={vizPanels.probabilities}
@@ -288,6 +388,9 @@ export function ComposerToolbar() {
                     </DropdownMenuCheckboxItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
+                <DropdownMenuItem className="text-xs" onClick={resetLayout}>
+                  Reset layout
+                </DropdownMenuItem>
                 <DropdownMenuCheckboxItem
                   checked={showPhaseDisks}
                   onCheckedChange={setShowPhaseDisks}
@@ -373,6 +476,15 @@ export function ComposerToolbar() {
         confirmLabel="New circuit"
         destructive
         onConfirm={resetCircuit}
+      />
+      <ConfirmDialog
+        open={confirmClearOpen}
+        onOpenChange={setConfirmClearOpen}
+        title="Clear circuit?"
+        description="Remove all gates from the canvas. Registers and circuit name are kept."
+        confirmLabel="Clear circuit"
+        destructive
+        onConfirm={clearCircuit}
       />
     </>
   );
