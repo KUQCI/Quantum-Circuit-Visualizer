@@ -43,7 +43,9 @@ function getContentBreadcrumbs(pathname: string) {
           ? "API Reference"
           : path.includes("/assets")
             ? "Asset Tracker"
-            : "Composer Guide",
+            : path.includes("/debug")
+              ? "Translator Debug"
+              : "Composer Guide",
       },
     ];
   return [{ label: "Home", href: "/" }];

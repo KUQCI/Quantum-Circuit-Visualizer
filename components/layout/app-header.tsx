@@ -46,6 +46,7 @@ const secondaryNav = [
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
   { href: "/docs/assets", label: "Asset tracker", icon: Palette },
+  { href: "/docs/debug", label: "Translator debug", icon: BookOpen },
   { href: "/import", label: "Import", icon: Upload },
   { href: "/export", label: "Export", icon: Download },
 ] as const;

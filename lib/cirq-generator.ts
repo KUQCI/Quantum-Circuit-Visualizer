@@ -22,6 +22,10 @@ function formatCirqParam(op: Operation): string {
   return op.parameters[0].display ?? formatParam(op.parameters[0].value);
 }
 
+function qRef(index: number): string {
+  return `qubits[${index}]`;
+}
+
 function emitCirqGate(op: Operation): string {
   const gate = op.type;
 
@@ -30,41 +34,51 @@ function emitCirqGate(op: Operation): string {
   if (gate === "measure") {
     const q = qubitIndexFromId(op.targets[0]);
     const c = classicalBitIndexFromId(op.classicalTargets[0]);
-    return `circuit.append(cirq.measure(q${q}, key='c${c}'))`;
+    return `circuit.append(cirq.measure(${qRef(q)}, key='c${c}'))`;
   }
 
   if (gate === "reset") {
     const q = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.reset(q${q}))`;
+    return `circuit.append(cirq.reset(${qRef(q)}))`;
   }
 
   if (["h", "x", "y", "z", "s", "t"].includes(gate)) {
     const q = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.${gate}(q${q}))`;
+    return `circuit.append(cirq.${gate}(${qRef(q)}))`;
+  }
+
+  if (gate === "sdg") {
+    const q = qubitIndexFromId(op.targets[0]);
+    return `circuit.append(cirq.S(${qRef(q)}) ** -1)`;
+  }
+
+  if (gate === "tdg") {
+    const q = qubitIndexFromId(op.targets[0]);
+    return `circuit.append(cirq.T(${qRef(q)}) ** -1)`;
   }
 
   if (["rx", "ry", "rz"].includes(gate)) {
     const q = qubitIndexFromId(op.targets[0]);
     const p = formatCirqParam(op) || "0";
-    return `circuit.append(cirq.${gate}(${p}).on(q${q}))`;
+    return `circuit.append(cirq.${gate}(${p}).on(${qRef(q)}))`;
   }
 
   if (gate === "cx") {
     const c = qubitIndexFromId(op.controls[0]);
     const t = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.CNOT(q${c}, q${t}))`;
+    return `circuit.append(cirq.CNOT(${qRef(c)}, ${qRef(t)}))`;
   }
 
   if (gate === "cz") {
     const c = qubitIndexFromId(op.controls[0]);
     const t = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.CZ(q${c}, q${t}))`;
+    return `circuit.append(cirq.CZ(${qRef(c)}, ${qRef(t)}))`;
   }
 
   if (gate === "swap") {
     const q1 = qubitIndexFromId(op.targets[0]);
     const q2 = qubitIndexFromId(op.targets[1] ?? op.controls[0]);
-    return `circuit.append(cirq.SWAP(q${q1}, q${q2}))`;
+    return `circuit.append(cirq.SWAP(${qRef(q1)}, ${qRef(q2)}))`;
   }
 
   throw new Error(`Gate ${gate} not supported in Cirq export`);
@@ -77,7 +91,6 @@ export function generateCirqCode(circuit: Circuit): CirqGenerateResult {
       "import cirq",
       "",
       `qubits = [cirq.LineQubit(i) for i in range(${n})]`,
-      `q0, q1${n > 2 ? ", ..." : ""} = qubits[0], qubits[1]${n > 2 ? ", *qubits[2:]" : ""}`,
       "circuit = cirq.Circuit()",
       "",
     ];

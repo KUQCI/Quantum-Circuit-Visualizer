@@ -1,4 +1,11 @@
-import { CircuitSchema, Circuit, Operation, qubitIndexFromId, classicalBitIndexFromId } from "./circuit-schema";
+import {
+  CircuitSchema,
+  Circuit,
+  Operation,
+  SUPPORTED_GATES,
+  qubitIndexFromId,
+  classicalBitIndexFromId,
+} from "./circuit-schema";
 import { ZodError } from "zod";
 
 export interface ValidationResult {
@@ -9,6 +16,12 @@ export interface ValidationResult {
 export interface ValidationError {
   valid: false;
   errors: string[];
+}
+
+export interface SemanticCheckResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
 export function validateCircuit(data: unknown): ValidationResult | ValidationError {
@@ -56,6 +69,66 @@ export function repairCircuit(circuit: Circuit): Circuit {
   };
 }
 
+/** Semantic checks for translator IR (errors = hard; warnings = soft). */
+export function validateCircuitSemantics(circuit: Circuit): SemanticCheckResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const v1 = new Set<string>(SUPPORTED_GATES);
+
+  for (const op of circuit.operations) {
+    if (!Number.isInteger(op.column) || op.column < 0) {
+      errors.push(`Operation ${op.id}: column must be a non-negative integer`);
+    }
+
+    if (!isOperationValidForCircuit(op, circuit)) {
+      errors.push(`Operation ${op.id} (${op.type}): target/control/classical id out of range`);
+      continue;
+    }
+
+    if (!v1.has(op.type) && !["id", "sx", "sxdg", "p", "u", "rxx", "rzz", "ccx", "rccx", "rc3x", "reset"].includes(op.type)) {
+      warnings.push(`Operation ${op.id}: gate type '${op.type}' is outside the v1 supported set`);
+    }
+
+    if (op.type === "measure") {
+      if (op.targets.length !== 1) {
+        errors.push(`measure ${op.id}: needs exactly one qubit target`);
+      }
+      if (op.classicalTargets.length !== 1) {
+        errors.push(`measure ${op.id}: needs exactly one classical target`);
+      }
+    }
+
+    if (op.type === "cx" || op.type === "cz") {
+      if (op.controls.length !== 1 || op.targets.length !== 1) {
+        errors.push(`${op.type} ${op.id}: needs one control and one target`);
+      }
+    }
+
+    if (op.type === "swap") {
+      const n = op.targets.length + (op.controls.length > 0 ? 1 : 0);
+      if (op.targets.length !== 2 && !(op.controls.length === 1 && op.targets.length === 1)) {
+        errors.push(`swap ${op.id}: needs two qubit targets`);
+      }
+      void n;
+    }
+
+    if (["rx", "ry", "rz"].includes(op.type)) {
+      if (!op.parameters?.length) {
+        errors.push(`${op.type} ${op.id}: missing rotation parameter`);
+      }
+    }
+  }
+
+  const placement = validateCircuitPlacement(circuit);
+  warnings.push(...placement);
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
 export function validateCircuitPlacement(circuit: Circuit): string[] {
   const warnings: string[] = [];
   const columnMap = new Map<number, Set<string>>();
@@ -81,7 +154,7 @@ export function validateCircuitPlacement(circuit: Circuit): string[] {
     if (op.type === "measure" && op.classicalTargets.length === 0) {
       warnings.push(`Measure gate ${op.id} is missing a classical target`);
     }
-    if (["cx", "cz", "swap"].includes(op.type) && op.controls.length === 0) {
+    if (["cx", "cz"].includes(op.type) && op.controls.length === 0) {
       warnings.push(`${op.type.toUpperCase()} gate ${op.id} is missing a control qubit`);
     }
     if (["rx", "ry", "rz"].includes(op.type) && !op.parameters?.length) {
