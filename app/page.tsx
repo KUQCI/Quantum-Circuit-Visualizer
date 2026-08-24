@@ -13,6 +13,7 @@ import {
 import { PageActions } from "@/components/navigation/PageActions";
 import { ArtistAssetPlaceholder } from "@/components/assets/ArtistAssetPlaceholder";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { Reveal } from "@/components/motion/Reveal";
 import { useCircuitStore } from "@/store/circuit-store";
 import { formatDate } from "@/lib/utils";
 import {
@@ -57,79 +58,83 @@ export default function HomePage() {
   return (
     <div className="page-container max-w-5xl pb-4">
       {/* Hero */}
-      <section className="relative mb-8 overflow-hidden rounded-2xl border border-[var(--color-border)]">
-        <ArtistAssetPlaceholder
-          assetId="quantum-journey-banner"
-          aspect="banner"
-          variant="polished"
-          className="absolute inset-0 min-h-0 rounded-none border-0 aspect-auto h-full w-full"
-        />
-        <div className="relative px-5 py-12 text-center sm:px-10 sm:py-16">
-          <ExternalAnchor
-            href={QCI_HOME_URL}
-            className="relative z-[1] mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-brand)]"
-          >
-            <Image
-              src="https://kuqci.github.io/logo.png"
-              alt=""
-              width={20}
-              height={20}
-              className="rounded-full"
-              unoptimized
-              aria-hidden
-            />
-            <span className="mono-label text-[0.7rem] tracking-[0.12em] text-[var(--color-brand)]">
-              Khalifa University Quantum Computing Initiative
-            </span>
-            <ExternalLink className="h-3 w-3" />
-          </ExternalAnchor>
+      <Reveal variant="fade" className="mb-8">
+        <section className="relative overflow-hidden rounded-2xl border border-[var(--color-border)]">
+          <ArtistAssetPlaceholder
+            assetId="quantum-journey-banner"
+            aspect="banner"
+            variant="polished"
+            className="absolute inset-0 min-h-0 rounded-none border-0 aspect-auto h-full w-full"
+          />
+          <div className="relative px-5 py-12 text-center sm:px-10 sm:py-16">
+            <ExternalAnchor
+              href={QCI_HOME_URL}
+              className="relative z-[1] mb-5 inline-flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-brand)]"
+            >
+              <Image
+                src="https://kuqci.github.io/logo.png"
+                alt=""
+                width={20}
+                height={20}
+                className="rounded-full"
+                unoptimized
+                aria-hidden
+              />
+              <span className="mono-label text-[0.7rem] tracking-[0.12em] text-[var(--color-brand)]">
+                Khalifa University Quantum Computing Initiative
+              </span>
+              <ExternalLink className="h-3 w-3" />
+            </ExternalAnchor>
 
-          <p className="relative z-[1] mono-label mb-3 text-[0.7rem] text-[var(--color-muted-foreground)]">
-            A QCI R&amp;D Project
-          </p>
-          <h1 className="relative z-[1] text-4xl font-semibold tracking-tight text-[var(--color-foreground)] sm:text-5xl">
-            Quantum Circuit Visualizer
-          </h1>
-          <p className="relative z-[1] mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-muted-foreground)] sm:text-lg">
-            Build, view, and convert quantum circuits through an interactive
-            visual editor — bridging learning and real code.
-          </p>
-        </div>
-      </section>
+            <p className="relative z-[1] mono-label mb-3 text-[0.7rem] text-[var(--color-muted-foreground)]">
+              A QCI R&amp;D Project
+            </p>
+            <h1 className="relative z-[1] text-4xl font-semibold tracking-tight text-[var(--color-foreground)] sm:text-5xl">
+              Quantum Circuit Visualizer
+            </h1>
+            <p className="relative z-[1] mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-muted-foreground)] sm:text-lg">
+              Build, view, and convert quantum circuits through an interactive
+              visual editor — bridging learning and real code.
+            </p>
+          </div>
+        </section>
+      </Reveal>
 
       {/* Main CTAs */}
-      <section className="mb-2" aria-label="Primary actions">
-        <PageActions
-          className="justify-center"
-          primary={[
-            {
-              label: "Start Building",
-              href: "/editor",
-              icon: <PenLine className="h-4 w-4" />,
-            },
-          ]}
-          secondary={[
-            {
-              label: "Start Learning",
-              href: "/learn",
-              icon: <GraduationCap className="h-4 w-4" />,
-            },
-            {
-              label: "Open Projects",
-              href: "/projects",
-              icon: <FolderOpen className="h-4 w-4" />,
-            },
-            {
-              label: "Import Qiskit",
-              href: "/import",
-              icon: <Upload className="h-4 w-4" />,
-            },
-          ]}
-        />
-      </section>
+      <Reveal variant="up" delay={80} className="mb-2" as="section">
+        <div aria-label="Primary actions">
+          <PageActions
+            className="justify-center"
+            primary={[
+              {
+                label: "Start Building",
+                href: "/editor",
+                icon: <PenLine className="h-4 w-4" />,
+              },
+            ]}
+            secondary={[
+              {
+                label: "Start Learning",
+                href: "/learn",
+                icon: <GraduationCap className="h-4 w-4" />,
+              },
+              {
+                label: "Open Projects",
+                href: "/projects",
+                icon: <FolderOpen className="h-4 w-4" />,
+              },
+              {
+                label: "Import Qiskit",
+                href: "/import",
+                icon: <Upload className="h-4 w-4" />,
+              },
+            ]}
+          />
+        </div>
+      </Reveal>
 
       {/* Continue */}
-      <section className="qci-section border-t border-[var(--color-border)]">
+      <Reveal as="section" className="qci-section border-t border-[var(--color-border)]">
         <p className="qci-section-eyebrow">Continue</p>
         <h2 className="qci-section-title">Pick up where you left off</h2>
         <p className="qci-section-lead">
@@ -139,10 +144,10 @@ export default function HomePage() {
         <div className="mt-8">
           <ContinueWhereYouLeftOff />
         </div>
-      </section>
+      </Reveal>
 
       {/* Learn / Build / Connect */}
-      <section className="qci-section border-t border-[var(--color-border)]">
+      <Reveal as="section" className="qci-section border-t border-[var(--color-border)]">
         <p className="qci-section-eyebrow">Mission</p>
         <h2 className="qci-section-title">
           Learn, build, and connect quantum circuits
@@ -152,28 +157,29 @@ export default function HomePage() {
           mission to make quantum computing accessible and practical.
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {missionCards.map((card) => (
-            <Link
-              key={card.title}
-              href={card.href}
-              className="technical-panel group block p-6 transition duration-200 hover:shadow-[var(--shadow-blue-glow)]"
-            >
-              <p className="mono-label mb-6 text-xs text-[var(--color-brand)]/70">
-                {card.n}
-              </p>
-              <h3 className="text-xl font-semibold text-[var(--color-foreground)] group-hover:text-[var(--color-brand)]">
-                {card.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-muted-foreground)]">
-                {card.body}
-              </p>
-            </Link>
+          {missionCards.map((card, i) => (
+            <Reveal key={card.title} delay={i * 90} variant="up">
+              <Link
+                href={card.href}
+                className="technical-panel group block h-full p-6"
+              >
+                <p className="mono-label mb-6 text-xs text-[var(--color-brand)]/70">
+                  {card.n}
+                </p>
+                <h3 className="text-xl font-semibold text-[var(--color-foreground)] transition-colors group-hover:text-[var(--color-brand)]">
+                  {card.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-muted-foreground)]">
+                  {card.body}
+                </p>
+              </Link>
+            </Reveal>
           ))}
         </div>
-      </section>
+      </Reveal>
 
       {/* R&D Project */}
-      <section className="qci-section border-t border-[var(--color-border)]">
+      <Reveal as="section" className="qci-section border-t border-[var(--color-border)]">
         <p className="qci-section-eyebrow">R&amp;D Project</p>
         <h2 className="qci-section-title">Part of the QCI open-source stack</h2>
         <article className="technical-panel mt-8 p-5 sm:p-6">
@@ -184,7 +190,7 @@ export default function HomePage() {
             >
               KUQCI/Quantum-Circuit-Visualizer
             </ExternalAnchor>
-            <span className="status-pill status-pill--prototyping">
+            <span className="status-pill status-pill--prototyping motion-status-pulse">
               Prototyping
             </span>
           </div>
@@ -238,10 +244,10 @@ export default function HomePage() {
             </ExternalAnchor>
           </div>
         </article>
-      </section>
+      </Reveal>
 
       {/* Recent projects */}
-      <section className="qci-section border-t border-[var(--color-border)] pt-10">
+      <Reveal as="section" className="qci-section border-t border-[var(--color-border)] pt-10">
         <div className="mb-5 flex items-end justify-between gap-3">
           <div>
             <p className="qci-section-eyebrow mb-2">Projects</p>
@@ -270,30 +276,29 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {recentProjects.map((project) => (
-              <article
-                key={project.id}
-                className="technical-panel p-5 transition hover:border-[var(--color-border-strong)]"
-              >
-                <h3 className="text-base font-semibold text-[var(--color-foreground)]">
-                  {project.name}
-                </h3>
-                <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-                  {project.circuit.qubits.length} qubits ·{" "}
-                  {project.circuit.operations.length} gates ·{" "}
-                  {formatDate(project.updatedAt)}
-                </p>
-                <Button asChild variant="outline" size="sm" className="mt-4">
-                  <Link href={`/editor?project=${project.id}`}>
-                    <ArrowLeftRight className="h-3.5 w-3.5" />
-                    Open in Build
-                  </Link>
-                </Button>
-              </article>
+            {recentProjects.map((project, i) => (
+              <Reveal key={project.id} delay={i * 70}>
+                <article className="technical-panel h-full p-5">
+                  <h3 className="text-base font-semibold text-[var(--color-foreground)]">
+                    {project.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
+                    {project.circuit.qubits.length} qubits ·{" "}
+                    {project.circuit.operations.length} gates ·{" "}
+                    {formatDate(project.updatedAt)}
+                  </p>
+                  <Button asChild variant="outline" size="sm" className="mt-4">
+                    <Link href={`/editor?project=${project.id}`}>
+                      <ArrowLeftRight className="h-3.5 w-3.5" />
+                      Open in Build
+                    </Link>
+                  </Button>
+                </article>
+              </Reveal>
             ))}
           </div>
         )}
-      </section>
+      </Reveal>
     </div>
   );
 }

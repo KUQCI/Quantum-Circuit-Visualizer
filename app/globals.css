@@ -289,12 +289,17 @@ html[data-theme="light"] .glass-nav-compact {
   background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   box-shadow: var(--shadow-blue-glow);
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 }
 
 .technical-panel:hover {
   border-color: color-mix(in srgb, var(--color-cyan-quantum) 35%, transparent);
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 36px rgba(47, 128, 237, 0.16),
+    0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
 .status-pill {
@@ -476,10 +481,16 @@ html[data-theme="light"] .glass-nav-compact {
 /* ── Navigation links ── */
 .kuqci-nav-link {
   position: relative;
-  transition: color 0.2s;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
 .kuqci-nav-link:hover {
   color: var(--color-brand);
+}
+.kuqci-nav-link:active {
+  transform: scale(0.98);
 }
 .kuqci-nav-link::after {
   content: "";
@@ -489,7 +500,7 @@ html[data-theme="light"] .glass-nav-compact {
   width: 0;
   height: 2px;
   background: var(--color-gold-duck);
-  transition: width 0.2s;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .kuqci-nav-link:hover::after,
 .kuqci-nav-link.active::after {
@@ -600,8 +611,23 @@ button:disabled,
   }
 
   .quanta-bob,
-  [data-quanta-animated] {
+  [data-quanta-animated],
+  .motion-aurora,
+  .motion-grid-drift,
+  .motion-hero-shimmer {
     animation: none !important;
+  }
+
+  .motion-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .technical-panel:hover,
+  .academy-card:hover,
+  .motion-lift:hover {
+    transform: none !important;
   }
 }
 
@@ -633,13 +659,225 @@ button:disabled,
   }
 }
 
-/* ── Quantum Academy ── */
+/* ── Motion system (public / academy polish) ── */
+@keyframes motion-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-fade-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes motion-fade-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes motion-aurora {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.06) translate(2%, -1%);
+  }
+}
+
+@keyframes motion-grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 48px 48px;
+  }
+}
+
+@keyframes motion-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes motion-pulse-soft {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.motion-page-enter {
+  animation: motion-fade-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-reveal {
+  --motion-delay: 0ms;
+  opacity: 0;
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.55s ease;
+  transition-delay: var(--motion-delay);
+  will-change: opacity, transform;
+}
+
+.motion-reveal--up {
+  transform: translateY(16px);
+}
+
+.motion-reveal--fade {
+  transform: none;
+}
+
+.motion-reveal--scale {
+  transform: scale(0.97);
+}
+
+.motion-reveal--left {
+  transform: translateX(-14px);
+}
+
+.motion-reveal--right {
+  transform: translateX(14px);
+}
+
+.motion-reveal--in {
+  opacity: 1;
+  transform: none;
+}
+
+.motion-lift {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.motion-lift:hover {
+  transform: translateY(-3px);
+}
+
+.motion-aurora {
+  animation: motion-aurora 10s ease-in-out infinite;
+}
+
+.motion-grid-drift {
+  animation: motion-grid-drift 28s linear infinite;
+}
+
+.motion-hero-shimmer {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(125, 211, 252, 0.08) 40%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  animation: motion-shimmer 7s ease-in-out infinite;
+}
+
+.motion-status-pulse {
+  animation: motion-pulse-soft 2.8s ease-in-out infinite;
+}
+
+.academy-card {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.academy-card:hover {
+  transform: translateY(-2px);
+}
+
 .academy-hero {
+  position: relative;
+  overflow: hidden;
   background:
     radial-gradient(ellipse at 0% 0%, rgba(47, 128, 237, 0.14), transparent 55%),
     radial-gradient(ellipse at 100% 100%, rgba(246, 196, 83, 0.08), transparent 50%),
     linear-gradient(135deg, rgba(8, 17, 31, 0.9) 0%, rgba(5, 9, 20, 0.6) 100%);
 }
+
+.academy-hero::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    ellipse at 30% 20%,
+    rgba(47, 128, 237, 0.18),
+    transparent 55%
+  );
+  animation: motion-aurora 12s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.academy-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.academy-progress-bar > div {
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Composer stays calm — no hover lift on dense UI */
+[data-composer="true"] .technical-panel:hover,
+[data-composer="true"] .motion-lift:hover {
+  transform: none;
+}
+
+/* ── Quantum Academy ── */
 
 .academy-xp-pill {
   display: inline-flex;

@@ -7,6 +7,7 @@ import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
+import { Reveal } from "@/components/motion/Reveal";
 import { CHALLENGES, getChallengesByDifficulty } from "@/lib/learning/challenges";
 import {
   getNextChallenge,
@@ -176,23 +177,24 @@ export default function ChallengesPage() {
                   )}
                 </div>
                 <div className={`grid gap-4 ${cols}`}>
-                  {items.map((c) => (
-                    <ChallengeCard
-                      key={c.id}
-                      challenge={c}
-                      unlocked={unlocked}
-                      completed={completedChallenges.includes(c.id)}
-                      lockedReason={
-                        unlocked
-                          ? undefined
-                          : challengeLockReason(
-                              tier,
-                              completedLessons,
-                              completedChallenges,
-                              c.id
-                            )
-                      }
-                    />
+                  {items.map((c, i) => (
+                    <Reveal key={c.id} delay={i * 55} variant="up">
+                      <ChallengeCard
+                        challenge={c}
+                        unlocked={unlocked}
+                        completed={completedChallenges.includes(c.id)}
+                        lockedReason={
+                          unlocked
+                            ? undefined
+                            : challengeLockReason(
+                                tier,
+                                completedLessons,
+                                completedChallenges,
+                                c.id
+                              )
+                        }
+                      />
+                    </Reveal>
                   ))}
                 </div>
               </section>

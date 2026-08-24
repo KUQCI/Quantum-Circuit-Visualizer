@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)] disabled:pointer-events-none disabled:opacity-50 cursor-pointer active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:brightness-105 active:brightness-95 shadow-sm",
+          "bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:brightness-105 hover:shadow-[0_0_20px_rgba(246,196,83,0.25)] active:brightness-95 shadow-sm",
         secondary:
-          "border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] text-[var(--color-brand)] hover:bg-[var(--color-brand-hover)]",
+          "border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] text-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] hover:border-[var(--color-brand)]",
         outline:
-          "border border-[var(--color-brand-border)] bg-transparent text-[var(--color-brand)] hover:bg-[var(--color-brand-hover)]",
+          "border border-[var(--color-brand-border)] bg-transparent text-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] hover:border-[var(--color-brand)]",
         ghost:
           "text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]",
         destructive:

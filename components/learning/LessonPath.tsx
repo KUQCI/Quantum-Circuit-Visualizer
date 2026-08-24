@@ -12,6 +12,7 @@ import {
 } from "@/store/progress-store";
 import { getNextLesson } from "@/lib/navigation/flow";
 import { LessonCard } from "./LessonCard";
+import { Reveal } from "@/components/motion/Reveal";
 import { cn } from "@/lib/utils";
 
 const MODULE_ORDER: ModuleId[] = [
@@ -93,18 +94,19 @@ export function LessonPath() {
                   ? LESSONS.find((l) => l.id === prev.id)
                   : null;
                 return (
-                  <LessonCard
-                    key={lesson.id}
-                    lesson={lesson}
-                    unlocked={unlocked}
-                    completed={completedLessons.includes(lesson.id)}
-                    recommended={nextLesson?.id === lesson.id}
-                    lockedReason={
-                      !unlocked && prevLesson
-                        ? `Complete “${prevLesson.title}” first`
-                        : undefined
-                    }
-                  />
+                  <Reveal key={lesson.id} delay={(lesson.order % 3) * 60}>
+                    <LessonCard
+                      lesson={lesson}
+                      unlocked={unlocked}
+                      completed={completedLessons.includes(lesson.id)}
+                      recommended={nextLesson?.id === lesson.id}
+                      lockedReason={
+                        !unlocked && prevLesson
+                          ? `Complete “${prevLesson.title}” first`
+                          : undefined
+                      }
+                    />
+                  </Reveal>
                 );
               })}
             </div>

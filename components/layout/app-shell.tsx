@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { AppBootstrap } from "@/components/layout/app-bootstrap";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { PageTransition } from "@/components/motion/PageTransition";
 import {
   isEditorPath,
   isFullWorkspacePath,
@@ -106,7 +107,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Breadcrumbs items={breadcrumbs} />
             </div>
           )}
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
         {!isFullWorkspace && <SiteFooter />}
       </div>
