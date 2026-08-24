@@ -30,6 +30,7 @@ import {
   MoreHorizontal,
   Upload,
   Download,
+  Palette,
 } from "lucide-react";
 
 const primaryNav = [
@@ -44,9 +45,9 @@ const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
+  { href: "/docs/assets", label: "Asset tracker", icon: Palette },
   { href: "/import", label: "Import", icon: Upload },
   { href: "/export", label: "Export", icon: Download },
-  { href: "/roadmap", label: "Roadmap", icon: BookOpen },
 ] as const;
 
 export function AppHeader() {
@@ -70,30 +71,35 @@ export function AppHeader() {
     >
       <div
         className={cn(
-          "app-header-inner flex items-center gap-2 px-3 sm:gap-3 sm:px-4",
+          "app-header-inner mx-auto flex w-full max-w-[1600px] items-center gap-2 px-3 sm:gap-3 sm:px-4",
           isComposer ? "h-10" : "h-14"
         )}
       >
-        <Link href="/" className="flex shrink-0 items-center gap-2">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image
             src="https://kuqci.github.io/logo.png"
-            alt="KUQCI"
-            width={24}
-            height={24}
-            className="rounded-md"
+            alt="QCI"
+            width={28}
+            height={28}
+            className="rounded-full border border-[var(--color-brand-border)]"
             unoptimized
           />
-          <span className="hidden text-sm font-semibold text-[var(--color-foreground)] sm:inline">
-            KUQCI
+          <span className="hidden leading-tight sm:block">
+            <span className="block text-sm font-semibold text-[var(--color-foreground)]">
+              Circuit Visualizer
+            </span>
+            <span className="mono-label block text-[0.62rem] text-[var(--color-muted-foreground)]">
+              QCI · Khalifa University
+            </span>
           </span>
         </Link>
 
-        {/* Desktop primary nav — hidden in composer to maximize canvas space */}
         <nav
           className={cn(
             "hidden min-w-0 flex-1 items-center gap-0.5",
             !isComposer && "md:flex"
           )}
+          aria-label="Primary"
         >
           {primaryNav.map((item) => {
             const Icon = item.icon;
@@ -122,7 +128,6 @@ export function AppHeader() {
             <ModeSwitcher size="sm" className="inline-flex" />
           )}
 
-          {/* More menu — desktop/tablet */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -174,7 +179,6 @@ export function AppHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Mobile menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

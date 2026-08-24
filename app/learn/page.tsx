@@ -9,6 +9,7 @@ import { ProgressHydrationGate } from "@/components/layout/progress-hydration-ga
 import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
+import { ArtistAssetPlaceholder } from "@/components/assets/ArtistAssetPlaceholder";
 import { quantaMessages } from "@/lib/mascot/messages";
 import {
   getBeginnerChallenge,
@@ -34,16 +35,17 @@ export default function LearnPage() {
 
   return (
     <div className="page-container max-w-5xl">
-      <div className="academy-hero mb-8 rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
+      <div className="academy-hero mb-8 overflow-hidden rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          <QuantaDuck size={72} animated />
+          <div className="relative shrink-0">
+            <QuantaDuck size={72} animated />
+          </div>
           <div className="flex-1">
-            <p className="text-xs font-medium uppercase tracking-widest text-[var(--color-brand)]">
-              Quantum Academy
-            </p>
+            <p className="qci-section-eyebrow mb-1">Quantum Academy</p>
             <h1 className="page-title mt-1 text-3xl">Learn Quantum Circuits</h1>
-            <p className="page-description mt-2">
-              Learn quantum circuits through interactive lessons guided by Quanta
+            <p className="page-description mt-2 max-w-xl">
+              A guided QCI learning track — playful with Quanta, still academic
+              and research-focused.
             </p>
             <PageActions
               className="mt-4"
@@ -64,6 +66,20 @@ export default function LearnPage() {
             />
           </div>
         </div>
+      </div>
+
+      <div className="mb-8 grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+        <ArtistAssetPlaceholder
+          assetId="quanta-teacher"
+          label="Quanta Teacher"
+          aspect="banner"
+          className="min-h-[120px]"
+        />
+        <ArtistAssetPlaceholder
+          assetId="bloch-sphere-duck-icon"
+          aspect="square"
+          className="min-h-[120px]"
+        />
       </div>
 
       <ContinueWhereYouLeftOff className="mb-8" showProject={false} />
@@ -89,8 +105,9 @@ export default function LearnPage() {
         />
 
         <section className="mb-8">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
-            Your Progress
+          <p className="qci-section-eyebrow">Your progress</p>
+          <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
+            Track the learning path
           </h2>
           <ProgressSummary />
           <PageActions
@@ -104,8 +121,9 @@ export default function LearnPage() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
-            Learning Path
+          <p className="qci-section-eyebrow">Learning track</p>
+          <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
+            Guided R&amp;D curriculum
           </h2>
           <LessonPath />
         </section>
