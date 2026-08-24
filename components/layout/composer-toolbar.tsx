@@ -10,6 +10,8 @@ import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dialog";
 import { RunCircuitDialog } from "@/components/execution/run-circuit-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { getCodeLanguage } from "@/lib/code-adapters";
+import { downloadTextFile } from "@/lib/utils";
 import {
   Save,
   Play,
@@ -20,6 +22,7 @@ import {
   HelpCircle,
   Check,
   Menu,
+  Download,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +49,7 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
     showPhaseDisks,
     vizPanels,
     alignmentMode,
+    codePanelLanguage,
     setShowCodePanel,
     setShowVizPanels,
     setShowPhaseDisks,
@@ -61,9 +65,25 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
     resetCircuit();
   };
 
+  const handleSaveProject = () => {
+    saveProject(circuit.name.trim() || "Untitled Circuit");
+  };
+
+  const handleDownloadFile = () => {
+    const adapter = getCodeLanguage(codePanelLanguage);
+    const result = adapter.generate(circuit);
+    if (!result.success || !result.code) return;
+    const ext = adapter.defaultFilename.split(".").pop() ?? "txt";
+    const base = (circuit.name.trim() || "untitled_circuit")
+      .replace(/\s+/g, "_")
+      .toLowerCase();
+    downloadTextFile(result.code, `${base}.${ext}`);
+  };
+
   const fileItems = [
     { label: "New circuit", action: handleNewCircuit },
-    { label: "Save file", action: () => saveProject() },
+    { label: "Save Project", action: handleSaveProject },
+    { label: "Download File", action: handleDownloadFile },
     { label: "Open projects", action: () => router.push("/projects") },
     { label: "Import circuit", action: () => router.push("/import") },
     { label: "Export Qiskit", action: () => router.push("/export") },
@@ -81,6 +101,7 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
 
   const helpItems = [
     { label: "Composer guide", action: () => router.push("/docs/composer") },
+    { label: "Translator debug", action: () => router.push("/docs/debug") },
     { label: "API reference", action: () => router.push("/docs/api") },
     { label: "Roadmap", action: () => router.push("/roadmap") },
   ];
@@ -96,8 +117,9 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
                 circuit: { ...circuit, name: e.target.value },
               })
             }
+            placeholder="Untitled Circuit"
             aria-label="Circuit name"
-            className="h-7 min-w-0 max-w-[140px] border-none bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-0 sm:max-w-[176px]"
+            className="h-7 min-w-0 max-w-[160px] border-none bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-1 sm:max-w-[220px]"
           />
 
           {/* Mobile menu */}
@@ -305,16 +327,30 @@ export function ComposerToolbar({ immersive = false }: { immersive?: boolean }) 
             variant="outline"
             size="sm"
             className="h-7 gap-1.5 px-2 text-xs sm:px-3"
-            onClick={() => saveProject()}
+            onClick={handleSaveProject}
+            aria-label="Save project to browser"
+            title="Save Project — stores this circuit in Projects (localStorage)"
           >
             <Save className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Save file</span>
+            <span className="hidden sm:inline">Save Project</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs sm:px-3"
+            onClick={handleDownloadFile}
+            aria-label="Download circuit file"
+            title="Download File — export generated code to disk"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">Download</span>
           </Button>
           <Button
             size="sm"
             className="h-7 gap-1.5 px-2 text-xs sm:px-3"
             onClick={() => setRunOpen(true)}
             title="Set up and run on simulator"
+            aria-label="Run circuit"
           >
             <Play className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Run circuit</span>

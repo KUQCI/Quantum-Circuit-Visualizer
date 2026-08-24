@@ -8,6 +8,8 @@ export interface PageAction {
   onClick?: () => void;
   icon?: React.ReactNode;
   variant?: "default" | "outline" | "secondary" | "ghost" | "destructive";
+  disabled?: boolean;
+  title?: string;
 }
 
 interface PageActionsProps {
@@ -42,7 +44,7 @@ function ActionButton({
     action.variant ?? (priority === "primary" ? "default" : "outline");
   const size = priority === "primary" ? "default" : "sm";
 
-  if (action.href) {
+  if (action.href && !action.disabled) {
     return (
       <Button asChild variant={variant} size={size} className="gap-1.5">
         <Link href={action.href}>
@@ -59,6 +61,8 @@ function ActionButton({
       size={size}
       className="gap-1.5"
       onClick={action.onClick}
+      disabled={action.disabled}
+      title={action.title}
     >
       {action.icon}
       {action.label}

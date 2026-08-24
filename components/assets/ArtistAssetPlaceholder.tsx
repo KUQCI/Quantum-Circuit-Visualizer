@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 
 export type ArtistAssetId =
@@ -26,19 +28,24 @@ interface ArtistAssetPlaceholderProps {
   className?: string;
   /** Aspect ratio hint for layout: banner, square, video */
   aspect?: "banner" | "square" | "video" | "icon";
+  /**
+   * `polished` — public-facing decorative slot (no artist/dev copy).
+   * `dev` — internal tracker style with asset IDs (docs/assets only).
+   */
+  variant?: "polished" | "dev";
   children?: React.ReactNode;
 }
 
 /**
- * Labeled slot for future artist assets.
- * Replace `children` / swap this component when final art arrives —
- * search the codebase for `ArtistAssetPlaceholder` or the assetId.
+ * Slot for future artist assets.
+ * Public pages should use variant="polished". Detailed tracking lives on /docs/assets.
  */
 export function ArtistAssetPlaceholder({
   assetId,
   label,
   className,
   aspect = "banner",
+  variant = "dev",
   children,
 }: ArtistAssetPlaceholderProps) {
   const title = label ?? LABELS[assetId];
@@ -50,6 +57,37 @@ export function ArtistAssetPlaceholder({
         : aspect === "icon"
           ? "aspect-square min-h-[72px] max-w-[96px]"
           : "aspect-square min-h-[160px]";
+
+  if (variant === "polished") {
+    return (
+      <div
+        data-artist-asset={assetId}
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-[var(--color-border)]",
+          aspectClass,
+          className
+        )}
+        aria-hidden
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at 28% 20%, rgba(47,128,237,0.28), transparent 55%), radial-gradient(ellipse at 78% 75%, rgba(125,211,252,0.12), transparent 50%), linear-gradient(160deg, #07111f 0%, #0a1628 45%, #050914 100%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(47,128,237,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(47,128,237,0.12) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -71,13 +109,13 @@ export function ArtistAssetPlaceholder({
       {children ?? (
         <>
           <p className="mono-label relative z-[1] px-3 text-[0.65rem] text-[var(--color-brand)]">
-            Artist asset placeholder
+            Internal · artist asset
           </p>
           <p className="relative z-[1] mt-2 px-4 text-sm font-semibold text-[var(--color-foreground)]">
             {title}
           </p>
           <p className="relative z-[1] mt-1 max-w-xs px-4 text-xs text-[var(--color-muted-foreground)]">
-            Replace when final art arrives · id: {assetId}
+            Tracked in Docs · Asset Tracker · id: {assetId}
           </p>
         </>
       )}

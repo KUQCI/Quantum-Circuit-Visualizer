@@ -25,7 +25,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 3,
     xpReward: 25,
     skills: ["qubits"],
-    starterCircuit: lessonCircuit("Lesson: Qubit Basics", 1),
+    starterCircuit: lessonCircuit("Qubit Basics", 1),
     successCondition: { type: "manual" },
     hint: "Read the story, then click Check Answer when you're ready.",
     quantaIntro:
@@ -46,7 +46,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 4,
     xpReward: 50,
     skills: ["gates"],
-    starterCircuit: lessonCircuit("Lesson: First Gate", 1),
+    starterCircuit: lessonCircuit("First Gate", 1),
     successCondition: {
       type: "hasGateOnQubit",
       gate: "x",
@@ -71,7 +71,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 5,
     xpReward: 50,
     skills: ["gates"],
-    starterCircuit: lessonCircuit("Lesson: Superposition", 1),
+    starterCircuit: lessonCircuit("Superposition", 1),
     successCondition: {
       type: "all",
       conditions: [
@@ -97,7 +97,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 3,
     xpReward: 50,
     skills: ["gates"],
-    starterCircuit: lessonCircuit("Lesson: Flip with X", 1),
+    starterCircuit: lessonCircuit("Flip with X", 1),
     successCondition: {
       type: "hasGateOnQubit",
       gate: "x",
@@ -121,7 +121,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 6,
     xpReward: 75,
     skills: ["gates"],
-    starterCircuit: lessonCircuit("Lesson: RX Rotation", 1),
+    starterCircuit: lessonCircuit("RX Rotation", 1),
     successCondition: {
       type: "hasParameterGate",
       gate: "rx",
@@ -145,7 +145,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 7,
     xpReward: 75,
     skills: ["measurement"],
-    starterCircuit: lessonCircuit("Lesson: Measurement", 1, 1),
+    starterCircuit: lessonCircuit("Measurement", 1, 1),
     successCondition: {
       type: "hasMeasurement",
       qubit: "q0",
@@ -169,7 +169,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 10,
     xpReward: 100,
     skills: ["entanglement"],
-    starterCircuit: lessonCircuit("Lesson: Bell State", 2),
+    starterCircuit: lessonCircuit("Bell State", 2),
     successCondition: {
       type: "all",
       conditions: [
@@ -201,7 +201,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 8,
     xpReward: 100,
     skills: ["entanglement"],
-    starterCircuit: lessonCircuit("Lesson: Entangle", 2),
+    starterCircuit: lessonCircuit("Entangle", 2),
     successCondition: {
       type: "all",
       conditions: [
@@ -227,7 +227,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 5,
     xpReward: 30,
     skills: ["qiskit"],
-    starterCircuit: lessonCircuit("Lesson: Export", 1, 0, [
+    starterCircuit: lessonCircuit("Export", 1, 0, [
       {
         id: "lesson_export_h",
         type: "h",
@@ -257,7 +257,7 @@ export const LESSONS: LessonDefinition[] = [
     estimatedMinutes: 8,
     xpReward: 30,
     skills: ["qiskit"],
-    starterCircuit: lessonCircuit("Lesson: Import", 1),
+    starterCircuit: lessonCircuit("Import", 1),
     successCondition: {
       type: "all",
       conditions: [

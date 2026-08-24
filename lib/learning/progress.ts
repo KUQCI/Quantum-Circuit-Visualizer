@@ -84,3 +84,19 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   entanglement: "Entanglement",
   qiskit: "Qiskit Import & Export",
 };
+
+/** Short academic “why this matters” copy for each module. */
+export const MODULE_WHY: Record<ModuleId, string> = {
+  "quantum-basics":
+    "Every circuit begins with a qubit and a blank wire — this is your foundation.",
+  "single-qubit-gates":
+    "Superposition and Pauli flips are the first real quantum moves you will reuse constantly.",
+  measurement:
+    "Measurement turns quantum states into classical outcomes — essential for any experiment.",
+  "multi-qubit-gates":
+    "Controlled gates let qubits talk — the bridge from single wires to algorithms.",
+  entanglement:
+    "Bell and GHZ states unlock correlations that classical bits cannot share.",
+  qiskit:
+    "Import and export connect the visualizer to research code and real backends.",
+};

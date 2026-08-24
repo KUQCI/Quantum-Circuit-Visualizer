@@ -4,6 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { ComposerToolbar } from "@/components/layout/composer-toolbar";
 import { ComposerFooter } from "@/components/layout/composer-footer";
 import { EditorBootstrap } from "@/components/layout/editor-bootstrap";
+import { ComposerValidationBanner } from "@/components/layout/composer-validation-banner";
 import { GateLibrary } from "@/components/gates/gate-library";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
 import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-panel";
@@ -57,6 +58,7 @@ export function ComposerEditorLayout() {
       </Suspense>
 
       <ComposerToolbar immersive />
+      <ComposerValidationBanner />
 
       <FeatureErrorBoundary
         title="Build workspace error"

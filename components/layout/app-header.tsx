@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { isEditorPath, isPathActive, normalizePath } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
 import { ModeSwitcher } from "@/components/navigation/ModeSwitcher";
+import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,6 +32,8 @@ import {
   Upload,
   Download,
   Palette,
+  ExternalLink,
+  Bug,
 } from "lucide-react";
 
 const primaryNav = [
@@ -45,8 +48,8 @@ const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
-  { href: "/docs/assets", label: "Asset tracker", icon: Palette },
-  { href: "/docs/debug", label: "Translator debug", icon: BookOpen },
+  { href: "/docs/assets", label: "Asset Tracker", icon: Palette },
+  { href: "/docs/debug", label: "Translator Debug", icon: Bug },
   { href: "/import", label: "Import", icon: Upload },
   { href: "/export", label: "Export", icon: Download },
 ] as const;
@@ -56,12 +59,8 @@ export function AppHeader() {
   const path = normalizePath(pathname);
   const { theme, toggleTheme } = useThemeStore();
   const isComposer = isEditorPath(path);
-  const showModeSwitcher =
-    isEditorPath(path) ||
-    path === "/learn" ||
-    path.startsWith("/learn/") ||
-    path === "/challenges" ||
-    path.startsWith("/challenges/");
+  /** Mode switcher only on Build — primary nav already covers Learn/Challenges. */
+  const showModeSwitcher = isComposer;
 
   return (
     <header
@@ -76,21 +75,26 @@ export function AppHeader() {
           isComposer ? "h-10" : "h-14"
         )}
       >
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2.5"
+          aria-label="Quantum Circuit Visualizer home"
+        >
           <Image
             src="https://kuqci.github.io/logo.png"
-            alt="QCI"
+            alt=""
             width={28}
             height={28}
             className="rounded-full border border-[var(--color-brand-border)]"
             unoptimized
+            aria-hidden
           />
           <span className="hidden leading-tight sm:block">
             <span className="block text-sm font-semibold text-[var(--color-foreground)]">
-              Circuit Visualizer
+              Quantum Circuit Visualizer
             </span>
-            <span className="mono-label block text-[0.62rem] text-[var(--color-muted-foreground)]">
-              QCI · Khalifa University
+            <span className="mono-label block text-[0.65rem] text-[var(--color-muted-foreground)]">
+              A QCI R&amp;D Project
             </span>
           </span>
         </Link>
@@ -117,7 +121,7 @@ export function AppHeader() {
                     : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className="h-4 w-4 shrink-0" aria-hidden />
                 {item.label}
               </Link>
             );
@@ -140,11 +144,11 @@ export function AppHeader() {
                 )}
                 aria-label="More navigation"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-4 w-4" aria-hidden />
                 More
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-52">
               {secondaryNav.map((item) => {
                 const Icon = item.icon;
                 const active = isPathActive(pathname, item.href);
@@ -157,22 +161,31 @@ export function AppHeader() {
                         active && "text-[var(--color-brand)]"
                       )}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4" aria-hidden />
                       {item.label}
                     </Link>
                   </DropdownMenuItem>
                 );
               })}
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <ExternalAnchor
+                  href={QCI_HOME_URL}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden />
+                  Back to QCI
+                </ExternalAnchor>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={toggleTheme}>
                 {theme === "dark" ? (
                   <>
-                    <Sun className="h-4 w-4" />
+                    <Sun className="h-4 w-4" aria-hidden />
                     Light theme
                   </>
                 ) : (
                   <>
-                    <Moon className="h-4 w-4" />
+                    <Moon className="h-4 w-4" aria-hidden />
                     Dark theme
                   </>
                 )}
@@ -204,22 +217,31 @@ export function AppHeader() {
                         active && "text-[var(--color-brand)]"
                       )}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4" aria-hidden />
                       {item.label}
                     </Link>
                   </DropdownMenuItem>
                 );
               })}
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <ExternalAnchor
+                  href={QCI_HOME_URL}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden />
+                  Back to QCI
+                </ExternalAnchor>
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={toggleTheme}>
                 {theme === "dark" ? (
                   <>
-                    <Sun className="h-4 w-4" />
+                    <Sun className="h-4 w-4" aria-hidden />
                     Light theme
                   </>
                 ) : (
                   <>
-                    <Moon className="h-4 w-4" />
+                    <Moon className="h-4 w-4" aria-hidden />
                     Dark theme
                   </>
                 )}

@@ -38,7 +38,9 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "beginner",
     xpReward: 100,
     challengeType: "build",
-    starterCircuit: createEmptyCircuit("Challenge: Superposition", 1),
+    estimatedMinutes: 3,
+    successCriteria: "Place an H gate on q[0].",
+    starterCircuit: createEmptyCircuit("Superposition", 1),
     successCondition: {
       type: "hasGateOnQubit",
       gate: "h",
@@ -58,7 +60,9 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "beginner",
     xpReward: 100,
     challengeType: "build",
-    starterCircuit: createEmptyCircuit("Challenge: Pauli Flip", 1),
+    estimatedMinutes: 4,
+    successCriteria: "Apply X then Z on q[0] in that order.",
+    starterCircuit: createEmptyCircuit("Pauli Flip", 1),
     successCondition: {
       type: "operationOrder",
       operations: [
@@ -80,7 +84,9 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "beginner",
     xpReward: 100,
     challengeType: "build",
-    starterCircuit: createEmptyCircuit("Challenge: Measure", 1, 1),
+    estimatedMinutes: 4,
+    successCriteria: "Measure q[0] into classical bit c[0].",
+    starterCircuit: createEmptyCircuit("Measure", 1, 1),
     successCondition: {
       type: "hasMeasurement",
       qubit: "q0",
@@ -100,7 +106,9 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "intermediate",
     xpReward: 175,
     challengeType: "build",
-    starterCircuit: createEmptyCircuit("Challenge: Bell Pair", 2),
+    estimatedMinutes: 6,
+    successCriteria: "Build H on q[0], then CX from q[0] to q[1].",
+    starterCircuit: createEmptyCircuit("Bell Pair", 2),
     successCondition: {
       type: "operationOrder",
       operations: [
@@ -122,6 +130,8 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "intermediate",
     xpReward: 175,
     challengeType: "fix",
+    estimatedMinutes: 7,
+    successCriteria: "Reorder gates so H comes before CX.",
     starterCircuit: brokenBellCircuit(),
     successCondition: {
       type: "operationOrder",
@@ -144,7 +154,9 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "intermediate",
     xpReward: 175,
     challengeType: "match",
-    starterCircuit: createEmptyCircuit("Challenge: Match", 1),
+    estimatedMinutes: 5,
+    successCriteria: "Match the target circuit exactly (single H on q[0]).",
+    starterCircuit: createEmptyCircuit("Match", 1),
     targetCircuit: structuredClone(simpleSuperpositionCircuit),
     successCondition: {
       type: "exactCircuitMatch",
@@ -164,7 +176,9 @@ export const CHALLENGES: ChallengeDefinition[] = [
     difficulty: "intermediate",
     xpReward: 175,
     challengeType: "import",
-    starterCircuit: createEmptyCircuit("Challenge: Import", 2),
+    estimatedMinutes: 8,
+    successCriteria: "Reproduce the Qiskit snippet as a visual circuit.",
+    starterCircuit: createEmptyCircuit("Import", 2),
     importCode: `from qiskit import QuantumCircuit
 qc = QuantumCircuit(2)
 qc.h(0)
@@ -190,7 +204,9 @@ qc.cx(0, 1)`,
     difficulty: "advanced",
     xpReward: 250,
     challengeType: "export",
-    starterCircuit: createEmptyCircuit("Challenge: Export", 2),
+    estimatedMinutes: 10,
+    successCriteria: "Build a Bell state and export/copy the Qiskit code.",
+    starterCircuit: createEmptyCircuit("Export", 2),
     targetCircuit: structuredClone(bellStateCircuit),
     successCondition: {
       type: "all",

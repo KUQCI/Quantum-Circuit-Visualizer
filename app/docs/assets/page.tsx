@@ -26,12 +26,12 @@ export default function AssetTrackerPage() {
   return (
     <div className="page-container max-w-4xl">
       <div className="page-header mb-8">
-        <p className="qci-section-eyebrow">Docs · Art pipeline</p>
+        <p className="qci-section-eyebrow">Docs · Internal</p>
         <h1 className="page-title text-3xl">Artist asset tracker</h1>
         <p className="page-description mt-3 max-w-2xl">
-          Static requirements board for the Circuit Visualizer art pack. Structured
-          so it can move to Notion later — each row has priority, owner, due date,
-          status, and notes.
+          Internal art pipeline for the Quantum Circuit Visualizer. Public Home
+          keeps a polished banner only — detailed placeholders and requirements
+          live here. Structured so it can move to Notion later.
         </p>
         <PageActions
           className="mt-5"

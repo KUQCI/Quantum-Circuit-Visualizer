@@ -20,6 +20,7 @@ export function QuantaDuck({
       height={size}
       viewBox="0 0 64 64"
       className={cn(animated && "animate-[quanta-bob_3s_ease-in-out_infinite]", className)}
+      data-quanta-animated={animated ? "true" : undefined}
       role="img"
       aria-label="Quanta the Duck mascot"
     >
