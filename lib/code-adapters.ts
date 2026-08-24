@@ -4,6 +4,7 @@ import { generateOpenQasm } from "./openqasm-generator";
 import { generateCirqCode } from "./cirq-generator";
 import { parseQiskitCode } from "./qiskit-parser";
 import { parseOpenQasm } from "./openqasm-parser";
+import { validateCircuit } from "./validation";
 
 export type CodeLanguageId =
   | "qiskit"
@@ -16,12 +17,14 @@ export interface CodeParseResult {
   success: boolean;
   circuit?: Circuit;
   error?: string;
+  warnings?: string[];
 }
 
 export interface CodeGenerateResult {
   success: boolean;
   code?: string;
   error?: string;
+  warnings?: string[];
 }
 
 export interface CodeLanguageAdapter {
@@ -37,18 +40,42 @@ export interface CodeLanguageAdapter {
 }
 
 function wrapParse(
-  fn: (code: string, name?: string) => { success: boolean; circuit?: Circuit; error?: string }
+  fn: (
+    code: string,
+    name?: string
+  ) => { success: boolean; circuit?: Circuit; error?: string; warnings?: string[] }
 ): (code: string, circuitName?: string) => CodeParseResult {
-  return (code, circuitName) => fn(code, circuitName);
+  return (code, circuitName) => {
+    const result = fn(code, circuitName);
+    if (result.success) {
+      return {
+        success: true,
+        circuit: result.circuit,
+        warnings: result.warnings,
+      };
+    }
+    return {
+      success: false,
+      error: result.error,
+      warnings: result.warnings,
+    };
+  };
 }
 
 function wrapGenerate(
-  fn: (circuit: Circuit) => { success: boolean; code?: string; error?: string }
+  fn: (circuit: Circuit) => {
+    success: boolean;
+    code?: string;
+    error?: string;
+    warnings?: string[];
+  }
 ): (circuit: Circuit) => CodeGenerateResult {
   return (circuit) => {
     const result = fn(circuit);
-    if (result.success) return { success: true, code: result.code };
-    return { success: false, error: result.error };
+    if (result.success) {
+      return { success: true, code: result.code, warnings: result.warnings };
+    }
+    return { success: false, error: result.error, warnings: result.warnings };
   };
 }
 
@@ -87,15 +114,19 @@ function generateJsonIr(circuit: Circuit): CodeGenerateResult {
 function parseJsonIr(code: string, circuitName?: string): CodeParseResult {
   try {
     const parsed = JSON.parse(code);
-    if (!parsed.qubits || !parsed.operations) {
-      return { success: false, error: "Invalid circuit JSON: missing qubits or operations" };
+    const validated = validateCircuit({
+      ...parsed,
+      name: circuitName ?? parsed.name ?? "Imported Circuit",
+    });
+    if (!validated.valid) {
+      return {
+        success: false,
+        error: validated.errors.join("; "),
+      };
     }
     return {
       success: true,
-      circuit: {
-        ...parsed,
-        name: circuitName ?? parsed.name ?? "Imported Circuit",
-      },
+      circuit: validated.circuit,
     };
   } catch (err) {
     return {

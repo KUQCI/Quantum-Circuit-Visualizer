@@ -99,6 +99,9 @@ export function tokenize(text: string): Token[] {
 
     if (ch === '"') {
       const j = text.indexOf('"', i + 1);
+      if (j < 0) {
+        throw new SyntaxError(`Unterminated string starting at position ${i}`);
+      }
       tokens.push({ kind: "STR", value: text.slice(i + 1, j), pos: i });
       i = j + 1;
       continue;

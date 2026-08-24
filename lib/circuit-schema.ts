@@ -24,13 +24,17 @@ export const OperationSchema = z.object({
   classicalTargets: z.array(z.string()).default([]),
   column: z.number().int().min(0),
   parameters: z.array(ParameterSchema).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export const CircuitSchema = z.object({
+  /** Optional stable id for projects / debug */
+  id: z.string().optional(),
   name: z.string(),
   qubits: z.array(QubitSchema).min(1),
   classicalBits: z.array(ClassicalBitSchema),
   operations: z.array(OperationSchema),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export type Parameter = z.infer<typeof ParameterSchema>;
@@ -39,13 +43,16 @@ export type ClassicalBit = z.infer<typeof ClassicalBitSchema>;
 export type Operation = z.infer<typeof OperationSchema>;
 export type Circuit = z.infer<typeof CircuitSchema>;
 
+/** v1 gates required by the translator contract (+ sdg/tdg). */
 export const SUPPORTED_GATES = [
   "h",
   "x",
   "y",
   "z",
   "s",
+  "sdg",
   "t",
+  "tdg",
   "rx",
   "ry",
   "rz",
@@ -134,4 +141,13 @@ export function qubitIndexFromId(id: string): number {
 
 export function classicalBitIndexFromId(id: string): number {
   return parseInt(id.replace("c", ""), 10);
+}
+
+/** Number of qubits / classical bits (canonical counts from IR arrays). */
+export function circuitQubitCount(circuit: Circuit): number {
+  return circuit.qubits.length;
+}
+
+export function circuitClassicalCount(circuit: Circuit): number {
+  return circuit.classicalBits.length;
 }

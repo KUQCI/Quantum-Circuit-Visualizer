@@ -101,14 +101,37 @@ translator.py            Original Python QASM 2.0 ↔ Qiskit translator
 ## Architecture
 
 ```
-Qiskit Python Code
-       ↕  (qiskit-parser.ts / qiskit-generator.ts)
-  JSON Circuit IR  ← single source of truth (circuit-schema.ts)
+Qiskit / OpenQASM / JSON text
+       ↕  (safe text parsers & generators — no Python execution)
+  JSON Circuit IR  ← single source of truth (`lib/circuit-schema.ts`)
        ↕
-  Visual Canvas  ← Zustand store + localStorage
-       ↕
-  OpenQASM 2.0   ← translator-core.ts (ported from translator.py)
+  Visual Canvas / Learn / Projects  ← Zustand + localStorage
 ```
+
+Audit notes and known limitations: [`docs/translator-audit.md`](docs/translator-audit.md)  
+Live IR debugger: `/docs/debug` (after deploy)
+
+### Supported Qiskit syntax (v1)
+
+```python
+from qiskit import QuantumCircuit
+
+qc = QuantumCircuit(2, 2)   # or QuantumCircuit(2); also `circuit = ...`
+qc.h(0)
+qc.x(0); qc.y(0); qc.z(0)
+qc.s(0); qc.sdg(0); qc.t(0); qc.tdg(0)
+qc.rx(1.57, 0); qc.ry(theta, 0); qc.rz(pi/2, 0)
+qc.cx(0, 1); qc.cz(0, 1); qc.swap(0, 1)
+qc.measure(0, 0); qc.measure([0, 1], [0, 1])
+qc.barrier(); qc.barrier(0); qc.barrier([0, 1])
+```
+
+**Unsupported (warnings, not crashes):** unknown methods, QuantumRegister constructors, `measure_all`, control-flow, arbitrary Python.
+
+### Deployment URLs
+
+- GitHub Pages: `https://kuqci.github.io/Quantum-Circuit-Visualizer/`
+- QCI host: `https://qcinit.tech/Quantum-Circuit-Visualizer/`
 
 The original Python translator (`translator.py`) provides OpenQASM 2.0 parsing with a `GATE_LIBRARY`, `ExprParser` for mathematical expressions (e.g. `pi/2`, `3*theta`), and `formatParam` using fraction approximation. This logic is ported to TypeScript in `lib/translator-core.ts`. Import and export run entirely in the browser — no server required.
 
