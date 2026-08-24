@@ -27,7 +27,7 @@ export function NextStepCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4 sm:p-5",
+        "rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4 sm:p-5 motion-lift",
         className
       )}
     >
