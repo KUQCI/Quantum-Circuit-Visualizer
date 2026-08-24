@@ -57,7 +57,7 @@ export function ComposerEditorLayout() {
         <EditorBootstrap />
       </Suspense>
 
-      <ComposerToolbar immersive />
+      <ComposerToolbar />
       <ComposerValidationBanner />
 
       <FeatureErrorBoundary

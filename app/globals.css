@@ -427,20 +427,17 @@ html[data-theme="light"] .glass-nav-compact {
   }
 }
 
-.workspace-header--composer {
-  --app-header-height: 2.5rem;
-}
-
-.workspace-header--composer .app-header-inner {
-  height: 2.5rem;
-}
-
 .workspace-main--composer {
   display: flex;
   flex: 1 1 0;
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
+}
+
+.editor-toolbar {
+  /* Secondary to global navbar — slightly denser, no brand chrome */
+  background: color-mix(in srgb, var(--color-toolbar) 96%, var(--color-ink));
 }
 
 .shadow-card {
