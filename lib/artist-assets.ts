@@ -51,9 +51,9 @@ export const ARTIST_ASSET_REQUIREMENTS: ArtistAssetRequirement[] = [
     priority: "P0",
     owner: "Art team (TBD)",
     dueDate: "TBD",
-    status: "needed",
+    status: "done",
     notes:
-      "Official Quanta duck teacher style for Learn mode. Match existing Quanta silhouette until assets land.",
+      "Official Quanta teacher assets live in public/assets/quanta — see Docs → Quanta Assets.",
   },
   {
     id: "quanta-wave-loop",

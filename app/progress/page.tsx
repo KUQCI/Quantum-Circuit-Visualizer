@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
@@ -46,8 +47,17 @@ export default function ProgressPage() {
   return (
     <div className="page-container max-w-4xl">
       <div className="page-header mb-6">
-        <h1 className="page-title text-3xl">Progress</h1>
-        <p className="page-description">Your Quantum Academy journey</p>
+        <div className="flex items-start gap-4">
+          <QuantaImage
+            variant="didYouCode"
+            size="sm"
+            className="hidden shrink-0 sm:block"
+          />
+          <div>
+            <h1 className="page-title text-3xl">Progress</h1>
+            <p className="page-description">Your Quantum Academy journey</p>
+          </div>
+        </div>
         <PageActions
           className="mt-4"
           secondary={[
@@ -76,7 +86,18 @@ export default function ProgressPage() {
         />
       )}
 
-      <QuantaMessage title="Quanta" message={quantaMsg} className="my-6" />
+      <QuantaMessage
+        title="Quanta"
+        message={quantaMsg}
+        className="my-6"
+        imageVariant={
+          currentStreak >= 2
+            ? "didYouCode"
+            : completedLessons.length >= 3
+              ? "coding"
+              : "success"
+        }
+      />
 
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">

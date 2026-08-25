@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { QuantaDuck } from "@/components/mascot/QuantaDuck";
+import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaCard } from "@/components/mascot/QuantaCard";
 import { LessonPath } from "@/components/learning/LessonPath";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
@@ -10,7 +11,7 @@ import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYo
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
 import { Reveal } from "@/components/motion/Reveal";
-import { getProgressQuantaMessage } from "@/lib/mascot/messages";
+import { getProgressQuantaMessage, quantaMessages } from "@/lib/mascot/messages";
 import {
   getBeginnerChallenge,
   getNextLesson,
@@ -47,8 +48,8 @@ export default function LearnPage() {
       <Reveal variant="scale" className="mb-8">
         <div className="academy-hero overflow-hidden rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-            <div className="relative shrink-0">
-              <QuantaDuck size={72} animated />
+            <div className="relative shrink-0 self-center sm:self-auto">
+              <QuantaImage variant="learning" size="lg" priority />
             </div>
             <div className="flex-1">
               <p className="qci-section-eyebrow mb-1">Quantum Academy</p>
@@ -85,6 +86,15 @@ export default function LearnPage() {
             </div>
           </div>
         </div>
+      </Reveal>
+
+      <Reveal className="mb-6">
+        <QuantaCard
+          variant="learning"
+          title="Hi, I’m Quanta"
+          description={quantaMessages.welcome}
+          imageSize="sm"
+        />
       </Reveal>
 
       <ProgressHydrationGate>
@@ -128,6 +138,7 @@ export default function LearnPage() {
                 ? `Start with “${nextLesson.title}.” ${quantaTip}`
                 : quantaTip
             }
+            imageVariant="researcher"
           />
         </Reveal>
 
@@ -163,9 +174,9 @@ export default function LearnPage() {
         </Reveal>
 
         <Reveal as="section">
-          <p className="qci-section-eyebrow">Learning track</p>
+          <p className="qci-section-eyebrow">Curriculum</p>
           <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
-            Quantum journey modules
+            Lesson path
           </h2>
           <LessonPath />
         </Reveal>

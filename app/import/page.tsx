@@ -28,6 +28,8 @@ import {
 import { AlertCircle, CheckCircle2, PenLine, GraduationCap, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Circuit } from "@/lib/circuit-schema";
+import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { quantaMessages } from "@/lib/mascot/messages";
 
 const EXAMPLES: Record<CodeLanguageId, string> = {
   qiskit: bellStateQiskitCode,
@@ -163,24 +165,32 @@ export default function ImportPage() {
       </Card>
 
       {result && !result.success && (
-        <Card className="alert-error mb-6">
-          <CardHeader>
-            <CardTitle className="alert-error-title flex items-center gap-2 text-base">
-              <AlertCircle className="h-4 w-4" />
-              Parse Error
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="alert-error-body text-sm">
-            <p>{result.error}</p>
-            {result.details && (
-              <ul className="mt-2 list-inside list-disc">
-                {result.details.map((d, i) => (
-                  <li key={i}>{d}</li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <div className="mb-6 space-y-3">
+          <Card className="alert-error">
+            <CardHeader>
+              <CardTitle className="alert-error-title flex items-center gap-2 text-base">
+                <AlertCircle className="h-4 w-4" />
+                Parse Error
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="alert-error-body text-sm">
+              <p>{result.error}</p>
+              {result.details && (
+                <ul className="mt-2 list-inside list-disc">
+                  {result.details.map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+          <QuantaMessage
+            title="Quanta"
+            message={quantaMessages.parseError}
+            variant="error"
+            imageVariant="error"
+          />
+        </div>
       )}
 
       {circuit && (

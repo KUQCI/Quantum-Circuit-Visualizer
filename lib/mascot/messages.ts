@@ -1,20 +1,25 @@
 export const quantaMessages = {
   welcome:
-    "Hi, I'm Quanta! I'll help you build your first quantum circuits one gate at a time.",
+    "Hi, I'm Quanta. I'll help you build your first quantum circuits one gate at a time.",
+  meetQuanta:
+    "Quanta is your guide through circuits, gates, and quantum logic.",
   challengesTip:
-    "Challenges test what you learned. Start with beginner quests, then build up to entanglement!",
-  achievementsTip:
-    "Badges show your quantum milestones. Collect them as you master circuits.",
+    "Challenges test what you learned. Start small, then build up to entanglement.",
+  achievementsTip: "Collect badges as you master circuits.",
+  projectsEmpty:
+    "No saved circuits yet. Want to hatch your first project?",
+  parseError:
+    "I could not understand this line yet. Try simple syntax like qc.h(0) or qc.cx(0, 1).",
   progress: {
     level1: "Every quantum expert starts with one gate.",
     hasLessons: "You're building real circuit intuition now.",
-    hasStreak: "Your learning streak is glowing!",
+    hasStreak: "Your learning streak is glowing.",
     default: "Keep exploring — the quantum realm awaits.",
   },
   generic: {
-    hint: "Take your time — quantum circuits reward patience.",
-    success: "Nice work! That circuit is officially quantum-duck approved.",
-    incorrect: "Almost! Check your gates and try again.",
+    hint: "Try placing the H gate on q[0].",
+    success: "Quantum-duck approved. Nice work!",
+    incorrect: "Almost! Check which wire your gate is on.",
     encourage: "You're closer than you think. One gate at a time!",
   },
 } as const;

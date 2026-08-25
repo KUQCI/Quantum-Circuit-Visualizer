@@ -1,12 +1,15 @@
 "use client";
 
-import { QuantaDuck } from "./QuantaDuck";
+import { QuantaImage } from "./QuantaImage";
+import { variantFromFeedback, type QuantaVariant } from "@/lib/quanta-assets";
 import { cn } from "@/lib/utils";
 
 interface QuantaMessageProps {
   message: string;
   title?: string;
   variant?: "default" | "success" | "hint" | "error";
+  /** Override image variant independently of bubble style */
+  imageVariant?: QuantaVariant;
   showMascot?: boolean;
   className?: string;
   size?: "default" | "lg";
@@ -16,11 +19,18 @@ export function QuantaMessage({
   message,
   title,
   variant = "default",
+  imageVariant,
   showMascot = true,
   className,
   size = "default",
 }: QuantaMessageProps) {
   const isLg = size === "lg";
+  const img =
+    imageVariant ??
+    variantFromFeedback(
+      variant === "default" ? "default" : variant
+    );
+
   return (
     <div
       className={cn(
@@ -35,10 +45,10 @@ export function QuantaMessage({
       role="status"
     >
       {showMascot && (
-        <QuantaDuck
-          size={isLg ? 48 : 40}
+        <QuantaImage
+          variant={img}
+          size={isLg ? "sm" : "xs"}
           className="shrink-0"
-          animated={variant === "success"}
         />
       )}
       <div className="min-w-0 flex-1">

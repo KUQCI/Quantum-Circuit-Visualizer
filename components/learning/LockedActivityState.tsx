@@ -27,6 +27,7 @@ export function LockedActivityState({
         title="Quanta"
         message="Complete the previous steps first — I'll unlock this when you're ready!"
         className="mt-6 w-full max-w-lg text-left"
+        imageVariant="waiting"
       />
       <Button asChild className="mt-6">
         <Link href={backHref}>{backLabel}</Link>

@@ -13,11 +13,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageActions } from "@/components/navigation/PageActions";
-import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
 import { PROJECT_TEMPLATES } from "@/lib/project-templates";
 import { formatDate } from "@/lib/utils";
+import { quantaMessages } from "@/lib/mascot/messages";
 import {
   Plus,
   FolderOpen,
@@ -28,7 +29,6 @@ import {
   GraduationCap,
   Download,
   Upload,
-  Sparkles,
 } from "lucide-react";
 
 export default function ProjectsPage() {
@@ -137,26 +137,23 @@ export default function ProjectsPage() {
 
       {projects.length === 0 ? (
         <div className="space-y-8">
-          <div className="technical-panel space-y-4 p-6">
-            <QuantaMessage
-              title="Quanta"
-              message="No saved circuits yet. Open a template below, import Qiskit, or start from a blank canvas."
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => handleOpenTemplate("tpl-bell")}>
-                <Sparkles className="h-4 w-4" />
-                Open Bell State Template
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/import")}>
-                <Upload className="h-4 w-4" />
-                Import Qiskit
-              </Button>
-              <Button variant="outline" onClick={handleNewProject}>
-                <Plus className="h-4 w-4" />
-                Start Blank Circuit
-              </Button>
-            </div>
-          </div>
+          <QuantaEmptyState
+            variant="empty"
+            title={quantaMessages.projectsEmpty}
+            description="Open a template, import Qiskit, or start from a blank canvas — then save to keep it here."
+            actions={[
+              {
+                label: "Start Blank Circuit",
+                onClick: handleNewProject,
+                primary: true,
+              },
+              {
+                label: "Open Bell State Template",
+                onClick: () => handleOpenTemplate("tpl-bell"),
+              },
+              { label: "Import Qiskit", href: "/import" },
+            ]}
+          />
 
           <section>
             <h2 className="mb-1 text-lg font-semibold text-[var(--color-foreground)]">
