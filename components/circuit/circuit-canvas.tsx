@@ -299,6 +299,11 @@ function DropPreview({
   const gateDef = getGateByType(gateType);
   if (!gateDef) return null;
 
+  const needed = getQubitsNeeded(gateDef);
+  const isInvalid =
+    (gateDef.category === "two" || gateDef.category === "three") &&
+    numQubits < needed;
+
   const isTwoQubit = gateDef.category === "two";
   const controlIdx = position.qubitIndex;
   const targetIdx =
@@ -306,8 +311,12 @@ function DropPreview({
       ? position.qubitIndex + 1
       : position.qubitIndex - 1;
 
-  const previewStyle =
-    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-sm border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary)]/20 text-[11px] font-bold text-[var(--color-primary)]";
+  const previewStyle = cn(
+    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-sm border-2 border-dashed text-[11px] font-bold",
+    isInvalid
+      ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20 text-[var(--color-destructive)]"
+      : "border-[var(--color-primary)] bg-[var(--color-primary)]/20 text-[var(--color-primary)]"
+  );
 
   if (gateDef.type === "barrier") {
     return (
@@ -333,7 +342,18 @@ function DropPreview({
       >
         <GateSymbol gate={gateDef} className="h-3.5 w-3.5" />
       </div>
-      {isTwoQubit && targetIdx >= 0 && targetIdx !== controlIdx && (
+      {isInvalid && (
+        <div
+          className="pointer-events-none absolute z-40 rounded bg-[var(--color-destructive)] px-1.5 py-0.5 text-[9px] font-medium text-white"
+          style={{
+            left: columnToX(position.column) + GATE_COLUMN_INSET - 4,
+            top: qubitToY(position.qubitIndex) + 4,
+          }}
+        >
+          Need {needed} qubits
+        </div>
+      )}
+      {!isInvalid && isTwoQubit && targetIdx >= 0 && targetIdx !== controlIdx && (
         <>
           <div
             className="pointer-events-none absolute z-30 w-0.5 bg-[var(--color-primary)]/60"
@@ -1211,8 +1231,8 @@ export function CircuitCanvas({
                 operation={selectedOp}
                 wireIndex={selectedWireIndex}
                 onDelete={() => removeOperation(selectedOp.id)}
-                onInspect={() => setInspectMode(true)}
-                onCopy={() => copyOperation(selectedOp.id)}
+                onInspect={() => setShowInspector(true)}
+                onCopy={() => duplicateOperation(selectedOp.id)}
                 onMoveStart={() => setMovingOperationId(selectedOp.id)}
                 draggable
               />

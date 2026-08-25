@@ -91,6 +91,13 @@ export const useEditorUiStore = create<EditorUiState>()(
           operationsPanelCollapsed: false,
           showCodePanel: true,
           showVizPanels: true,
+          showInspector: true,
+          vizPanels: {
+            probabilities: true,
+            qsphere: true,
+            statevector: true,
+            histogram: true,
+          },
         });
       },
     }),
@@ -105,6 +112,7 @@ export const useEditorUiStore = create<EditorUiState>()(
           | "showVizPanels"
           | "showPhaseDisks"
           | "showInspector"
+          | "operationsPanelCollapsed"
           | "vizPanels"
         >
       >(),
@@ -137,6 +145,10 @@ export const useEditorUiStore = create<EditorUiState>()(
             saved.showInspector,
             current.showInspector
           ),
+          operationsPanelCollapsed: asBoolean(
+            saved.operationsPanelCollapsed,
+            current.operationsPanelCollapsed
+          ),
           vizPanels: {
             probabilities: asBoolean(
               saved.vizPanels?.probabilities,
@@ -164,6 +176,7 @@ export const useEditorUiStore = create<EditorUiState>()(
         showVizPanels: state.showVizPanels,
         showPhaseDisks: state.showPhaseDisks,
         showInspector: state.showInspector,
+        operationsPanelCollapsed: state.operationsPanelCollapsed,
         vizPanels: state.vizPanels,
       }),
     }

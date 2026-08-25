@@ -103,12 +103,12 @@ export function ComposerToolbar() {
   };
 
   const fileItems = [
-    { label: "New circuit", action: handleNewCircuit },
-    { label: "Open projects", action: () => router.push("/projects") },
+    { label: "New Circuit", action: handleNewCircuit },
+    { label: "Open Project", action: () => router.push("/projects") },
+    { label: "Save Project", action: handleSaveProject },
     { label: "Import Qiskit", action: () => router.push("/import") },
-    { label: "Export code", action: () => router.push("/export") },
+    { label: "Export Code", action: () => router.push("/export") },
     { label: "Download .py", action: handleDownloadFile },
-    { label: "Save project", action: handleSaveProject },
   ];
 
   const sampleItems = [
@@ -122,28 +122,24 @@ export function ComposerToolbar() {
     { label: "Undo", action: undo, disabled: !canUndo() },
     { label: "Redo", action: redo, disabled: !canRedo() },
     {
-      label: "Duplicate gate",
+      label: "Duplicate Gate",
       action: () => selectedOperationId && duplicateOperation(selectedOperationId),
       disabled: !selectedOperationId,
     },
     {
-      label: "Delete gate",
+      label: "Delete Gate",
       action: () => selectedOperationId && removeOperation(selectedOperationId),
       disabled: !selectedOperationId,
     },
-    { label: "Clear circuit", action: () => setConfirmClearOpen(true) },
+    { label: "Clear Circuit", action: () => setConfirmClearOpen(true) },
     { label: "Manage registers", action: () => setRegistersOpen(true) },
-    {
-      label: "Left alignment",
-      action: () => useCircuitStore.getState().alignOperationsLeft(),
-    },
   ];
 
   const helpItems = [
-    { label: "Supported gates", action: () => router.push("/docs/composer#gates") },
-    { label: "Keyboard shortcuts", action: () => router.push("/docs/composer#shortcuts") },
-    { label: "Translator limitations", action: () => router.push("/docs/debug") },
-    { label: "Composer guide", action: () => router.push("/docs/composer") },
+    { label: "Supported Gates", action: () => router.push("/docs/composer") },
+    { label: "Keyboard Shortcuts", action: () => router.push("/docs/composer") },
+    { label: "Translator Limitations", action: () => router.push("/docs/debug") },
+    { label: "About this Visualizer", action: () => router.push("/") },
   ];
 
   return (

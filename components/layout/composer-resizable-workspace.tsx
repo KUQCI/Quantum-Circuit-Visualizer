@@ -44,7 +44,6 @@ export function ComposerResizableWorkspace({
   onPlacementComplete,
 }: ComposerResizableWorkspaceProps) {
   const circuit = useCircuitStore((s) => s.circuit);
-  const selectedOperationId = useCircuitStore((s) => s.selectedOperationId);
 
   const {
     showCodePanel,
@@ -60,7 +59,6 @@ export function ComposerResizableWorkspace({
   const { ref: workspaceRef, size } = useElementSize<HTMLDivElement>();
   const tier = getLayoutTier(size.width, size.height);
   const useVizTabs = tier !== "desktop";
-  const showInspectorPanel = showInspector && !!selectedOperationId;
 
   const opsPanelRef = useRef<ImperativePanelHandle>(null);
   const codePanelRef = useRef<ImperativePanelHandle>(null);
@@ -91,9 +89,9 @@ export function ComposerResizableWorkspace({
   useEffect(() => {
     const panel = inspectorPanelRef.current;
     if (!panel) return;
-    if (!showInspectorPanel) panel.collapse();
+    if (!showInspector) panel.collapse();
     else panel.expand();
-  }, [showInspectorPanel, layoutResetKey]);
+  }, [showInspector, layoutResetKey]);
 
   return (
     <div ref={workspaceRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -107,7 +105,7 @@ export function ComposerResizableWorkspace({
           ref={opsPanelRef}
           id="composer-ops"
           order={0}
-          defaultSize={16}
+          defaultSize={18}
           minSize={12}
           maxSize={28}
           collapsible
@@ -126,16 +124,26 @@ export function ComposerResizableWorkspace({
 
         <PanelResizeHandle className="composer-resize-handle composer-resize-handle--horizontal" />
 
-        <Panel id="composer-main" order={1} minSize={30} defaultSize={54}>
+        <Panel id="composer-main" order={1} minSize={32} defaultSize={52}>
           <PanelGroup
             key={`composer-v-${layoutResetKey}`}
             direction="vertical"
             autoSaveId="react-resizable-panels:qci-composer-v"
             className="h-full min-h-0"
           >
-            <Panel id="composer-canvas-stack" order={0} minSize={25} defaultSize={showVizPanels ? 65 : 100}>
+            <Panel
+              id="composer-canvas-stack"
+              order={0}
+              minSize={28}
+              defaultSize={showVizPanels ? 64 : 100}
+            >
               <PanelGroup direction="horizontal" className="h-full min-h-0">
-                <Panel id="composer-canvas" order={0} minSize={35} defaultSize={showInspectorPanel ? 72 : 100}>
+                <Panel
+                  id="composer-canvas"
+                  order={0}
+                  minSize={40}
+                  defaultSize={showInspector ? 70 : 100}
+                >
                   <div className="composer-canvas-column h-full min-h-0 overflow-hidden bg-[var(--color-canvas)]">
                     <CircuitCanvas
                       draggingGate={draggingGate}
@@ -153,11 +161,17 @@ export function ComposerResizableWorkspace({
                       ref={inspectorPanelRef}
                       id="composer-inspector"
                       order={1}
-                      defaultSize={28}
-                      minSize={18}
+                      defaultSize={30}
+                      minSize={16}
                       maxSize={40}
                       collapsible
                       collapsedSize={0}
+                      onCollapse={() =>
+                        useEditorUiStore.getState().setShowInspector(false)
+                      }
+                      onExpand={() =>
+                        useEditorUiStore.getState().setShowInspector(true)
+                      }
                       className="composer-panel min-w-0 border-l border-[var(--color-border)]"
                     >
                       <OperationInspector />
@@ -173,8 +187,8 @@ export function ComposerResizableWorkspace({
               ref={vizPanelRef}
               id="composer-viz"
               order={1}
-              defaultSize={35}
-              minSize={15}
+              defaultSize={36}
+              minSize={16}
               collapsible
               collapsedSize={0}
               onCollapse={() => setShowVizPanels(false)}

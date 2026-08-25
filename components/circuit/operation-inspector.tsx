@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCircuitStore } from "@/store/circuit-store";
 import { getGateByType } from "@/components/gates/gate-definitions";
+import { getCircuitDepth } from "@/lib/circuit-schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatParam, parseParamExpression } from "@/lib/translator-core";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function QubitSelect({
@@ -47,6 +48,86 @@ function QubitSelect({
   );
 }
 
+function CircuitSummary() {
+  const circuit = useCircuitStore((s) => s.circuit);
+  const validationWarnings = useCircuitStore((s) => s.validationWarnings);
+  const depth = useMemo(() => getCircuitDepth(circuit), [circuit]);
+  const ok = validationWarnings.length === 0;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]">
+      <div className="shrink-0 border-b border-[var(--color-border)] px-3 py-2">
+        <h3 className="text-xs font-semibold text-[var(--color-foreground)]">
+          Inspector
+        </h3>
+        <p className="text-[10px] text-[var(--color-muted-foreground)]">
+          Circuit summary
+        </p>
+      </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-xs">
+        <SummaryRow label="Name" value={circuit.name || "Untitled Circuit"} />
+        <SummaryRow label="Qubits" value={String(circuit.qubits.length)} />
+        <SummaryRow
+          label="Classical bits"
+          value={String(circuit.classicalBits.length)}
+        />
+        <SummaryRow
+          label="Operations"
+          value={String(circuit.operations.length)}
+        />
+        <SummaryRow label="Depth" value={String(depth)} />
+        <div>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
+            Validation
+          </span>
+          <div
+            className={cn(
+              "mt-1 flex items-start gap-1.5 rounded border px-2 py-1.5 text-[11px]",
+              ok
+                ? "border-[var(--color-success)]/30 bg-[var(--color-success)]/10 text-[var(--color-success)]"
+                : "border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 text-[var(--color-warning)]"
+            )}
+          >
+            {ok ? (
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>
+              {ok
+                ? "Circuit looks valid"
+                : `${validationWarnings.length} warning${validationWarnings.length === 1 ? "" : "s"}`}
+            </span>
+          </div>
+          {!ok && (
+            <ul className="mt-2 space-y-1 text-[10px] text-[var(--color-warning)]">
+              {validationWarnings.slice(0, 5).map((w, i) => (
+                <li key={i}>• {w}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <p className="text-[10px] leading-relaxed text-[var(--color-muted-foreground)]">
+          Select a gate on the canvas to edit targets, controls, and parameters.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
+        {label}
+      </span>
+      <span className="truncate font-mono text-[var(--color-foreground)]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function OperationInspector() {
   const {
     circuit,
@@ -71,11 +152,7 @@ export function OperationInspector() {
   }, [selected?.id, selected?.parameters, selected?.type]);
 
   if (!selected) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center px-4 text-center text-xs text-[var(--color-muted-foreground)]">
-        Select a gate on the canvas to inspect and edit its properties.
-      </div>
-    );
+    return <CircuitSummary />;
   }
 
   const gateDef = getGateByType(selected.type);

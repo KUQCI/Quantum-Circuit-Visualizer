@@ -9,6 +9,7 @@ import {
   ComposerResizableWorkspace,
   ComposerCollapseButtons,
 } from "@/components/layout/composer-resizable-workspace";
+import { ComposerStatusBar } from "@/components/layout/composer-status-bar";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 
 export function ComposerEditorLayout() {
@@ -42,6 +43,7 @@ export function ComposerEditorLayout() {
         </div>
       </FeatureErrorBoundary>
 
+      <ComposerStatusBar />
       <ComposerFooter />
     </div>
   );
