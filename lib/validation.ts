@@ -157,8 +157,23 @@ export function validateCircuitPlacement(circuit: Circuit): string[] {
     if (["cx", "cz"].includes(op.type) && op.controls.length === 0) {
       warnings.push(`${op.type.toUpperCase()} gate ${op.id} is missing a control qubit`);
     }
+    if (["cx", "cz"].includes(op.type) && op.controls.length > 0 && op.targets.length > 0) {
+      if (op.controls[0] === op.targets[0]) {
+        warnings.push(
+          `${op.type.toUpperCase()} gate ${op.id}: control and target cannot be the same qubit`
+        );
+      }
+    }
+    if (op.type === "swap" && op.targets.length >= 2 && op.targets[0] === op.targets[1]) {
+      warnings.push(`SWAP gate ${op.id}: both targets cannot be the same qubit`);
+    }
     if (["rx", "ry", "rz"].includes(op.type) && !op.parameters?.length) {
       warnings.push(`${op.type.toUpperCase()} gate ${op.id} is missing rotation parameter`);
+    }
+    if (!isOperationValidForCircuit(op, circuit)) {
+      warnings.push(
+        `Operation ${op.id} (${op.type}) references a missing qubit or classical bit`
+      );
     }
   }
 

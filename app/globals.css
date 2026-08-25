@@ -464,6 +464,36 @@ html[data-theme="light"] .glass-nav-compact {
   cursor: not-allowed;
 }
 
+.composer-resize-handle {
+  flex-shrink: 0;
+  position: relative;
+  background: color-mix(in srgb, var(--color-border) 80%, transparent);
+  transition: background 0.15s;
+}
+
+.composer-resize-handle--horizontal {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.composer-resize-handle--vertical {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.composer-resize-handle:hover,
+.composer-resize-handle[data-resize-handle-active] {
+  background: color-mix(in srgb, var(--color-cyan-quantum) 45%, var(--color-border));
+}
+
+.composer-collapse-rails {
+  pointer-events: none;
+}
+
+.composer-panel-rail--collapsed {
+  color: var(--color-brand);
+}
+
 /* Minimum touch targets for mobile toolbars and tabs */
 .touch-target-sm {
   min-height: 2.25rem;
