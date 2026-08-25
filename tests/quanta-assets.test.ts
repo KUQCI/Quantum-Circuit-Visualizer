@@ -9,11 +9,14 @@ import {
 
 describe("quanta-assets", () => {
   it("exposes core semantic keys", () => {
-    expect(quantaAssets.welcome).toContain("quanta-simple-duck");
-    expect(quantaAssets.learning).toContain("hatching-curious");
-    expect(quantaAssets.success).toContain("trophy");
-    expect(quantaAssets.error).toContain("surprised");
+    expect(quantaAssets.welcome).toContain("quanta-simple-duck.webp");
+    expect(quantaAssets.learning).toContain("hatching-curious.webp");
+    expect(quantaAssets.success).toContain("trophy.webp");
+    expect(quantaAssets.error).toContain("surprised.webp");
     expect(quantaAssets.empty).toContain("egg-waiting");
+    expect(Object.values(quantaAssets).every((p) => p.endsWith(".webp"))).toBe(
+      true
+    );
   });
 
   it("maps variants to paths", () => {

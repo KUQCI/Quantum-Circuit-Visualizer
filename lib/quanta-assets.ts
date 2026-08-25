@@ -2,27 +2,27 @@ import { withBasePath } from "@/lib/routes";
 
 /**
  * Central Quanta mascot asset registry.
- * Paths are relative to `public/` — use `getQuantaAssetUrl()` for GitHub Pages basePath.
+ * Transparent WebP assets — use `getQuantaAssetUrl()` for GitHub Pages basePath.
  */
 export const quantaAssets = {
-  welcome: "/assets/quanta/quanta-simple-duck.jpeg",
-  learning: "/assets/quanta/quanta-hatching-curious.jpeg",
-  thinking: "/assets/quanta/quanta-hatching-thinking.jpeg",
-  waiting: "/assets/quanta/quanta-tick-tock.jpeg",
-  success: "/assets/quanta/quanta-trophy.jpeg",
-  coding: "/assets/quanta/quanta-coding-power.jpeg",
-  researcher: "/assets/quanta/quanta-researcher-chip.jpeg",
-  announcement: "/assets/quanta/quanta-workshop-announcement-1.jpeg",
-  announcementAlt: "/assets/quanta/quanta-workshop-announcement-2.jpeg",
-  didYouCode: "/assets/quanta/quanta-did-you-code.jpeg",
-  error: "/assets/quanta/quanta-hatching-surprised.jpeg",
-  empty: "/assets/quanta/quanta-egg-waiting-1.jpeg",
-  emptyNervous: "/assets/quanta/quanta-egg-waiting-sweat.jpeg",
-  sleepy: "/assets/quanta/quanta-hatching-sleepy.jpeg",
-  hatchingNeutral: "/assets/quanta/quanta-hatching-neutral.jpeg",
-  avatar: "/assets/quanta/quanta-head-blue-bg.jpeg",
-  rubberDuck: "/assets/quanta/quanta-rubber-duck.jpeg",
-  contactSheet: "/assets/quanta/quanta-contact-sheet.jpg",
+  welcome: "/assets/quanta/quanta-simple-duck.webp",
+  learning: "/assets/quanta/quanta-hatching-curious.webp",
+  thinking: "/assets/quanta/quanta-hatching-thinking.webp",
+  waiting: "/assets/quanta/quanta-tick-tock.webp",
+  success: "/assets/quanta/quanta-trophy.webp",
+  coding: "/assets/quanta/quanta-coding-power.webp",
+  researcher: "/assets/quanta/quanta-researcher-chip.webp",
+  announcement: "/assets/quanta/quanta-workshop-announcement-1.webp",
+  announcementAlt: "/assets/quanta/quanta-workshop-announcement-2.webp",
+  didYouCode: "/assets/quanta/quanta-did-you-code.webp",
+  error: "/assets/quanta/quanta-hatching-surprised.webp",
+  empty: "/assets/quanta/quanta-egg-waiting-1.webp",
+  emptyNervous: "/assets/quanta/quanta-egg-waiting-sweat.webp",
+  sleepy: "/assets/quanta/quanta-hatching-sleepy.webp",
+  hatchingNeutral: "/assets/quanta/quanta-hatching-neutral.webp",
+  avatar: "/assets/quanta/quanta-head-blue-bg.webp",
+  rubberDuck: "/assets/quanta/quanta-rubber-duck.webp",
+  contactSheet: "/assets/quanta/quanta-contact-sheet.webp",
 } as const;
 
 export type QuantaAssetKey = keyof typeof quantaAssets;

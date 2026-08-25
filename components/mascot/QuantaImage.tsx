@@ -69,11 +69,7 @@ export function QuantaImage({
       loading={priority ? "eager" : "lazy"}
       decoding="async"
       onError={() => setFailed(true)}
-      className={cn(
-        "h-full w-full object-contain",
-        bare ? "rounded-md" : "rounded-md",
-        imgClassName
-      )}
+      className={cn("h-full w-full object-contain", imgClassName)}
       style={{ maxWidth: px, maxHeight: px }}
     />
   );
@@ -92,13 +88,14 @@ export function QuantaImage({
   return (
     <div
       className={cn(
-        "quanta-image-card relative shrink-0 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5",
-        "shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-cyan-quantum)_18%,transparent),0_0_24px_color-mix(in_srgb,var(--color-gold-duck)_12%,transparent)]",
+        "quanta-image-card relative shrink-0 overflow-hidden rounded-xl border border-[var(--color-border)]",
+        "bg-[color-mix(in_srgb,var(--color-surface)_88%,var(--color-cyan-quantum)_6%)] p-1.5",
+        "shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-cyan-quantum)_20%,transparent),0_0_22px_color-mix(in_srgb,var(--color-gold-duck)_14%,transparent)]",
         className
       )}
       style={{ width: px + 12, height: px + 12 }}
     >
-      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-lg bg-white">
+      <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-lg bg-transparent">
         {image}
       </div>
     </div>

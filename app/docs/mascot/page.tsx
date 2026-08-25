@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { PageActions } from "@/components/navigation/PageActions";
 import {
@@ -78,9 +77,8 @@ export default function QuantaMascotDocsPage() {
         </h2>
         <ul className="list-inside list-disc space-y-1 text-sm text-[var(--color-muted-foreground)]">
           <li>
-            White-background JPEGs sit inside framed{" "}
-            <code className="font-mono text-xs">QuantaImage</code> cards with a
-            light inner mat on dark QCI panels.
+            Assets are transparent WebP files under{" "}
+            <code className="font-mono text-xs">public/assets/quanta/</code>.
           </li>
           <li>
             Prefer{" "}
@@ -95,14 +93,11 @@ export default function QuantaMascotDocsPage() {
             empty states, errors, or onboarding.
           </li>
           <li>
-            Contact sheet:{" "}
-            <Link
-              href="/docs/assets"
-              className="text-[var(--color-brand)] hover:underline"
-            >
-              also listed on Asset Tracker
-            </Link>
-            .
+            Paths go through{" "}
+            <code className="font-mono text-xs">getQuantaAssetUrl()</code> so
+            GitHub Pages{" "}
+            <code className="font-mono text-xs">/Quantum-Circuit-Visualizer/</code>{" "}
+            base path works.
           </li>
         </ul>
       </section>
