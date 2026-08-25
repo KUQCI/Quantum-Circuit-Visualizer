@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaAchievement } from "@/components/mascot/QuantaAchievement";
 import { AchievementGrid } from "@/components/learning/AchievementBadge";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { PageActions } from "@/components/navigation/PageActions";
@@ -36,9 +36,10 @@ export default function AchievementsPage() {
 
       <ProgressSummary compact />
 
-      <QuantaMessage
-        title="Quanta"
+      <QuantaAchievement
         message={quantaMessages.achievementsTip}
+        unlockedCount={unlocked.length}
+        totalCount={ACHIEVEMENTS.length}
         className="my-6"
       />
 

@@ -1,0 +1,92 @@
+{
+  "name": "Quanta Mascot Assets",
+  "generated": "2026-08-25",
+  "basePath": "/assets/quanta/",
+  "assets": [
+    {
+      "file": "/assets/quanta/quanta-egg-waiting-1.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.40 PM (1).jpeg",
+      "usage": "Adult Quanta watching a cracked egg; use for waiting/empty states."
+    },
+    {
+      "file": "/assets/quanta/quanta-egg-waiting-sweat.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.40 PM (2).jpeg",
+      "usage": "Adult Quanta waiting nervously beside egg; use for loading/in-progress states."
+    },
+    {
+      "file": "/assets/quanta/quanta-tick-tock.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.40 PM.jpeg",
+      "usage": "Adult Quanta checking watch with tick-tock text; use for deadlines/streak reminders."
+    },
+    {
+      "file": "/assets/quanta/quanta-hatching-curious.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.41 PM (1).jpeg",
+      "usage": "Baby Quanta hatching with ellipsis; use for beginner lessons/onboarding."
+    },
+    {
+      "file": "/assets/quanta/quanta-hatching-sleepy.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.41 PM (2).jpeg",
+      "usage": "Sleepy baby Quanta hatching; use for inactive/low-progress states."
+    },
+    {
+      "file": "/assets/quanta/quanta-hatching-surprised.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.41 PM.jpeg",
+      "usage": "Adult Quanta surprised by egg hatching; use for error/warning/help states."
+    },
+    {
+      "file": "/assets/quanta/quanta-did-you-code.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.42 PM (1).jpeg",
+      "usage": "Round Did You Code Today badge; use for progress/streak page."
+    },
+    {
+      "file": "/assets/quanta/quanta-workshop-announcement-1.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.42 PM(1).jpeg",
+      "usage": "Baby Quanta workshop announcement; use for events/announcements."
+    },
+    {
+      "file": "/assets/quanta/quanta-workshop-announcement-2.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.42 PM.jpeg",
+      "usage": "Variant workshop announcement; use for events/announcements."
+    },
+    {
+      "file": "/assets/quanta/quanta-head-blue-bg.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.43 PM (1).jpeg",
+      "usage": "Quanta head on blue background; use for avatar/logo accent if needed."
+    },
+    {
+      "file": "/assets/quanta/quanta-simple-duck.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.43 PM (2).jpeg",
+      "usage": "Happy simple Quanta duck; use for welcome/meet Quanta cards."
+    },
+    {
+      "file": "/assets/quanta/quanta-coding-power.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.43 PM (3).jpeg",
+      "usage": "Quanta coding with laptop and energy aura; use for Build/Challenges hero."
+    },
+    {
+      "file": "/assets/quanta/quanta-trophy.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.43 PM(1).jpeg",
+      "usage": "Quanta in trophy; use for achievements/success states."
+    },
+    {
+      "file": "/assets/quanta/quanta-hatching-neutral.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.43 PM.jpeg",
+      "usage": "Neutral baby Quanta hatching; use for lesson empty states."
+    },
+    {
+      "file": "/assets/quanta/quanta-researcher-chip.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.44 PM (1).jpeg",
+      "usage": "Researcher Quanta inspecting circuit chip; use for docs/debug/technical help."
+    },
+    {
+      "file": "/assets/quanta/quanta-rubber-duck.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.44 PM (2).jpeg",
+      "usage": "Simple rubber duck style Quanta; use sparingly as mascot icon."
+    },
+    {
+      "file": "/assets/quanta/quanta-hatching-thinking.jpeg",
+      "original": "WhatsApp Image 2026-08-25 at 8.17.44 PM.jpeg",
+      "usage": "Baby Quanta hatching with ellipsis; use for hints/thinking states."
+    }
+  ]
+}

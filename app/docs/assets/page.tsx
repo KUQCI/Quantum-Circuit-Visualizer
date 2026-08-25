@@ -6,6 +6,7 @@ import {
 } from "@/lib/artist-assets";
 import { PageActions } from "@/components/navigation/PageActions";
 import { ArtistAssetPlaceholder } from "@/components/assets/ArtistAssetPlaceholder";
+import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { PenLine, GraduationCap, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,18 @@ export default function AssetTrackerPage() {
 
       <div className="mb-8 grid gap-4 md:grid-cols-2">
         <ArtistAssetPlaceholder assetId="quantum-journey-banner" aspect="banner" />
-        <ArtistAssetPlaceholder assetId="quanta-teacher" aspect="square" />
+        <div className="technical-panel flex flex-col items-center justify-center gap-3 p-4">
+          <p className="mono-label text-[0.65rem] text-[var(--color-muted-foreground)]">
+            Quanta teacher (official)
+          </p>
+          <QuantaImage variant="learning" size="lg" />
+          <Link
+            href="/docs/mascot"
+            className="text-xs text-[var(--color-brand)] hover:underline"
+          >
+            Open Quanta asset gallery →
+          </Link>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)]">

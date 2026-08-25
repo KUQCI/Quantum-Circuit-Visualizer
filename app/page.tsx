@@ -12,8 +12,10 @@ import {
 } from "@/components/navigation/ExternalAnchor";
 import { PageActions } from "@/components/navigation/PageActions";
 import { ArtistAssetPlaceholder } from "@/components/assets/ArtistAssetPlaceholder";
-import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaCard } from "@/components/mascot/QuantaCard";
+import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { Reveal } from "@/components/motion/Reveal";
+import { quantaMessages } from "@/lib/mascot/messages";
 import { useCircuitStore } from "@/store/circuit-store";
 import { formatDate } from "@/lib/utils";
 import {
@@ -131,6 +133,18 @@ export default function HomePage() {
             ]}
           />
         </div>
+      </Reveal>
+
+      {/* Meet Quanta — supporting card, not hero */}
+      <Reveal variant="up" delay={100} className="mb-8">
+        <QuantaCard
+          variant="welcome"
+          title="Meet Quanta"
+          description={quantaMessages.meetQuanta}
+          ctaLabel="Start Learning"
+          ctaHref="/learn"
+          imageSize="md"
+        />
       </Reveal>
 
       {/* Continue */}
@@ -260,20 +274,15 @@ export default function HomePage() {
           </Button>
         </div>
         {recentProjects.length === 0 ? (
-          <div className="technical-panel space-y-4 px-6 py-8">
-            <QuantaMessage
-              title="Quanta"
-              message="No saved circuits yet. Open a template on Projects, or start building from a blank canvas."
-            />
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button asChild size="sm">
-                <Link href="/projects">Browse templates</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/editor">Start blank circuit</Link>
-              </Button>
-            </div>
-          </div>
+          <QuantaEmptyState
+            variant="empty"
+            title="No saved circuits yet"
+            description="Open a template on Projects, or start building from a blank canvas."
+            actions={[
+              { label: "Browse templates", href: "/projects", primary: true },
+              { label: "Start blank circuit", href: "/editor" },
+            ]}
+          />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {recentProjects.map((project, i) => (

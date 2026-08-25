@@ -282,6 +282,7 @@ export function LearningPlayer({
               message={activity.quantaIntro}
               variant="default"
               size="lg"
+              imageVariant="learning"
             />
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">

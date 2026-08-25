@@ -44,6 +44,8 @@ function getContentBreadcrumbs(pathname: string) {
           ? "API Reference"
           : path.includes("/assets")
             ? "Asset Tracker"
+            : path.includes("/mascot")
+              ? "Quanta Assets"
             : path.includes("/debug")
               ? "Translator Debug"
               : "Composer Guide",

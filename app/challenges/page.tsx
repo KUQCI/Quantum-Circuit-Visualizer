@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaImage } from "@/components/mascot/QuantaImage";
+import { QuantaTip } from "@/components/mascot/QuantaTip";
 import { ChallengeCard } from "@/components/learning/ChallengeCard";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
@@ -61,11 +62,22 @@ export default function ChallengesPage() {
   return (
     <div className="page-container max-w-6xl">
       <div className="page-header mb-6">
-        <h1 className="page-title text-3xl">Challenges</h1>
-        <p className="page-description">
-          Objective-based quests that reinforce what you learned in Quantum
-          Academy
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-4">
+            <QuantaImage
+              variant="coding"
+              size="sm"
+              className="hidden shrink-0 sm:block"
+            />
+            <div>
+              <h1 className="page-title text-3xl">Challenges</h1>
+              <p className="page-description">
+                Objective-based quests that reinforce what you learned in Quantum
+                Academy
+              </p>
+            </div>
+          </div>
+        </div>
         <PageActions
           className="mt-4"
           primary={
@@ -141,9 +153,10 @@ export default function ChallengesPage() {
 
         <ContinueWhereYouLeftOff className="my-6" showProject={false} />
 
-        <QuantaMessage
+        <QuantaTip
           title="Quanta"
           message={quantaMessages.challengesTip}
+          variant="waiting"
           className="my-6"
         />
 
