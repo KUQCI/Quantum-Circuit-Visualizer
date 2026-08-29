@@ -86,7 +86,7 @@ export const simpleSuperpositionCircuit: Circuit = {
 };
 
 export const quantumTeleportationCircuit: Circuit = {
-  name: "Quantum Teleportation (Placeholder)",
+  name: "Quantum Teleportation",
   qubits: [
     { id: "q0", label: "q[0]" },
     { id: "q1", label: "q[1]" },

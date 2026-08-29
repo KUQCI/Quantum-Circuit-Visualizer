@@ -32,6 +32,14 @@ interface HistoryEntry {
   circuit: Circuit;
 }
 
+/** Snapshot of the Build workspace while a lesson/challenge is active. */
+interface BuildWorkspaceSnapshot {
+  circuit: Circuit;
+  currentProjectId: string | null;
+  history: HistoryEntry[];
+  historyIndex: number;
+}
+
 interface CircuitState {
   circuit: Circuit;
   currentProjectId: string | null;
@@ -40,10 +48,21 @@ interface CircuitState {
   validationWarnings: string[];
   history: HistoryEntry[];
   historyIndex: number;
+  /** Non-persisted Build backup while Learn/Challenge is mounted. */
+  buildWorkspace: BuildWorkspaceSnapshot | null;
 
   setCircuit: (circuit: Circuit) => void;
   /** Load a lesson/challenge circuit without binding to a saved project. */
   setActivityCircuit: (circuit: Circuit) => void;
+  /**
+   * Enter Learn/Challenge: backup Build once, then load the activity circuit.
+   * Nested enters (lesson→lesson) keep the original Build backup.
+   */
+  enterActivityCircuit: (circuit: Circuit) => void;
+  /** Leave Learn/Challenge and restore Build when no activity remains mounted. */
+  exitActivityCircuit: () => void;
+  /** Keep the current activity circuit as Build (e.g. Open in Build). */
+  commitActivityToWorkspace: () => void;
   resetCircuit: () => void;
   setSelectedOperation: (id: string | null) => void;
 
@@ -54,6 +73,12 @@ interface CircuitState {
   setRegisterCounts: (qubits: number, classicalBits: number) => void;
 
   addOperation: (operation: Omit<Operation, "id">) => void;
+  /** Add measure and auto-create c[0] in a single undo step when needed. */
+  addMeasureOperation: (
+    qubitId: string,
+    column: number,
+    classicalBitId?: string
+  ) => void;
   updateOperation: (id: string, updates: Partial<Operation>) => void;
   removeOperation: (id: string) => void;
   moveOperation: (id: string, column: number) => void;
@@ -93,6 +118,31 @@ function pushHistory(state: CircuitState): Partial<CircuitState> {
     historyIndex: newHistory.length - 1,
     validationWarnings: validateCircuitPlacement(state.circuit),
   };
+}
+
+/** Keep history/index aligned when truncating for persist. */
+export function sliceHistoryForPersist(
+  history: HistoryEntry[],
+  historyIndex: number,
+  maxEntries = 10
+): { history: HistoryEntry[]; historyIndex: number } {
+  const start = Math.max(0, history.length - maxEntries);
+  const sliced = history.slice(-maxEntries);
+  const adjusted = Math.min(
+    Math.max(0, historyIndex - start),
+    Math.max(0, sliced.length - 1)
+  );
+  return { history: sliced, historyIndex: adjusted };
+}
+
+let activityMountCount = 0;
+let pendingActivityExit: ReturnType<typeof setTimeout> | null = null;
+
+function clearPendingActivityExit() {
+  if (pendingActivityExit !== null) {
+    clearTimeout(pendingActivityExit);
+    pendingActivityExit = null;
+  }
 }
 
 function loadProjectsFromStorage(): Project[] {
@@ -159,6 +209,7 @@ export const useCircuitStore = create<CircuitState>()(
       validationWarnings: [],
       history: [{ circuit: createEmptyCircuit("Untitled Circuit", 2, 0) }],
       historyIndex: 0,
+      buildWorkspace: null,
       projects: [],
 
       setCircuit: (circuit) => {
@@ -179,12 +230,76 @@ export const useCircuitStore = create<CircuitState>()(
         }));
       },
 
+      enterActivityCircuit: (circuit) => {
+        clearPendingActivityExit();
+        activityMountCount += 1;
+        const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
+        set((state) => {
+          const buildWorkspace =
+            state.buildWorkspace ??
+            ({
+              circuit: structuredClone(state.circuit),
+              currentProjectId: state.currentProjectId,
+              history: structuredClone(state.history),
+              historyIndex: state.historyIndex,
+            } satisfies BuildWorkspaceSnapshot);
+
+          return {
+            buildWorkspace,
+            circuit: safe,
+            currentProjectId: null,
+            selectedOperationId: null,
+            history: [{ circuit: structuredClone(safe) }],
+            historyIndex: 0,
+            validationWarnings: validateCircuitPlacement(safe),
+          };
+        });
+      },
+
+      exitActivityCircuit: () => {
+        activityMountCount = Math.max(0, activityMountCount - 1);
+        if (activityMountCount > 0) return;
+
+        clearPendingActivityExit();
+        pendingActivityExit = setTimeout(() => {
+          pendingActivityExit = null;
+          if (activityMountCount > 0) return;
+          set((state) => {
+            const backup = state.buildWorkspace;
+            if (!backup) return state;
+            const circuit = prepareCircuit(backup.circuit);
+            return {
+              buildWorkspace: null,
+              circuit,
+              currentProjectId: backup.currentProjectId,
+              selectedOperationId: null,
+              history:
+                backup.history.length > 0
+                  ? backup.history
+                  : [{ circuit: structuredClone(circuit) }],
+              historyIndex: Math.min(
+                Math.max(0, backup.historyIndex),
+                Math.max(0, backup.history.length - 1)
+              ),
+              validationWarnings: validateCircuitPlacement(circuit),
+            };
+          });
+        }, 0);
+      },
+
+      commitActivityToWorkspace: () => {
+        clearPendingActivityExit();
+        activityMountCount = 0;
+        set({ buildWorkspace: null });
+      },
+
       resetCircuit: () => {
         const circuit = createEmptyCircuit("Untitled Circuit", 2, 0);
         set((state) => ({
           circuit,
           currentProjectId: null,
           selectedOperationId: null,
+          buildWorkspace: null,
           ...pushHistory({ ...state, circuit }),
         }));
       },
@@ -258,21 +373,27 @@ export const useCircuitStore = create<CircuitState>()(
       removeClassicalBit: (bitId) => {
         set((state) => {
           const idx = parseInt(bitId.replace("c", ""), 10);
+          const remapped = state.circuit.operations.map((op) => ({
+            ...op,
+            classicalTargets: op.classicalTargets
+              .filter((t) => t !== bitId)
+              .map((t) => {
+                const origIdx = parseInt(t.replace("c", ""), 10);
+                const newIdx = origIdx > idx ? origIdx - 1 : origIdx;
+                return `c${newIdx}`;
+              }),
+          }));
           const circuit: Circuit = {
             ...state.circuit,
             classicalBits: state.circuit.classicalBits
               .filter((c) => c.id !== bitId)
-              .map((c, i) => ({ id: `c${i}`, label: `c[${i}]` })),
-            operations: state.circuit.operations.map((op) => ({
-              ...op,
-              classicalTargets: op.classicalTargets
-                .filter((t) => t !== bitId)
-                .map((t) => {
-                  const origIdx = parseInt(t.replace("c", ""), 10);
-                  const newIdx = origIdx > idx ? origIdx - 1 : origIdx;
-                  return `c${newIdx}`;
-                }),
-            })),
+              .map((_, i) => ({ id: `c${i}`, label: `c[${i}]` })),
+            operations: remapped.filter((op) => {
+              if (op.type === "measure" && op.classicalTargets.length === 0) {
+                return false;
+              }
+              return true;
+            }),
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
@@ -313,6 +434,48 @@ export const useCircuitStore = create<CircuitState>()(
             operations: [...state.circuit.operations, op],
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
+        });
+      },
+
+      addMeasureOperation: (qubitId, column, classicalBitId) => {
+        set((state) => {
+          let classicalBits = state.circuit.classicalBits;
+          let resolvedClassical = classicalBitId;
+
+          if (!resolvedClassical) {
+            if (classicalBits.length === 0) {
+              classicalBits = [{ id: "c0", label: "c[0]" }];
+              resolvedClassical = "c0";
+            } else {
+              const qIdx = parseInt(qubitId.replace("q", ""), 10);
+              const cIdx = Number.isFinite(qIdx)
+                ? Math.min(Math.max(0, qIdx), classicalBits.length - 1)
+                : 0;
+              resolvedClassical = `c${cIdx}`;
+            }
+          }
+
+          const op: Operation = {
+            ...createOperationFromGateType(
+              "measure",
+              [qubitId],
+              [],
+              column,
+              [resolvedClassical]
+            ),
+            id: generateOperationId(),
+          };
+
+          const circuit: Circuit = {
+            ...state.circuit,
+            classicalBits,
+            operations: [...state.circuit.operations, op],
+          };
+          return {
+            circuit,
+            selectedOperationId: op.id,
+            ...pushHistory({ ...state, circuit }),
+          };
         });
       },
 
@@ -434,6 +597,10 @@ export const useCircuitStore = create<CircuitState>()(
         const { circuit, projects, currentProjectId } = get();
         const now = new Date().toISOString();
         const projectName = name ?? circuit.name;
+        const namedCircuit: Circuit = {
+          ...structuredClone(circuit),
+          name: projectName,
+        };
 
         if (currentProjectId) {
           const existingIdx = projects.findIndex((p) => p.id === currentProjectId);
@@ -441,12 +608,12 @@ export const useCircuitStore = create<CircuitState>()(
             const updated = [...projects];
             updated[existingIdx] = {
               ...updated[existingIdx],
-              circuit: structuredClone(circuit),
+              circuit: namedCircuit,
               updatedAt: now,
               name: projectName,
             };
             saveProjectsToStorage(updated);
-            set({ projects: updated });
+            set({ projects: updated, circuit: namedCircuit });
             return currentProjectId;
           }
         }
@@ -454,13 +621,17 @@ export const useCircuitStore = create<CircuitState>()(
         const project: Project = {
           id: `proj_${Date.now()}`,
           name: projectName,
-          circuit: structuredClone(circuit),
+          circuit: namedCircuit,
           createdAt: now,
           updatedAt: now,
         };
         const updated = [project, ...projects];
         saveProjectsToStorage(updated);
-        set({ projects: updated, currentProjectId: project.id });
+        set({
+          projects: updated,
+          currentProjectId: project.id,
+          circuit: namedCircuit,
+        });
         useProgressStore.getState().recordProjectSaved();
         return project.id;
       },
@@ -540,12 +711,32 @@ export const useCircuitStore = create<CircuitState>()(
           ),
         };
       },
-      partialize: (state) => ({
-        circuit: state.circuit,
-        currentProjectId: state.currentProjectId,
-        history: state.history.slice(-10),
-        historyIndex: Math.min(state.historyIndex, 9),
-      }),
+      partialize: (state) => {
+        const source = state.buildWorkspace
+          ? {
+              circuit: state.buildWorkspace.circuit,
+              currentProjectId: state.buildWorkspace.currentProjectId,
+              history: state.buildWorkspace.history,
+              historyIndex: state.buildWorkspace.historyIndex,
+            }
+          : {
+              circuit: state.circuit,
+              currentProjectId: state.currentProjectId,
+              history: state.history,
+              historyIndex: state.historyIndex,
+            };
+        const { history, historyIndex } = sliceHistoryForPersist(
+          source.history,
+          source.historyIndex,
+          10
+        );
+        return {
+          circuit: source.circuit,
+          currentProjectId: source.currentProjectId,
+          history,
+          historyIndex,
+        };
+      },
     }
   )
 );

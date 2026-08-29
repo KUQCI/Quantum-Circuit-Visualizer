@@ -253,6 +253,80 @@ describe("Qiskit Generator", () => {
 });
 
 describe("Round-trip", () => {
+  it("parses measured Bell circuit from QA fixture", () => {
+    const code = `from qiskit import QuantumCircuit
+
+qc = QuantumCircuit(2, 2)
+qc.h(0)
+qc.cx(0, 1)
+qc.measure(0, 0)
+qc.measure(1, 1)
+`;
+    const parsed = parseQiskitCode(code, "Bell Measured");
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.circuit.qubits).toHaveLength(2);
+    expect(parsed.circuit.classicalBits).toHaveLength(2);
+    expect(parsed.circuit.operations.map((o) => o.type)).toEqual([
+      "h",
+      "cx",
+      "measure",
+      "measure",
+    ]);
+    expect(parsed.circuit.operations[0].targets).toEqual(["q0"]);
+    expect(parsed.circuit.operations[1].controls).toEqual(["q0"]);
+    expect(parsed.circuit.operations[1].targets).toEqual(["q1"]);
+    expect(parsed.circuit.operations[2].classicalTargets).toEqual(["c0"]);
+    expect(parsed.circuit.operations[3].classicalTargets).toEqual(["c1"]);
+
+    const exported = generateQiskitCode(parsed.circuit);
+    expect(exported.success).toBe(true);
+    if (!exported.success) return;
+    const again = parseQiskitCode(exported.code);
+    expect(again.success).toBe(true);
+    if (!again.success) return;
+    expect(again.circuit.operations.map((o) => o.type)).toEqual([
+      "h",
+      "cx",
+      "measure",
+      "measure",
+    ]);
+  });
+
+  it("warns on symbolic params without crashing", () => {
+    const code = `from qiskit import QuantumCircuit
+qc = QuantumCircuit(2)
+qc.x(0)
+qc.y(0)
+qc.z(0)
+qc.rx(pi/2, 0)
+qc.ry(theta, 0)
+qc.rz(1.57, 0)
+qc.cz(0, 1)
+qc.swap(0, 1)
+qc.barrier()
+`;
+    const parsed = parseQiskitCode(code);
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.circuit.operations.map((o) => o.type)).toEqual([
+      "x",
+      "y",
+      "z",
+      "rx",
+      "ry",
+      "rz",
+      "cz",
+      "swap",
+      "barrier",
+    ]);
+    expect(parsed.warnings.some((w) => /symbolic parameter "theta"/i.test(w))).toBe(
+      true
+    );
+    const ry = parsed.circuit.operations.find((o) => o.type === "ry");
+    expect(ry?.parameters?.[0]?.display).toBe("theta");
+  });
+
   it("Qiskit → IR → Qiskit preserves gates", () => {
     const import1 = parseQiskitCode(bellStateQiskitCode, "Bell State");
     expect(import1.success).toBe(true);

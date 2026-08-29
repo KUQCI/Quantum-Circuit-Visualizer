@@ -217,7 +217,11 @@ function parseGateCalls(code: string, varName: string): { calls: ParsedGateCall[
   return { calls, ignored };
 }
 
-function evaluateParam(expr: string): Parameter {
+function evaluateParam(
+  expr: string,
+  warnings?: string[],
+  line?: number
+): Parameter {
   const display = expr.trim();
   try {
     const value = parseParamExpression(display);
@@ -227,7 +231,9 @@ function evaluateParam(expr: string): Parameter {
     if (Number.isFinite(asFloat)) {
       return { value: asFloat, display: formatParam(asFloat) };
     }
-    // Symbolic (theta, pi/2 already handled) — keep display, placeholder value 0
+    // Symbolic (theta, …) — keep display text; sim uses 0 until symbols are supported
+    const msg = `symbolic parameter "${display}" is shown as-is but simulated as 0`;
+    warnings?.push(line != null ? `Line ${line}: ${msg}` : msg);
     return { value: 0, display };
   }
 }
@@ -279,7 +285,8 @@ function gateToOperations(
   call: ParsedGateCall,
   column: number,
   numQubits: number,
-  numClassical: number
+  numClassical: number,
+  warnings?: string[]
 ): Operation[] {
   const { gate, args } = call;
 
@@ -390,7 +397,9 @@ function gateToOperations(
   for (const idx of indices) assertQubit(idx, numQubits, gate);
 
   const parameters =
-    gateInfo.nParams > 0 ? params.map((expr) => evaluateParam(expr)) : undefined;
+    gateInfo.nParams > 0
+      ? params.map((expr) => evaluateParam(expr, warnings, call.line))
+      : undefined;
 
   if (gateInfo.nQubits === 1) {
     return [
@@ -514,7 +523,7 @@ export function parseQiskitCode(code: string, name = "Imported Circuit"): Qiskit
 
     for (const call of calls) {
       try {
-        const ops = gateToOperations(call, column, numQubits, numClassical);
+        const ops = gateToOperations(call, column, numQubits, numClassical, warnings);
         operations.push(...ops);
         column += Math.max(ops.length, 1);
       } catch (err) {

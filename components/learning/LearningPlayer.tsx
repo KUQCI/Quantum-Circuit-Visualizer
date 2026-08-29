@@ -58,6 +58,11 @@ export function LearningPlayer({
   const router = useRouter();
   const circuit = useCircuitStore((s) => s.circuit);
   const setActivityCircuit = useCircuitStore((s) => s.setActivityCircuit);
+  const enterActivityCircuit = useCircuitStore((s) => s.enterActivityCircuit);
+  const exitActivityCircuit = useCircuitStore((s) => s.exitActivityCircuit);
+  const commitActivityToWorkspace = useCircuitStore(
+    (s) => s.commitActivityToWorkspace
+  );
   const circuitHydrated = usePersistHydrated(useCircuitStore.persist);
   const isWideLayout = useMediaQuery("(min-width: 1280px)");
   const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
@@ -95,25 +100,34 @@ export function LearningPlayer({
   useEffect(() => {
     let cancelled = false;
 
-    const loadStarter = () => {
-      if (cancelled) return;
-      setActivityCircuit(structuredClone(activity.starterCircuit));
-      recordActivity();
-      setFeedbackStatus("idle");
-      setShowHint(false);
-      setExportDone(false);
-      setImportDone(false);
-      useEditorUiStore.getState().setInspectMode(false);
-    };
+    enterActivityCircuit(structuredClone(activity.starterCircuit));
+    recordActivity();
+    setFeedbackStatus("idle");
+    setShowHint(false);
+    setExportDone(false);
+    setImportDone(false);
+    useEditorUiStore.getState().setInspectMode(false);
 
-    loadStarter();
-    const unsub = useCircuitStore.persist.onFinishHydration(loadStarter);
+    const reloadStarter = () => {
+      if (cancelled) return;
+      // Hydration finished — refresh starter without remounting activity depth.
+      setActivityCircuit(structuredClone(activity.starterCircuit));
+    };
+    const unsub = useCircuitStore.persist.onFinishHydration(reloadStarter);
 
     return () => {
       cancelled = true;
       unsub();
+      exitActivityCircuit();
     };
-  }, [activity.id, activity.starterCircuit, setActivityCircuit, recordActivity]);
+  }, [
+    activity.id,
+    activity.starterCircuit,
+    enterActivityCircuit,
+    exitActivityCircuit,
+    setActivityCircuit,
+    recordActivity,
+  ]);
 
   useEffect(() => {
     if (circuit.operations.length > 0) {
@@ -174,7 +188,7 @@ export function LearningPlayer({
   };
 
   const handleOpenInBuild = () => {
-    setActivityCircuit(structuredClone(circuit));
+    commitActivityToWorkspace();
     router.push("/editor");
   };
 

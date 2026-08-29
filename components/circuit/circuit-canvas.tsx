@@ -449,6 +449,7 @@ export function CircuitCanvas({
     clipboard,
     setSelectedOperation,
     addOperation,
+    addMeasureOperation,
     removeOperation,
     updateOperation,
     moveOperation,
@@ -458,6 +459,7 @@ export function CircuitCanvas({
     addQubit,
     removeQubit,
     addClassicalBit,
+    removeClassicalBit,
     undo,
     redo,
     canUndo,
@@ -536,20 +538,7 @@ export function CircuitCanvas({
       }
 
       if (gateType === "measure") {
-        const classicalIdx =
-          circuit.classicalBits.length === 0
-            ? 0
-            : Math.min(qubitIndex, circuit.classicalBits.length - 1);
-        if (circuit.classicalBits.length === 0) addClassicalBit();
-        addOperation(
-          createOperationFromGateType(
-            "measure",
-            [`q${qubitIndex}`],
-            [],
-            column,
-            [`c${classicalIdx}`]
-          )
-        );
+        addMeasureOperation(`q${qubitIndex}`, column);
         if (alignmentMode !== "freeform") alignOperationsLeft();
         return;
       }
@@ -639,7 +628,7 @@ export function CircuitCanvas({
       );
       if (alignmentMode !== "freeform") alignOperationsLeft();
     },
-    [circuit, addOperation, addClassicalBit, alignOperationsLeft, alignmentMode, inspectMode]
+    [circuit, addOperation, addMeasureOperation, alignOperationsLeft, alignmentMode, inspectMode]
   );
 
   const handleDragOver = useCallback(
@@ -836,8 +825,28 @@ export function CircuitCanvas({
                 size="sm"
                 className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
                 onClick={() => removeQubit(`q${circuit.qubits.length - 1}`)}
+                title="Remove last qubit"
+                aria-label="Remove last qubit"
               >
                 <Minus className="h-3 w-3" />
+                <span className="hidden min-[400px]:inline">Qubit</span>
+              </Button>
+            )}
+            {circuit.classicalBits.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
+                onClick={() =>
+                  removeClassicalBit(
+                    `c${circuit.classicalBits.length - 1}`
+                  )
+                }
+                title="Remove last classical bit"
+                aria-label="Remove last classical bit"
+              >
+                <Minus className="h-3 w-3" />
+                <span className="hidden min-[400px]:inline">Classical</span>
               </Button>
             )}
           </div>
