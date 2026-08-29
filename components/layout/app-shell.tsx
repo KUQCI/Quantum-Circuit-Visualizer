@@ -42,13 +42,9 @@ function getContentBreadcrumbs(pathname: string) {
       {
         label: path.includes("/api")
           ? "API Reference"
-          : path.includes("/assets")
-            ? "Asset Tracker"
-            : path.includes("/mascot")
-              ? "Quanta Assets"
-            : path.includes("/debug")
-              ? "Translator Debug"
-              : "Composer Guide",
+          : path.includes("/debug")
+            ? "Translator Debug"
+            : "Composer Guide",
       },
     ];
   return [{ label: "Home", href: "/" }];
