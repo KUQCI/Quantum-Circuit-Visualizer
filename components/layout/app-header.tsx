@@ -30,7 +30,6 @@ import {
   MoreHorizontal,
   Upload,
   Download,
-  Palette,
   ExternalLink,
   Bug,
 } from "lucide-react";
@@ -47,8 +46,6 @@ const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
-  { href: "/docs/assets", label: "Asset Tracker", icon: Palette },
-  { href: "/docs/mascot", label: "Quanta Assets", icon: Palette },
   { href: "/docs/debug", label: "Translator Debug", icon: Bug },
   { href: "/import", label: "Import", icon: Upload },
   { href: "/export", label: "Export", icon: Download },
