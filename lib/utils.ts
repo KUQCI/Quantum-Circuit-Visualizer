@@ -34,10 +34,12 @@ export function formatDate(iso: string): string {
 export function debounce<Args extends unknown[]>(
   fn: (...args: Args) => void,
   delay: number
-): (...args: Args) => void {
+): ((...args: Args) => void) & { cancel: () => void } {
   let timer: ReturnType<typeof setTimeout>;
-  return (...args: Args) => {
+  const debounced = (...args: Args) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
+  debounced.cancel = () => clearTimeout(timer);
+  return debounced;
 }

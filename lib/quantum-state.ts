@@ -357,6 +357,7 @@ function applyMultiQubitGate(
   qubits: number[],
   numQubits: number
 ): Complex[] {
+  if (new Set(qubits).size !== qubits.length) return state;
   const dim = 1 << numQubits;
   const k = qubits.length;
   const result = state.map(() => c(0));

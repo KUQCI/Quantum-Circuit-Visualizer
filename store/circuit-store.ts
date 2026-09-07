@@ -530,13 +530,20 @@ export const useCircuitStore = create<CircuitState>()(
         const wireIds = [...clipboard.targets, ...clipboard.controls];
         if (wireIds.length === 0) return;
 
+        const indices = wireIds.map((id) => parseInt(id.replace("q", ""), 10));
+        if (indices.some((index) => !Number.isInteger(index))) return;
+        const minIdx = Math.min(...indices);
+        const maxIdx = Math.max(...indices);
+        const span = maxIdx - minIdx;
+        if (span >= circuit.qubits.length) return;
+        const baseIndex = Math.min(
+          Math.max(0, qubitIndex),
+          circuit.qubits.length - 1 - span
+        );
+
         const offsetQubit = (id: string): string => {
           const origIdx = parseInt(id.replace("q", ""), 10);
-          const minIdx = Math.min(
-            ...wireIds.map((q) => parseInt(q.replace("q", ""), 10))
-          );
-          const newIdx = qubitIndex + (origIdx - minIdx);
-          return `q${Math.max(0, Math.min(circuit.qubits.length - 1, newIdx))}`;
+          return `q${baseIndex + (origIdx - minIdx)}`;
         };
 
         const pasted: Omit<Operation, "id"> = {

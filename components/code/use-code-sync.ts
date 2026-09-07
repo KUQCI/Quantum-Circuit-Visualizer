@@ -72,13 +72,15 @@ export function useCodeSync() {
   );
 
   const debouncedParseRef = useRef<
-    ((newCode: string, generation: number) => void) | null
+    (((newCode: string, generation: number) => void) & { cancel: () => void }) | null
   >(null);
 
   useEffect(() => {
-    debouncedParseRef.current = debounce((newCode: string, generation: number) => {
+    const debounced = debounce((newCode: string, generation: number) => {
       parseCode(newCode, generation);
     }, 600);
+    debouncedParseRef.current = debounced;
+    return () => debounced.cancel();
   }, [parseCode]);
 
   useEffect(() => {
