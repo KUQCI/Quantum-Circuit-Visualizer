@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { evaluateAchievements } from "@/lib/learning/achievements";
+import { ACHIEVEMENTS, evaluateAchievements } from "@/lib/learning/achievements";
 import { getLevelFromXp, updateStreak } from "@/lib/learning/progress";
 import type { SkillTag } from "@/lib/learning/types";
 import {
@@ -69,7 +69,10 @@ function checkAchievements(get: () => ProgressState, set: (p: Partial<ProgressSt
 
   if (newly.length === 0) return;
 
-  const achievementXp = newly.length * 10;
+  const achievementXp = newly.reduce(
+    (sum, id) => sum + (ACHIEVEMENTS.find((achievement) => achievement.id === id)?.xpReward ?? 0),
+    0
+  );
   set({
     unlockedAchievements: [...state.unlockedAchievements, ...newly],
     totalXp: state.totalXp + achievementXp,

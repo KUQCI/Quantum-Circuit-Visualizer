@@ -401,7 +401,7 @@ export const useCircuitStore = create<CircuitState>()(
 
       setRegisterCounts: (numQubits, numClassicalBits) => {
         set((state) => {
-          let circuit = structuredClone(state.circuit);
+          const circuit = structuredClone(state.circuit);
           circuit.qubits = Array.from({ length: Math.max(1, numQubits) }, (_, i) => ({
             id: `q${i}`,
             label: `q[${i}]`,

@@ -109,7 +109,14 @@ export function tokenize(text: string): Token[] {
 
     if (ch.match(/\d/) || (ch === "." && i + 1 < n && text[i + 1].match(/\d/))) {
       let j = i;
-      while (j < n && (text[j].match(/\d/) || text[j] === ".")) j++;
+      let seenDot = false;
+      while (j < n && (text[j].match(/\d/) || text[j] === ".")) {
+        if (text[j] === "." && seenDot) {
+          throw new SyntaxError(`Invalid number at position ${i}`);
+        }
+        if (text[j] === ".") seenDot = true;
+        j++;
+      }
       if (j < n && "eE".includes(text[j])) {
         j++;
         if (j < n && "+-".includes(text[j])) j++;
@@ -261,7 +268,7 @@ export function formatParam(value: number): string {
 
   for (let denom = 1; denom <= 64; denom++) {
     const numer = Math.round(absRatio * denom);
-    if (Math.abs(numer / denom - absRatio) < 1e-9 * Math.max(1, absRatio)) {
+    if (numer !== 0 && Math.abs(numer / denom - absRatio) < 1e-9 * Math.max(1, absRatio)) {
       const g = gcd(numer, denom);
       const p = numer / g;
       const q = denom / g;

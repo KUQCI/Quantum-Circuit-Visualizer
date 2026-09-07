@@ -47,7 +47,8 @@ export function updateStreak(
   lastActiveDate: string | null,
   currentStreak: number
 ): { streak: number; lastActiveDate: string } {
-  const today = new Date().toISOString().slice(0, 10);
+  const current = new Date();
+  const today = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
   if (!lastActiveDate) {
     return { streak: 1, lastActiveDate: today };
   }

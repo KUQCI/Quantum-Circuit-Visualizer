@@ -99,7 +99,7 @@ backend = service.least_busy(operational=True, simulator=False)
 sampler = Sampler(backend)
 job = sampler.run([qc], shots=1024)
 result = job.result()
-print(result[0].data.meas.get_counts())
+print(result[0].data.c.get_counts())
 `;
   return { success: true, code };
 }

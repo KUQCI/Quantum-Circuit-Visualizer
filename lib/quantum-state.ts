@@ -70,7 +70,7 @@ function cExp(angle: number): Complex {
 }
 
 function formatBasisLabel(index: number, numQubits: number): string {
-  return index.toString(2).padStart(numQubits, "0");
+  return index.toString(2).padStart(numQubits, "0").split("").reverse().join("");
 }
 
 function identity(n: number): Complex[][] {
@@ -234,7 +234,7 @@ function getSingleQubitMatrix(
         [c(0), c(0, -1)],
       ];
     case "p":
-      return rz(theta);
+      return [[c(1), c(0)], [c(0), cExp(theta)]];
     case "id":
       return identity(2);
     case "sx":
@@ -438,8 +438,11 @@ function applyOperation(
     return null;
   }
 
-  if (op.type === "barrier" || op.type === "measure" || op.type === "reset") {
+  if (op.type === "barrier" || op.type === "measure") {
     return state;
+  }
+  if (op.type === "reset") {
+    return collapseQubit(state, numQubits, qubitIndexFromId(op.targets[0]), 0);
   }
 
   const params = paramValues(op);
@@ -497,7 +500,6 @@ export function collapseQubit(
   qubit: number,
   outcome: 0 | 1
 ): Complex[] {
-  const dim = 1 << numQubits;
   const collapsed = state.map((amp, i) => {
     const bit = (i >> (numQubits - 1 - qubit)) & 1;
     return bit === outcome ? amp : c(0);
@@ -534,7 +536,7 @@ export function sampleFromStatevector(
   let cumulative = 0;
   for (let i = 0; i < dim; i++) {
     cumulative += cAbs2(state[i]);
-    if (r <= cumulative) {
+    if (r < cumulative) {
       return formatBasisLabel(i, numQubits);
     }
   }
