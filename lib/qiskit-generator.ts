@@ -138,6 +138,7 @@ export function generateQiskitCode(circuit: Circuit): QiskitGenerateResult {
 
     const lines: string[] = [
       "from qiskit import QuantumCircuit",
+      "from numpy import pi",
       "",
       `qc = QuantumCircuit(${numQubits}${numClassical > 0 ? `, ${numClassical}` : ""})`,
       "",

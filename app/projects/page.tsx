@@ -15,7 +15,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageActions } from "@/components/navigation/PageActions";
 import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
-import { createEmptyCircuit } from "@/lib/circuit-schema";
 import { PROJECT_TEMPLATES } from "@/lib/project-templates";
 import { formatDate } from "@/lib/utils";
 import { quantaMessages } from "@/lib/mascot/messages";
@@ -71,11 +70,6 @@ export default function ProjectsPage() {
 
   const handleNewProject = () => {
     resetCircuit();
-    const name = `Untitled Circuit`;
-    useCircuitStore.setState({
-      circuit: createEmptyCircuit(name, 2, 0),
-    });
-    saveProject(name);
     router.push("/editor");
   };
 

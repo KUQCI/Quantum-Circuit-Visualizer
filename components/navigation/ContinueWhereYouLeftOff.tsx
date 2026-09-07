@@ -10,16 +10,18 @@ import { ProgressHydrationGate } from "@/components/layout/progress-hydration-ga
 interface ContinueWhereYouLeftOffProps {
   className?: string;
   showProject?: boolean;
+  showLesson?: boolean;
 }
 
 export function ContinueWhereYouLeftOff({
   className,
   showProject = true,
+  showLesson = true,
 }: ContinueWhereYouLeftOffProps) {
   return (
     <div className={className}>
       <ProgressHydrationGate>
-        <ContinueWhereYouLeftOffContent showProject={showProject} />
+        <ContinueWhereYouLeftOffContent showProject={showProject} showLesson={showLesson} />
       </ProgressHydrationGate>
     </div>
   );
@@ -27,7 +29,8 @@ export function ContinueWhereYouLeftOff({
 
 function ContinueWhereYouLeftOffContent({
   showProject = true,
-}: Pick<ContinueWhereYouLeftOffProps, "showProject">) {
+  showLesson = true,
+}: Pick<ContinueWhereYouLeftOffProps, "showProject" | "showLesson">) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
   const { projects, currentProjectId, loadProjects } = useCircuitStore();
@@ -53,7 +56,7 @@ function ContinueWhereYouLeftOffContent({
     secondaryLabel?: string;
   }[] = [];
 
-  if (targets.lesson) {
+  if (showLesson && targets.lesson) {
     cards.push({
       badge: "Continue Learning",
       title: targets.lesson.title,

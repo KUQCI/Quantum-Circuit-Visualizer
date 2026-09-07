@@ -82,7 +82,8 @@ function runSingleShot(
   const hasMeasurements = circuit.operations.some((op) => op.type === "measure");
 
   if (hasMeasurements && numClassical > 0) {
-    const key = classical
+    const key = [...classical]
+      .reverse()
       .map((b) => (b === null ? "0" : String(b)))
       .join("");
     return { key, error: null };
@@ -171,24 +172,3 @@ export function runCircuitShots(
   };
 }
 
-/** Ideal probabilities without sampling noise (for comparison). */
-export function idealProbabilitiesFromCircuit(circuit: Circuit): HistogramEntry[] {
-  const numQubits = circuit.qubits.length;
-  const shots = 10000;
-  const counts: Record<string, number> = {};
-
-  for (let i = 0; i < shots; i++) {
-    const { key, error } = runSingleShot(circuit, Math.random);
-    if (error) return [];
-    counts[key] = (counts[key] ?? 0) + 1;
-  }
-
-  return Object.entries(counts)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, count]) => ({
-      label,
-      count,
-      probability: count / shots,
-      percentage: (count / shots) * 100,
-    }));
-}

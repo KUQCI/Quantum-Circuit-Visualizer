@@ -7,7 +7,7 @@
     "build": "next build",
     "build:pages": "GITHUB_PAGES=true next build && node scripts/post-build-pages.mjs",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.9",
+    "@eslint/eslintrc": "^3.3.1",
     "@types/node": "^22.13.5",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

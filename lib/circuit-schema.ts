@@ -19,7 +19,7 @@ export const OperationSchema = z.object({
   id: z.string(),
   type: z.string(),
   label: z.string(),
-  targets: z.array(z.string()),
+  targets: z.array(z.string()).min(1),
   controls: z.array(z.string()).default([]),
   classicalTargets: z.array(z.string()).default([]),
   column: z.number().int().min(0),
@@ -31,7 +31,7 @@ export const CircuitSchema = z.object({
   /** Optional stable id for projects / debug */
   id: z.string().optional(),
   name: z.string(),
-  qubits: z.array(QubitSchema).min(1),
+  qubits: z.array(QubitSchema).min(1).max(64),
   classicalBits: z.array(ClassicalBitSchema),
   operations: z.array(OperationSchema),
   metadata: z.record(z.unknown()).optional(),

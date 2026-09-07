@@ -96,11 +96,12 @@ export const useExecutionStore = create<ExecutionState>()(
         const backendId = BACKENDS.some((b) => b.id === saved.backendId)
           ? saved.backendId!
           : current.backendId;
+        const backend = getBackend(backendId);
 
         return {
           ...current,
           backendId,
-          shots: asNumber(saved.shots, current.shots),
+          shots: Math.min(backend.maxShots, Math.max(1, asNumber(saved.shots, current.shots))),
         };
       },
       partialize: (state) => ({

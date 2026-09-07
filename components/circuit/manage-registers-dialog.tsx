@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCircuitStore } from "@/store/circuit-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,13 @@ export function ManageRegistersDialog({
   const setRegisterCounts = useCircuitStore((s) => s.setRegisterCounts);
   const [qubits, setQubits] = useState(circuit.qubits.length);
   const [classical, setClassical] = useState(circuit.classicalBits.length);
+
+  useEffect(() => {
+    if (open) {
+      setQubits(circuit.qubits.length);
+      setClassical(circuit.classicalBits.length);
+    }
+  }, [open, circuit.qubits.length, circuit.classicalBits.length]);
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
@@ -58,7 +65,7 @@ export function ManageRegistersDialog({
               min={1}
               max={16}
               value={qubits}
-              onChange={(e) => setQubits(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              onChange={(e) => setQubits(Math.min(16, Math.max(1, parseInt(e.target.value, 10) || 1)))}
               className="mt-1 h-8"
             />
           </div>
@@ -76,7 +83,7 @@ export function ManageRegistersDialog({
               max={16}
               value={classical}
               onChange={(e) =>
-                setClassical(Math.max(0, parseInt(e.target.value, 10) || 0))
+                setClassical(Math.min(16, Math.max(0, parseInt(e.target.value, 10) || 0)))
               }
               className="mt-1 h-8"
             />
