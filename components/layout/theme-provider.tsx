@@ -14,7 +14,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = JSON.parse(stored);
         const t = parsed?.state?.theme ?? "dark";
-        document.documentElement.setAttribute("data-theme", t);
+        if (t === "light" || t === "dark") {
+          document.documentElement.setAttribute("data-theme", t);
+        }
       } catch {
         /* use default */
       }

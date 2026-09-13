@@ -21,7 +21,7 @@ function readJson(key: string): unknown | null {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
   } catch {
-    localStorage.removeItem(key);
+    try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
     return null;
   }
 }
@@ -137,6 +137,8 @@ const MIGRATIONS: Record<number, () => void> = {
 export function runAppStorageMigrations(): void {
   if (typeof window === "undefined") return;
 
+  try {
+
   const stored = localStorage.getItem(APP_STORAGE_VERSION_KEY);
   const currentVersion = stored ? parseInt(stored, 10) : 0;
   if (Number.isNaN(currentVersion)) {
@@ -154,6 +156,9 @@ export function runAppStorageMigrations(): void {
     localStorage.setItem(APP_STORAGE_VERSION_KEY, String(APP_STORAGE_VERSION));
   } catch {
     /* ignore */
+  }
+  } catch {
+    // Access to storage can be disabled by browser privacy settings.
   }
 }
 

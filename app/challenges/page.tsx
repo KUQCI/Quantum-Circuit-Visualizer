@@ -151,7 +151,7 @@ export default function ChallengesPage() {
           )}
         </div>
 
-        <ContinueWhereYouLeftOff className="my-6" showProject={false} />
+        <ContinueWhereYouLeftOff className="my-6" showProject={false} showLesson={false} />
 
         <QuantaTip
           title="Quanta"

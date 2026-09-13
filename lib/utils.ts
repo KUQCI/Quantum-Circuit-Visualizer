@@ -15,8 +15,10 @@ export function downloadTextFile(content: string, filename: string) {
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function formatDate(iso: string): string {
@@ -32,10 +34,12 @@ export function formatDate(iso: string): string {
 export function debounce<Args extends unknown[]>(
   fn: (...args: Args) => void,
   delay: number
-): (...args: Args) => void {
+): ((...args: Args) => void) & { cancel: () => void } {
   let timer: ReturnType<typeof setTimeout>;
-  return (...args: Args) => {
+  const debounced = (...args: Args) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
+  debounced.cancel = () => clearTimeout(timer);
+  return debounced;
 }

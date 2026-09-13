@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
@@ -70,7 +70,7 @@ export function EditorBootstrap() {
 
   const initializedCompact = useRef(false);
 
-  const applyViewportPanelDefaults = () => {
+  const applyViewportPanelDefaults = useCallback(() => {
     if (isCompact) {
       setOperationsPanelCollapsed(true);
       if (!initializedCompact.current) {
@@ -92,7 +92,7 @@ export function EditorBootstrap() {
       setShowCodePanel(true);
       setShowVizPanels(true);
     }
-  };
+  }, [isCompact, setOperationsPanelCollapsed, setShowCodePanel, setShowVizPanels]);
 
   useEffect(() => {
     applyViewportPanelDefaults();
@@ -103,6 +103,7 @@ export function EditorBootstrap() {
 
     return unsub;
   }, [
+    applyViewportPanelDefaults,
     isCompact,
     setShowCodePanel,
     setShowVizPanels,

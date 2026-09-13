@@ -72,8 +72,17 @@ function stripComments(code: string): string {
   return code
     .split("\n")
     .map((line) => {
-      const idx = line.indexOf("#");
-      return idx >= 0 ? line.slice(0, idx) : line;
+      let quote: "'" | '"' | null = null;
+      let escaped = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (escaped) { escaped = false; continue; }
+        if (char === "\\") { escaped = true; continue; }
+        if (quote) { if (char === quote) quote = null; continue; }
+        if (char === "'" || char === '"') { quote = char; continue; }
+        if (char === "#") return line.slice(0, i);
+      }
+      return line;
     })
     .join("\n");
 }
@@ -431,15 +440,14 @@ function gateToOperations(
         },
       ];
     }
-    // Controlled two-qubit (cx, cz, rxx, rzz, …): control first, target second
     if (["rxx", "rzz"].includes(gate)) {
       return [
         {
           id: generateOperationId(),
           type: gate,
           label: getGateLabel(gate),
-          targets: [qubitIdFromIndex(indices[1])],
-          controls: [qubitIdFromIndex(indices[0])],
+          targets: [qubitIdFromIndex(indices[0]), qubitIdFromIndex(indices[1])],
+          controls: [],
           classicalTargets: [],
           column,
           parameters,
@@ -466,8 +474,8 @@ function gateToOperations(
         id: generateOperationId(),
         type: gate,
         label: getGateLabel(gate),
-        targets: [qubitIdFromIndex(indices[2])],
-        controls: [qubitIdFromIndex(indices[0]), qubitIdFromIndex(indices[1])],
+        targets: gate === "cswap" ? [qubitIdFromIndex(indices[1]), qubitIdFromIndex(indices[2])] : [qubitIdFromIndex(indices[2])],
+        controls: gate === "cswap" ? [qubitIdFromIndex(indices[0])] : [qubitIdFromIndex(indices[0]), qubitIdFromIndex(indices[1])],
         classicalTargets: [],
         column,
         parameters,

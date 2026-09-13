@@ -90,36 +90,32 @@ export function getMarginalDiskForQubit(
     return { amplitude: null, purity: 1 };
   }
 
-  if (numQubits === 1 && q === 0) {
-    return { amplitude: amplitudes[1] ?? null, purity: 1 };
-  }
-
   let p0 = 0;
   let p1 = 0;
-  let amp1: Complex = { re: 0, im: 0 };
+  const rho01: Complex = { re: 0, im: 0 };
+  const bitMask = 1 << (numQubits - 1 - q);
 
   for (let i = 0; i < amplitudes.length; i++) {
-    const bit = (i >> (numQubits - 1 - q)) & 1;
+    const bit = (i & bitMask) === 0 ? 0 : 1;
     const prob = cAbs2(amplitudes[i]);
     if (bit === 0) {
       p0 += prob;
     } else {
       p1 += prob;
-      amp1 = {
-        re: amp1.re + amplitudes[i].re,
-        im: amp1.im + amplitudes[i].im,
-      };
+      const zero = amplitudes[i ^ bitMask];
+      // rho01 = sum(other) a_0 * conjugate(a_1)
+      rho01.re += zero.re * amplitudes[i].re + zero.im * amplitudes[i].im;
+      rho01.im += zero.im * amplitudes[i].re - zero.re * amplitudes[i].im;
     }
   }
 
-  const norm1 = Math.sqrt(p1) || 1;
-  const beta = { re: amp1.re / norm1, im: amp1.im / norm1 };
-
-  if (p1 <= 0.001) {
-    return { amplitude: { re: 0, im: 0 }, purity: 0.5 + p0 * 0.5 };
-  }
-
-  return { amplitude: beta, purity: 0.5 + p0 * 0.5 };
+  const phase = -Math.atan2(rho01.im, rho01.re);
+  const magnitude = Math.sqrt(Math.max(0, p1));
+  const purity = p0 * p0 + p1 * p1 + 2 * cAbs2(rho01);
+  return {
+    amplitude: { re: magnitude * Math.cos(phase), im: magnitude * Math.sin(phase) },
+    purity,
+  };
 }
 
 function formatPhaseLabel(rad: number): string {
@@ -188,65 +184,18 @@ export function QubitPhaseDisks({
 }) {
   if (numQubits === 0 || amplitudes.length === 0) return null;
 
-  const disks = Array.from({ length: numQubits }, (_, q) => {
-    if (numQubits === 1) {
-      return { alpha: amplitudes[0], beta: amplitudes[1] ?? { re: 0, im: 0 } };
-    }
-
-    let p0 = 0;
-    let p1 = 0;
-    let amp0: Complex = { re: 0, im: 0 };
-    let amp1: Complex = { re: 0, im: 0 };
-
-    const dim = amplitudes.length;
-    for (let i = 0; i < dim; i++) {
-      const bit = (i >> (numQubits - 1 - q)) & 1;
-      const prob = amplitudes[i].re ** 2 + amplitudes[i].im ** 2;
-      if (bit === 0) {
-        p0 += prob;
-        amp0 = {
-          re: amp0.re + amplitudes[i].re,
-          im: amp0.im + amplitudes[i].im,
-        };
-      } else {
-        p1 += prob;
-        amp1 = {
-          re: amp1.re + amplitudes[i].re,
-          im: amp1.im + amplitudes[i].im,
-        };
-      }
-    }
-
-    const norm0 = Math.sqrt(p0) || 1;
-    const norm1 = Math.sqrt(p1) || 1;
-    return {
-      alpha: { re: amp0.re / norm0, im: amp0.im / norm0 },
-      beta: { re: amp1.re / norm1, im: amp1.im / norm1 },
-      purity: numQubits === 1 ? 1 : 0.5 + p0 * 0.5,
-    };
-  });
+  const disks = Array.from({ length: numQubits }, (_, q) =>
+    getMarginalDiskForQubit(amplitudes, numQubits, q)
+  );
 
   return (
     <>
       {disks.map((disk, q) => {
-        const p = disk.beta.re ** 2 + disk.beta.im ** 2;
-        const effectiveAmp = {
-          re: Math.sqrt(1 - p),
-          im: 0,
-        };
-        const displayAmp =
-          p > 0.001
-            ? {
-                re: disk.beta.re,
-                im: disk.beta.im,
-              }
-            : effectiveAmp;
-
         return (
           <PhaseDisk
             key={q}
-            amplitude={displayAmp}
-            purity={"purity" in disk ? (disk.purity as number) : 1}
+            amplitude={disk.amplitude}
+            purity={disk.purity}
             size={20}
             title={`q[${q}] local state`}
           />

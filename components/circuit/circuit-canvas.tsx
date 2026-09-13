@@ -92,7 +92,6 @@ function GateBlock({
   operation,
   isSelected,
   onSelect,
-  onDelete,
   wireIndex,
   numWires,
   isPaletteDragging,
@@ -554,11 +553,12 @@ export function CircuitCanvas({
       if (gateDef.category === "three") {
         const needed = getQubitsNeeded(gateDef);
         if (circuit.qubits.length < needed) return;
+        const baseIndex = Math.min(qubitIndex, circuit.qubits.length - needed);
         const controls =
           gateType === "rc3x"
-            ? [`q${qubitIndex}`, `q${qubitIndex + 1}`, `q${qubitIndex + 2}`]
-            : [`q${qubitIndex}`, `q${qubitIndex + 1}`];
-        const target = [`q${qubitIndex + needed - 1}`];
+            ? [`q${baseIndex}`, `q${baseIndex + 1}`, `q${baseIndex + 2}`]
+            : [`q${baseIndex}`, `q${baseIndex + 1}`];
+        const target = [`q${baseIndex + needed - 1}`];
         addOperation(
           createOperationFromGateType(gateType, target, controls, column)
         );

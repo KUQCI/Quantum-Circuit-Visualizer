@@ -4,13 +4,13 @@ export function compactColumnsLeft(operations: Operation[]): Operation[] {
   if (operations.length === 0) return operations;
 
   const sorted = [...operations].sort((a, b) => a.column - b.column || a.id.localeCompare(b.id));
-  const uniqueColumns = [...new Set(sorted.map((op) => op.column))].sort((a, b) => a - b);
-  const columnMap = new Map(uniqueColumns.map((col, idx) => [col, idx]));
-
-  return sorted.map((op) => ({
-    ...op,
-    column: columnMap.get(op.column) ?? op.column,
-  }));
+  const nextFree = new Map<string, number>();
+  return sorted.map((op) => {
+    const wires = [...new Set([...op.targets, ...op.controls, ...op.classicalTargets])];
+    const column = wires.reduce((next, wire) => Math.max(next, nextFree.get(wire) ?? 0), 0);
+    for (const wire of wires) nextFree.set(wire, column + 1);
+    return { ...op, column };
+  });
 }
 
 export function applyLeftAlignment(circuit: Circuit): Circuit {

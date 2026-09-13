@@ -8,6 +8,7 @@ import { formatParam } from "./translator-core";
 export interface GenerateResult {
   success: true;
   code: string;
+  warnings: string[];
 }
 
 export interface GenerateError {
@@ -26,69 +27,72 @@ function qRef(index: number): string {
   return `qubits[${index}]`;
 }
 
-function emitCirqGate(op: Operation): string {
+function emitCirqGate(op: Operation): { line: string } | { warning: string } {
   const gate = op.type;
 
-  if (gate === "barrier") return "# barrier";
+  if (gate === "barrier") return { line: "# barrier" };
 
   if (gate === "measure") {
+    if (!op.targets[0] || !op.classicalTargets[0]) return { warning: `measure ${op.id}: missing target` };
     const q = qubitIndexFromId(op.targets[0]);
     const c = classicalBitIndexFromId(op.classicalTargets[0]);
-    return `circuit.append(cirq.measure(${qRef(q)}, key='c${c}'))`;
+    return { line: `circuit.append(cirq.measure(${qRef(q)}, key='c${c}'))` };
   }
 
   if (gate === "reset") {
     const q = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.reset(${qRef(q)}))`;
+    return { line: `circuit.append(cirq.reset(${qRef(q)}))` };
   }
 
   if (["h", "x", "y", "z", "s", "t"].includes(gate)) {
     const q = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.${gate}(${qRef(q)}))`;
+    return { line: `circuit.append(cirq.${gate}(${qRef(q)}))` };
   }
 
   if (gate === "sdg") {
     const q = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.S(${qRef(q)}) ** -1)`;
+    return { line: `circuit.append(cirq.S(${qRef(q)}) ** -1)` };
   }
 
   if (gate === "tdg") {
     const q = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.T(${qRef(q)}) ** -1)`;
+    return { line: `circuit.append(cirq.T(${qRef(q)}) ** -1)` };
   }
 
   if (["rx", "ry", "rz"].includes(gate)) {
     const q = qubitIndexFromId(op.targets[0]);
     const p = formatCirqParam(op) || "0";
-    return `circuit.append(cirq.${gate}(${p}).on(${qRef(q)}))`;
+    return { line: `circuit.append(cirq.${gate}(${p}).on(${qRef(q)}))` };
   }
 
   if (gate === "cx") {
     const c = qubitIndexFromId(op.controls[0]);
     const t = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.CNOT(${qRef(c)}, ${qRef(t)}))`;
+    return { line: `circuit.append(cirq.CNOT(${qRef(c)}, ${qRef(t)}))` };
   }
 
   if (gate === "cz") {
     const c = qubitIndexFromId(op.controls[0]);
     const t = qubitIndexFromId(op.targets[0]);
-    return `circuit.append(cirq.CZ(${qRef(c)}, ${qRef(t)}))`;
+    return { line: `circuit.append(cirq.CZ(${qRef(c)}, ${qRef(t)}))` };
   }
 
   if (gate === "swap") {
     const q1 = qubitIndexFromId(op.targets[0]);
     const q2 = qubitIndexFromId(op.targets[1] ?? op.controls[0]);
-    return `circuit.append(cirq.SWAP(${qRef(q1)}, ${qRef(q2)}))`;
+    return { line: `circuit.append(cirq.SWAP(${qRef(q1)}, ${qRef(q2)}))` };
   }
 
-  throw new Error(`Gate ${gate} not supported in Cirq export`);
+  return { warning: `Gate ${gate} not supported in Cirq export` };
 }
 
 export function generateCirqCode(circuit: Circuit): CirqGenerateResult {
   try {
     const n = circuit.qubits.length;
+    const warnings: string[] = [];
     const lines = [
       "import cirq",
+      "from numpy import pi",
       "",
       `qubits = [cirq.LineQubit(i) for i in range(${n})]`,
       "circuit = cirq.Circuit()",
@@ -101,10 +105,12 @@ export function generateCirqCode(circuit: Circuit): CirqGenerateResult {
         lines.push("# --- barrier ---");
         continue;
       }
-      lines.push(emitCirqGate(op));
+      const emitted = emitCirqGate(op);
+      if ("line" in emitted) lines.push(emitted.line);
+      else warnings.push(emitted.warning);
     }
 
-    return { success: true, code: lines.join("\n") + "\n" };
+    return { success: true, code: lines.join("\n") + "\n", warnings };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Cirq generation failed";
     return { success: false, error: message };

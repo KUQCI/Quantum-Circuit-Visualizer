@@ -12,6 +12,7 @@ import {
 } from "@/lib/sample-circuits";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
 import type { Circuit } from "@/lib/circuit-schema";
+import { getMarginalDiskForQubit } from "@/components/visualizations/phase-disk";
 
 function probSum(result: ReturnType<typeof simulateCircuit>) {
   return result.probabilities.reduce((s, p) => s + p.probability, 0);
@@ -43,6 +44,24 @@ describe("Quantum State Simulation", () => {
     expect(result.probabilities[0].probability).toBeCloseTo(1);
     expect(result.probabilities[0].label).toBe("|0⟩");
     expect(probSum(result)).toBeCloseTo(1);
+  });
+
+  it("labels q0 as the rightmost bit, matching Qiskit", () => {
+    const circuit = createEmptyCircuit("X q0", 2);
+    circuit.operations.push({
+      id: "x0", type: "x", label: "X", targets: ["q0"], controls: [],
+      classicalTargets: [], column: 0,
+    });
+    const result = simulateCircuit(circuit);
+    expect(result.probabilities.find((entry) => entry.probability > 0.99)?.label).toBe("|01⟩");
+  });
+
+  it("computes Bell-state marginals from the reduced density matrix", () => {
+    const result = simulateCircuit(bellStateCircuit);
+    const marginal = getMarginalDiskForQubit(result.amplitudes, 2, 0);
+    const p1 = marginal.amplitude!.re ** 2 + marginal.amplitude!.im ** 2;
+    expect(p1).toBeCloseTo(0.5);
+    expect(marginal.purity).toBeCloseTo(0.5);
   });
 
   it("simulates simple superposition (50/50)", () => {

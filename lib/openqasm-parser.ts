@@ -29,11 +29,13 @@ export type ParseOpenQasmResult = OpenQasmParseResult | OpenQasmParseError;
 interface QregInfo {
   name: string;
   size: number;
+  offset: number;
 }
 
 interface CregInfo {
   name: string;
   size: number;
+  offset: number;
 }
 
 class Qasm2Parser {
@@ -49,7 +51,7 @@ class Qasm2Parser {
   }
 
   private peek(): Token {
-    return this.toks[this.i];
+    return this.toks[this.i] ?? this.toks[this.toks.length - 1];
   }
 
   private advance(): Token {
@@ -91,15 +93,8 @@ class Qasm2Parser {
       this.statement();
     }
 
-    const numQubits = Math.max(
-      1,
-      ...[...this.qregs.values()].map((r) => r.size),
-      0
-    );
-    const numClassical = Math.max(
-      0,
-      ...[...this.cregs.values()].map((r) => r.size)
-    );
+    const numQubits = Math.max(1, [...this.qregs.values()].reduce((sum, r) => sum + r.size, 0));
+    const numClassical = [...this.cregs.values()].reduce((sum, r) => sum + r.size, 0);
 
     return {
       name,
@@ -127,10 +122,11 @@ class Qasm2Parser {
       this.advance();
       const regName = this.expectId();
       this.expectSym("[");
-      const size = parseInt(this.advance().value, 10);
+      const size = this.readNonNegativeInteger("quantum register size");
       this.expectSym("]");
       this.expectSym(";");
-      this.qregs.set(regName, { name: regName, size });
+      const offset = [...this.qregs.values()].reduce((sum, reg) => sum + reg.size, 0);
+      this.qregs.set(regName, { name: regName, size, offset });
       return;
     }
 
@@ -138,10 +134,11 @@ class Qasm2Parser {
       this.advance();
       const regName = this.expectId();
       this.expectSym("[");
-      const size = parseInt(this.advance().value, 10);
+      const size = this.readNonNegativeInteger("classical register size");
       this.expectSym("]");
       this.expectSym(";");
-      this.cregs.set(regName, { name: regName, size });
+      const offset = [...this.cregs.values()].reduce((sum, reg) => sum + reg.size, 0);
+      this.cregs.set(regName, { name: regName, size, offset });
       return;
     }
 
@@ -197,14 +194,7 @@ class Qasm2Parser {
     }
 
     if (tok.kind === "ID" && tok.value === "if") {
-      this.advance();
-      this.expectSym("(");
-      this.expectId();
-      this.expectSym("==");
-      this.advance();
-      this.expectSym(")");
-      this.gateCall();
-      return;
+      throw new SyntaxError("Conditional gates are not supported; refusing to change circuit semantics");
     }
 
     if (tok.kind === "ID") {
@@ -291,8 +281,8 @@ class Qasm2Parser {
         id: generateOperationId(),
         type: name,
         label: getGateLabel(name),
-        targets: [qubits[2]],
-        controls: [qubits[0], qubits[1]],
+        targets: name === "cswap" ? [qubits[1], qubits[2]] : [qubits[2]],
+        controls: name === "cswap" ? [qubits[0]] : [qubits[0], qubits[1]],
         classicalTargets: [],
         column: col,
         parameters,
@@ -335,27 +325,27 @@ class Qasm2Parser {
     const reg = this.qregs.get(regName);
     if (!reg) throw new SyntaxError(`Unknown quantum register '${regName}'`);
     const idx = index ?? 0;
-    if (idx >= reg.size) {
+    if (!Number.isInteger(idx) || idx < 0 || idx >= reg.size) {
       throw new SyntaxError(`Qubit index ${idx} out of range for register ${regName}`);
     }
-    return qubitIdFromIndex(idx);
+    return qubitIdFromIndex(reg.offset + idx);
   }
 
   private resolveClassical(regName: string, index?: number): string {
     const reg = this.cregs.get(regName);
     if (!reg) throw new SyntaxError(`Unknown classical register '${regName}'`);
     const idx = index ?? 0;
-    if (idx >= reg.size) {
+    if (!Number.isInteger(idx) || idx < 0 || idx >= reg.size) {
       throw new SyntaxError(`Classical index ${idx} out of range for register ${regName}`);
     }
-    return classicalBitIdFromIndex(idx);
+    return classicalBitIdFromIndex(reg.offset + idx);
   }
 
   private singleArg(classical: boolean): string {
     const name = this.expectId();
     if (this.peek().value === "[") {
       this.advance();
-      const idx = parseInt(this.advance().value, 10);
+      const idx = this.readNonNegativeInteger("register index");
       this.expectSym("]");
       return classical ? this.resolveClassical(name, idx) : this.resolveQubit(name, idx);
     }
@@ -364,14 +354,10 @@ class Qasm2Parser {
     if (!reg) {
       throw new SyntaxError(`Unknown register '${name}'`);
     }
-    if (reg.size === 1) {
-      return classical
-        ? this.resolveClassical(name, 0)
-        : this.resolveQubit(name, 0);
+    if (reg.size !== 1) {
+      throw new SyntaxError(`Bare register '${name}' requires broadcast semantics, which are not supported`);
     }
-    return classical
-      ? this.resolveClassical(name, 0)
-      : this.resolveQubit(name, 0);
+    return classical ? this.resolveClassical(name, 0) : this.resolveQubit(name, 0);
   }
 
   private argList(): string[] {
@@ -386,11 +372,20 @@ class Qasm2Parser {
   }
 
   private getAllQubitIds(): string[] {
-    let total = 0;
-    for (const reg of this.qregs.values()) {
-      total = Math.max(total, reg.size);
-    }
+    const total = [...this.qregs.values()].reduce((sum, reg) => sum + reg.size, 0);
     return Array.from({ length: total }, (_, i) => qubitIdFromIndex(i));
+  }
+
+  private readNonNegativeInteger(context: string): number {
+    const tok = this.advance();
+    if (tok.kind !== "NUM" || !/^\d+$/.test(tok.value)) {
+      throw new SyntaxError(`Expected integer ${context}, got '${tok.value}' at pos ${tok.pos}`);
+    }
+    const value = Number(tok.value);
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw new SyntaxError(`Invalid ${context} '${tok.value}' at pos ${tok.pos}`);
+    }
+    return value;
   }
 }
 

@@ -2,14 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-function readMatches(query: string): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia(query).matches;
-}
-
 /** Subscribe to a CSS media query; updates on viewport changes and orientation. */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(() => readMatches(query));
+  const [matches, setMatches] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia(query);

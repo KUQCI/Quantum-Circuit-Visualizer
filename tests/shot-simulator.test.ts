@@ -87,4 +87,13 @@ describe("Shot simulator", () => {
     const total = result.histogram.reduce((sum, h) => sum + h.count, 0);
     expect(total).toBe(shots);
   });
+
+  it("prints classical bits from highest to lowest index", () => {
+    const circuit = createEmptyCircuit("Measure q0", 2, 2);
+    circuit.operations.push(
+      { id: "x0", type: "x", label: "X", targets: ["q0"], controls: [], classicalTargets: [], column: 0 },
+      { id: "m0", type: "measure", label: "M", targets: ["q0"], controls: [], classicalTargets: ["c0"], column: 1 }
+    );
+    expect(runCircuitShots(circuit, 1).counts).toEqual({ "01": 1 });
+  });
 });

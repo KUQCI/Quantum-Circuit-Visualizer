@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useExecutionStore } from "@/store/execution-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { BACKENDS, type BackendId } from "@/lib/backends";
+import { BACKENDS } from "@/lib/backends";
 import { MeasurementHistogram } from "@/components/visualizations/measurement-histogram";
 import { cn } from "@/lib/utils";
 import { Loader2, Play, ExternalLink, CheckCircle2 } from "lucide-react";

@@ -61,9 +61,17 @@ export default function ImportPage() {
     setResult(null);
   };
 
-  const handleParse = () => {
+  const handleParse = async () => {
     setLoading(true);
     setResult(null);
+
+    if (code.length > 100_000) {
+      setResult({ success: false, error: "Import is limited to 100,000 characters" });
+      setLoading(false);
+      return;
+    }
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     const parsed = adapter.parse(code);
     if (!parsed.success || !parsed.circuit) {
@@ -83,7 +91,7 @@ export default function ImportPage() {
       return;
     }
 
-    setResult({ success: true, circuit: validated.circuit });
+    setResult({ success: true, circuit: validated.circuit, details: parsed.warnings });
     setLoading(false);
   };
 

@@ -4,6 +4,7 @@ import { GATE_LIBRARY, formatParam } from "./translator-core";
 export interface GenerateResult {
   success: true;
   code: string;
+  warnings: string[];
 }
 
 export interface GenerateError {
@@ -15,6 +16,7 @@ export type OpenQasmGenerateResult = GenerateResult | GenerateError;
 
 export function generateOpenQasm(circuit: Circuit): OpenQasmGenerateResult {
   try {
+    const warnings: string[] = [];
     const lines = ['OPENQASM 2.0;', 'include "qelib1.inc";', ""];
 
     lines.push(`qreg q[${circuit.qubits.length}];`);
@@ -27,18 +29,24 @@ export function generateOpenQasm(circuit: Circuit): OpenQasmGenerateResult {
 
     for (const op of sortedOps) {
       if (op.type === "barrier") {
-        const qubitStr = circuit.qubits.map((q) => q.label).join(",");
+        const qubitStr = op.targets.map((id) => `q[${parseInt(id.replace("q", ""), 10)}]`).join(",");
+        if (!qubitStr) { warnings.push(`barrier ${op.id}: missing targets`); continue; }
         lines.push(`barrier ${qubitStr};`);
         continue;
       }
 
       if (op.type === "reset") {
+        if (!op.targets[0]) { warnings.push(`reset ${op.id}: missing target`); continue; }
         const qIdx = parseInt(op.targets[0].replace("q", ""), 10);
         lines.push(`reset q[${qIdx}];`);
         continue;
       }
 
       if (op.type === "measure") {
+        if (!op.targets[0] || !op.classicalTargets[0]) {
+          warnings.push(`measure ${op.id}: missing qubit or classical target`);
+          continue;
+        }
         const qIdx = parseInt(op.targets[0].replace("q", ""), 10);
         const cIdx = parseInt(op.classicalTargets[0].replace("c", ""), 10);
         lines.push(`measure q[${qIdx}] -> c[${cIdx}];`);
@@ -47,7 +55,8 @@ export function generateOpenQasm(circuit: Circuit): OpenQasmGenerateResult {
 
       const gateInfo = GATE_LIBRARY[op.type];
       if (!gateInfo) {
-        throw new Error(`Gate ${op.type} not supported in OpenQASM export`);
+        warnings.push(`Gate ${op.type} not supported in OpenQASM export`);
+        continue;
       }
 
       const paramStr =
@@ -59,20 +68,21 @@ export function generateOpenQasm(circuit: Circuit): OpenQasmGenerateResult {
         const qIdx = parseInt(op.targets[0].replace("q", ""), 10);
         lines.push(`${op.type}${paramStr} q[${qIdx}];`);
       } else if (gateInfo.nQubits === 2) {
-        if (op.type === "swap" && op.targets.length === 2) {
+        if (["swap", "rxx", "rzz"].includes(op.type) && op.targets.length === 2) {
           const q1 = parseInt(op.targets[0].replace("q", ""), 10);
           const q2 = parseInt(op.targets[1].replace("q", ""), 10);
-          lines.push(`swap q[${q1}],q[${q2}];`);
+          lines.push(`${op.type}${paramStr} q[${q1}],q[${q2}];`);
         } else {
           const cIdx = parseInt(op.controls[0].replace("q", ""), 10);
           const tIdx = parseInt(op.targets[0].replace("q", ""), 10);
           lines.push(`${op.type}${paramStr} q[${cIdx}],q[${tIdx}];`);
         }
       } else if (gateInfo.nQubits === 3) {
-        const c1 = parseInt(op.controls[0].replace("q", ""), 10);
-        const c2 = parseInt(op.controls[1].replace("q", ""), 10);
-        const t = parseInt(op.targets[0].replace("q", ""), 10);
-        lines.push(`${op.type}${paramStr} q[${c1}],q[${c2}],q[${t}];`);
+        const wires = op.type === "cswap"
+          ? [op.controls[0], op.targets[0], op.targets[1]]
+          : [op.controls[0], op.controls[1], op.targets[0]];
+        if (wires.some((wire) => !wire)) { warnings.push(`${op.type} ${op.id}: missing wires`); continue; }
+        lines.push(`${op.type}${paramStr} ${wires.map((wire) => `q[${parseInt(wire.replace("q", ""), 10)}]`).join(",")};`);
       } else if (gateInfo.nQubits === 4) {
         const c1 = parseInt(op.controls[0].replace("q", ""), 10);
         const c2 = parseInt(op.controls[1].replace("q", ""), 10);
@@ -82,7 +92,7 @@ export function generateOpenQasm(circuit: Circuit): OpenQasmGenerateResult {
       }
     }
 
-    return { success: true, code: lines.join("\n") + "\n" };
+    return { success: true, code: lines.join("\n") + "\n", warnings };
   } catch (err) {
     const message = err instanceof Error ? err.message : "OpenQASM generation failed";
     return { success: false, error: message };
