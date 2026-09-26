@@ -165,6 +165,16 @@ qc.cx(0, 1)
     expect(result.success).toBe(false);
   });
 
+  it("fails on an unclosed gate call", () => {
+    const result = parseQiskitCode(`from qiskit import QuantumCircuit
+qc = QuantumCircuit(1)
+qc.h(
+`);
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error).toMatch(/Line 3: .*unclosed call/i);
+  });
+
   it("rejects out-of-range qubit indices", () => {
     const result = parseQiskitCode(`from qiskit import QuantumCircuit
 qc = QuantumCircuit(1)
