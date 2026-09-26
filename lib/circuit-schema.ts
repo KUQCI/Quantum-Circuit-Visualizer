@@ -3,6 +3,7 @@ import { z } from "zod";
 export const ParameterSchema = z.object({
   value: z.number(),
   display: z.string().optional(),
+  symbol: z.string().optional(),
 });
 
 export const QubitSchema = z.object({

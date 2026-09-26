@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CodeEditor } from "@/components/code/code-editor";
+import { CodeEditor, type CodeDiagnostic } from "@/components/code/code-editor";
 import { CodePanelActions } from "@/components/code/code-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCodeSync } from "@/components/code/use-code-sync";
@@ -12,6 +12,7 @@ import { CODE_LANGUAGES, type CodeLanguageId } from "@/lib/code-adapters";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   ExternalLink,
   Loader2,
@@ -27,14 +28,41 @@ export function MultiLanguageCodePanel() {
   const {
     code,
     parseError,
+    warnings,
+    exportWarnings,
     syncStatus,
     adapter,
     handleCodeChange,
     forceSyncFromCircuit,
+    applyPending,
+    discardPending,
     readOnly,
   } = useCodeSync();
 
   const filename = `${circuit.name.replace(/\s+/g, "_").toLowerCase()}.${adapter.defaultFilename.split(".").pop()}`;
+  const displayedWarnings =
+    syncStatus === "partial" ? exportWarnings : warnings;
+  const ignoredWarningCount = warnings.filter(
+    (warning) =>
+      !/^(?:Line \d+:\s*)?unbound parameter ".+" — bind a value before simulating$/.test(
+        warning
+      )
+  ).length;
+  const diagnostics = useMemo<CodeDiagnostic[]>(() => {
+    const entries = [
+      ...(parseError ? [{ message: parseError, severity: "error" as const }] : []),
+      ...displayedWarnings.map((message) => ({
+        message,
+        severity: "warning" as const,
+      })),
+    ];
+    return entries.flatMap(({ message, severity }) => {
+      const match = /^Line (\d+):\s*(.*)$/.exec(message);
+      return match
+        ? [{ line: Number(match[1]), message: match[2], severity }]
+        : [];
+    });
+  }, [displayedWarnings, parseError]);
 
   return (
     <div className="flex h-full flex-col">
@@ -78,6 +106,45 @@ export function MultiLanguageCodePanel() {
         </div>
       )}
 
+      {displayedWarnings.length > 0 && (
+        <div
+          role="status"
+          className="mx-2 mb-1.5 rounded border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 px-2 py-2 text-xs text-[var(--color-warning)]"
+        >
+          <p className="font-medium">
+            {syncStatus === "partial"
+              ? "Export cannot represent every operation"
+              : "Code warnings"}
+          </p>
+          <ul className="mt-1 space-y-0.5">
+            {displayedWarnings.map((warning, index) => (
+              <li key={`${warning}-${index}`}>{warning}</li>
+            ))}
+          </ul>
+          {syncStatus === "blocked" && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 border-[var(--color-warning)]/50 px-2 text-[10px] text-[var(--color-warning)]"
+                onClick={applyPending}
+              >
+                Apply anyway ({ignoredWarningCount} line
+                {ignoredWarningCount === 1 ? "" : "s"} ignored)
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[10px] text-[var(--color-warning)]"
+                onClick={discardPending}
+              >
+                Revert to circuit
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="code-editor-shell min-h-0 flex-1 p-2">
         <div className="h-full min-h-[120px]">
           <CodeEditor
@@ -88,6 +155,7 @@ export function MultiLanguageCodePanel() {
             language={adapter.monacoLanguage}
             completionProfile={codePanelLanguage}
             height="100%"
+            diagnostics={diagnostics}
           />
         </div>
       </div>
@@ -152,20 +220,45 @@ function SyncBadge({
   status,
   error,
 }: {
-  status: "synced" | "editing" | "error";
+  status: "synced" | "editing" | "error" | "blocked" | "partial";
   error: string | null;
 }) {
   if (status === "editing") {
     return (
       <span className="flex items-center gap-1 text-[10px] text-[var(--color-muted-foreground)]">
         <Loader2 className="h-3 w-3 animate-spin" />
+        <span>Parsing…</span>
       </span>
     );
   }
   if (status === "error" || error) {
-    return <AlertCircle className="h-3 w-3 text-[var(--color-destructive)]" />;
+    return (
+      <span className="flex items-center gap-1 text-[10px] text-[var(--color-destructive)]">
+        <AlertCircle className="h-3 w-3" />
+        <span>Error</span>
+      </span>
+    );
+  }
+  if (status === "blocked") {
+    return (
+      <span className="flex items-center gap-1 text-[10px] text-[var(--color-warning)]">
+        <AlertTriangle className="h-3 w-3" />
+        <span>Not applied</span>
+      </span>
+    );
+  }
+  if (status === "partial") {
+    return (
+      <span className="flex items-center gap-1 text-[10px] text-[var(--color-warning)]">
+        <AlertTriangle className="h-3 w-3" />
+        <span>Export incomplete</span>
+      </span>
+    );
   }
   return (
-    <CheckCircle2 className="h-3 w-3 text-[var(--color-success)]" />
+    <span className="flex items-center gap-1 text-[10px] text-[var(--color-muted-foreground)]">
+      <CheckCircle2 className="h-3 w-3 text-[var(--color-success)]" />
+      <span>Synced</span>
+    </span>
   );
 }

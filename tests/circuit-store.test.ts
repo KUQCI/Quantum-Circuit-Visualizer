@@ -178,4 +178,32 @@ describe("circuit store register + measure safety", () => {
     expect(useCircuitStore.getState().circuit.operations[0].type).toBe("h");
     expect(useCircuitStore.getState().circuit.name).toBe("QA Project");
   });
+
+  it("renames the saved and live circuit names", () => {
+    const firstCircuit = createEmptyCircuit("First", 1, 0);
+    const secondCircuit = createEmptyCircuit("Second", 1, 0);
+    const now = new Date().toISOString();
+    useCircuitStore.setState({
+      projects: [
+        { id: "first", name: "First", circuit: firstCircuit, createdAt: now, updatedAt: now },
+        { id: "second", name: "Second", circuit: secondCircuit, createdAt: now, updatedAt: now },
+      ],
+      currentProjectId: "first",
+      circuit: firstCircuit,
+    });
+
+    useCircuitStore.getState().renameProject("second", "Renamed Second");
+    let state = useCircuitStore.getState();
+    expect(state.projects.find((p) => p.id === "second")?.circuit.name).toBe(
+      "Renamed Second"
+    );
+    expect(state.circuit.name).toBe("First");
+
+    state.renameProject("first", "Renamed First");
+    state = useCircuitStore.getState();
+    expect(state.projects.find((p) => p.id === "first")?.circuit.name).toBe(
+      "Renamed First"
+    );
+    expect(state.circuit.name).toBe("Renamed First");
+  });
 });

@@ -10,6 +10,7 @@ interface NextStepCardProps {
   ctaLabel?: string;
   secondaryHref?: string;
   secondaryLabel?: string;
+  secondaryActions?: { href: string; label: string }[];
   badge?: string;
   className?: string;
 }
@@ -21,6 +22,7 @@ export function NextStepCard({
   ctaLabel = "Continue",
   secondaryHref,
   secondaryLabel,
+  secondaryActions = [],
   badge,
   className,
 }: NextStepCardProps) {
@@ -51,6 +53,11 @@ export function NextStepCard({
               <Link href={secondaryHref}>{secondaryLabel}</Link>
             </Button>
           )}
+          {secondaryActions.map((action) => (
+            <Button key={action.href} asChild variant="outline" size="sm">
+              <Link href={action.href}>{action.label}</Link>
+            </Button>
+          ))}
           <Button asChild size="sm" className="gap-1.5">
             <Link href={href}>
               {ctaLabel}

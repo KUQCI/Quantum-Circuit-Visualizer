@@ -14,9 +14,6 @@ describe("quanta-assets", () => {
     expect(quantaAssets.success).toContain("trophy.webp");
     expect(quantaAssets.error).toContain("surprised.webp");
     expect(quantaAssets.empty).toContain("egg-waiting");
-    expect(Object.values(quantaAssets).every((p) => p.endsWith(".webp"))).toBe(
-      true
-    );
   });
 
   it("maps variants to paths", () => {
@@ -37,5 +34,16 @@ describe("quanta-assets", () => {
   it("prefixes base path when configured", () => {
     const url = getQuantaAssetUrl("welcome");
     expect(url).toContain("/assets/quanta/");
+  });
+
+  it("resolves intro assets under the base path", () => {
+    expect(getQuantaAssetPath("introVideo")).toBe(quantaAssets.introVideo);
+    expect(getQuantaAssetPath("introPoster")).toBe(quantaAssets.introPoster);
+    expect(getQuantaAssetUrl("introVideo")).toContain(
+      "/assets/quanta/intro/door-open.mp4"
+    );
+    expect(getQuantaAssetUrl("introPoster")).toContain(
+      "/assets/quanta/intro/door-poster.jpg"
+    );
   });
 });

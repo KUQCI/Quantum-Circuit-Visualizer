@@ -23,6 +23,8 @@ export const quantaAssets = {
   avatar: "/assets/quanta/quanta-head-blue-bg.webp",
   rubberDuck: "/assets/quanta/quanta-rubber-duck.webp",
   contactSheet: "/assets/quanta/quanta-contact-sheet.webp",
+  introVideo: "/assets/quanta/intro/door-open.mp4",
+  introPoster: "/assets/quanta/intro/door-poster.jpg",
 } as const;
 
 export type QuantaAssetKey = keyof typeof quantaAssets;

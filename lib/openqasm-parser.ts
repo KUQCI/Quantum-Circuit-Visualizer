@@ -1,6 +1,7 @@
 import {
   Circuit,
   Operation,
+  Parameter,
   generateOperationId,
   getGateLabel,
   qubitIdFromIndex,
@@ -11,17 +12,18 @@ import {
   Token,
   tokenize,
   evalExpr,
-  formatParam,
 } from "./translator-core";
 
 export interface OpenQasmParseResult {
   success: true;
   circuit: Circuit;
+  warnings: string[];
 }
 
 export interface OpenQasmParseError {
   success: false;
   error: string;
+  warnings?: string[];
 }
 
 export type ParseOpenQasmResult = OpenQasmParseResult | OpenQasmParseError;
@@ -45,9 +47,14 @@ class Qasm2Parser {
   private cregs: Map<string, CregInfo> = new Map();
   private operations: Operation[] = [];
   private column = 0;
+  private warnings: string[] = [];
 
   constructor(text: string) {
     this.toks = tokenize(text);
+  }
+
+  getWarnings(): string[] {
+    return this.warnings;
   }
 
   private peek(): Token {
@@ -208,7 +215,7 @@ class Qasm2Parser {
   private gateCall(): void {
     const name = this.expectId().toLowerCase();
 
-    const params: number[] = [];
+    const params: Parameter[] = [];
     if (this.peek().value === "(") {
       this.advance();
       if (this.peek().value !== ")") {
@@ -240,7 +247,7 @@ class Qasm2Parser {
 
     const parameters =
       params.length > 0
-        ? params.map((value) => ({ value, display: formatParam(value) }))
+        ? params
         : undefined;
 
     const col = this.column++;
@@ -304,7 +311,7 @@ class Qasm2Parser {
     }
   }
 
-  private paramExpr(): number {
+  private paramExpr(): Parameter {
     const start = this.i;
     let depth = 0;
     while (true) {
@@ -318,7 +325,14 @@ class Qasm2Parser {
       this.advance();
     }
     const slice = this.toks.slice(start, this.i);
-    return evalExpr(slice);
+    const display = slice.map((token) => token.value).join("").trim();
+    try {
+      const value = evalExpr(slice);
+      return { value, display };
+    } catch {
+      this.warnings.push(`unbound parameter "${display}" — bind a value before simulating`);
+      return { value: 0, display, symbol: display };
+    }
   }
 
   private resolveQubit(regName: string, index?: number): string {
@@ -391,8 +405,9 @@ class Qasm2Parser {
 
 export function parseOpenQasm(code: string, name = "Imported Circuit"): ParseOpenQasmResult {
   try {
-    const circuit = new Qasm2Parser(code).parse(name);
-    return { success: true, circuit };
+    const parser = new Qasm2Parser(code);
+    const circuit = parser.parse(name);
+    return { success: true, circuit, warnings: parser.getWarnings() };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown OpenQASM parse error";
     return { success: false, error: message };

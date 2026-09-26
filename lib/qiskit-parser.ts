@@ -192,9 +192,14 @@ function isIndexToken(s: string): boolean {
   return /^-?\d+$/.test(s.trim());
 }
 
-function parseGateCalls(code: string, varName: string): { calls: ParsedGateCall[]; ignored: string[] } {
+function parseGateCalls(code: string, varName: string): {
+  calls: ParsedGateCall[];
+  ignored: string[];
+  errors: string[];
+} {
   const calls: ParsedGateCall[] = [];
   const ignored: string[] = [];
+  const errors: string[] = [];
   const lines = code.split("\n");
   const escaped = varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const callStart = new RegExp(`${escaped}\\.(\\w+)\\s*\\(`, "g");
@@ -220,7 +225,7 @@ function parseGateCalls(code: string, varName: string): { calls: ParsedGateCall[
       const openIdx = match.index + match[0].length - 1;
       const extracted = extractParenContents(line, openIdx);
       if (!extracted) {
-        ignored.push(`Line ${lineIdx + 1}: unclosed call ${varName}.${gate}(...`);
+        errors.push(`Line ${lineIdx + 1}: unclosed call ${varName}.${gate}(...`);
         break;
       }
       calls.push({
@@ -240,7 +245,7 @@ function parseGateCalls(code: string, varName: string): { calls: ParsedGateCall[
     }
   }
 
-  return { calls, ignored };
+  return { calls, ignored, errors };
 }
 
 function evaluateParam(
@@ -257,10 +262,9 @@ function evaluateParam(
     if (Number.isFinite(asFloat)) {
       return { value: asFloat, display: formatParam(asFloat) };
     }
-    // Symbolic (theta, …) — keep display text; sim uses 0 until symbols are supported
-    const msg = `symbolic parameter "${display}" is shown as-is but simulated as 0`;
+    const msg = `unbound parameter "${display}" — bind a value before simulating`;
     warnings?.push(line != null ? `Line ${line}: ${msg}` : msg);
-    return { value: 0, display };
+    return { value: 0, display, symbol: display };
   }
 }
 
@@ -541,8 +545,11 @@ export function parseQiskitCode(code: string, name = "Imported Circuit"): Qiskit
       return { success: false, error: "QuantumCircuit must have at least 1 qubit" };
     }
 
-    const { calls, ignored } = parseGateCalls(cleaned, varName);
+    const { calls, ignored, errors } = parseGateCalls(cleaned, varName);
     warnings.push(...ignored);
+    if (errors.length > 0) {
+      return { success: false, error: errors[0], warnings };
+    }
 
     const operations: Operation[] = [];
     let column = 0;

@@ -113,7 +113,11 @@ export default function LearnPage() {
         )}
 
         <Reveal className="mb-6">
-          <ContinueWhereYouLeftOff showProject={false} showLesson={false} />
+          <ContinueWhereYouLeftOff
+            showProject={false}
+            showLesson={false}
+            showChallenge={false}
+          />
         </Reveal>
 
         {beginnerChallenge && (
@@ -124,8 +128,10 @@ export default function LearnPage() {
               description={beginnerChallenge.description}
               href={`/challenges/${beginnerChallenge.id}`}
               ctaLabel="Start Challenge"
-              secondaryHref="/achievements"
-              secondaryLabel="View Achievements"
+              secondaryActions={[
+                { href: "/challenges", label: "All Challenges" },
+                { href: "/achievements", label: "View Achievements" },
+              ]}
             />
           </Reveal>
         )}

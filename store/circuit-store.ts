@@ -14,6 +14,7 @@ import { prepareCircuit, prepareHistory } from "@/lib/circuit-guard";
 import { runAppStorageMigrations } from "@/lib/app-storage";
 import { validateCircuit, validateCircuitPlacement } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
+import { retargetOperation } from "@/lib/circuit-edit";
 import { useProgressStore } from "@/store/progress-store";
 import {
   asNumber,
@@ -72,16 +73,25 @@ interface CircuitState {
   removeClassicalBit: (bitId: string) => void;
   setRegisterCounts: (qubits: number, classicalBits: number) => void;
 
-  addOperation: (operation: Omit<Operation, "id">) => void;
+  addOperation: (operation: Omit<Operation, "id">) => string;
   /** Add measure and auto-create c[0] in a single undo step when needed. */
   addMeasureOperation: (
     qubitId: string,
     column: number,
     classicalBitId?: string
-  ) => void;
+  ) => string;
   updateOperation: (id: string, updates: Partial<Operation>) => void;
   removeOperation: (id: string) => void;
   moveOperation: (id: string, column: number) => void;
+  relocateOperation: (
+    id: string,
+    column: number,
+    qubitIndex?: number
+  ) => void;
+  duplicateOperation: (id: string) => void;
+  clearCircuit: () => void;
+  loadSampleCircuit: (sample: Circuit) => void;
+  refreshValidation: () => void;
   copyOperation: (id: string) => void;
   pasteOperation: (column: number, qubitIndex: number) => void;
   alignOperationsLeft: () => void;
@@ -427,17 +437,19 @@ export const useCircuitStore = create<CircuitState>()(
       },
 
       addOperation: (operation) => {
+        const op: Operation = { ...operation, id: generateOperationId() };
         set((state) => {
-          const op: Operation = { ...operation, id: generateOperationId() };
           const circuit: Circuit = {
             ...state.circuit,
             operations: [...state.circuit.operations, op],
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
+        return op.id;
       },
 
       addMeasureOperation: (qubitId, column, classicalBitId) => {
+        const opId = generateOperationId();
         set((state) => {
           let classicalBits = state.circuit.classicalBits;
           let resolvedClassical = classicalBitId;
@@ -463,7 +475,7 @@ export const useCircuitStore = create<CircuitState>()(
               column,
               [resolvedClassical]
             ),
-            id: generateOperationId(),
+            id: opId,
           };
 
           const circuit: Circuit = {
@@ -477,6 +489,7 @@ export const useCircuitStore = create<CircuitState>()(
             ...pushHistory({ ...state, circuit }),
           };
         });
+        return opId;
       },
 
       updateOperation: (id, updates) => {
@@ -515,6 +528,71 @@ export const useCircuitStore = create<CircuitState>()(
             ),
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
+        });
+      },
+
+      relocateOperation: (id, column, qubitIndex) => {
+        set((state) => {
+          const op = state.circuit.operations.find((o) => o.id === id);
+          if (!op) return state;
+          const updated = retargetOperation(
+            op,
+            column,
+            qubitIndex,
+            state.circuit.qubits.length,
+            state.circuit.classicalBits.length
+          );
+          const circuit: Circuit = {
+            ...state.circuit,
+            operations: state.circuit.operations.map((o) =>
+              o.id === id ? updated : o
+            ),
+          };
+          return { circuit, ...pushHistory({ ...state, circuit }) };
+        });
+      },
+
+      duplicateOperation: (id) => {
+        const op = get().circuit.operations.find((o) => o.id === id);
+        if (!op) return;
+        const maxCol = Math.max(
+          0,
+          ...get().circuit.operations.map((o) => o.column)
+        );
+        const { id: _omit, ...rest } = op;
+        get().addOperation({ ...rest, column: maxCol + 1 });
+      },
+
+      clearCircuit: () => {
+        set((state) => {
+          const circuit: Circuit = {
+            ...state.circuit,
+            operations: [],
+          };
+          return {
+            circuit,
+            selectedOperationId: null,
+            ...pushHistory({ ...state, circuit }),
+          };
+        });
+      },
+
+      loadSampleCircuit: (sample) => {
+        set((state) => {
+          const circuit = prepareCircuit(structuredClone(sample));
+          return {
+            circuit,
+            currentProjectId: null,
+            selectedOperationId: null,
+            ...pushHistory({ ...state, circuit }),
+          };
+        });
+      },
+
+      refreshValidation: () => {
+        const circuit = get().circuit;
+        set({
+          validationWarnings: validateCircuitPlacement(circuit),
         });
       },
 
@@ -660,10 +738,21 @@ export const useCircuitStore = create<CircuitState>()(
 
       renameProject: (id, name) => {
         const projects = get().projects.map((p) =>
-          p.id === id ? { ...p, name, updatedAt: new Date().toISOString() } : p
+          p.id === id
+            ? {
+                ...p,
+                name,
+                circuit: { ...p.circuit, name },
+                updatedAt: new Date().toISOString(),
+              }
+            : p
         );
         saveProjectsToStorage(projects);
-        set({ projects });
+        if (get().currentProjectId === id) {
+          set({ projects, circuit: { ...get().circuit, name } });
+        } else {
+          set({ projects });
+        }
       },
 
       duplicateProject: (id) => {
@@ -716,6 +805,7 @@ export const useCircuitStore = create<CircuitState>()(
             Math.max(0, historyIndex),
             Math.max(0, history.length - 1)
           ),
+          validationWarnings: validateCircuitPlacement(circuit),
         };
       },
       partialize: (state) => {
