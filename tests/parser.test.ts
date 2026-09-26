@@ -10,6 +10,7 @@ import {
 import {
   evalExpr,
   formatParam,
+  isSymbolicExpression,
   parseParamExpression,
   tokenize,
 } from "@/lib/translator-core";
@@ -86,7 +87,32 @@ qc.rz(pi/2, 0)
     if (!result.success) return;
     expect(result.circuit.operations[0].parameters?.[0].value).toBeCloseTo(1.57);
     expect(result.circuit.operations[1].parameters?.[0].display).toBe("theta");
+    expect(result.circuit.operations[1].parameters?.[0].symbol).toBe("theta");
     expect(result.circuit.operations[2].parameters?.[0].display).toBe("pi/2");
+  });
+
+  it("rejects malformed parameter expressions", () => {
+    const result = parseQiskitCode(`from qiskit import QuantumCircuit
+qc = QuantumCircuit(1)
+qc.rx(pi/, 0)
+`);
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error).toMatch(/Line 3: invalid parameter expression "pi\/"/);
+  });
+
+  it("preserves symbolic parameter expressions", () => {
+    const result = parseQiskitCode(`from qiskit import QuantumCircuit
+qc = QuantumCircuit(1)
+qc.rx(theta, 0)
+qc.ry(2*theta + pi/2, 0)
+`);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.circuit.operations[0].parameters?.[0].symbol).toBe("theta");
+    expect(result.circuit.operations[1].parameters?.[0].symbol).toBe(
+      "2*theta + pi/2"
+    );
   });
 
   it("parses nested param expressions", () => {
@@ -434,5 +460,14 @@ describe("Translator Core", () => {
 
   it("throws on unterminated string instead of hanging", () => {
     expect(() => tokenize('include "qelib1.inc')).toThrow(/Unterminated string/);
+  });
+
+  it("recognizes valid symbolic expression shapes", () => {
+    expect(isSymbolicExpression("theta")).toBe(true);
+    expect(isSymbolicExpression("2*theta + pi/2")).toBe(true);
+    expect(isSymbolicExpression("sin(theta)")).toBe(true);
+    expect(isSymbolicExpression("pi/")).toBe(false);
+    expect(isSymbolicExpression("theta + * 2")).toBe(false);
+    expect(isSymbolicExpression("unknown(theta)")).toBe(false);
   });
 });

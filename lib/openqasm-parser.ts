@@ -10,6 +10,7 @@ import {
 import {
   GATE_LIBRARY,
   Token,
+  isSymbolicExpression,
   tokenize,
   evalExpr,
 } from "./translator-core";
@@ -330,6 +331,9 @@ class Qasm2Parser {
       const value = evalExpr(slice);
       return { value, display };
     } catch {
+      if (!isSymbolicExpression(display)) {
+        throw new SyntaxError(`invalid parameter expression "${display}"`);
+      }
       this.warnings.push(`unbound parameter "${display}" — bind a value before simulating`);
       return { value: 0, display, symbol: display };
     }

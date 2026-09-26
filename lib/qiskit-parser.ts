@@ -14,6 +14,7 @@ import {
 import {
   GATE_LIBRARY,
   formatParam,
+  isSymbolicExpression,
   parseParamExpression,
 } from "./translator-core";
 
@@ -261,6 +262,9 @@ function evaluateParam(
     const asFloat = Number(display);
     if (Number.isFinite(asFloat)) {
       return { value: asFloat, display: formatParam(asFloat) };
+    }
+    if (!isSymbolicExpression(display)) {
+      throw new SyntaxError(`invalid parameter expression "${display}"`);
     }
     const msg = `unbound parameter "${display}" — bind a value before simulating`;
     warnings?.push(line != null ? `Line ${line}: ${msg}` : msg);

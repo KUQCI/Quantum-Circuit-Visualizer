@@ -27,4 +27,26 @@ describe("OpenQASM parser", () => {
     if (!reparsed.success) return;
     expect(reparsed.circuit.operations.map((o) => o.type)).toEqual(["h", "cx"]);
   });
+
+  it("rejects malformed parameter expressions", () => {
+    const result = parseOpenQasm(`OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[1];
+rx(pi/) q[0];
+`);
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error).toContain('invalid parameter expression "pi/"');
+  });
+
+  it("preserves symbolic parameter expressions", () => {
+    const result = parseOpenQasm(`OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[1];
+rx(theta) q[0];
+`);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.circuit.operations[0].parameters?.[0].symbol).toBe("theta");
+  });
 });
