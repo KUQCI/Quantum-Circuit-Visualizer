@@ -9,7 +9,7 @@ type PersistApi = {
 
 /** True after a Zustand persist store has rehydrated from localStorage. */
 export function usePersistHydrated(persist: PersistApi): boolean {
-  const [hydrated, setHydrated] = useState(() => persist.hasHydrated());
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     if (persist.hasHydrated()) {
