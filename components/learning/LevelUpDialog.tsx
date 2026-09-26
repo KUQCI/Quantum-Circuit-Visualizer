@@ -40,7 +40,13 @@ export function LevelUpDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) continueLearning();
+        else setOpen(true);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Level up!</DialogTitle>
