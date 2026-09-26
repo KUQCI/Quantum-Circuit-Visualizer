@@ -27,7 +27,7 @@ describe("circuit-edit", () => {
 
   it("retargetOperation moves single-qubit gate to new qubit", () => {
     const op = baseOp({ type: "x", targets: ["q0"], column: 2 });
-    const next = retargetOperation(op, 3, 1, 3, 0);
+    const next = retargetOperation(op, 3, 1, 3);
     expect(next.column).toBe(3);
     expect(next.targets).toEqual(["q1"]);
   });
@@ -38,7 +38,7 @@ describe("circuit-edit", () => {
       targets: ["q0"],
       classicalTargets: ["c0"],
     });
-    const next = retargetOperation(op, 1, 1, 2, 2);
+    const next = retargetOperation(op, 1, 1, 2);
     expect(next.targets).toEqual(["q1"]);
     expect(next.classicalTargets).toEqual(["c0"]);
   });
@@ -49,7 +49,7 @@ describe("circuit-edit", () => {
       targets: ["q1"],
       classicalTargets: ["c0"],
     });
-    const next = retargetOperation(op, 2, 0, 2, 2);
+    const next = retargetOperation(op, 2, 0, 2);
     expect(next.targets).toEqual(["q0"]);
     expect(next.classicalTargets).toEqual(["c0"]);
   });
@@ -61,7 +61,7 @@ describe("circuit-edit", () => {
       targets: ["q1"],
       column: 0,
     });
-    const next = retargetOperation(op, 2, 1, 4, 0);
+    const next = retargetOperation(op, 2, 1, 4);
     expect(next.controls).toEqual(["q1"]);
     expect(next.targets).toEqual(["q2"]);
     expect(next.column).toBe(2);
@@ -73,7 +73,7 @@ describe("circuit-edit", () => {
       controls: ["q0", "q1"],
       targets: ["q2"],
     });
-    const next = retargetOperation(op, 1, 1, 4, 0);
+    const next = retargetOperation(op, 1, 1, 4);
     expect(next.controls).toEqual(["q1", "q2"]);
     expect(next.targets).toEqual(["q3"]);
   });
@@ -84,7 +84,7 @@ describe("circuit-edit", () => {
       controls: ["q0"],
       targets: ["q1", "q2"],
     });
-    const next = retargetOperation(op, 1, 1, 4, 0);
+    const next = retargetOperation(op, 1, 1, 4);
     expect(next.controls).toEqual(["q1"]);
     expect(next.targets).toEqual(["q2", "q3"]);
   });
@@ -94,7 +94,7 @@ describe("circuit-edit", () => {
       type: "rzz",
       targets: ["q0", "q1"],
     });
-    const next = retargetOperation(op, 1, 2, 3, 0);
+    const next = retargetOperation(op, 1, 2, 3);
     expect(next.targets).toEqual(["q1", "q2"]);
   });
 
@@ -104,7 +104,7 @@ describe("circuit-edit", () => {
       controls: ["q0", "q1"],
       targets: ["q2"],
     });
-    const next = retargetOperation(op, 4, 0, 2, 0);
+    const next = retargetOperation(op, 4, 0, 2);
     expect(next.column).toBe(4);
     expect(next.controls).toEqual(op.controls);
     expect(next.targets).toEqual(op.targets);

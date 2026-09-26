@@ -20,8 +20,7 @@ export function retargetOperation(
   op: Operation,
   column: number,
   qubitIndex: number | undefined,
-  numQubits: number,
-  numClassical: number
+  numQubits: number
 ): Operation {
   const next: Operation = { ...op, column: Math.max(0, column) };
 

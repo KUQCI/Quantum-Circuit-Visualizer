@@ -539,8 +539,7 @@ export const useCircuitStore = create<CircuitState>()(
             op,
             column,
             qubitIndex,
-            state.circuit.qubits.length,
-            state.circuit.classicalBits.length
+            state.circuit.qubits.length
           );
           const circuit: Circuit = {
             ...state.circuit,
