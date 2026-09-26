@@ -130,6 +130,28 @@ export function runCircuitShots(
     };
   }
 
+  const symbols = [
+    ...new Set(
+      circuit.operations.flatMap(
+        (op) =>
+          op.parameters?.flatMap((parameter) =>
+            parameter.symbol ? [parameter.symbol] : []
+          ) ?? []
+      )
+    ),
+  ];
+  if (symbols.length > 0) {
+    return {
+      backendId,
+      shots,
+      counts: {},
+      histogram: [],
+      registerLabel: "—",
+      executionTimeMs: performance.now() - start,
+      error: `Unbound parameter ${symbols.join(", ")} — bind a value before simulating`,
+    };
+  }
+
   const counts: Record<string, number> = {};
 
   for (let i = 0; i < shots; i++) {
@@ -172,4 +194,3 @@ export function runCircuitShots(
     error: null,
   };
 }
-

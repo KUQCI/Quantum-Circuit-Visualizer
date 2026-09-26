@@ -257,10 +257,9 @@ function evaluateParam(
     if (Number.isFinite(asFloat)) {
       return { value: asFloat, display: formatParam(asFloat) };
     }
-    // Symbolic (theta, …) — keep display text; sim uses 0 until symbols are supported
-    const msg = `symbolic parameter "${display}" is shown as-is but simulated as 0`;
+    const msg = `unbound parameter "${display}" — bind a value before simulating`;
     warnings?.push(line != null ? `Line ${line}: ${msg}` : msg);
-    return { value: 0, display };
+    return { value: 0, display, symbol: display };
   }
 }
 

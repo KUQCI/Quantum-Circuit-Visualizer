@@ -320,9 +320,12 @@ qc.barrier()
       "swap",
       "barrier",
     ]);
-    expect(parsed.warnings.some((w) => /symbolic parameter "theta"/i.test(w))).toBe(
-      true
-    );
+    expect(
+      parsed.warnings.some(
+        (w) =>
+          /unbound parameter "theta" — bind a value before simulating/i.test(w)
+      )
+    ).toBe(true);
     const ry = parsed.circuit.operations.find((o) => o.type === "ry");
     expect(ry?.parameters?.[0]?.display).toBe("theta");
   });

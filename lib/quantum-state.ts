@@ -734,6 +734,27 @@ function simulateCircuitInternal(circuit: Circuit): QuantumStateResult {
     };
   }
 
+  const symbols = [
+    ...new Set(
+      circuit.operations.flatMap(
+        (op) =>
+          op.parameters?.flatMap((parameter) =>
+            parameter.symbol ? [parameter.symbol] : []
+          ) ?? []
+      )
+    ),
+  ];
+  if (symbols.length > 0) {
+    return {
+      numQubits,
+      amplitudes: [],
+      probabilities: [],
+      qSpherePoints: [],
+      blochVector: null,
+      error: `Unbound parameter ${symbols.join(", ")} — bind a value before simulating`,
+    };
+  }
+
   let state: Complex[] = Array.from({ length: 1 << numQubits }, () => c(0));
   state[0] = c(1);
 
