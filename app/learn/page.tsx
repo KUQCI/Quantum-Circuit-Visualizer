@@ -124,8 +124,10 @@ export default function LearnPage() {
               description={beginnerChallenge.description}
               href={`/challenges/${beginnerChallenge.id}`}
               ctaLabel="Start Challenge"
-              secondaryHref="/achievements"
-              secondaryLabel="View Achievements"
+              secondaryActions={[
+                { href: "/challenges", label: "All Challenges" },
+                { href: "/achievements", label: "View Achievements" },
+              ]}
             />
           </Reveal>
         )}
