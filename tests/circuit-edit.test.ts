@@ -40,7 +40,18 @@ describe("circuit-edit", () => {
     });
     const next = retargetOperation(op, 1, 1, 2, 2);
     expect(next.targets).toEqual(["q1"]);
-    expect(next.classicalTargets).toEqual(["c1"]);
+    expect(next.classicalTargets).toEqual(["c0"]);
+  });
+
+  it("retargetOperation preserves a measurement classical target in either direction", () => {
+    const op = baseOp({
+      type: "measure",
+      targets: ["q1"],
+      classicalTargets: ["c0"],
+    });
+    const next = retargetOperation(op, 2, 0, 2, 2);
+    expect(next.targets).toEqual(["q0"]);
+    expect(next.classicalTargets).toEqual(["c0"]);
   });
 
   it("retargetOperation preserves control/target offset for CX", () => {

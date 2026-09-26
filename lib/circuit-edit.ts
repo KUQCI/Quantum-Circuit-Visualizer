@@ -4,10 +4,6 @@ function qIndex(id: string): number {
   return parseInt(id.replace("q", ""), 10);
 }
 
-function cIndex(id: string): number {
-  return parseInt(id.replace("c", ""), 10);
-}
-
 /** Gates that can be moved to another qubit wire by drag. */
 export function canRetargetOnWire(op: Operation): boolean {
   if (op.type === "barrier") return false;
@@ -32,12 +28,10 @@ export function retargetOperation(
   if (qubitIndex === undefined) return next;
 
   if (op.type === "measure") {
-    const cIdx =
-      numClassical === 0 ? 0 : Math.min(qubitIndex, numClassical - 1);
     return {
       ...next,
       targets: [`q${qubitIndex}`],
-      classicalTargets: numClassical > 0 ? [`c${cIdx}`] : [],
+      classicalTargets: op.classicalTargets,
     };
   }
 
