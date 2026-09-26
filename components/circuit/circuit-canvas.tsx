@@ -223,7 +223,7 @@ function GateBlock({
     <div
       className={cn(
         "absolute flex items-center justify-center",
-        isPaletteDragging || isInspectLocked
+        isPaletteDragging
           ? "pointer-events-none"
           : "cursor-pointer"
       )}
