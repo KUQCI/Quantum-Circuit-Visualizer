@@ -136,6 +136,29 @@ export default function LearnPage() {
           </Reveal>
         )}
 
+        <Reveal as="section" className="mb-8">
+          <p className="qci-section-eyebrow">Build mode practice</p>
+          <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
+            Guided walkthroughs
+          </h2>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <NextStepCard
+              badge="Walkthrough 1"
+              title="Bell-state entanglement"
+              description="Step through H and CX to see how entanglement appears in the state."
+              href="/editor?walkthrough=bell"
+              ctaLabel="Open walkthrough"
+            />
+            <NextStepCard
+              badge="Walkthrough 2"
+              title="Why phase matters"
+              description="Use HZH to see a phase change become visible through interference."
+              href="/editor?walkthrough=hzh"
+              ctaLabel="Open walkthrough"
+            />
+          </div>
+        </Reveal>
+
         <Reveal className="mb-8">
           <QuantaMessage
             title="Quanta"

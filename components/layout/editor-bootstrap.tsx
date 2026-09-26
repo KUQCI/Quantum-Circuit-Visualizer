@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCircuitStore } from "@/store/circuit-store";
+import { useEditorUiStore } from "@/store/editor-ui-store";
+import { getWalkthrough } from "@/lib/learning/walkthroughs";
 import { AlertTriangle } from "lucide-react";
 
 /** Handles ?project=id query param and viewport-aware default panel state. */
@@ -10,6 +12,12 @@ export function EditorBootstrap() {
   const searchParams = useSearchParams();
   const openProject = useCircuitStore((s) => s.openProject);
   const loadProjects = useCircuitStore((s) => s.loadProjects);
+  const loadSampleCircuit = useCircuitStore((s) => s.loadSampleCircuit);
+  const setInspectMode = useEditorUiStore((s) => s.setInspectMode);
+  const setInspectStep = useEditorUiStore((s) => s.setInspectStep);
+  const setActiveWalkthroughId = useEditorUiStore(
+    (s) => s.setActiveWalkthroughId
+  );
   const [projectLoadError, setProjectLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,6 +48,34 @@ export function EditorBootstrap() {
 
     return useCircuitStore.persist.onFinishHydration(tryOpen);
   }, [searchParams, openProject, loadProjects]);
+
+  useEffect(() => {
+    const walkthroughId = searchParams.get("walkthrough");
+    const walkthrough = getWalkthrough(walkthroughId);
+    if (!walkthrough) {
+      setActiveWalkthroughId(null);
+      return;
+    }
+
+    const start = () => {
+      loadSampleCircuit(walkthrough.circuit);
+      setActiveWalkthroughId(walkthrough.id);
+      setInspectMode(true);
+      setInspectStep(0);
+    };
+
+    if (useCircuitStore.persist.hasHydrated()) {
+      start();
+      return;
+    }
+    return useCircuitStore.persist.onFinishHydration(start);
+  }, [
+    searchParams,
+    loadSampleCircuit,
+    setActiveWalkthroughId,
+    setInspectMode,
+    setInspectStep,
+  ]);
 
   // Sanitize leftover lesson/challenge titles when opening free Build mode
   useEffect(() => {
