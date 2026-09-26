@@ -16,7 +16,7 @@ describe("navigation flow", () => {
 
   it("skips completed lessons", () => {
     const next = getNextLesson(["what-is-a-qubit"]);
-    expect(next?.id).toBe("add-first-gate");
+    expect(next?.id).toBe("bits-vs-qubits");
   });
 
   it("returns next challenge when tier unlocked", () => {

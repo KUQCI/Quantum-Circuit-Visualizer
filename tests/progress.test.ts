@@ -73,6 +73,11 @@ describe("academy progress", () => {
     expect(useProgressStore.getState().lastCelebratedLevel).toBe(2);
   });
 
+  it("starts a streak when the first lesson is completed", () => {
+    useProgressStore.getState().completeLesson("what-is-a-qubit", 25);
+    expect(useProgressStore.getState().currentStreak).toBe(1);
+  });
+
   it("rehydrates the original fields from a v0-shaped persisted blob", async () => {
     const values = new Map<string, string>();
     const storage = {

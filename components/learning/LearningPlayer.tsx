@@ -110,6 +110,9 @@ export function LearningPlayer({
   const [quizIndex, setQuizIndex] = useState(0);
   const [quizWrongAttempts, setQuizWrongAttempts] = useState(0);
   const [quizFirstTry, setQuizFirstTry] = useState(true);
+  const [maxStageReached, setMaxStageReached] = useState(
+    mode === "lesson" ? (isComplete ? 3 : 0) : 2
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -127,6 +130,8 @@ export function LearningPlayer({
     setQuizIndex(0);
     setQuizWrongAttempts(0);
     setQuizFirstTry(true);
+    setMaxStageReached(mode === "lesson" ? (isComplete ? 3 : 0) : 2);
+    setQuantaFeedback("");
     useEditorUiStore.getState().setInspectMode(false);
 
     const reloadStarter = () => {
@@ -151,6 +156,12 @@ export function LearningPlayer({
     mode,
     isComplete,
   ]);
+
+  useEffect(() => {
+    const currentStageIndex = (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage);
+    setMaxStageReached((value) => Math.max(value, currentStageIndex));
+    setQuantaFeedback("");
+  }, [stage]);
 
   useEffect(() => {
     if (circuit.operations.length > 0) {
@@ -192,20 +203,30 @@ export function LearningPlayer({
           setQuizChoice(null);
           setQuizChecked(false);
           setQuizWrongAttempts(0);
+          setFeedbackStatus("idle");
+          setFeedbackMessage("");
+          setQuantaFeedback("");
           return;
         }
         recordQuizResult(activity.id, quizFirstTry);
-        setQuantaFeedback(question.explanation);
-        setFeedbackStatus("success");
-        setFeedbackMessage("Quiz complete!");
+        setFeedbackStatus("idle");
+        setFeedbackMessage("");
+        setQuantaFeedback("");
         setStage("build");
         return;
       }
       setQuizChecked(true);
       if (!correct) {
         setQuizFirstTry(false);
-        setQuizWrongAttempts((value) => value + 1);
-        setQuantaFeedback(activity.quantaIncorrect);
+        const attempts = quizWrongAttempts + 1;
+        setQuizWrongAttempts(attempts);
+        setFeedbackStatus("error");
+        setFeedbackMessage("Not quite — try again.");
+        setQuantaFeedback(
+          attempts >= 2
+            ? `Here's the explanation: ${question.explanation}`
+            : activity.quantaIncorrect
+        );
         return;
       }
       setQuantaFeedback(question.explanation);
@@ -339,8 +360,13 @@ export function LearningPlayer({
           <div key={item} className="flex items-center gap-1">
             <button
               type="button"
-              disabled={index > (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage)}
-              onClick={() => setStage(item)}
+              disabled={index > maxStageReached}
+              onClick={() => {
+                setStage(item);
+                setFeedbackStatus("idle");
+                setFeedbackMessage("");
+                setQuantaFeedback("");
+              }}
               className={cn(
                 "rounded-full px-2 py-1 text-[10px] font-semibold uppercase",
                 stage === item
@@ -379,10 +405,22 @@ export function LearningPlayer({
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <QuantaMessage
               title="Quanta"
-              message={activity.quantaIntro}
-              variant="default"
+              message={quantaFeedback || activity.quantaIntro}
+              variant={
+                feedbackStatus === "error"
+                  ? "error"
+                  : feedbackStatus === "success"
+                    ? "success"
+                    : "default"
+              }
               size="lg"
-              imageVariant="learning"
+              imageVariant={
+                feedbackStatus === "error"
+                  ? "thinking"
+                  : feedbackStatus === "success"
+                    ? "success"
+                    : "learning"
+              }
             />
             {mode === "lesson" && isLesson(activity) && stage === "learn" ? (
               <LessonSectionCard
@@ -405,6 +443,9 @@ export function LearningPlayer({
                 onChoice={(value) => {
                   setQuizChoice(value);
                   setQuizChecked(false);
+                  setFeedbackStatus("idle");
+                  setFeedbackMessage("");
+                  setQuantaFeedback("");
                 }}
                 onCheck={handleCheck}
               />
@@ -493,7 +534,10 @@ export function LearningPlayer({
 
       {/* Bottom actions */}
       <div className="shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4">
-        {feedbackStatus === "success" && nextHref && (
+        {(mode === "challenge"
+          ? feedbackStatus === "success"
+          : stage === "done") &&
+          nextHref && (
           <NextStepCard
             badge={mode === "lesson" ? "Lesson Complete" : "Challenge Complete"}
             title={mode === "lesson" ? "Ready for the next lesson?" : "Ready for the next challenge?"}
@@ -538,7 +582,10 @@ export function LearningPlayer({
               <Link href={relatedHref}>{relatedLabel}</Link>
             </Button>
           )}
-          {feedbackStatus === "success" && nextHref && (
+          {(mode === "challenge"
+            ? feedbackStatus === "success"
+            : stage === "done") &&
+            nextHref && (
             <Button
               size="default"
               variant="secondary"

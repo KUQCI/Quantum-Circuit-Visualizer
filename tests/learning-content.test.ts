@@ -74,6 +74,20 @@ function includesAction(
 }
 
 describe("academy lesson content", () => {
+  it("uses contiguous order grouped by module", () => {
+    const ordered = [...LESSONS].sort((a, b) => a.order - b.order);
+    expect(ordered.map((lesson) => lesson.order)).toEqual(
+      Array.from({ length: ordered.length }, (_, index) => index + 1)
+    );
+
+    const expectedModuleOrder = MODULE_IDS.flatMap((moduleId) =>
+      LESSONS.filter((lesson) => lesson.module === moduleId)
+        .sort((a, b) => a.order - b.order)
+        .map((lesson) => lesson.id)
+    );
+    expect(ordered.map((lesson) => lesson.id)).toEqual(expectedModuleOrder);
+  });
+
   it("provides complete, valid content for every lesson", () => {
     const ids = new Set<string>();
     for (const lesson of LESSONS) {

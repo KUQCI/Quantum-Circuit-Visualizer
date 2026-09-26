@@ -152,7 +152,10 @@ export const useProgressStore = create<ProgressState>()(
       recordActivity: () => {
         const { lastActiveDate, currentStreak } = get();
         const updated = updateStreak(lastActiveDate, currentStreak);
-        set(updated);
+        set({
+          currentStreak: updated.streak,
+          lastActiveDate: updated.lastActiveDate,
+        });
         checkAchievements(get, set);
       },
 
