@@ -738,10 +738,21 @@ export const useCircuitStore = create<CircuitState>()(
 
       renameProject: (id, name) => {
         const projects = get().projects.map((p) =>
-          p.id === id ? { ...p, name, updatedAt: new Date().toISOString() } : p
+          p.id === id
+            ? {
+                ...p,
+                name,
+                circuit: { ...p.circuit, name },
+                updatedAt: new Date().toISOString(),
+              }
+            : p
         );
         saveProjectsToStorage(projects);
-        set({ projects });
+        if (get().currentProjectId === id) {
+          set({ projects, circuit: { ...get().circuit, name } });
+        } else {
+          set({ projects });
+        }
       },
 
       duplicateProject: (id) => {
