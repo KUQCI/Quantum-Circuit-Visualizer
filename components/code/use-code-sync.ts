@@ -5,6 +5,8 @@ import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { getCodeLanguage } from "@/lib/code-adapters";
 import { validateCircuit } from "@/lib/validation";
+import { decideCodeSync } from "@/lib/code-sync-policy";
+import type { Circuit } from "@/lib/circuit-schema";
 import { debounce } from "@/lib/utils";
 
 export function useCodeSync() {
@@ -13,9 +15,12 @@ export function useCodeSync() {
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
   const [code, setCode] = useState("");
   const [parseError, setParseError] = useState<string | null>(null);
-  const [syncStatus, setSyncStatus] = useState<"synced" | "editing" | "error">(
-    "synced"
-  );
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [pendingCircuit, setPendingCircuit] = useState<Circuit | null>(null);
+  const [exportWarnings, setExportWarnings] = useState<string[]>([]);
+  const [syncStatus, setSyncStatus] = useState<
+    "synced" | "editing" | "error" | "blocked" | "partial"
+  >("synced");
   const parseGenerationRef = useRef(0);
   /** Skip one circuit→code sync after the circuit was updated by parsing editor text */
   const skipNextCircuitToCodeSyncRef = useRef(false);
@@ -28,9 +33,12 @@ export function useCodeSync() {
     if (result.success && result.code) {
       setCode(result.code);
       setParseError(null);
-      setSyncStatus("synced");
+      const nextExportWarnings = result.warnings ?? [];
+      setExportWarnings(nextExportWarnings);
+      setSyncStatus(nextExportWarnings.length > 0 ? "partial" : "synced");
     } else if (!result.success) {
       setParseError(result.error ?? "Generation failed");
+      setExportWarnings([]);
       setSyncStatus("error");
     }
   }, [circuit, adapter]);
@@ -41,6 +49,8 @@ export function useCodeSync() {
 
       if (!adapter.bidirectional) {
         suppressCircuitToCodeSyncRef.current = false;
+        setWarnings([]);
+        setPendingCircuit(null);
         setSyncStatus("synced");
         return;
       }
@@ -50,22 +60,42 @@ export function useCodeSync() {
 
       if (!result.success || !result.circuit) {
         setParseError(result.error ?? "Parse failed");
+        setWarnings(result.warnings ?? []);
+        setPendingCircuit(null);
+        setExportWarnings([]);
         setSyncStatus("error");
         suppressCircuitToCodeSyncRef.current = true;
         return;
       }
-      const validated = validateCircuit(result.circuit);
-      if (!validated.valid) {
-        setParseError(validated.errors.join("; "));
+
+      const decision = decideCodeSync(result, (candidate) => {
+        const validated = validateCircuit(candidate);
+        return validated.valid
+          ? { valid: true, errors: [], circuit: validated.circuit }
+          : { ...validated, circuit: candidate };
+      });
+      if (decision.kind === "error") {
+        setParseError(decision.error);
+        setWarnings(decision.warnings);
+        setPendingCircuit(null);
         setSyncStatus("error");
+        suppressCircuitToCodeSyncRef.current = true;
+        return;
+      }
+
+      setWarnings(decision.warnings);
+      setParseError(null);
+      if (decision.kind === "blocked") {
+        setPendingCircuit(decision.circuit);
+        setSyncStatus("blocked");
         suppressCircuitToCodeSyncRef.current = true;
         return;
       }
 
       skipNextCircuitToCodeSyncRef.current = true;
       suppressCircuitToCodeSyncRef.current = false;
-      setCircuit(validated.circuit);
-      setParseError(null);
+      setPendingCircuit(null);
+      setCircuit(decision.circuit);
       setSyncStatus("synced");
     },
     [adapter, circuit.name, setCircuit]
@@ -106,6 +136,8 @@ export function useCodeSync() {
     parseGenerationRef.current += 1;
     suppressCircuitToCodeSyncRef.current = false;
     skipNextCircuitToCodeSyncRef.current = false;
+    setPendingCircuit(null);
+    setWarnings([]);
     syncCodeFromCircuit();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only on language tab change
   }, [codePanelLanguage]);
@@ -114,6 +146,9 @@ export function useCodeSync() {
     (newCode: string) => {
       suppressCircuitToCodeSyncRef.current = true;
       setCode(newCode);
+      setPendingCircuit(null);
+      setWarnings([]);
+      setExportWarnings([]);
       if (!adapter.bidirectional) {
         suppressCircuitToCodeSyncRef.current = false;
         setSyncStatus("synced");
@@ -132,16 +167,37 @@ export function useCodeSync() {
     parseGenerationRef.current += 1;
     suppressCircuitToCodeSyncRef.current = false;
     skipNextCircuitToCodeSyncRef.current = false;
+    setPendingCircuit(null);
+    setWarnings([]);
     syncCodeFromCircuit();
   }, [syncCodeFromCircuit]);
+
+  const applyPending = useCallback(() => {
+    if (!pendingCircuit) return;
+    skipNextCircuitToCodeSyncRef.current = true;
+    suppressCircuitToCodeSyncRef.current = false;
+    setCircuit(pendingCircuit);
+    setPendingCircuit(null);
+    setParseError(null);
+    setSyncStatus("synced");
+  }, [pendingCircuit, setCircuit]);
+
+  const discardPending = useCallback(() => {
+    forceSyncFromCircuit();
+  }, [forceSyncFromCircuit]);
 
   return {
     code,
     parseError,
+    warnings,
+    pendingCircuit,
+    exportWarnings,
     syncStatus,
     adapter,
     handleCodeChange,
     forceSyncFromCircuit,
+    applyPending,
+    discardPending,
     readOnly: !adapter.bidirectional,
   };
 }
