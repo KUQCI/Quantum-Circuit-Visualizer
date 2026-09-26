@@ -166,7 +166,7 @@ function ResizableVizRow({
     <PanelGroup
       key={`viz-${layoutResetKey}-${activePanels.join("-")}`}
       direction="horizontal"
-      autoSaveId="react-resizable-panels:qci-composer-viz"
+      autoSaveId="qci-composer-viz"
       className="h-full min-h-0 divide-x divide-[var(--color-border)]"
     >
       {activePanels.flatMap((panelId, index) => {

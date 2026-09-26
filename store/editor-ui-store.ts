@@ -13,6 +13,9 @@ export const COMPOSER_LAYOUT_STORAGE_KEYS = [
   "react-resizable-panels:qci-composer-h",
   "react-resizable-panels:qci-composer-v",
   "react-resizable-panels:qci-composer-viz",
+  "react-resizable-panels:react-resizable-panels:qci-composer-h",
+  "react-resizable-panels:react-resizable-panels:qci-composer-v",
+  "react-resizable-panels:react-resizable-panels:qci-composer-viz",
 ] as const;
 
 interface EditorUiState {
@@ -87,9 +90,13 @@ export const useEditorUiStore = create<EditorUiState>()(
       setNarrowActiveTab: (tab) => set({ narrowActiveTab: tab }),
       resetLayout: () => {
         if (typeof window !== "undefined") {
-          for (const key of COMPOSER_LAYOUT_STORAGE_KEYS) {
-            localStorage.removeItem(key);
-          }
+          const clearPanelLayouts = () => {
+            for (const key of COMPOSER_LAYOUT_STORAGE_KEYS) {
+              localStorage.removeItem(key);
+            }
+          };
+          clearPanelLayouts();
+          window.setTimeout(clearPanelLayouts, 500);
         }
         set({
           layoutResetKey: get().layoutResetKey + 1,

@@ -215,7 +215,7 @@ export function ComposerResizableWorkspace({
         <PanelGroup
           key={`composer-h-${layoutResetKey}`}
           direction="horizontal"
-          autoSaveId="react-resizable-panels:qci-composer-h"
+          autoSaveId="qci-composer-h"
           className="min-h-0 flex-1"
         >
         <Panel
@@ -250,7 +250,7 @@ export function ComposerResizableWorkspace({
           <PanelGroup
             key={`composer-v-${layoutResetKey}`}
             direction="vertical"
-            autoSaveId="react-resizable-panels:qci-composer-v"
+            autoSaveId="qci-composer-v"
             className="h-full min-h-0"
           >
             <Panel
