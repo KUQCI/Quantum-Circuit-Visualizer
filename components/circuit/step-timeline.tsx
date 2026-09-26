@@ -85,7 +85,10 @@ export function StepTimeline() {
           aria-label={inspectPlaying ? "Pause playback" : "Play steps"}
           title={inspectPlaying ? "Pause" : "Play"}
           disabled={maxStep === 0}
-          onClick={() => setInspectPlaying(!inspectPlaying)}
+          onClick={() => {
+            if (!inspectPlaying && inspectStep >= maxStep) setInspectStep(0);
+            setInspectPlaying(!inspectPlaying);
+          }}
         >
           {inspectPlaying ? (
             <Pause className="h-3.5 w-3.5" />
