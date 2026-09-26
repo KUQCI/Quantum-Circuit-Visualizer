@@ -14,6 +14,7 @@ import { PageActions } from "@/components/navigation/PageActions";
 import { ArtistAssetPlaceholder } from "@/components/assets/ArtistAssetPlaceholder";
 import { QuantaCard } from "@/components/mascot/QuantaCard";
 import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
+import { QuantaEntrance } from "@/components/mascot/QuantaEntrance";
 import { Reveal } from "@/components/motion/Reveal";
 import { quantaMessages } from "@/lib/mascot/messages";
 import { useCircuitStore } from "@/store/circuit-store";
@@ -59,6 +60,7 @@ export default function HomePage() {
 
   return (
     <div className="page-container max-w-5xl pb-4">
+      <QuantaEntrance />
       {/* Hero */}
       <Reveal variant="fade" className="mb-8">
         <section className="relative overflow-hidden rounded-2xl border border-[var(--color-border)]">
