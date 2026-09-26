@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import {
   Panel,
   PanelGroup,
@@ -25,6 +25,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { NarrowActiveTab } from "@/store/editor-ui-store";
+import type { Circuit } from "@/lib/circuit-schema";
 
 interface ComposerResizableWorkspaceProps {
   draggingGate: string | null;
@@ -33,6 +35,111 @@ interface ComposerResizableWorkspaceProps {
   onDragStart: (gate: string | null) => void;
   onDragEnd: () => void;
   onPlacementComplete: () => void;
+}
+
+const NARROW_TABS: { id: NarrowActiveTab; label: string }[] = [
+  { id: "gates", label: "Gates" },
+  { id: "inspector", label: "Inspector" },
+  { id: "results", label: "Results" },
+  { id: "code", label: "Code" },
+];
+
+function NarrowWorkspace({
+  draggingGate,
+  selectedGate,
+  onGateSelect,
+  onDragStart,
+  onDragEnd,
+  onPlacementComplete,
+  circuit,
+  tier,
+  layoutResetKey,
+}: ComposerResizableWorkspaceProps & {
+  circuit: Circuit;
+  tier: ReturnType<typeof getLayoutTier>;
+  layoutResetKey: number;
+}) {
+  const { narrowActiveTab, setNarrowActiveTab } = useEditorUiStore();
+  const activeIndex = NARROW_TABS.findIndex((tab) => tab.id === narrowActiveTab);
+
+  const selectTab = (id: NarrowActiveTab) => setNarrowActiveTab(id);
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    let nextIndex = activeIndex;
+    if (event.key === "ArrowRight") nextIndex = (activeIndex + 1) % NARROW_TABS.length;
+    else if (event.key === "ArrowLeft") {
+      nextIndex = (activeIndex - 1 + NARROW_TABS.length) % NARROW_TABS.length;
+    } else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = NARROW_TABS.length - 1;
+    else return;
+    event.preventDefault();
+    const next = NARROW_TABS[nextIndex].id;
+    selectTab(next);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-narrow-tab="${next}"]`)?.focus();
+    });
+  };
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="min-h-0 basis-[55%] shrink-0 overflow-hidden bg-[var(--color-canvas)]">
+        <CircuitCanvas
+          draggingGate={draggingGate}
+          onDragEnd={onDragEnd}
+          placementGate={selectedGate}
+          onPlacementComplete={onPlacementComplete}
+        />
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col border-t border-[var(--color-border)]">
+        <div
+          role="tablist"
+          aria-label="Composer panels"
+          className="flex shrink-0 border-b border-[var(--color-border)] bg-[var(--color-toolbar)]"
+        >
+          {NARROW_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={narrowActiveTab === tab.id}
+              tabIndex={narrowActiveTab === tab.id ? 0 : -1}
+              data-narrow-tab={tab.id}
+              className={cn(
+                "flex-1 px-2 py-2 text-xs font-medium",
+                narrowActiveTab === tab.id
+                  ? "border-b-2 border-[var(--color-brand)] text-[var(--color-foreground)]"
+                  : "text-[var(--color-muted-foreground)]"
+              )}
+              onClick={() => selectTab(tab.id)}
+              onKeyDown={handleKeyDown}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto">
+          {narrowActiveTab === "gates" && (
+            <GateLibrary
+              selectedGate={selectedGate}
+              onGateSelect={onGateSelect}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+            />
+          )}
+          {narrowActiveTab === "inspector" && <OperationInspector />}
+          {narrowActiveTab === "results" && (
+            <VisualizationPanels
+              circuit={circuit}
+              useVizTabs
+              layoutTier={tier}
+              resizable={false}
+              layoutResetKey={layoutResetKey}
+            />
+          )}
+          {narrowActiveTab === "code" && <MultiLanguageCodePanel />}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function ComposerResizableWorkspace({
@@ -51,9 +158,6 @@ export function ComposerResizableWorkspace({
     showInspector,
     operationsPanelCollapsed,
     layoutResetKey,
-    setShowCodePanel,
-    setShowVizPanels,
-    setOperationsPanelCollapsed,
   } = useEditorUiStore();
 
   const { ref: workspaceRef, size } = useElementSize<HTMLDivElement>();
@@ -95,12 +199,25 @@ export function ComposerResizableWorkspace({
 
   return (
     <div ref={workspaceRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <PanelGroup
-        key={`composer-h-${layoutResetKey}`}
-        direction="horizontal"
-        autoSaveId="react-resizable-panels:qci-composer-h"
-        className="min-h-0 flex-1"
-      >
+      {tier !== "desktop" ? (
+        <NarrowWorkspace
+          draggingGate={draggingGate}
+          selectedGate={selectedGate}
+          onGateSelect={onGateSelect}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onPlacementComplete={onPlacementComplete}
+          circuit={circuit}
+          tier={tier}
+          layoutResetKey={layoutResetKey}
+        />
+      ) : (
+        <PanelGroup
+          key={`composer-h-${layoutResetKey}`}
+          direction="horizontal"
+          autoSaveId="react-resizable-panels:qci-composer-h"
+          className="min-h-0 flex-1"
+        >
         <Panel
           ref={opsPanelRef}
           id="composer-ops"
@@ -110,17 +227,22 @@ export function ComposerResizableWorkspace({
           maxSize={28}
           collapsible
           collapsedSize={0}
-          onCollapse={() => setOperationsPanelCollapsed(true)}
-          onExpand={() => setOperationsPanelCollapsed(false)}
+          onCollapse={() => {
+            if (useEditorUiStore.getState().operationsPanelCollapsed) return;
+            requestAnimationFrame(() => opsPanelRef.current?.expand());
+          }}
+          onExpand={() =>
+            useEditorUiStore.getState().setOperationsPanelCollapsed(false)
+          }
           className="composer-panel composer-panel-ops min-w-0"
         >
           <GateLibrary
-            selectedGate={selectedGate}
-            onGateSelect={onGateSelect}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-          />
-        </Panel>
+              selectedGate={selectedGate}
+              onGateSelect={onGateSelect}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+            />
+          </Panel>
 
         <PanelResizeHandle className="composer-resize-handle composer-resize-handle--horizontal" />
 
@@ -166,9 +288,11 @@ export function ComposerResizableWorkspace({
                       maxSize={40}
                       collapsible
                       collapsedSize={0}
-                      onCollapse={() =>
-                        useEditorUiStore.getState().setShowInspector(false)
-                      }
+                      onCollapse={() => {
+                        if (useEditorUiStore.getState().showInspector) {
+                          requestAnimationFrame(() => inspectorPanelRef.current?.expand());
+                        }
+                      }}
                       onExpand={() =>
                         useEditorUiStore.getState().setShowInspector(true)
                       }
@@ -191,8 +315,12 @@ export function ComposerResizableWorkspace({
               minSize={16}
               collapsible
               collapsedSize={0}
-              onCollapse={() => setShowVizPanels(false)}
-              onExpand={() => setShowVizPanels(true)}
+              onCollapse={() => {
+                if (useEditorUiStore.getState().showVizPanels) {
+                  requestAnimationFrame(() => vizPanelRef.current?.expand());
+                }
+              }}
+              onExpand={() => useEditorUiStore.getState().setShowVizPanels(true)}
               className="composer-viz-band min-h-0 border-t border-[var(--color-border)]"
             >
               <VisualizationPanels
@@ -217,13 +345,18 @@ export function ComposerResizableWorkspace({
           maxSize={42}
           collapsible
           collapsedSize={0}
-          onCollapse={() => setShowCodePanel(false)}
-          onExpand={() => setShowCodePanel(true)}
+          onCollapse={() => {
+            if (useEditorUiStore.getState().showCodePanel) {
+              requestAnimationFrame(() => codePanelRef.current?.expand());
+            }
+          }}
+          onExpand={() => useEditorUiStore.getState().setShowCodePanel(true)}
           className="composer-panel composer-panel-code min-w-0 border-l border-[var(--color-border)]"
         >
           <MultiLanguageCodePanel />
         </Panel>
-      </PanelGroup>
+        </PanelGroup>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { CODE_LANGUAGES } from "@/lib/code-adapters";
 import { asBoolean, createSafeJsonStorage } from "@/lib/safe-persist";
 
 export type AlignmentMode = "freeform" | "left" | "layers";
+export type NarrowActiveTab = "gates" | "inspector" | "results" | "code";
 
 export const COMPOSER_LAYOUT_STORAGE_KEYS = [
   "react-resizable-panels:qci-composer-h",
@@ -30,6 +31,7 @@ interface EditorUiState {
   inspectMode: boolean;
   inspectStep: number;
   operationsPanelCollapsed: boolean;
+  narrowActiveTab: NarrowActiveTab;
   /** Bumps when layout localStorage is cleared — remounts panel groups */
   layoutResetKey: number;
 
@@ -43,6 +45,7 @@ interface EditorUiState {
   setInspectMode: (on: boolean) => void;
   setInspectStep: (step: number) => void;
   setOperationsPanelCollapsed: (collapsed: boolean) => void;
+  setNarrowActiveTab: (tab: NarrowActiveTab) => void;
   resetLayout: () => void;
 }
 
@@ -64,6 +67,7 @@ export const useEditorUiStore = create<EditorUiState>()(
       inspectMode: false,
       inspectStep: 0,
       operationsPanelCollapsed: false,
+      narrowActiveTab: "gates",
       layoutResetKey: 0,
 
       setAlignmentMode: (mode) => set({ alignmentMode: mode }),
@@ -80,6 +84,7 @@ export const useEditorUiStore = create<EditorUiState>()(
       setInspectStep: (step) => set({ inspectStep: Math.max(0, step) }),
       setOperationsPanelCollapsed: (collapsed) =>
         set({ operationsPanelCollapsed: collapsed }),
+      setNarrowActiveTab: (tab) => set({ narrowActiveTab: tab }),
       resetLayout: () => {
         if (typeof window !== "undefined") {
           for (const key of COMPOSER_LAYOUT_STORAGE_KEYS) {
@@ -89,6 +94,7 @@ export const useEditorUiStore = create<EditorUiState>()(
         set({
           layoutResetKey: get().layoutResetKey + 1,
           operationsPanelCollapsed: false,
+          narrowActiveTab: "gates",
           showCodePanel: true,
           showVizPanels: true,
           showInspector: true,
@@ -113,6 +119,7 @@ export const useEditorUiStore = create<EditorUiState>()(
           | "showPhaseDisks"
           | "showInspector"
           | "operationsPanelCollapsed"
+          | "narrowActiveTab"
           | "vizPanels"
         >
       >(),
@@ -149,6 +156,13 @@ export const useEditorUiStore = create<EditorUiState>()(
             saved.operationsPanelCollapsed,
             current.operationsPanelCollapsed
           ),
+          narrowActiveTab:
+            saved.narrowActiveTab === "gates" ||
+            saved.narrowActiveTab === "inspector" ||
+            saved.narrowActiveTab === "results" ||
+            saved.narrowActiveTab === "code"
+              ? saved.narrowActiveTab
+              : current.narrowActiveTab,
           vizPanels: {
             probabilities: asBoolean(
               saved.vizPanels?.probabilities,
@@ -177,6 +191,7 @@ export const useEditorUiStore = create<EditorUiState>()(
         showPhaseDisks: state.showPhaseDisks,
         showInspector: state.showInspector,
         operationsPanelCollapsed: state.operationsPanelCollapsed,
+        narrowActiveTab: state.narrowActiveTab,
         vizPanels: state.vizPanels,
       }),
     }
