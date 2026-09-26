@@ -2,11 +2,28 @@ import { describe, expect, it } from "vitest";
 import { LESSONS } from "@/lib/learning/lessons";
 import { MODULE_IDS } from "@/lib/learning/progress";
 import { checkCircuit } from "@/lib/learning/checker";
+import { createEmptyCircuit } from "@/lib/circuit-schema";
 import type { CheckCondition } from "@/lib/learning/types";
 
 function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number]["starterCircuit"]) {
-  const next = structuredClone(circuit);
-  let counter = next.operations.length;
+  let qubitCount = circuit.qubits.length;
+  let classicalCount = circuit.classicalBits.length;
+  const inspect = (item: CheckCondition) => {
+    if (item.type === "minQubits") qubitCount = Math.max(qubitCount, item.count);
+    if (item.type === "hasControlledGate") qubitCount = Math.max(qubitCount, 2);
+    if (item.type === "hasMeasurement") classicalCount = Math.max(classicalCount, item.count ?? 1);
+    if (item.type === "operationOrder") {
+      for (const operation of item.operations) {
+        for (const wire of [operation.target, operation.control]) {
+          if (wire?.startsWith("q")) qubitCount = Math.max(qubitCount, Number(wire.slice(1)) + 1);
+        }
+      }
+    }
+    if (item.type === "all" || item.type === "any") item.conditions.forEach(inspect);
+  };
+  inspect(condition);
+  const next = createEmptyCircuit("solution", qubitCount, classicalCount);
+  let counter = 0;
   const add = (type: string, target = "q0", controls: string[] = []) => {
     next.operations.push({
       id: `solution-${counter++}`,
@@ -26,7 +43,9 @@ function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number
     } else if (item.type === "hasControlledGate") {
       add(item.gate ?? "cx", "q1", ["q0"]);
     } else if (item.type === "hasMeasurement") {
-      add("measure", item.qubit ?? "q0");
+      for (let index = 0; index < (item.count ?? 1); index += 1) {
+        add("measure", item.qubit ?? `q${index}`);
+      }
     } else if (item.type === "hasParameterGate") {
       add(item.gate ?? "rx");
     } else if (item.type === "operationOrder") {
@@ -60,9 +79,14 @@ describe("academy lesson content", () => {
     for (const lesson of LESSONS) {
       expect(ids.has(lesson.id)).toBe(false);
       ids.add(lesson.id);
-      expect(lesson.sections.length).toBeGreaterThanOrEqual(2);
-      expect(lesson.quiz.length).toBeGreaterThanOrEqual(1);
+      expect(lesson.sections.length).toBeGreaterThanOrEqual(3);
+      expect(lesson.sections.length).toBeLessThanOrEqual(4);
+      expect(lesson.sections.every((section) => section.quantaNote)).toBe(true);
+      expect(lesson.quiz.length).toBe(2);
+      expect(new Set(lesson.quiz.map((question) => question.answerIndex)).size).toBe(2);
       for (const question of lesson.quiz) {
+        expect(question.options.length).toBeGreaterThanOrEqual(3);
+        expect(question.options.length).toBeLessThanOrEqual(4);
         expect(question.answerIndex).toBeGreaterThanOrEqual(0);
         expect(question.answerIndex).toBeLessThan(question.options.length);
       }
@@ -91,6 +115,17 @@ describe("academy lesson content", () => {
         actionImportDone: includesAction(lesson.successCondition, "actionImport"),
       });
       expect(result.success, `${lesson.id}: ${result.message}`).toBe(true);
+    }
+  });
+
+  it("starts every build lesson below its success condition", () => {
+    for (const lesson of LESSONS) {
+      if (lesson.successCondition.type === "manual") continue;
+      const result = checkCircuit(lesson.starterCircuit, lesson.successCondition, {
+        actionExportDone: false,
+        actionImportDone: false,
+      });
+      expect(result.success, `${lesson.id}: starter already passes`).toBe(false);
     }
   });
 });
