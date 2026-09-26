@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  circuitSignature,
   computeStepSnapshots,
   explainStep,
 } from "@/lib/step-explanations";
 import { getExecutionLayers, getMaxInspectStep } from "@/lib/circuit-layout";
 import { bellStateCircuit, hzhCircuit } from "@/lib/sample-circuits";
+import { WALKTHROUGHS } from "@/lib/learning/walkthroughs";
 import type { Circuit } from "@/lib/circuit-schema";
 
 describe("step explanations", () => {
@@ -92,5 +94,45 @@ describe("step explanations", () => {
     expect(explanation.computed.join(" ")).toContain(
       "Unbound parameter theta"
     );
+  });
+
+  it("invalidates snapshots when operation ids or classical mappings change", () => {
+    const measurement: Circuit = {
+      ...hzhCircuit,
+      classicalBits: [{ id: "c0", label: "c[0]" }],
+      operations: [
+        {
+          ...hzhCircuit.operations[0],
+          id: "measure-a",
+          type: "measure",
+          classicalTargets: ["c0"],
+        },
+      ],
+    };
+    const otherClassicalTarget = {
+      ...measurement,
+      operations: [
+        { ...measurement.operations[0], classicalTargets: [] },
+      ],
+    };
+    const otherId = {
+      ...measurement,
+      operations: [{ ...measurement.operations[0], id: "measure-b" }],
+    };
+    expect(circuitSignature(measurement)).not.toBe(
+      circuitSignature(otherClassicalTarget)
+    );
+    expect(circuitSignature(measurement)).not.toBe(circuitSignature(otherId));
+  });
+
+  it("keeps walkthrough highlights aligned to execution layers", () => {
+    for (const walkthrough of WALKTHROUGHS) {
+      const max = getMaxInspectStep(walkthrough.circuit.operations);
+      for (const step of walkthrough.steps) {
+        if (step.inspectStep !== null) {
+          expect(step.inspectStep).toBeLessThanOrEqual(max);
+        }
+      }
+    }
   });
 });

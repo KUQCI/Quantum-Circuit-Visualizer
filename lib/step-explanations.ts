@@ -134,9 +134,11 @@ export function circuitSignature(circuit: Circuit): string {
   return JSON.stringify({
     qubits: circuit.qubits.map((qubit) => qubit.id),
     operations: circuit.operations.map((op) => ({
+      id: op.id,
       type: op.type,
       controls: op.controls,
       targets: op.targets,
+      classicalTargets: op.classicalTargets,
       parameters: op.parameters,
       column: op.column,
     })),
