@@ -12,7 +12,6 @@ import {
   Token,
   tokenize,
   evalExpr,
-  formatParam,
 } from "./translator-core";
 
 export interface OpenQasmParseResult {
@@ -248,8 +247,8 @@ class Qasm2Parser {
 
     const parameters =
       params.length > 0
-      ? params
-      : undefined;
+        ? params
+        : undefined;
 
     const col = this.column++;
 
@@ -329,7 +328,7 @@ class Qasm2Parser {
     const display = slice.map((token) => token.value).join("").trim();
     try {
       const value = evalExpr(slice);
-      return { value, display: formatParam(value) === display ? formatParam(value) : display };
+      return { value, display };
     } catch {
       this.warnings.push(`unbound parameter "${display}" — bind a value before simulating`);
       return { value: 0, display, symbol: display };
