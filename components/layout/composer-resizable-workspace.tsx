@@ -135,7 +135,14 @@ function NarrowWorkspace({
               layoutResetKey={layoutResetKey}
             />
           )}
-          {narrowActiveTab === "code" && <MultiLanguageCodePanel />}
+          <div
+            className={cn(
+              "min-h-0 flex-1 flex-col",
+              narrowActiveTab === "code" ? "flex" : "hidden"
+            )}
+          >
+            <MultiLanguageCodePanel />
+          </div>
         </div>
       </div>
     </div>
