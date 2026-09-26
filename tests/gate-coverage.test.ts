@@ -3,6 +3,7 @@ import { parseOpenQasm } from "@/lib/openqasm-parser";
 import { simulateCircuit } from "@/lib/quantum-state";
 import { generateCirqCode } from "@/lib/cirq-generator";
 import { generateQiskitCode } from "@/lib/qiskit-generator";
+import { parseQiskitCode } from "@/lib/qiskit-parser";
 import { getCodeLanguage } from "@/lib/code-adapters";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
 import type { Circuit } from "@/lib/circuit-schema";
@@ -120,6 +121,35 @@ describe("Qiskit export", () => {
     expect(result.code).toContain("qc.cp(0.8, 0, 2)");
     expect(result.code).toContain("qc.cu(0.4, 0.5, 0.6, 0, 0, 3)");
     expect(result.code).toContain("qc.cswap(0, 1, 2)");
+  });
+
+  it("round-trips every emitted gate back through the Qiskit parser", () => {
+    const circuit = circuitFromBody(
+      "u1(0.7) q[0];\nu2(0.3,0.9) q[1];\nu3(0.4,0.5,0.6) q[2];\ncy q[0],q[1];\nch q[0],q[2];\ncsx q[0],q[3];\ncrz(0.8) q[0],q[1];\ncu1(0.8) q[0],q[2];\ncu3(0.4,0.5,0.6) q[0],q[3];\ncu(0.4,0.5,0.6,0.2) q[1],q[2];\ncswap q[0],q[1],q[2];\nrc3x q[0],q[1],q[2],q[3];"
+    );
+    const generated = generateQiskitCode(circuit);
+    expect(generated.success).toBe(true);
+    if (!generated.success) return;
+
+    const reparsed = parseQiskitCode(generated.code);
+    expect(reparsed.success).toBe(true);
+    if (!reparsed.success) return;
+    expect(reparsed.warnings ?? []).toEqual([]);
+    expect(reparsed.circuit.operations.length).toBe(circuit.operations.length);
+    expect(reparsed.circuit.operations.map((op) => op.type)).toEqual([
+      "p",
+      "u",
+      "u",
+      "cy",
+      "ch",
+      "csx",
+      "crz",
+      "cu1",
+      "cu",
+      "cu",
+      "cswap",
+      "rc3x",
+    ]);
   });
 
   it("uses the Qiskit method name for the relative-phase CCCX", () => {
