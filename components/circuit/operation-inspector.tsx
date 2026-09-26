@@ -21,8 +21,12 @@ function QubitSelect({
   value: string;
   options: { id: string; label: string }[];
   onChange: (id: string) => void;
-  exclude?: string;
+  exclude?: string | string[];
 }) {
+  const excluded = new Set(
+    Array.isArray(exclude) ? exclude : exclude ? [exclude] : []
+  );
+
   return (
     <div>
       <label className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
@@ -37,7 +41,7 @@ function QubitSelect({
         )}
       >
         {options
-          .filter((q) => q.id !== exclude)
+          .filter((q) => !excluded.has(q.id))
           .map((q) => (
             <option key={q.id} value={q.id}>
               {q.label}
@@ -306,12 +310,31 @@ export function OperationInspector() {
           selected.type !== "swap" &&
           selected.type !== "barrier" &&
           selected.targets.length > 0 && (
-            <QubitSelect
-              label="Target qubit"
-              value={selected.targets[0]}
-              options={circuit.qubits}
-              onChange={(id) => updateOperation(selected.id, { targets: [id] })}
-            />
+            <>
+              {selected.targets.map((target, targetIndex) => (
+                <QubitSelect
+                  key={`target-${targetIndex}`}
+                  label={
+                    selected.targets.length > 1
+                      ? `Target ${targetIndex + 1}`
+                      : "Target qubit"
+                  }
+                  value={target}
+                  options={circuit.qubits}
+                  exclude={[
+                    ...selected.controls,
+                    ...selected.targets.filter((_, index) => index !== targetIndex),
+                  ]}
+                  onChange={(id) =>
+                    updateOperation(selected.id, {
+                      targets: selected.targets.map((current, index) =>
+                        index === targetIndex ? id : current
+                      ),
+                    })
+                  }
+                />
+              ))}
+            </>
           )}
 
         {["rx", "ry", "rz"].includes(selected.type) && (
