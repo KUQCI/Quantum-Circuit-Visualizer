@@ -11,17 +11,23 @@ interface ContinueWhereYouLeftOffProps {
   className?: string;
   showProject?: boolean;
   showLesson?: boolean;
+  showChallenge?: boolean;
 }
 
 export function ContinueWhereYouLeftOff({
   className,
   showProject = true,
   showLesson = true,
+  showChallenge = true,
 }: ContinueWhereYouLeftOffProps) {
   return (
     <div className={className}>
       <ProgressHydrationGate>
-        <ContinueWhereYouLeftOffContent showProject={showProject} showLesson={showLesson} />
+        <ContinueWhereYouLeftOffContent
+          showProject={showProject}
+          showLesson={showLesson}
+          showChallenge={showChallenge}
+        />
       </ProgressHydrationGate>
     </div>
   );
@@ -30,7 +36,11 @@ export function ContinueWhereYouLeftOff({
 function ContinueWhereYouLeftOffContent({
   showProject = true,
   showLesson = true,
-}: Pick<ContinueWhereYouLeftOffProps, "showProject" | "showLesson">) {
+  showChallenge = true,
+}: Pick<
+  ContinueWhereYouLeftOffProps,
+  "showProject" | "showLesson" | "showChallenge"
+>) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
   const { projects, currentProjectId, loadProjects } = useCircuitStore();
@@ -80,7 +90,7 @@ function ContinueWhereYouLeftOffContent({
     });
   }
 
-  if (cards.length === 0 && targets.challenge) {
+  if (showChallenge && cards.length === 0 && targets.challenge) {
     cards.push({
       badge: "Recommended Challenge",
       title: targets.challenge.title,
@@ -90,6 +100,10 @@ function ContinueWhereYouLeftOffContent({
       secondaryHref: "/challenges",
       secondaryLabel: "All Challenges",
     });
+  }
+
+  if (!showProject && !showLesson && !showChallenge && cards.length === 0) {
+    return null;
   }
 
   if (cards.length === 0) {

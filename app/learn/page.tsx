@@ -113,7 +113,11 @@ export default function LearnPage() {
         )}
 
         <Reveal className="mb-6">
-          <ContinueWhereYouLeftOff showProject={false} showLesson={false} />
+          <ContinueWhereYouLeftOff
+            showProject={false}
+            showLesson={false}
+            showChallenge={false}
+          />
         </Reveal>
 
         {beginnerChallenge && (
