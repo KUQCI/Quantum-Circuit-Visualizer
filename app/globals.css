@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+html[data-quanta-cursor="on"] body {
+  cursor: var(--quanta-cursor);
+}
+
+html[data-quanta-cursor="on"]
+  :is(a, button, [role="button"], label[for], summary, select):not(:disabled) {
+  cursor: var(--quanta-cursor-pointer);
+}
+
+html[data-quanta-cursor="on"] :is(input, textarea, .monaco-editor, .composer-resize-handle) {
+  cursor: revert;
+}
+
 @theme {
   --radius: 1rem;
   --font-sans: "Space Grotesk", "Segoe UI", system-ui, sans-serif;

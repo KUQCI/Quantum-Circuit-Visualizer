@@ -33,6 +33,7 @@ import {
   Palette,
   ExternalLink,
   Bug,
+  Mouse,
 } from "lucide-react";
 
 const primaryNav = [
@@ -59,7 +60,7 @@ const secondaryNav = [
  */
 export function AppHeader() {
   const pathname = usePathname();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme, quantaCursor, setQuantaCursor } = useThemeStore();
 
   return (
     <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
@@ -169,6 +170,13 @@ export function AppHeader() {
                   </>
                 )}
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setQuantaCursor(!quantaCursor)}
+                aria-checked={quantaCursor}
+              >
+                <Mouse className="h-4 w-4" aria-hidden />
+                Quanta cursor {quantaCursor ? "on" : "off"}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -224,6 +232,13 @@ export function AppHeader() {
                     Dark theme
                   </>
                 )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setQuantaCursor(!quantaCursor)}
+                aria-checked={quantaCursor}
+              >
+                <Mouse className="h-4 w-4" aria-hidden />
+                Quanta cursor {quantaCursor ? "on" : "off"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

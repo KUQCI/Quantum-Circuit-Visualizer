@@ -17,6 +17,7 @@ import {
   getNextLesson,
 } from "@/lib/navigation/flow";
 import { useProgressStore } from "@/store/progress-store";
+import { DAILY_GOAL_XP, getLevelTitle, levelQuantaVariant } from "@/lib/learning/progress";
 import { PenLine, Swords, BarChart3, Award } from "lucide-react";
 
 export default function LearnPage() {
@@ -26,6 +27,7 @@ export default function LearnPage() {
   const totalXp = useProgressStore((s) => s.totalXp);
   const getLevel = useProgressStore((s) => s.getLevel);
   const streak = useProgressStore((s) => s.currentStreak);
+  const dailyXp = useProgressStore((s) => s.dailyXp);
 
   useEffect(() => {
     recordActivity();
@@ -42,6 +44,9 @@ export default function LearnPage() {
     completedLessons.length,
     streak
   );
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayXp = dailyXp[todayKey] ?? 0;
 
   return (
     <div className="page-container max-w-5xl">
@@ -49,11 +54,22 @@ export default function LearnPage() {
         <div className="academy-hero overflow-hidden rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             <div className="relative shrink-0 self-center sm:self-auto">
-              <QuantaImage variant="learning" size="lg" priority />
+              <QuantaImage variant={levelQuantaVariant(level)} size="lg" priority />
             </div>
             <div className="flex-1">
               <p className="qci-section-eyebrow mb-1">Quantum Academy</p>
               <h1 className="page-title mt-1 text-3xl">Learn Quantum Circuits</h1>
+              <p className="mt-2 text-sm font-semibold text-[var(--color-brand)]">
+                Level {level} · {getLevelTitle(level)}
+              </p>
+              <div className="mt-3 max-w-sm">
+                <div className="mb-1 flex justify-between text-xs text-[var(--color-muted-foreground)]">
+                  <span>Daily goal</span><span>{Math.min(todayXp, DAILY_GOAL_XP)}/{DAILY_GOAL_XP} XP</span>
+                </div>
+                <div className="academy-progress-bar h-2 overflow-hidden rounded-full">
+                  <div className="academy-progress-fill h-full rounded-full" style={{ width: `${Math.min(100, todayXp / DAILY_GOAL_XP * 100)}%` }} />
+                </div>
+              </div>
               <p className="page-description mt-2 max-w-xl">
                 A guided QCI learning track — academic and research-focused, with
                 Quanta as your guide.

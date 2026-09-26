@@ -25,6 +25,8 @@ export const quantaAssets = {
   contactSheet: "/assets/quanta/quanta-contact-sheet.webp",
   introVideo: "/assets/quanta/intro/door-open.mp4",
   introPoster: "/assets/quanta/intro/door-poster.jpg",
+  cursorDefault: "/assets/quanta/cursor/quanta-cursor.svg",
+  cursorPointer: "/assets/quanta/cursor/quanta-cursor-pointer.svg",
 } as const;
 
 export type QuantaAssetKey = keyof typeof quantaAssets;
@@ -41,6 +43,7 @@ export type QuantaVariant =
   | "didYouCode"
   | "error"
   | "empty"
+  | "hatchingNeutral"
   | "avatar";
 
 /** Map semantic variants to registry keys (stable API for components). */
@@ -56,6 +59,7 @@ export const quantaVariantMap: Record<QuantaVariant, QuantaAssetKey> = {
   didYouCode: "didYouCode",
   error: "error",
   empty: "empty",
+  hatchingNeutral: "hatchingNeutral",
   avatar: "avatar",
 };
 
@@ -71,6 +75,7 @@ export const quantaAltText: Record<QuantaVariant, string> = {
   didYouCode: "Quanta asking Did you code today?",
   error: "Surprised Quanta reacting to a hatching egg",
   empty: "Quanta waiting beside an egg — nothing hatched yet",
+  hatchingNeutral: "Quanta hatching from an egg",
   avatar: "Quanta head portrait",
 };
 
