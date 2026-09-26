@@ -9,7 +9,7 @@ import { decideCodeSync } from "@/lib/code-sync-policy";
 import type { Circuit } from "@/lib/circuit-schema";
 import { debounce } from "@/lib/utils";
 
-export function useCodeSync() {
+export function useCodeSync(active = true) {
   const circuit = useCircuitStore((s) => s.circuit);
   const setCircuit = useCircuitStore((s) => s.setCircuit);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
@@ -45,6 +45,7 @@ export function useCodeSync() {
 
   const parseCode = useCallback(
     (newCode: string, generation: number) => {
+      if (!active) return;
       if (generation !== parseGenerationRef.current) return;
 
       if (!adapter.bidirectional) {
@@ -98,7 +99,7 @@ export function useCodeSync() {
       setCircuit(decision.circuit);
       setSyncStatus("synced");
     },
-    [adapter, circuit.name, setCircuit]
+    [active, adapter, circuit.name, setCircuit]
   );
 
   const debouncedParseRef = useRef<
@@ -112,6 +113,12 @@ export function useCodeSync() {
     debouncedParseRef.current = debounced;
     return () => debounced.cancel();
   }, [parseCode]);
+
+  useEffect(() => {
+    if (active) return;
+    debouncedParseRef.current?.cancel();
+    parseGenerationRef.current += 1;
+  }, [active]);
 
   useEffect(() => {
     return () => {

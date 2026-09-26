@@ -20,7 +20,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-export function MultiLanguageCodePanel() {
+export function MultiLanguageCodePanel({ active = true }: { active?: boolean }) {
   const { resetCircuit, circuit } = useCircuitStore();
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
@@ -37,7 +37,7 @@ export function MultiLanguageCodePanel() {
     applyPending,
     discardPending,
     readOnly,
-  } = useCodeSync();
+  } = useCodeSync(active);
 
   const filename = `${circuit.name.replace(/\s+/g, "_").toLowerCase()}.${adapter.defaultFilename.split(".").pop()}`;
   const displayedWarnings =

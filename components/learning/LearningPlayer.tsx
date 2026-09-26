@@ -444,7 +444,7 @@ function LearningCodePanel({
 }) {
   return (
     <div className="learning-code-panel flex h-full min-h-[220px] flex-col">
-      <MultiLanguageCodePanel />
+      <MultiLanguageCodePanel active />
       <div className="flex shrink-0 gap-2 border-t border-[var(--color-border)] p-3">
         <Button
           size="sm"
