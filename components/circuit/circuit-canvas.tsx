@@ -797,9 +797,25 @@ export function CircuitCanvas({
         target &&
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
-          target.isContentEditable)
+          target.isContentEditable ||
+          Boolean(target.closest(".monaco-editor")))
       ) {
         return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        const key = e.key.toLowerCase();
+        if (key === "z" && (e.shiftKey ? canRedo() : canUndo())) {
+          e.preventDefault();
+          if (e.shiftKey) redo();
+          else undo();
+          return;
+        }
+        if (key === "y" && canRedo()) {
+          e.preventDefault();
+          redo();
+          return;
+        }
       }
 
       if ((e.key === "Delete" || e.key === "Backspace") && selectedOperationId) {
@@ -847,6 +863,10 @@ export function CircuitCanvas({
     removeOperation,
     duplicateOperation,
     relocateOperation,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   ]);
 
   return (
