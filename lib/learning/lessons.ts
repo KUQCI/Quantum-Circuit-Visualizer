@@ -190,6 +190,7 @@ const BASE_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     quantaHint: "Column 0: H on q[0]. Column 1: CX control q[0], target q[1].",
     quantaSuccess: "Entangled! You've built a Bell pair.",
     quantaIncorrect: "Order matters: H on q[0], then CX q[0]→q[1].",
+    walkthroughId: "bell",
     order: 19,
   },
   {

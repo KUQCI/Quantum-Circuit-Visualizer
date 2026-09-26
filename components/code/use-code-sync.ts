@@ -9,7 +9,14 @@ import { decideCodeSync } from "@/lib/code-sync-policy";
 import type { Circuit } from "@/lib/circuit-schema";
 import { debounce } from "@/lib/utils";
 
-export function useCodeSync(active = true) {
+interface UseCodeSyncOptions {
+  onCodeApplied?: () => void;
+}
+
+export function useCodeSync(
+  active = true,
+  { onCodeApplied }: UseCodeSyncOptions = {}
+) {
   const circuit = useCircuitStore((s) => s.circuit);
   const setCircuit = useCircuitStore((s) => s.setCircuit);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
@@ -22,6 +29,10 @@ export function useCodeSync(active = true) {
     "synced" | "editing" | "error" | "blocked" | "partial"
   >("synced");
   const parseGenerationRef = useRef(0);
+  const onCodeAppliedRef = useRef(onCodeApplied);
+  useEffect(() => {
+    onCodeAppliedRef.current = onCodeApplied;
+  }, [onCodeApplied]);
   /** Skip one circuit→code sync after the circuit was updated by parsing editor text */
   const skipNextCircuitToCodeSyncRef = useRef(false);
   /** While true, never overwrite the editor from the canvas (user is typing or has a parse error) */
@@ -97,6 +108,7 @@ export function useCodeSync(active = true) {
       suppressCircuitToCodeSyncRef.current = false;
       setPendingCircuit(null);
       setCircuit(decision.circuit);
+      onCodeAppliedRef.current?.();
       setSyncStatus("synced");
     },
     [active, adapter, circuit.name, setCircuit]
@@ -184,6 +196,7 @@ export function useCodeSync(active = true) {
     skipNextCircuitToCodeSyncRef.current = true;
     suppressCircuitToCodeSyncRef.current = false;
     setCircuit(pendingCircuit);
+    onCodeAppliedRef.current?.();
     setPendingCircuit(null);
     setParseError(null);
     setSyncStatus("synced");

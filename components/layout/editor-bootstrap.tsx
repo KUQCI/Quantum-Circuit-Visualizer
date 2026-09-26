@@ -63,6 +63,7 @@ export function EditorBootstrap() {
     if (lastStartedWalkthrough.current === walkthrough.id) return;
 
     const start = () => {
+      useCircuitStore.getState().flushActivityExit();
       const current = useCircuitStore.getState();
       if (!useEditorUiStore.getState().walkthroughBackup) {
         setWalkthroughBackup({

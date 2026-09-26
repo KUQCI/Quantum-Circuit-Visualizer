@@ -15,6 +15,7 @@ import {
   levelQuantaVariant,
 } from "@/lib/learning/progress";
 import { useProgressStore } from "@/store/progress-store";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 export function LevelUpDialog() {
   const totalXp = useProgressStore((state) => state.totalXp);
@@ -25,11 +26,13 @@ export function LevelUpDialog() {
     (state) => state.markLevelCelebrated
   );
   const level = useProgressStore((state) => state.getLevel());
+  const hydrated = usePersistHydrated(useProgressStore.persist);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (level > lastCelebratedLevel) setOpen(true);
-  }, [level, lastCelebratedLevel, totalXp]);
+  }, [hydrated, level, lastCelebratedLevel, totalXp]);
 
   const continueLearning = () => {
     markLevelCelebrated(level);

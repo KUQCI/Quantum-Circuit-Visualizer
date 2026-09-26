@@ -20,7 +20,15 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-export function MultiLanguageCodePanel({ active = true }: { active?: boolean }) {
+export function MultiLanguageCodePanel({
+  active = true,
+  onExport,
+  onCodeApplied,
+}: {
+  active?: boolean;
+  onExport?: () => void;
+  onCodeApplied?: () => void;
+}) {
   const { resetCircuit, circuit } = useCircuitStore();
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
@@ -37,7 +45,7 @@ export function MultiLanguageCodePanel({ active = true }: { active?: boolean }) 
     applyPending,
     discardPending,
     readOnly,
-  } = useCodeSync(active);
+  } = useCodeSync(active, { onCodeApplied });
 
   const filename = `${circuit.name.replace(/\s+/g, "_").toLowerCase()}.${adapter.defaultFilename.split(".").pop()}`;
   const displayedWarnings =
@@ -161,7 +169,11 @@ export function MultiLanguageCodePanel({ active = true }: { active?: boolean }) 
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--color-border)] p-2">
-        <CodePanelActions code={code} filename={filename} />
+        <CodePanelActions
+          code={code}
+          filename={filename}
+          onExport={onExport}
+        />
         <Button
           variant="ghost"
           size="sm"

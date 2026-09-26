@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
@@ -113,9 +113,20 @@ export function LearningPlayer({
   const [maxStageReached, setMaxStageReached] = useState(
     mode === "lesson" ? (isComplete ? 3 : 0) : 2
   );
+  const isCompleteRef = useRef(isComplete);
+  const modeRef = useRef(mode);
+
+  useEffect(() => {
+    isCompleteRef.current = isComplete;
+  }, [isComplete]);
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   useEffect(() => {
     let cancelled = false;
+    const completed = isCompleteRef.current;
+    const currentMode = modeRef.current;
 
     enterActivityCircuit(structuredClone(activity.starterCircuit));
     recordActivity();
@@ -123,14 +134,18 @@ export function LearningPlayer({
     setShowHint(false);
     setExportDone(false);
     setImportDone(false);
-    setStage(mode === "lesson" ? (isComplete ? "done" : "learn") : "build");
+    setStage(
+      currentMode === "lesson" ? (completed ? "done" : "learn") : "build"
+    );
     setSectionIndex(0);
     setQuizChoice(null);
     setQuizChecked(false);
     setQuizIndex(0);
     setQuizWrongAttempts(0);
     setQuizFirstTry(true);
-    setMaxStageReached(mode === "lesson" ? (isComplete ? 3 : 0) : 2);
+    setMaxStageReached(
+      currentMode === "lesson" ? (completed ? 3 : 0) : 2
+    );
     setQuantaFeedback("");
     useEditorUiStore.getState().setInspectMode(false);
 
@@ -153,8 +168,6 @@ export function LearningPlayer({
     exitActivityCircuit,
     setActivityCircuit,
     recordActivity,
-    mode,
-    isComplete,
   ]);
 
   useEffect(() => {
@@ -779,25 +792,11 @@ function LearningCodePanel({
 }) {
   return (
     <div className="learning-code-panel flex h-full min-h-[220px] flex-col">
-      <MultiLanguageCodePanel active />
-      <div className="flex shrink-0 gap-2 border-t border-[var(--color-border)] p-3">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-9 flex-1 text-sm"
-          onClick={onExport}
-        >
-          Mark Export Done
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-9 flex-1 text-sm"
-          onClick={onImportSync}
-        >
-          Mark Import Done
-        </Button>
-      </div>
+      <MultiLanguageCodePanel
+        active
+        onExport={onExport}
+        onCodeApplied={onImportSync}
+      />
     </div>
   );
 }
