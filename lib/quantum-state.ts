@@ -31,7 +31,9 @@ export interface QuantumStateResult {
   error: string | null;
 }
 
-const MAX_QUBITS = 6;
+/** Largest circuit the browser statevector simulator will run. */
+export const MAX_SIMULATION_QUBITS = 6;
+const MAX_QUBITS = MAX_SIMULATION_QUBITS;
 const PROB_THRESHOLD = 1e-10;
 
 function c(re: number, im = 0): Complex {
@@ -254,10 +256,127 @@ function getSingleQubitMatrix(
     case "rz":
       return rz(theta);
     case "u":
+    case "u3":
       return uMatrix(theta, params[1] ?? 0, params[2] ?? 0);
+    case "u1":
+      return [[c(1), c(0)], [c(0), cExp(theta)]];
+    case "u2":
+      return uMatrix(Math.PI / 2, theta, params[1] ?? 0);
     default:
       return null;
   }
+}
+
+/** Embed a gate as the lowest block of a controlled operator (controls are the leading qubits). */
+function controlledMatrix(base: Complex[][], numControls: number): Complex[][] {
+  const baseDim = base.length;
+  const m = identity(baseDim * (1 << numControls));
+  const offset = m.length - baseDim;
+  for (let row = 0; row < baseDim; row++) {
+    for (let col = 0; col < baseDim; col++) {
+      m[offset + row][offset + col] = base[row][col];
+    }
+  }
+  return m;
+}
+
+function scaleMatrix(matrix: Complex[][], factor: Complex): Complex[][] {
+  return matrix.map((row) => row.map((entry) => cMul(factor, entry)));
+}
+
+/** Controlled gates whose target block is a single-qubit matrix. */
+const CONTROLLED_BASE: Record<string, string> = {
+  cy: "y",
+  ch: "h",
+  csx: "sx",
+  crz: "rz",
+  cu1: "p",
+  cu3: "u",
+  cu: "u",
+  ccx: "x",
+};
+
+function getControlledMatrix(
+  type: string,
+  params: number[],
+  numControls: number
+): Complex[][] | null {
+  const baseType = CONTROLLED_BASE[type];
+  if (!baseType) return null;
+  const base = getSingleQubitMatrix(baseType, params);
+  if (!base) return null;
+  // CU carries an extra global phase γ on the controlled block.
+  const phased = type === "cu" ? scaleMatrix(base, cExp(params[3] ?? 0)) : base;
+  return controlledMatrix(phased, numControls);
+}
+
+interface GateStep {
+  type: string;
+  params?: number[];
+  qubits: number[];
+}
+
+/** Relative-phase Toffoli / CCCX decompositions (Qiskit RCCXGate, RC3XGate). */
+function relativePhaseSteps(type: string, qubits: number[]): GateStep[] | null {
+  const quarter = Math.PI / 4;
+  if (type === "rccx") {
+    const [a, b, t] = qubits;
+    return [
+      { type: "u2", params: [0, Math.PI], qubits: [t] },
+      { type: "u1", params: [quarter], qubits: [t] },
+      { type: "cx", qubits: [b, t] },
+      { type: "u1", params: [-quarter], qubits: [t] },
+      { type: "cx", qubits: [a, t] },
+      { type: "u1", params: [quarter], qubits: [t] },
+      { type: "cx", qubits: [b, t] },
+      { type: "u1", params: [-quarter], qubits: [t] },
+      { type: "u2", params: [0, Math.PI], qubits: [t] },
+    ];
+  }
+  if (type === "rc3x") {
+    const [a, b, d, t] = qubits;
+    return [
+      { type: "u2", params: [0, Math.PI], qubits: [t] },
+      { type: "u1", params: [quarter], qubits: [t] },
+      { type: "cx", qubits: [d, t] },
+      { type: "u1", params: [-quarter], qubits: [t] },
+      { type: "u2", params: [0, Math.PI], qubits: [t] },
+      { type: "cx", qubits: [a, t] },
+      { type: "u1", params: [quarter], qubits: [t] },
+      { type: "cx", qubits: [b, t] },
+      { type: "u1", params: [-quarter], qubits: [t] },
+      { type: "cx", qubits: [a, t] },
+      { type: "u1", params: [quarter], qubits: [t] },
+      { type: "cx", qubits: [b, t] },
+      { type: "u1", params: [-quarter], qubits: [t] },
+      { type: "u2", params: [0, Math.PI], qubits: [t] },
+      { type: "u1", params: [quarter], qubits: [t] },
+      { type: "cx", qubits: [d, t] },
+      { type: "u1", params: [-quarter], qubits: [t] },
+      { type: "u2", params: [0, Math.PI], qubits: [t] },
+    ];
+  }
+  return null;
+}
+
+function applySteps(
+  state: Complex[],
+  steps: GateStep[],
+  numQubits: number
+): Complex[] | null {
+  let next = state;
+  for (const step of steps) {
+    if (step.type === "cx") {
+      const matrix = getTwoQubitMatrix("cx");
+      if (!matrix) return null;
+      next = applyMultiQubitGate(next, matrix, step.qubits, numQubits);
+      continue;
+    }
+    const matrix = getSingleQubitMatrix(step.type, step.params);
+    if (!matrix) return null;
+    next = applySingleQubitGate(next, matrix, step.qubits[0], numQubits);
+  }
+  return next;
 }
 
 function rxxMatrix(theta: number): Complex[][] {
@@ -475,12 +594,43 @@ function applyOperation(
     return applyMultiQubitGate(state, ccxMatrix(), qubits, numQubits);
   }
 
-  if (op.controls.length === 1 && op.targets.length === 1) {
+  if (op.type === "cswap" && op.controls.length === 1 && op.targets.length === 2) {
+    const swapMatrix = getTwoQubitMatrix("swap");
+    if (!swapMatrix) return null;
+    const qubits = [
+      qubitIndexFromId(op.controls[0]),
+      qubitIndexFromId(op.targets[0]),
+      qubitIndexFromId(op.targets[1]),
+    ];
+    return applyMultiQubitGate(state, controlledMatrix(swapMatrix, 1), qubits, numQubits);
+  }
+
+  if (
+    (op.type === "rccx" || op.type === "rc3x") &&
+    op.targets.length === 1 &&
+    op.controls.length === (op.type === "rccx" ? 2 : 3)
+  ) {
+    const qubits = [...op.controls, ...op.targets].map(qubitIndexFromId);
+    const steps = relativePhaseSteps(op.type, qubits);
+    if (!steps) return null;
+    return applySteps(state, steps, numQubits);
+  }
+
+  if (op.controls.length >= 1 && op.targets.length === 1) {
     const control = qubitIndexFromId(op.controls[0]);
     const target = qubitIndexFromId(op.targets[0]);
-    const matrix = getTwoQubitMatrix(op.type, params[0] ?? 0);
-    if (!matrix) return null;
-    return applyMultiQubitGate(state, matrix, [control, target], numQubits);
+
+    if (op.controls.length === 1) {
+      const twoQubit = getTwoQubitMatrix(op.type, params[0] ?? 0);
+      if (twoQubit) {
+        return applyMultiQubitGate(state, twoQubit, [control, target], numQubits);
+      }
+    }
+
+    const controlled = getControlledMatrix(op.type, params, op.controls.length);
+    if (!controlled) return null;
+    const qubits = [...op.controls.map(qubitIndexFromId), target];
+    return applyMultiQubitGate(state, controlled, qubits, numQubits);
   }
 
   return null;

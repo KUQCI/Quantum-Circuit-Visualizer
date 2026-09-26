@@ -64,7 +64,20 @@ function emitGateLine(op: Operation): { line: string } | { warning: string } {
     return { line: `qc.${gate}(${param}, ${qubitIndexFromId(op.targets[0])})` };
   }
 
-  if (gate === "u") {
+  if (gate === "u1") {
+    if (!op.targets[0]) return { warning: `u1 ${op.id}: missing target` };
+    const param = formatParameter(op) || "0";
+    return { line: `qc.p(${param}, ${qubitIndexFromId(op.targets[0])})` };
+  }
+
+  if (gate === "u2") {
+    if (!op.targets[0]) return { warning: `u2 ${op.id}: missing target` };
+    const phi = formatParameter(op, 0) || "0";
+    const lam = formatParameter(op, 1) || "0";
+    return { line: `qc.u(pi/2, ${phi}, ${lam}, ${qubitIndexFromId(op.targets[0])})` };
+  }
+
+  if (gate === "u" || gate === "u3") {
     if (!op.targets[0]) return { warning: `u ${op.id}: missing target` };
     const theta = formatParameter(op, 0) || "pi/2";
     const phi = formatParameter(op, 1) || "0";
@@ -89,12 +102,45 @@ function emitGateLine(op: Operation): { line: string } | { warning: string } {
     return { warning: `swap ${op.id}: needs two qubit targets` };
   }
 
-  if (["cx", "cz"].includes(gate)) {
+  if (["cx", "cy", "cz", "ch", "csx"].includes(gate)) {
     if (!op.controls[0] || !op.targets[0]) {
       return { warning: `${gate} ${op.id}: needs control and target` };
     }
     return {
       line: `qc.${gate}(${qubitIndexFromId(op.controls[0])}, ${qubitIndexFromId(op.targets[0])})`,
+    };
+  }
+
+  if (gate === "crz" || gate === "cu1") {
+    if (!op.controls[0] || !op.targets[0]) {
+      return { warning: `${gate} ${op.id}: needs control and target` };
+    }
+    const method = gate === "crz" ? "crz" : "cp";
+    const param = formatParameter(op) || "0";
+    return {
+      line: `qc.${method}(${param}, ${qubitIndexFromId(op.controls[0])}, ${qubitIndexFromId(op.targets[0])})`,
+    };
+  }
+
+  if (gate === "cu3" || gate === "cu") {
+    if (!op.controls[0] || !op.targets[0]) {
+      return { warning: `${gate} ${op.id}: needs control and target` };
+    }
+    const theta = formatParameter(op, 0) || "0";
+    const phi = formatParameter(op, 1) || "0";
+    const lam = formatParameter(op, 2) || "0";
+    const gamma = gate === "cu" ? formatParameter(op, 3) || "0" : "0";
+    return {
+      line: `qc.cu(${theta}, ${phi}, ${lam}, ${gamma}, ${qubitIndexFromId(op.controls[0])}, ${qubitIndexFromId(op.targets[0])})`,
+    };
+  }
+
+  if (gate === "cswap") {
+    if (!op.controls[0] || op.targets.length < 2) {
+      return { warning: `cswap ${op.id}: needs one control and two targets` };
+    }
+    return {
+      line: `qc.cswap(${qubitIndexFromId(op.controls[0])}, ${qubitIndexFromId(op.targets[0])}, ${qubitIndexFromId(op.targets[1])})`,
     };
   }
 
@@ -123,7 +169,7 @@ function emitGateLine(op: Operation): { line: string } | { warning: string } {
     }
     const [c1, c2, c3] = op.controls.map(qubitIndexFromId);
     return {
-      line: `qc.rc3x(${c1}, ${c2}, ${c3}, ${qubitIndexFromId(op.targets[0])})`,
+      line: `qc.rcccx(${c1}, ${c2}, ${c3}, ${qubitIndexFromId(op.targets[0])})`,
     };
   }
 

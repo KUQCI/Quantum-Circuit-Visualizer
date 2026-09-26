@@ -8,6 +8,7 @@ import {
   collapseQubit,
   measureQubit,
   sampleFromStatevector,
+  MAX_SIMULATION_QUBITS,
   type Complex,
 } from "./quantum-state";
 import type { BackendId } from "./backends";
@@ -29,7 +30,7 @@ export interface ExecutionResult {
   error: string | null;
 }
 
-const MAX_QUBITS = 6;
+const MAX_QUBITS = MAX_SIMULATION_QUBITS;
 
 function c(re: number, im = 0): Complex {
   return { re, im };
