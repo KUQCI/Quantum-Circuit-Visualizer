@@ -1,6 +1,36 @@
-export const LEVEL_THRESHOLDS = [0, 100, 250, 500, 900, 1400, 2000] as const;
+export const LEVEL_THRESHOLDS = [
+  0, 100, 250, 500, 900, 1400, 2000, 2800, 3800, 5000, 6500, 8500,
+] as const;
+export const LEVEL_TITLES = [
+  "Curious Egg",
+  "Hatchling",
+  "Fledgling",
+  "Gate Apprentice",
+  "Superposition Scholar",
+  "Entangler",
+  "Circuit Builder",
+  "Phase Whisperer",
+  "Algorithm Adept",
+  "Qiskit Coder",
+  "Quantum Researcher",
+  "Quantum Architect",
+] as const;
 
 export const MAX_LEVEL = LEVEL_THRESHOLDS.length;
+export const DAILY_GOAL_XP = 50;
+
+export function getLevelTitle(level: number): string {
+  return LEVEL_TITLES[Math.max(1, Math.min(level, LEVEL_TITLES.length)) - 1];
+}
+
+export function levelQuantaVariant(level: number): "empty" | "hatchingNeutral" | "learning" | "coding" | "researcher" | "success" {
+  if (level <= 1) return "empty";
+  if (level <= 3) return "hatchingNeutral";
+  if (level <= 5) return "learning";
+  if (level <= 8) return "coding";
+  if (level <= 11) return "researcher";
+  return "success";
+}
 
 export function getLevelFromXp(xp: number): number {
   let level = 1;
@@ -72,7 +102,9 @@ export const MODULE_IDS = [
   "measurement",
   "multi-qubit-gates",
   "entanglement",
+  "algorithms",
   "qiskit",
+  "capstone",
 ] as const;
 
 export type ModuleId = (typeof MODULE_IDS)[number];
@@ -83,7 +115,9 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   measurement: "Measurement",
   "multi-qubit-gates": "Multi-Qubit Gates",
   entanglement: "Entanglement",
+  algorithms: "Algorithms",
   qiskit: "Qiskit Import & Export",
+  capstone: "Capstone",
 };
 
 /** Short academic “why this matters” copy for each module. */
@@ -98,6 +132,10 @@ export const MODULE_WHY: Record<ModuleId, string> = {
     "Controlled gates let qubits talk — the bridge from single wires to algorithms.",
   entanglement:
     "Bell and GHZ states unlock correlations that classical bits cannot share.",
+  algorithms:
+    "Algorithms turn gate patterns into repeatable answers to useful questions.",
   qiskit:
     "Import and export connect the visualizer to research code and real backends.",
+  capstone:
+    "Bring preparation, entanglement, measurement, and analysis together.",
 };

@@ -85,6 +85,59 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     xpReward: 50,
     icon: "🦆",
   },
+  ...(
+    [
+      "quantum-basics",
+      "single-qubit-gates",
+      "measurement",
+      "multi-qubit-gates",
+      "entanglement",
+      "algorithms",
+      "qiskit",
+      "capstone",
+    ] as const
+  ).map((module) => ({
+    id: `module-${module}`,
+    name: `${module.replaceAll("-", " ")} complete`,
+    description: `Complete every lesson in the ${module.replaceAll("-", " ")} module.`,
+    xpReward: 50,
+    icon: "🏅",
+  })),
+  {
+    id: "quiz-whiz",
+    name: "Quiz Whiz",
+    description: "Answer five lesson quizzes correctly on the first try.",
+    xpReward: 75,
+    icon: "🧠",
+  },
+  {
+    id: "streak-3",
+    name: "Three-Day Streak",
+    description: "Stay active for three days in a row.",
+    xpReward: 30,
+    icon: "🔥",
+  },
+  {
+    id: "streak-7",
+    name: "Seven-Day Streak",
+    description: "Stay active for seven days in a row.",
+    xpReward: 75,
+    icon: "🌟",
+  },
+  {
+    id: "capstone-graduate",
+    name: "Capstone Graduate",
+    description: "Complete the Bell experiment capstone.",
+    xpReward: 100,
+    icon: "🎓",
+  },
+  {
+    id: "academy-complete",
+    name: "Academy Complete",
+    description: "Complete every Quantum Academy lesson.",
+    xpReward: 250,
+    icon: "🏆",
+  },
 ];
 
 export function getAchievementById(id: string): AchievementDefinition | undefined {
@@ -100,6 +153,10 @@ export interface AchievementCheckContext {
   exportDone: boolean;
   importDone: boolean;
   projectSaved: boolean;
+  completedModules?: string[];
+  firstTryQuizzes?: number;
+  currentStreak?: number;
+  completedLessonsCount?: number;
 }
 
 export function evaluateAchievements(
@@ -139,6 +196,17 @@ export function evaluateAchievements(
   unlock(
     "quantum-explorer",
     beginnerLessons.every((id) => ctx.completedLessons.includes(id))
+  );
+  for (const moduleId of ctx.completedModules ?? []) {
+    unlock(`module-${moduleId}`, true);
+  }
+  unlock("quiz-whiz", (ctx.firstTryQuizzes ?? 0) >= 5);
+  unlock("streak-3", (ctx.currentStreak ?? 0) >= 3);
+  unlock("streak-7", (ctx.currentStreak ?? 0) >= 7);
+  unlock("capstone-graduate", ctx.completedLessons.includes("capstone-bell-experiment"));
+  unlock(
+    "academy-complete",
+    (ctx.completedLessonsCount ?? ctx.completedLessons.length) >= 30
   );
 
   return newly;

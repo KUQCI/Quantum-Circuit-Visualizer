@@ -21,7 +21,9 @@ const MODULE_ORDER: ModuleId[] = [
   "measurement",
   "multi-qubit-gates",
   "entanglement",
+  "algorithms",
   "qiskit",
+  "capstone",
 ];
 
 export function LessonPath() {
@@ -63,7 +65,7 @@ export function LessonPath() {
                 </p>
               </div>
               <span className="text-xs text-[var(--color-muted-foreground)]">
-                {done}/{moduleLessons.length} complete
+                {done === moduleLessons.length ? "✓ Complete" : `${done}/${moduleLessons.length} complete`}
               </span>
             </div>
             <div

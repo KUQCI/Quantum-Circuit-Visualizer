@@ -98,7 +98,7 @@ function checkSingle(
     }
 
     case "hasMeasurement": {
-      const found = circuit.operations.some((op) => {
+      const matches = circuit.operations.filter((op) => {
         if (op.type !== "measure") return false;
         if (condition.qubit && !op.targets.includes(condition.qubit)) return false;
         if (
@@ -108,6 +108,7 @@ function checkSingle(
           return false;
         return true;
       });
+      const found = matches.length >= (condition.count ?? 1);
       return found
         ? { success: true, message: "Measurement in place!" }
         : {

@@ -7,6 +7,7 @@ import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
 import { GateLibrary } from "@/components/gates/gate-library";
 import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-panel";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
+import { QuantaAchievement } from "@/components/mascot/QuantaAchievement";
 import { QuantaHint } from "@/components/mascot/QuantaHint";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
@@ -29,8 +30,10 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getLevelTitle, xpForNextLevel } from "@/lib/learning/progress";
 
 type ActivityDefinition = LessonDefinition | ChallengeDefinition;
+type LessonStage = "learn" | "quiz" | "build" | "done";
 
 function isLesson(a: ActivityDefinition): a is LessonDefinition {
   return "module" in a;
@@ -69,6 +72,8 @@ export function LearningPlayer({
 
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const completeChallenge = useProgressStore((s) => s.completeChallenge);
+  const recordQuizResult = useProgressStore((s) => s.recordQuizResult);
+  const awardXp = useProgressStore((s) => s.awardXp);
   const recordExport = useProgressStore((s) => s.recordExport);
   const recordImport = useProgressStore((s) => s.recordImport);
   const recordActivity = useProgressStore((s) => s.recordActivity);
@@ -96,6 +101,13 @@ export function LearningPlayer({
   const [xpAwarded, setXpAwarded] = useState(0);
   const [exportDone, setExportDone] = useState(false);
   const [importDone, setImportDone] = useState(false);
+  const [stage, setStage] = useState<LessonStage>(
+    mode === "lesson" ? (isComplete ? "done" : "learn") : "build"
+  );
+  const [sectionIndex, setSectionIndex] = useState(0);
+  const [quizChoice, setQuizChoice] = useState<number | null>(null);
+  const [quizChecked, setQuizChecked] = useState(false);
+  const [quizFirstTry, setQuizFirstTry] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,6 +118,11 @@ export function LearningPlayer({
     setShowHint(false);
     setExportDone(false);
     setImportDone(false);
+    setStage(mode === "lesson" ? (isComplete ? "done" : "learn") : "build");
+    setSectionIndex(0);
+    setQuizChoice(null);
+    setQuizChecked(false);
+    setQuizFirstTry(true);
     useEditorUiStore.getState().setInspectMode(false);
 
     const reloadStarter = () => {
@@ -127,6 +144,8 @@ export function LearningPlayer({
     exitActivityCircuit,
     setActivityCircuit,
     recordActivity,
+    mode,
+    isComplete,
   ]);
 
   useEffect(() => {
@@ -160,6 +179,23 @@ export function LearningPlayer({
   }, [recordImport]);
 
   const handleCheck = () => {
+    if (mode === "lesson" && isLesson(activity) && stage === "quiz") {
+      const question = activity.quiz[0];
+      const correct = quizChoice === question.answerIndex;
+      setQuizChecked(true);
+      if (!correct) {
+        setQuizFirstTry(false);
+        setQuantaFeedback(activity.quantaIncorrect);
+        return;
+      }
+      recordQuizResult(activity.id, quizFirstTry);
+      setQuantaFeedback(question.explanation);
+      setFeedbackStatus("success");
+      setFeedbackMessage("Quiz answer correct!");
+      setStage("build");
+      return;
+    }
+    if (mode === "lesson" && stage !== "build") return;
     const result = checkCircuit(circuit, activity.successCondition, {
       actionExportDone: exportDone,
       actionImportDone: importDone,
@@ -176,7 +212,17 @@ export function LearningPlayer({
           if (didAward) awarded = activity.xpReward;
         }
       }
+      if (
+        mode === "lesson" &&
+        isLesson(activity) &&
+        !isComplete &&
+        quizFirstTry
+      ) {
+        awardXp(10, "First-try quiz bonus");
+        awarded += 10;
+      }
       setXpAwarded(awarded);
+      if (mode === "lesson") setStage("done");
       setFeedbackStatus("success");
       setFeedbackMessage(result.message);
       setQuantaFeedback(activity.quantaSuccess);
@@ -270,6 +316,21 @@ export function LearningPlayer({
           <span className="academy-xp-pill text-xs">+{activity.xpReward} XP</span>
         </div>
       </div>
+      <div className="flex shrink-0 items-center justify-center gap-1 border-b border-[var(--color-border)] px-3 py-2">
+        {(["learn", "quiz", "build", "done"] as LessonStage[]).map((item, index) => (
+          <div key={item} className="flex items-center gap-1">
+            <span className={cn(
+              "rounded-full px-2 py-1 text-[10px] font-semibold uppercase",
+              stage === item
+                ? "bg-[var(--color-brand)] text-white"
+                : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
+            )}>
+              {index + 1}. {item}
+            </span>
+            {index < 3 && <ChevronRight className="h-3 w-3 text-[var(--color-muted-foreground)]" />}
+          </div>
+        ))}
+      </div>
 
       {/* Main workspace */}
       <FeatureErrorBoundary
@@ -298,6 +359,32 @@ export function LearningPlayer({
               size="lg"
               imageVariant="learning"
             />
+            {mode === "lesson" && isLesson(activity) && stage === "learn" ? (
+              <LessonSectionCard
+                lesson={activity}
+                index={sectionIndex}
+                onPrevious={() => setSectionIndex((value) => Math.max(0, value - 1))}
+                onNext={() =>
+                  sectionIndex < activity.sections.length - 1
+                    ? setSectionIndex((value) => value + 1)
+                    : setStage("quiz")
+                }
+              />
+            ) : mode === "lesson" && isLesson(activity) && stage === "quiz" ? (
+              <QuizCard
+                lesson={activity}
+                choice={quizChoice}
+                checked={quizChecked}
+                onChoice={setQuizChoice}
+                onCheck={handleCheck}
+              />
+            ) : stage === "done" ? (
+              <DoneCard
+                lesson={mode === "lesson" && isLesson(activity) ? activity : null}
+                xp={xpAwarded}
+                nextHref={nextHref}
+              />
+            ) : (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
               <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
                 Instructions
@@ -306,6 +393,7 @@ export function LearningPlayer({
                 {storyText}
               </p>
             </div>
+            )}
             {targetCircuit && (
               <div className="rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
                 <h3 className="mb-1 text-sm font-semibold text-[var(--color-brand)]">
@@ -393,10 +481,12 @@ export function LearningPlayer({
           xpAwarded={xpAwarded}
         />
         <div className="flex flex-wrap gap-2">
-          <Button size="default" className="gap-2" onClick={handleCheck}>
-            <CheckCircle className="h-4 w-4" />
-            Check Answer
-          </Button>
+          {(!isLesson(activity) || stage === "build") && (
+            <Button size="default" className="gap-2" onClick={handleCheck}>
+              <CheckCircle className="h-4 w-4" />
+              Check Answer
+            </Button>
+          )}
           <Button size="default" variant="outline" className="gap-2" onClick={() => setShowHint(true)}>
             <Lightbulb className="h-4 w-4" />
             Show Hint
@@ -430,6 +520,152 @@ export function LearningPlayer({
             </Button>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LessonSectionCard({
+  lesson,
+  index,
+  onPrevious,
+  onNext,
+}: {
+  lesson: LessonDefinition;
+  index: number;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  const section = lesson.sections[index];
+  const miniCircuit = section.circuit;
+  return (
+    <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand)]">
+        Part {index + 1} of {lesson.sections.length}
+      </p>
+      <h2 className="text-lg font-semibold">{section.heading}</h2>
+      <p className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</p>
+      {miniCircuit && (
+        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-2 font-mono text-xs">
+          {miniCircuit.qubits.map((qubit) => (
+            <p key={qubit.id}>
+              {qubit.label}:{" "}
+              {miniCircuit.operations
+                .filter((operation) => operation.targets.includes(qubit.id))
+                .sort((a, b) => a.column - b.column)
+                .map((operation) => operation.type.toUpperCase())
+                .join(" → ") || "|0⟩"}
+            </p>
+          ))}
+        </div>
+      )}
+      <QuantaMessage
+        title="Quanta hint"
+        message={section.quantaNote ?? lesson.quantaHint}
+        variant="hint"
+      />
+      <div className="flex justify-between gap-2">
+        <Button variant="outline" size="sm" onClick={onPrevious} disabled={index === 0}>
+          Previous
+        </Button>
+        <Button size="sm" onClick={onNext}>
+          {index === lesson.sections.length - 1 ? "Take the quiz" : "Next"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function QuizCard({
+  lesson,
+  choice,
+  checked,
+  onChoice,
+  onCheck,
+}: {
+  lesson: LessonDefinition;
+  choice: number | null;
+  checked: boolean;
+  onChoice: (value: number) => void;
+  onCheck: () => void;
+}) {
+  const question = lesson.quiz[0];
+  const correct = choice === question.answerIndex;
+  return (
+    <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand)]">
+        Quick check
+      </p>
+      <h2 className="text-base font-semibold">{question.question}</h2>
+      <div className="space-y-2">
+        {question.options.map((option, index) => (
+          <label
+            key={option}
+            className="flex cursor-pointer items-start gap-2 rounded border border-[var(--color-border)] p-2 text-sm"
+          >
+            <input
+              type="radio"
+              name={`${lesson.id}-quiz`}
+              checked={choice === index}
+              onChange={() => onChoice(index)}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+      {checked && (
+        <p className={correct ? "text-sm text-[var(--color-success)]" : "text-sm text-[var(--color-warning)]"}>
+          {correct ? question.explanation : "Not quite — try another answer."}
+        </p>
+      )}
+      <Button size="sm" onClick={onCheck} disabled={choice === null}>
+        Check answer
+      </Button>
+    </div>
+  );
+}
+
+function DoneCard({
+  lesson,
+  xp,
+  nextHref,
+}: {
+  lesson: LessonDefinition | null;
+  xp: number;
+  nextHref?: string;
+}) {
+  const totalXp = useProgressStore((state) => state.totalXp);
+  const level = useProgressStore((state) => state.getLevel());
+  const xpInfo = xpForNextLevel(totalXp);
+  return (
+    <div className="space-y-3">
+      <QuantaAchievement
+        title="Circuit milestone complete!"
+        message={`You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`}
+      />
+      <div className="space-y-3 rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
+        <h2 className="text-lg font-semibold">Level {level} · {getLevelTitle(level)}</h2>
+        <p className="text-sm">
+          First-try quizzes add a +10 XP bonus. Your progress is saved automatically.
+        </p>
+      <div className="h-2 overflow-hidden rounded-full bg-[var(--color-muted)]">
+          <div
+            className="h-full rounded-full bg-[var(--color-brand)]"
+            style={{ width: `${Math.round((xpInfo.progress || 1) * 100)}%` }}
+          />
+        </div>
+        {lesson?.walkthroughId && (
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/editor?walkthrough=${lesson.walkthroughId}`}>
+              Open guided walkthrough
+            </Link>
+          </Button>
+        )}
+        {nextHref && (
+          <Button asChild size="sm">
+            <Link href={nextHref}>Next lesson</Link>
+          </Button>
+        )}
       </div>
     </div>
   );
