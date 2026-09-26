@@ -83,6 +83,14 @@ function generateQiskitRuntimeSnippet(circuit: Circuit): CodeGenerateResult {
   const qiskit = generateQiskitCode(circuit);
   if (!qiskit.success) return { success: false, error: qiskit.error };
 
+  const hasMeasurement =
+    circuit.classicalBits.length > 0 &&
+    circuit.operations.some((op) => op.type === "measure");
+  const readout = hasMeasurement
+    ? "print(result[0].data.c.get_counts())"
+    : `# no measurements in this circuit — add one to read out counts
+print(result[0].data)`;
+
   const code = `"""
 IBM Quantum Runtime — Sampler V2 example
 Docs: https://quantum.cloud.ibm.com/docs/en/api/qiskit-ibm-runtime
@@ -99,7 +107,7 @@ backend = service.least_busy(operational=True, simulator=False)
 sampler = Sampler(backend)
 job = sampler.run([qc], shots=1024)
 result = job.result()
-print(result[0].data.c.get_counts())
+${readout}
 `;
   return { success: true, code };
 }

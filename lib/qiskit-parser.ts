@@ -49,17 +49,34 @@ const SUPPORTED_QISKIT_GATES = new Set([
   "rz",
   "u",
   "cx",
+  "cy",
   "cz",
+  "ch",
+  "csx",
+  "crz",
+  "cu1",
+  "cu3",
+  "cu",
+  "cswap",
   "swap",
   "rxx",
   "rzz",
   "ccx",
   "rccx",
   "rc3x",
+  "u1",
+  "u2",
+  "u3",
   "measure",
   "reset",
   "barrier",
 ]);
+
+/** Qiskit method names that differ from the IR gate type. */
+const QISKIT_GATE_ALIASES: Record<string, string> = {
+  cp: "cu1",
+  rcccx: "rc3x",
+};
 
 interface ParsedGateCall {
   gate: string;
@@ -297,7 +314,8 @@ function gateToOperations(
   numClassical: number,
   warnings?: string[]
 ): Operation[] {
-  const { gate, args } = call;
+  const { args } = call;
+  const gate = QISKIT_GATE_ALIASES[call.gate] ?? call.gate;
 
   if (!SUPPORTED_QISKIT_GATES.has(gate)) {
     throw new NotImplementedError(
