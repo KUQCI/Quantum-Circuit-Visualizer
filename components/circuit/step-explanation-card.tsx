@@ -29,6 +29,9 @@ function amplitudeText(amplitude: { re: number; im: number }): string {
 
 export function StepExplanationCard() {
   const circuit = useCircuitStore((state) => state.circuit);
+  const selectedOperationId = useCircuitStore(
+    (state) => state.selectedOperationId
+  );
   const setSelectedOperation = useCircuitStore(
     (state) => state.setSelectedOperation
   );
@@ -83,7 +86,12 @@ export function StepExplanationCard() {
               <button
                 key={summary.opId}
                 type="button"
-                className="block w-full rounded border border-transparent px-2 py-1 text-left text-[11px] text-[var(--color-muted-foreground)] hover:border-[var(--color-brand-border)] hover:bg-[var(--color-brand-subtle)]"
+                className={cn(
+                  "block w-full rounded border px-2 py-1 text-left text-[11px] text-[var(--color-muted-foreground)] hover:border-[var(--color-brand-border)] hover:bg-[var(--color-brand-subtle)]",
+                  selectedOperationId === summary.opId
+                    ? "border-[var(--color-brand)] bg-[var(--color-brand-subtle)]"
+                    : "border-transparent"
+                )}
                 onClick={() => setSelectedOperation(summary.opId)}
               >
                 <span className="font-medium text-[var(--color-foreground)]">
