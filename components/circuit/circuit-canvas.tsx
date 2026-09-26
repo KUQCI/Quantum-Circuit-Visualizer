@@ -797,6 +797,7 @@ export function CircuitCanvas({
         target &&
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
           target.isContentEditable ||
           Boolean(target.closest(".monaco-editor")))
       ) {
