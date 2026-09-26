@@ -3,6 +3,7 @@
 import { xpForNextLevel } from "@/lib/learning/progress";
 import { useProgressStore } from "@/store/progress-store";
 import { Flame, Star, Trophy, Zap } from "lucide-react";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 export function ProgressSummary({ compact = false }: { compact?: boolean }) {
   const totalXp = useProgressStore((s) => s.totalXp);
@@ -10,8 +11,15 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
   const currentStreak = useProgressStore((s) => s.currentStreak);
   const getLevel = useProgressStore((s) => s.getLevel);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
   const level = getLevel();
   const xpInfo = xpForNextLevel(totalXp);
+
+  if (!progressHydrated) {
+    return (
+      <div className="min-h-20 animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40" />
+    );
+  }
 
   if (compact) {
     return (

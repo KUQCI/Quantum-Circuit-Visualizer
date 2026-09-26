@@ -22,6 +22,7 @@ import {
 } from "@/store/progress-store";
 import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
 import { BarChart3, Award, GraduationCap } from "lucide-react";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 function challengeLockReason(
   difficulty: "beginner" | "intermediate" | "advanced",
@@ -49,15 +50,27 @@ export default function ChallengesPage() {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
   const recordActivity = useProgressStore((s) => s.recordActivity);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
+    if (!progressHydrated) return;
     recordActivity();
-  }, [recordActivity]);
+  }, [progressHydrated, recordActivity]);
 
   const nextChallenge = getNextChallenge(completedLessons, completedChallenges);
   const nextLesson = getNextLesson(completedLessons);
   const allComplete = completedChallenges.length >= CHALLENGES.length;
   const tiers = ["beginner", "intermediate", "advanced"] as const;
+
+  if (!progressHydrated) {
+    return (
+      <div className="page-container max-w-6xl">
+        <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container max-w-6xl">

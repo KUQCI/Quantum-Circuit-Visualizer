@@ -18,6 +18,7 @@ import {
 } from "@/lib/navigation/flow";
 import { useProgressStore } from "@/store/progress-store";
 import { DAILY_GOAL_XP, getLevelTitle, levelQuantaVariant } from "@/lib/learning/progress";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { PenLine, Swords, BarChart3, Award } from "lucide-react";
 
 export default function LearnPage() {
@@ -28,10 +29,12 @@ export default function LearnPage() {
   const getLevel = useProgressStore((s) => s.getLevel);
   const streak = useProgressStore((s) => s.currentStreak);
   const dailyXp = useProgressStore((s) => s.dailyXp);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
+    if (!progressHydrated) return;
     recordActivity();
-  }, [recordActivity]);
+  }, [progressHydrated, recordActivity]);
 
   const level = getLevel();
   const nextLesson = getNextLesson(completedLessons);
@@ -47,6 +50,16 @@ export default function LearnPage() {
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const todayXp = dailyXp[todayKey] ?? 0;
+
+  if (!progressHydrated) {
+    return (
+      <div className="page-container max-w-5xl">
+        <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container max-w-5xl">

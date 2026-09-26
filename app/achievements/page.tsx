@@ -9,14 +9,27 @@ import { ACHIEVEMENTS } from "@/lib/learning/achievements";
 import { quantaMessages } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
 import { BarChart3, GraduationCap } from "lucide-react";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 export default function AchievementsPage() {
   const unlocked = useProgressStore((s) => s.unlockedAchievements);
   const recordActivity = useProgressStore((s) => s.recordActivity);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
+    if (!progressHydrated) return;
     recordActivity();
-  }, [recordActivity]);
+  }, [progressHydrated, recordActivity]);
+
+  if (!progressHydrated) {
+    return (
+      <div className="page-container max-w-4xl">
+        <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container max-w-4xl">

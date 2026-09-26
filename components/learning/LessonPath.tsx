@@ -14,6 +14,7 @@ import { getNextLesson } from "@/lib/navigation/flow";
 import { LessonCard } from "./LessonCard";
 import { Reveal } from "@/components/motion/Reveal";
 import { cn } from "@/lib/utils";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 const MODULE_ORDER: ModuleId[] = [
   "quantum-basics",
@@ -28,8 +29,17 @@ const MODULE_ORDER: ModuleId[] = [
 
 export function LessonPath() {
   const completedLessons = useProgressStore((s) => s.completedLessons);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
   const lessonMeta = LESSONS.map((l) => ({ id: l.id, order: l.order }));
   const nextLesson = getNextLesson(completedLessons);
+
+  if (!progressHydrated) {
+    return (
+      <div className="flex min-h-24 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <div className="lesson-journey space-y-10">

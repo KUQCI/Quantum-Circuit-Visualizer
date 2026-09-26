@@ -13,6 +13,7 @@ import { getNextChallenge, getNextLesson } from "@/lib/navigation/flow";
 import { getProgressQuantaMessage } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
 import { Award, Swords } from "lucide-react";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 const SKILL_LABELS: Record<string, string> = {
   qubits: "Qubits",
@@ -31,10 +32,12 @@ export default function ProgressPage() {
   const getLevel = useProgressStore((s) => s.getLevel);
   const recordActivity = useProgressStore((s) => s.recordActivity);
   const dailyXp = useProgressStore((s) => s.dailyXp);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
+    if (!progressHydrated) return;
     recordActivity();
-  }, [recordActivity]);
+  }, [progressHydrated, recordActivity]);
 
   const level = getLevel();
   const quantaMsg = getProgressQuantaMessage(
@@ -46,6 +49,16 @@ export default function ProgressPage() {
   const nextChallenge = getNextChallenge(completedLessons, completedChallenges);
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  if (!progressHydrated) {
+    return (
+      <div className="page-container max-w-4xl">
+        <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container max-w-4xl">

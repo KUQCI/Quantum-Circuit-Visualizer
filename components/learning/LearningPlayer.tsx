@@ -160,7 +160,6 @@ export function LearningPlayer({
   useEffect(() => {
     const currentStageIndex = (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage);
     setMaxStageReached((value) => Math.max(value, currentStageIndex));
-    setQuantaFeedback("");
   }, [stage]);
 
   useEffect(() => {
