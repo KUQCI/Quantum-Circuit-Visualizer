@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { formatParam, parseParamExpression } from "@/lib/translator-core";
 import { Copy, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEditorUiStore } from "@/store/editor-ui-store";
+import { StepTimeline } from "@/components/circuit/step-timeline";
+import { StepExplanationCard } from "@/components/circuit/step-explanation-card";
+import { WalkthroughPanel } from "@/components/learning/WalkthroughPanel";
 
 function QubitSelect({
   label,
@@ -143,6 +147,7 @@ export function OperationInspector() {
   } = useCircuitStore();
 
   const selected = circuit.operations.find((op) => op.id === selectedOperationId);
+  const inspectMode = useEditorUiStore((state) => state.inspectMode);
   const [paramDraft, setParamDraft] = useState("");
 
   useEffect(() => {
@@ -155,8 +160,34 @@ export function OperationInspector() {
     }
   }, [selected?.id, selected?.parameters, selected?.type]);
 
+  const inspectContent = inspectMode ? (
+    <>
+      <div>
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-muted-foreground)]">
+          Step through
+        </p>
+        <StepTimeline />
+      </div>
+      <StepExplanationCard />
+    </>
+  ) : null;
+  const walkthroughContent = <WalkthroughPanel />;
+
   if (!selected) {
-    return <CircuitSummary />;
+    return (
+      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]">
+        {inspectMode && (
+          <div className="shrink-0 space-y-3 overflow-y-auto border-b border-[var(--color-border)] p-3">
+            {walkthroughContent}
+            {inspectContent}
+          </div>
+        )}
+        {!inspectMode && <div className="shrink-0 p-3">{walkthroughContent}</div>}
+        <div className="min-h-0 flex-1">
+          <CircuitSummary />
+        </div>
+      </div>
+    );
   }
 
   const gateDef = getGateByType(selected.type);
@@ -231,6 +262,8 @@ export function OperationInspector() {
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-xs">
+        {walkthroughContent}
+        {inspectContent}
         <InspectorField label="Type" value={selected.type.toUpperCase()} />
         <InspectorField label="Column" value={String(selected.column + 1)} />
 

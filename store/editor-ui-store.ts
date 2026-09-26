@@ -33,6 +33,8 @@ interface EditorUiState {
   };
   inspectMode: boolean;
   inspectStep: number;
+  inspectPlaying: boolean;
+  activeWalkthroughId: "bell" | "hzh" | null;
   operationsPanelCollapsed: boolean;
   narrowActiveTab: NarrowActiveTab;
   /** Bumps when layout localStorage is cleared — remounts panel groups */
@@ -47,6 +49,8 @@ interface EditorUiState {
   setVizPanel: (panel: keyof EditorUiState["vizPanels"], show: boolean) => void;
   setInspectMode: (on: boolean) => void;
   setInspectStep: (step: number) => void;
+  setInspectPlaying: (on: boolean) => void;
+  setActiveWalkthroughId: (id: "bell" | "hzh" | null) => void;
   setOperationsPanelCollapsed: (collapsed: boolean) => void;
   setNarrowActiveTab: (tab: NarrowActiveTab) => void;
   resetLayout: () => void;
@@ -69,6 +73,8 @@ export const useEditorUiStore = create<EditorUiState>()(
       },
       inspectMode: false,
       inspectStep: 0,
+      inspectPlaying: false,
+      activeWalkthroughId: null,
       operationsPanelCollapsed: false,
       narrowActiveTab: "gates",
       layoutResetKey: 0,
@@ -83,8 +89,11 @@ export const useEditorUiStore = create<EditorUiState>()(
         set((state) => ({
           vizPanels: { ...state.vizPanels, [panel]: show },
         })),
-      setInspectMode: (on) => set({ inspectMode: on, inspectStep: 0 }),
+      setInspectMode: (on) =>
+        set({ inspectMode: on, inspectStep: 0, inspectPlaying: false }),
       setInspectStep: (step) => set({ inspectStep: Math.max(0, step) }),
+      setInspectPlaying: (on) => set({ inspectPlaying: on }),
+      setActiveWalkthroughId: (id) => set({ activeWalkthroughId: id }),
       setOperationsPanelCollapsed: (collapsed) =>
         set({ operationsPanelCollapsed: collapsed }),
       setNarrowActiveTab: (tab) => set({ narrowActiveTab: tab }),

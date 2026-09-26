@@ -518,6 +518,22 @@ export function CircuitCanvas({
     () => getExecutionLayers(circuit.operations),
     [circuit.operations]
   );
+  const inspectLayers = useMemo(
+    () =>
+      getExecutionLayers(
+        circuit.operations.filter((operation) => operation.type !== "barrier")
+      ),
+    [circuit.operations]
+  );
+
+  const selectOperationForInspect = (operationId: string) => {
+    setSelectedOperation(operationId);
+    if (!inspectMode) return;
+    const layerIndex = inspectLayers.findIndex((layer) =>
+      layer.some((operation) => operation.id === operationId)
+    );
+    if (layerIndex >= 0) setInspectStep(layerIndex + 1);
+  };
 
   const inspectCircuit = useMemo(() => {
     if (!inspectMode) return circuit;
@@ -1212,7 +1228,7 @@ export function CircuitCanvas({
                       key={op.id}
                       operation={op}
                       isSelected={selectedOperationId === op.id}
-                      onSelect={() => setSelectedOperation(op.id)}
+                      onSelect={() => selectOperationForInspect(op.id)}
                       onDelete={() => removeOperation(op.id)}
                       wireIndex={0}
                       numWires={circuit.qubits.length}
@@ -1227,7 +1243,7 @@ export function CircuitCanvas({
                     key={`${op.id}-${wireIdx}`}
                     operation={op}
                     isSelected={selectedOperationId === op.id}
-                    onSelect={() => setSelectedOperation(op.id)}
+                    onSelect={() => selectOperationForInspect(op.id)}
                     onDelete={() => removeOperation(op.id)}
                     wireIndex={wireIdx}
                     numWires={circuit.qubits.length}
