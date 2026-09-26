@@ -41,46 +41,36 @@ export function retargetOperation(
     };
   }
 
-  if (op.type === "swap" && op.targets.length >= 2) {
-    const a = qIndex(op.targets[0]);
-    const b = qIndex(op.targets[1]);
-    const span = b - a;
-    const newA = Math.max(0, Math.min(numQubits - 1, qubitIndex));
-    const newB = Math.max(0, Math.min(numQubits - 1, newA + span));
-    if (newA === newB) return next;
-    return {
-      ...next,
-      targets: [`q${Math.min(newA, newB)}`, `q${Math.max(newA, newB)}`],
-      controls: [],
-    };
-  }
-
-  if (op.controls.length > 0 && op.targets.length > 0) {
-    const controlIdx = qIndex(op.controls[0]);
-    const targetIdx = qIndex(op.targets[0]);
-    const offset = targetIdx - controlIdx;
-    const newControl = Math.max(0, Math.min(numQubits - 1, qubitIndex));
-    const newTarget = Math.max(
-      0,
-      Math.min(numQubits - 1, newControl + offset)
-    );
-    if (newControl === newTarget) return next;
-    return {
-      ...next,
-      controls: [`q${newControl}`],
-      targets: [`q${newTarget}`],
-    };
-  }
-
-  if (op.targets.length === 1 && op.controls.length === 0) {
+  if (op.controls.length === 0 && op.targets.length === 1) {
     return { ...next, targets: [`q${qubitIndex}`] };
   }
 
-  if (op.type === "barrier") {
+  const wires = [...op.controls, ...op.targets];
+  if (wires.length === 0 || numQubits < 1) {
     return next;
   }
 
-  return next;
+  const indices = wires.map(qIndex);
+  const minIdx = Math.min(...indices);
+  const maxIdx = Math.max(...indices);
+  const span = maxIdx - minIdx;
+  if (numQubits < span + 1) return next;
+
+  const requestedDelta = qubitIndex - minIdx;
+  const minDelta = -minIdx;
+  const maxDelta = numQubits - 1 - maxIdx;
+  const delta = Math.max(minDelta, Math.min(maxDelta, requestedDelta));
+  const shift = (id: string) => `q${qIndex(id) + delta}`;
+  const targets = op.targets.map(shift);
+
+  return {
+    ...next,
+    controls: op.controls.map(shift),
+    targets:
+      op.type === "swap"
+        ? [...targets].sort((a, b) => qIndex(a) - qIndex(b))
+        : targets,
+  };
 }
 
 /** Primary wire index for an operation (for selection UI). */

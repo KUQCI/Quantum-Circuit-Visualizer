@@ -56,6 +56,49 @@ describe("circuit-edit", () => {
     expect(next.column).toBe(2);
   });
 
+  it("retargetOperation shifts every wire in a controlled block", () => {
+    const op = baseOp({
+      type: "ccx",
+      controls: ["q0", "q1"],
+      targets: ["q2"],
+    });
+    const next = retargetOperation(op, 1, 1, 4, 0);
+    expect(next.controls).toEqual(["q1", "q2"]);
+    expect(next.targets).toEqual(["q3"]);
+  });
+
+  it("retargetOperation keeps both CSWAP targets", () => {
+    const op = baseOp({
+      type: "cswap",
+      controls: ["q0"],
+      targets: ["q1", "q2"],
+    });
+    const next = retargetOperation(op, 1, 1, 4, 0);
+    expect(next.controls).toEqual(["q1"]);
+    expect(next.targets).toEqual(["q2", "q3"]);
+  });
+
+  it("retargetOperation shifts multi-target operations with bounds clamping", () => {
+    const op = baseOp({
+      type: "rzz",
+      targets: ["q0", "q1"],
+    });
+    const next = retargetOperation(op, 1, 2, 3, 0);
+    expect(next.targets).toEqual(["q1", "q2"]);
+  });
+
+  it("retargetOperation only changes the column when a block cannot fit", () => {
+    const op = baseOp({
+      type: "ccx",
+      controls: ["q0", "q1"],
+      targets: ["q2"],
+    });
+    const next = retargetOperation(op, 4, 0, 2, 0);
+    expect(next.column).toBe(4);
+    expect(next.controls).toEqual(op.controls);
+    expect(next.targets).toEqual(op.targets);
+  });
+
   it("primaryWireIndex returns minimum wire", () => {
     const op = baseOp({ controls: ["q2"], targets: ["q3"] });
     expect(primaryWireIndex(op)).toBe(2);
