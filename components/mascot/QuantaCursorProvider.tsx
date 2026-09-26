@@ -19,11 +19,11 @@ export function QuantaCursorProvider() {
     root.dataset.quantaCursor = "on";
     root.style.setProperty(
       "--quanta-cursor",
-      `url(${getQuantaAssetUrl("cursorDefault")}) 4 4, auto`
+        `url(${getQuantaAssetUrl("cursorDefault")}) 30 14, auto`
     );
     root.style.setProperty(
       "--quanta-cursor-pointer",
-      `url(${getQuantaAssetUrl("cursorPointer")}) 6 2, pointer`
+        `url(${getQuantaAssetUrl("cursorPointer")}) 30 10, pointer`
     );
     return () => {
       root.removeAttribute("data-quanta-cursor");

@@ -10,6 +10,7 @@ import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAn
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -170,13 +171,13 @@ export function AppHeader() {
                   </>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
                 onClick={() => setQuantaCursor(!quantaCursor)}
-                aria-checked={quantaCursor}
+                checked={quantaCursor}
               >
                 <Mouse className="h-4 w-4" aria-hidden />
                 Quanta cursor {quantaCursor ? "on" : "off"}
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -233,13 +234,13 @@ export function AppHeader() {
                   </>
                 )}
               </DropdownMenuItem>
-              <DropdownMenuItem
+              <DropdownMenuCheckboxItem
                 onClick={() => setQuantaCursor(!quantaCursor)}
-                aria-checked={quantaCursor}
+                checked={quantaCursor}
               >
                 <Mouse className="h-4 w-4" aria-hidden />
                 Quanta cursor {quantaCursor ? "on" : "off"}
-              </DropdownMenuItem>
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

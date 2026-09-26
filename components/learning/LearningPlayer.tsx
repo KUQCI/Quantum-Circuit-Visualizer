@@ -107,6 +107,8 @@ export function LearningPlayer({
   const [sectionIndex, setSectionIndex] = useState(0);
   const [quizChoice, setQuizChoice] = useState<number | null>(null);
   const [quizChecked, setQuizChecked] = useState(false);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizWrongAttempts, setQuizWrongAttempts] = useState(0);
   const [quizFirstTry, setQuizFirstTry] = useState(true);
 
   useEffect(() => {
@@ -122,6 +124,8 @@ export function LearningPlayer({
     setSectionIndex(0);
     setQuizChoice(null);
     setQuizChecked(false);
+    setQuizIndex(0);
+    setQuizWrongAttempts(0);
     setQuizFirstTry(true);
     useEditorUiStore.getState().setInspectMode(false);
 
@@ -180,19 +184,33 @@ export function LearningPlayer({
 
   const handleCheck = () => {
     if (mode === "lesson" && isLesson(activity) && stage === "quiz") {
-      const question = activity.quiz[0];
+      const question = activity.quiz[quizIndex];
       const correct = quizChoice === question.answerIndex;
+      if (quizChecked && (correct || quizWrongAttempts >= 2)) {
+        if (quizIndex < activity.quiz.length - 1) {
+          setQuizIndex((value) => value + 1);
+          setQuizChoice(null);
+          setQuizChecked(false);
+          setQuizWrongAttempts(0);
+          return;
+        }
+        recordQuizResult(activity.id, quizFirstTry);
+        setQuantaFeedback(question.explanation);
+        setFeedbackStatus("success");
+        setFeedbackMessage("Quiz complete!");
+        setStage("build");
+        return;
+      }
       setQuizChecked(true);
       if (!correct) {
         setQuizFirstTry(false);
+        setQuizWrongAttempts((value) => value + 1);
         setQuantaFeedback(activity.quantaIncorrect);
         return;
       }
-      recordQuizResult(activity.id, quizFirstTry);
       setQuantaFeedback(question.explanation);
       setFeedbackStatus("success");
       setFeedbackMessage("Quiz answer correct!");
-      setStage("build");
       return;
     }
     if (mode === "lesson" && stage !== "build") return;
@@ -319,14 +337,21 @@ export function LearningPlayer({
       <div className="flex shrink-0 items-center justify-center gap-1 border-b border-[var(--color-border)] px-3 py-2">
         {(["learn", "quiz", "build", "done"] as LessonStage[]).map((item, index) => (
           <div key={item} className="flex items-center gap-1">
-            <span className={cn(
-              "rounded-full px-2 py-1 text-[10px] font-semibold uppercase",
-              stage === item
-                ? "bg-[var(--color-brand)] text-white"
-                : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
-            )}>
+            <button
+              type="button"
+              disabled={index > (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage)}
+              onClick={() => setStage(item)}
+              className={cn(
+                "rounded-full px-2 py-1 text-[10px] font-semibold uppercase",
+                stage === item
+                  ? "bg-[var(--color-brand)] text-white"
+                  : index < (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage)
+                    ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)] hover:underline"
+                    : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
+              )}
+            >
               {index + 1}. {item}
-            </span>
+            </button>
             {index < 3 && <ChevronRight className="h-3 w-3 text-[var(--color-muted-foreground)]" />}
           </div>
         ))}
@@ -373,9 +398,14 @@ export function LearningPlayer({
             ) : mode === "lesson" && isLesson(activity) && stage === "quiz" ? (
               <QuizCard
                 lesson={activity}
+                index={quizIndex}
                 choice={quizChoice}
                 checked={quizChecked}
-                onChoice={setQuizChoice}
+                wrongAttempts={quizWrongAttempts}
+                onChoice={(value) => {
+                  setQuizChoice(value);
+                  setQuizChecked(false);
+                }}
                 onCheck={handleCheck}
               />
             ) : stage === "done" ? (
@@ -552,8 +582,20 @@ function LessonSectionCard({
               {qubit.label}:{" "}
               {miniCircuit.operations
                 .filter((operation) => operation.targets.includes(qubit.id))
+                .concat(
+                  miniCircuit.operations.filter((operation) =>
+                    operation.controls.includes(qubit.id)
+                  )
+                )
+                .filter((operation, operationIndex, operations) =>
+                  operations.findIndex((candidate) => candidate.id === operation.id) === operationIndex
+                )
                 .sort((a, b) => a.column - b.column)
-                .map((operation) => operation.type.toUpperCase())
+                .map((operation) =>
+                  operation.controls.length
+                    ? `${operation.type.toUpperCase()}(${operation.controls.join("→")}→${operation.targets.join(",")})`
+                    : operation.type.toUpperCase()
+                )
                 .join(" → ") || "|0⟩"}
             </p>
           ))}
@@ -578,18 +620,22 @@ function LessonSectionCard({
 
 function QuizCard({
   lesson,
+  index,
   choice,
   checked,
+  wrongAttempts,
   onChoice,
   onCheck,
 }: {
   lesson: LessonDefinition;
+  index: number;
   choice: number | null;
   checked: boolean;
+  wrongAttempts: number;
   onChoice: (value: number) => void;
   onCheck: () => void;
 }) {
-  const question = lesson.quiz[0];
+  const question = lesson.quiz[index];
   const correct = choice === question.answerIndex;
   return (
     <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
@@ -601,7 +647,12 @@ function QuizCard({
         {question.options.map((option, index) => (
           <label
             key={option}
-            className="flex cursor-pointer items-start gap-2 rounded border border-[var(--color-border)] p-2 text-sm"
+            className={cn(
+              "flex cursor-pointer items-start gap-2 rounded border p-2 text-sm",
+              checked && choice === index && !correct
+                ? "border-[var(--color-destructive)] bg-[var(--color-error-subtle)]"
+                : "border-[var(--color-border)]"
+            )}
           >
             <input
               type="radio"
@@ -615,11 +666,13 @@ function QuizCard({
       </div>
       {checked && (
         <p className={correct ? "text-sm text-[var(--color-success)]" : "text-sm text-[var(--color-warning)]"}>
-          {correct ? question.explanation : "Not quite — try another answer."}
+          {correct || wrongAttempts >= 2
+            ? question.explanation
+            : "Not quite — try another answer."}
         </p>
       )}
       <Button size="sm" onClick={onCheck} disabled={choice === null}>
-        Check answer
+        {checked ? (correct || wrongAttempts >= 2 ? "Next question" : "Try again") : "Check answer"}
       </Button>
     </div>
   );

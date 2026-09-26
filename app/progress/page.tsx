@@ -76,6 +76,9 @@ export default function ProgressPage() {
         <p className="mt-1 text-[var(--color-muted-foreground)]">
           Daily goal: {Math.min(dailyXp[todayKey] ?? 0, DAILY_GOAL_XP)}/{DAILY_GOAL_XP} XP
         </p>
+        <p className="mt-1 text-[var(--color-muted-foreground)]">
+          🔥 Current streak: {currentStreak} day{currentStreak === 1 ? "" : "s"}
+        </p>
       </div>
 
       {nextLesson && (
@@ -123,8 +126,14 @@ export default function ProgressPage() {
               <div key={mod} className="rounded-xl border border-[var(--color-border)] p-3">
                 <div className="mb-1 flex justify-between text-xs">
                   <span className="font-medium">{MODULE_LABELS[mod]}</span>
-                  <span className="text-[var(--color-muted-foreground)]">
-                    {done === total && total > 0 ? "✓ Complete" : `${done}/${total}`}
+                  <span
+                    className={
+                      done === total && total > 0
+                        ? "rounded-full bg-[var(--color-success-subtle)] px-2 py-0.5 text-[var(--color-success-foreground)]"
+                        : "text-[var(--color-muted-foreground)]"
+                    }
+                  >
+                    {done === total && total > 0 ? "✓ Complete" : `${done}/${total} complete`}
                   </span>
                 </div>
                 <div className="academy-progress-bar h-1.5 overflow-hidden rounded-full">

@@ -9,8 +9,22 @@ html[data-quanta-cursor="on"]
   cursor: var(--quanta-cursor-pointer);
 }
 
-html[data-quanta-cursor="on"] :is(input, textarea, .monaco-editor, .composer-resize-handle) {
+html[data-quanta-cursor="on"]
+  :is(
+    input,
+    textarea,
+    [contenteditable="true"],
+    .monaco-editor,
+    .composer-resize-handle,
+    .composer-resize-handle--horizontal,
+    .composer-resize-handle--vertical,
+    [draggable="true"]:active
+  ) {
   cursor: revert;
+}
+
+html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
 }
 
 @theme {
@@ -491,6 +505,14 @@ html[data-theme="light"] .glass-nav-compact {
 
 .composer-resize-handle--vertical {
   height: 4px;
+  cursor: row-resize;
+}
+
+html[data-quanta-cursor="on"] .composer-resize-handle--horizontal {
+  cursor: col-resize;
+}
+
+html[data-quanta-cursor="on"] .composer-resize-handle--vertical {
   cursor: row-resize;
 }
 
