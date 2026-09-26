@@ -457,8 +457,8 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     story: "Teleportation transfers an unknown quantum state using entanglement plus two classical correction bits — never copying the original state.",
     difficulty: "advanced", estimatedMinutes: 12, xpReward: 110, skills: ["algorithms", "entanglement"],
     starterCircuit: lessonCircuit("Teleportation Preview", 2), successCondition: { type: "minQubits", count: 3 },
-    hint: "Inspect the starter circuit and trace its three wires.", quantaIntro: "Teleportation is a protocol, not science-fiction transport.",
-    quantaHint: "Follow preparation, Bell interaction, measurement, and correction.", quantaSuccess: "Teleportation tour complete.", quantaIncorrect: "Use all three qubits in the starter circuit.", order: 26,
+    hint: "Add a third qubit (Edit → Add qubit) so the circuit has all three roles, then trace the wires.", quantaIntro: "Teleportation is a protocol, not science-fiction transport.",
+    quantaHint: "Follow preparation, Bell interaction, measurement, and correction.", quantaSuccess: "Teleportation tour complete.", quantaIncorrect: "Teleportation needs three wires — add a qubit so the receiver has a place to live.", order: 26,
   },
   {
     id: "grover-two-qubits", title: "Grover with Two Qubits", module: "algorithms",
@@ -1502,7 +1502,7 @@ const LESSON_CONTENT: Record<
       {
         heading: "Trace three roles",
         body:
-          "Use the starter circuit's three wires: the unknown input, the entangled partner, and the receiver. Follow preparation, Bell interaction, measurement, and correction columns.\n\nOpen Inspector for measurements and verify their classical targets; those bits control the later correction logic.",
+          "Add a third qubit so the circuit has three wires: the unknown input, the entangled partner, and the receiver (the Quantum Teleportation sample in File → Samples shows the full protocol). Follow preparation, Bell interaction, measurement, and correction columns.\n\nOpen Inspector for measurements and verify their classical targets; those bits control the later correction logic.",
         quantaNote: "Give each wire a job before reading the whole protocol.",
       },
       {
