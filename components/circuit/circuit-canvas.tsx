@@ -991,23 +991,6 @@ export function CircuitCanvas({
                 size="sm"
                 className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
                 onClick={() =>
-                  removeClassicalBit(
-                    `c${circuit.classicalBits.length - 1}`
-                  )
-                }
-                title="Remove last classical bit"
-                aria-label="Remove last classical bit"
-              >
-                <Minus className="h-3 w-3" />
-                <span className="hidden min-[400px]:inline">Classical</span>
-              </Button>
-            )}
-            {circuit.classicalBits.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
-                onClick={() =>
                   requestRemoveClassical(
                     `c${circuit.classicalBits.length - 1}`
                   )
