@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCircuitStore, createOperationFromGateType } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { countOpsUsingQubit, countOpsUsingClassical } from "@/lib/circuit-edit";
 import {
   getGateByType,
   getGateColorByType,
@@ -26,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -296,6 +298,11 @@ function DropPreview({
   const gateDef = getGateByType(gateType);
   if (!gateDef) return null;
 
+  const needed = getQubitsNeeded(gateDef);
+  const isInvalid =
+    (gateDef.category === "two" || gateDef.category === "three") &&
+    numQubits < needed;
+
   const isTwoQubit = gateDef.category === "two";
   const controlIdx = position.qubitIndex;
   const targetIdx =
@@ -303,8 +310,12 @@ function DropPreview({
       ? position.qubitIndex + 1
       : position.qubitIndex - 1;
 
-  const previewStyle =
-    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-sm border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary)]/20 text-[11px] font-bold text-[var(--color-primary)]";
+  const previewStyle = cn(
+    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-sm border-2 border-dashed text-[11px] font-bold",
+    isInvalid
+      ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20 text-[var(--color-destructive)]"
+      : "border-[var(--color-primary)] bg-[var(--color-primary)]/20 text-[var(--color-primary)]"
+  );
 
   if (gateDef.type === "barrier") {
     return (
@@ -330,7 +341,18 @@ function DropPreview({
       >
         <GateSymbol gate={gateDef} className="h-3.5 w-3.5" />
       </div>
-      {isTwoQubit && targetIdx >= 0 && targetIdx !== controlIdx && (
+      {isInvalid && (
+        <div
+          className="pointer-events-none absolute z-40 rounded bg-[var(--color-destructive)] px-1.5 py-0.5 text-[9px] font-medium text-white"
+          style={{
+            left: columnToX(position.column) + GATE_COLUMN_INSET - 4,
+            top: qubitToY(position.qubitIndex) + 4,
+          }}
+        >
+          Need {needed} qubits
+        </div>
+      )}
+      {!isInvalid && isTwoQubit && targetIdx >= 0 && targetIdx !== controlIdx && (
         <>
           <div
             className="pointer-events-none absolute z-30 w-0.5 bg-[var(--color-primary)]/60"
@@ -451,7 +473,8 @@ export function CircuitCanvas({
     addMeasureOperation,
     removeOperation,
     updateOperation,
-    moveOperation,
+    relocateOperation,
+    duplicateOperation,
     copyOperation,
     pasteOperation,
     alignOperationsLeft,
@@ -472,6 +495,7 @@ export function CircuitCanvas({
     inspectStep,
     setInspectMode,
     setInspectStep,
+    setShowInspector,
   } = useEditorUiStore();
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -480,6 +504,10 @@ export function CircuitCanvas({
   const [movingOperationId, setMovingOperationId] = useState<string | null>(null);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [paramValue, setParamValue] = useState("");
+  const [pendingRemoveQubit, setPendingRemoveQubit] = useState<string | null>(null);
+  const [pendingRemoveClassical, setPendingRemoveClassical] = useState<string | null>(
+    null
+  );
 
   const isPaletteDragging = draggingGate !== null;
   const isPlacementMode = placementGate !== null;
@@ -516,15 +544,17 @@ export function CircuitCanvas({
 
   const placeGate = useCallback(
     (gateType: string, qubitIndex: number, column: number) => {
-      if (inspectMode) return;
+      if (inspectMode) return null;
 
       const gateDef = getGateByType(gateType);
-      if (!gateDef) return;
+      if (!gateDef) return null;
 
-      if (gateType === "control") return;
+      if (gateType === "control") return null;
+
+      let newOpId: string | null = null;
 
       if (gateType === "barrier") {
-        addOperation(
+        newOpId = addOperation(
           createOperationFromGateType(
             "barrier",
             circuit.qubits.map((q) => q.id),
@@ -533,37 +563,37 @@ export function CircuitCanvas({
           )
         );
         if (alignmentMode !== "freeform") alignOperationsLeft();
-        return;
+        return newOpId;
       }
 
       if (gateType === "measure") {
-        addMeasureOperation(`q${qubitIndex}`, column);
+        newOpId = addMeasureOperation(`q${qubitIndex}`, column);
         if (alignmentMode !== "freeform") alignOperationsLeft();
-        return;
+        return newOpId;
       }
 
       if (gateType === "reset") {
-        addOperation(
+        newOpId = addOperation(
           createOperationFromGateType("reset", [`q${qubitIndex}`], [], column)
         );
         if (alignmentMode !== "freeform") alignOperationsLeft();
-        return;
+        return newOpId;
       }
 
       if (gateDef.category === "three") {
         const needed = getQubitsNeeded(gateDef);
-        if (circuit.qubits.length < needed) return;
+        if (circuit.qubits.length < needed) return null;
         const baseIndex = Math.min(qubitIndex, circuit.qubits.length - needed);
         const controls =
           gateType === "rc3x"
             ? [`q${baseIndex}`, `q${baseIndex + 1}`, `q${baseIndex + 2}`]
             : [`q${baseIndex}`, `q${baseIndex + 1}`];
         const target = [`q${baseIndex + needed - 1}`];
-        addOperation(
+        newOpId = addOperation(
           createOperationFromGateType(gateType, target, controls, column)
         );
         if (alignmentMode !== "freeform") alignOperationsLeft();
-        return;
+        return newOpId;
       }
 
       if (gateDef.category === "two") {
@@ -572,10 +602,10 @@ export function CircuitCanvas({
           qubitIndex + 1 < circuit.qubits.length
             ? qubitIndex + 1
             : qubitIndex - 1;
-        if (targetIdx < 0 || targetIdx === controlIdx) return;
+        if (targetIdx < 0 || targetIdx === controlIdx) return null;
 
         if (gateType === "swap") {
-          addOperation(
+          newOpId = addOperation(
             createOperationFromGateType(
               gateType,
               [`q${controlIdx}`, `q${targetIdx}`],
@@ -584,7 +614,7 @@ export function CircuitCanvas({
             )
           );
         } else if (gateType === "rxx" || gateType === "rzz") {
-          addOperation(
+          newOpId = addOperation(
             createOperationFromGateType(
               gateType,
               [`q${targetIdx}`],
@@ -595,7 +625,7 @@ export function CircuitCanvas({
             )
           );
         } else {
-          addOperation(
+          newOpId = addOperation(
             createOperationFromGateType(
               gateType,
               [`q${targetIdx}`],
@@ -607,7 +637,8 @@ export function CircuitCanvas({
           );
         }
         if (alignmentMode !== "freeform") alignOperationsLeft();
-        return;
+        setShowInspector(true);
+        return newOpId;
       }
 
       const params = gateDef.defaultParams3
@@ -616,7 +647,7 @@ export function CircuitCanvas({
           ? [gateDef.defaultParams]
           : undefined;
 
-      addOperation(
+      newOpId = addOperation(
         createOperationFromGateType(
           gateType,
           [`q${qubitIndex}`],
@@ -627,8 +658,20 @@ export function CircuitCanvas({
         )
       );
       if (alignmentMode !== "freeform") alignOperationsLeft();
+      if (["rx", "ry", "rz"].includes(gateType)) {
+        setShowInspector(true);
+      }
+      return newOpId;
     },
-    [circuit, addOperation, addMeasureOperation, alignOperationsLeft, alignmentMode, inspectMode]
+    [
+      circuit,
+      addOperation,
+      addMeasureOperation,
+      alignOperationsLeft,
+      alignmentMode,
+      inspectMode,
+      setShowInspector,
+    ]
   );
 
   const handleDragOver = useCallback(
@@ -676,10 +719,11 @@ export function CircuitCanvas({
       );
 
       if (moveId && pos && !inspectMode) {
-        moveOperation(moveId, pos.column);
+        relocateOperation(moveId, pos.column, pos.qubitIndex);
         if (alignmentMode !== "freeform") alignOperationsLeft();
       } else if (gateType && pos && !inspectMode) {
-        placeGate(gateType, pos.qubitIndex, pos.column);
+        const newId = placeGate(gateType, pos.qubitIndex, pos.column);
+        if (newId) setSelectedOperation(newId);
       }
 
       setDropPreview(null);
@@ -691,7 +735,8 @@ export function CircuitCanvas({
       movingOperationId,
       circuit.qubits.length,
       placeGate,
-      moveOperation,
+      relocateOperation,
+      setSelectedOperation,
       alignOperationsLeft,
       alignmentMode,
       inspectMode,
@@ -717,6 +762,90 @@ export function CircuitCanvas({
         ]
       )
     : 0;
+
+  const requestRemoveQubit = useCallback(
+    (qubitId: string) => {
+      const count = countOpsUsingQubit(circuit, qubitId);
+      if (count > 0) {
+        setPendingRemoveQubit(qubitId);
+        return;
+      }
+      removeQubit(qubitId);
+    },
+    [circuit, removeQubit]
+  );
+
+  const requestRemoveClassical = useCallback(
+    (bitId: string) => {
+      const count = countOpsUsingClassical(circuit, bitId);
+      if (count > 0) {
+        setPendingRemoveClassical(bitId);
+        return;
+      }
+      removeClassicalBit(bitId);
+    },
+    [circuit, removeClassicalBit]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (inspectMode) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedOperationId) {
+        e.preventDefault();
+        removeOperation(selectedOperationId);
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d" && selectedOperationId) {
+        e.preventDefault();
+        duplicateOperation(selectedOperationId);
+        return;
+      }
+
+      if (!selectedOp) return;
+
+      const col = selectedOp.column;
+      const wire = selectedWireIndex;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        relocateOperation(selectedOp.id, Math.max(0, col - 1), wire);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        relocateOperation(selectedOp.id, col + 1, wire);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (wire > 0) relocateOperation(selectedOp.id, col, wire - 1);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (wire < circuit.qubits.length - 1) {
+          relocateOperation(selectedOp.id, col, wire + 1);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    inspectMode,
+    selectedOperationId,
+    selectedOp,
+    selectedWireIndex,
+    circuit.qubits.length,
+    removeOperation,
+    duplicateOperation,
+    relocateOperation,
+  ]);
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -824,7 +953,9 @@ export function CircuitCanvas({
                 variant="ghost"
                 size="sm"
                 className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
-                onClick={() => removeQubit(`q${circuit.qubits.length - 1}`)}
+                onClick={() =>
+                  requestRemoveQubit(`q${circuit.qubits.length - 1}`)
+                }
                 title="Remove last qubit"
                 aria-label="Remove last qubit"
               >
@@ -844,6 +975,22 @@ export function CircuitCanvas({
                 }
                 title="Remove last classical bit"
                 aria-label="Remove last classical bit"
+              >
+                <Minus className="h-3 w-3" />
+                <span className="hidden min-[400px]:inline">Classical</span>
+              </Button>
+            )}
+            {circuit.classicalBits.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
+                onClick={() =>
+                  requestRemoveClassical(
+                    `c${circuit.classicalBits.length - 1}`
+                  )
+                }
+                title="Remove last classical bit"
               >
                 <Minus className="h-3 w-3" />
                 <span className="hidden min-[400px]:inline">Classical</span>
@@ -879,7 +1026,8 @@ export function CircuitCanvas({
               circuit.qubits.length
             );
             if (pos) {
-              placeGate(placementGate, pos.qubitIndex, pos.column);
+              const newId = placeGate(placementGate, pos.qubitIndex, pos.column);
+              if (newId) setSelectedOperation(newId);
               onPlacementComplete?.();
             }
           }}
@@ -1090,8 +1238,8 @@ export function CircuitCanvas({
                 operation={selectedOp}
                 wireIndex={selectedWireIndex}
                 onDelete={() => removeOperation(selectedOp.id)}
-                onInspect={() => setInspectMode(true)}
-                onCopy={() => copyOperation(selectedOp.id)}
+                onInspect={() => setShowInspector(true)}
+                onCopy={() => duplicateOperation(selectedOp.id)}
                 onMoveStart={() => setMovingOperationId(selectedOp.id)}
                 draggable
               />
@@ -1168,6 +1316,31 @@ export function CircuitCanvas({
             </div>
           )}
       </div>
+
+      <ConfirmDialog
+        open={pendingRemoveQubit !== null}
+        onOpenChange={(open) => !open && setPendingRemoveQubit(null)}
+        title="Remove qubit?"
+        description="This qubit is used by existing gates. Removing it will delete those operations."
+        confirmLabel="Remove qubit and gates"
+        destructive
+        onConfirm={() => {
+          if (pendingRemoveQubit) removeQubit(pendingRemoveQubit);
+          setPendingRemoveQubit(null);
+        }}
+      />
+      <ConfirmDialog
+        open={pendingRemoveClassical !== null}
+        onOpenChange={(open) => !open && setPendingRemoveClassical(null)}
+        title="Remove classical bit?"
+        description="This classical bit is targeted by measurements. Removing it will update or remove those measurements."
+        confirmLabel="Remove classical bit"
+        destructive
+        onConfirm={() => {
+          if (pendingRemoveClassical) removeClassicalBit(pendingRemoveClassical);
+          setPendingRemoveClassical(null);
+        }}
+      />
     </TooltipProvider>
   );
 }

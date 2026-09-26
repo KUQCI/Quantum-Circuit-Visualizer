@@ -37,12 +37,16 @@ export function GateLibrary({
 }: GateLibraryProps) {
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const paletteGates = useMemo(() => getPaletteGates(), []);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    const draggable = GATE_LIBRARY_UI.filter((g) => g.type !== "control");
+    let draggable = GATE_LIBRARY_UI.filter((g) => g.type !== "control");
+    if (categoryFilter !== "all") {
+      draggable = draggable.filter((g) => g.category === categoryFilter);
+    }
     if (!q) return draggable;
     return draggable.filter(
       (g) =>
@@ -52,14 +56,17 @@ export function GateLibrary({
         g.description.toLowerCase().includes(q) ||
         g.qiskitExample.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, categoryFilter]);
 
   const filteredPalette = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    if (!q) return paletteGates;
     const types = new Set(filtered.map((g) => g.type));
     return paletteGates.filter((g) => types.has(g.type));
-  }, [query, filtered, paletteGates]);
+  }, [filtered, paletteGates]);
+
+  const categoryTabs = [
+    { id: "all", label: "All" },
+    ...GATE_CATEGORIES.filter((c) => c.id !== "modifier"),
+  ];
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -74,7 +81,7 @@ export function GateLibrary({
             <h2
               className={cn(
                 "font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]",
-                variant === "learning" ? "text-xs" : "text-xs"
+                "text-xs"
               )}
             >
               Operations
@@ -118,6 +125,29 @@ export function GateLibrary({
               className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
             />
           </div>
+          <div
+            className="mt-2 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            role="tablist"
+            aria-label="Gate categories"
+          >
+            {categoryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={categoryFilter === tab.id}
+                className={cn(
+                  "shrink-0 rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
+                  categoryFilter === tab.id
+                    ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
+                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]"
+                )}
+                onClick={() => setCategoryFilter(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
@@ -145,6 +175,10 @@ export function GateLibrary({
                 </div>
               );
             })
+          ) : filteredPalette.length === 0 ? (
+            <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
+              No gates match your search.
+            </p>
           ) : (
             <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 xl:grid-cols-4">
               {filteredPalette.map((gate) => (
