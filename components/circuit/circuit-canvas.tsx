@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatParam, parseParamExpression } from "@/lib/translator-core";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import {
   Undo2,
   Redo2,
@@ -487,6 +488,7 @@ export function CircuitCanvas({
     canUndo,
     canRedo,
   } = useCircuitStore();
+  const hydrated = usePersistHydrated(useCircuitStore.persist);
 
   const {
     alignmentMode,
@@ -856,7 +858,7 @@ export function CircuitCanvas({
               type="button"
               className="composer-toolbar-btn touch-target-sm flex shrink-0 items-center justify-center rounded"
               onClick={undo}
-              disabled={!canUndo()}
+              disabled={!hydrated || !canUndo()}
               title="Undo"
               aria-label="Undo"
             >
@@ -866,7 +868,7 @@ export function CircuitCanvas({
               type="button"
               className="composer-toolbar-btn touch-target-sm flex shrink-0 items-center justify-center rounded"
               onClick={redo}
-              disabled={!canRedo()}
+              disabled={!hydrated || !canRedo()}
               title="Redo"
               aria-label="Redo"
             >

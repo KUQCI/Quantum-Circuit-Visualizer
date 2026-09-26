@@ -11,6 +11,7 @@ import { RunCircuitDialog } from "@/components/execution/run-circuit-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getCodeLanguage } from "@/lib/code-adapters";
 import { downloadTextFile } from "@/lib/utils";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { sampleCircuitsMap } from "@/lib/sample-circuits";
 import {
   Save,
@@ -56,6 +57,7 @@ export function ComposerToolbar() {
     removeOperation,
     duplicateOperation,
   } = useCircuitStore();
+  const hydrated = usePersistHydrated(useCircuitStore.persist);
   const [registersOpen, setRegistersOpen] = useState(false);
   const [runOpen, setRunOpen] = useState(false);
   const [confirmNewOpen, setConfirmNewOpen] = useState(false);
@@ -119,8 +121,8 @@ export function ComposerToolbar() {
   ];
 
   const editItems = [
-    { label: "Undo", action: undo, disabled: !canUndo() },
-    { label: "Redo", action: redo, disabled: !canRedo() },
+    { label: "Undo", action: undo, disabled: !hydrated || !canUndo() },
+    { label: "Redo", action: redo, disabled: !hydrated || !canRedo() },
     {
       label: "Duplicate Gate",
       action: () => selectedOperationId && duplicateOperation(selectedOperationId),

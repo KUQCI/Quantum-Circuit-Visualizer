@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThemeStore, getMonacoTheme } from "@/store/theme-store";
 import type { CodeLanguageId } from "@/lib/code-adapters";
 import {
@@ -9,7 +9,13 @@ import {
   monacoLanguageForProfile,
   setupMonacoEditor,
 } from "@/lib/monaco-editor-setup";
-import type { Monaco } from "@monaco-editor/react";
+import type { Monaco, OnMount } from "@monaco-editor/react";
+
+export interface CodeDiagnostic {
+  line: number;
+  message: string;
+  severity: "error" | "warning";
+}
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -27,6 +33,7 @@ interface CodeEditorProps {
   height?: string;
   language?: string;
   completionProfile?: CodeLanguageId;
+  diagnostics?: CodeDiagnostic[];
 }
 
 export function CodeEditor({
@@ -36,8 +43,12 @@ export function CodeEditor({
   height = "400px",
   language = "python",
   completionProfile,
+  diagnostics = [],
 }: CodeEditorProps) {
   const [mounted, setMounted] = useState(false);
+  const [editorReady, setEditorReady] = useState(false);
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
   const theme = useThemeStore((s) => s.theme);
   const editorLanguage = monacoLanguageForProfile(language, completionProfile);
 
@@ -48,6 +59,45 @@ export function CodeEditor({
   const handleBeforeMount = (monaco: Monaco) => {
     setupMonacoEditor(monaco);
   };
+
+  const handleMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor;
+    monacoRef.current = monaco;
+    setEditorReady(true);
+  };
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+    const model = editor?.getModel();
+    if (!model || !monaco) return;
+
+    monaco.editor.setModelMarkers(
+      model,
+      "qci",
+      diagnostics.flatMap((diagnostic) => {
+        if (
+          diagnostic.line < 1 ||
+          diagnostic.line > model.getLineCount()
+        ) {
+          return [];
+        }
+        return [
+          {
+            startLineNumber: diagnostic.line,
+            endLineNumber: diagnostic.line,
+            startColumn: 1,
+            endColumn: model.getLineMaxColumn(diagnostic.line),
+            message: diagnostic.message,
+            severity:
+              diagnostic.severity === "error"
+                ? monaco.MarkerSeverity.Error
+                : monaco.MarkerSeverity.Warning,
+          },
+        ];
+      })
+    );
+  }, [diagnostics, editorReady]);
 
   if (!mounted) {
     return (
@@ -69,6 +119,7 @@ export function CodeEditor({
         onChange={(v) => onChange?.(v ?? "")}
         theme={getMonacoTheme(theme)}
         beforeMount={handleBeforeMount}
+        onMount={handleMount}
         options={getMonacoEditorOptions(readOnly)}
       />
     </div>
