@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRef } from "react";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { getWalkthrough } from "@/lib/learning/walkthroughs";
@@ -18,6 +19,8 @@ export function EditorBootstrap() {
   const setActiveWalkthroughId = useEditorUiStore(
     (s) => s.setActiveWalkthroughId
   );
+  const setWalkthroughBackup = useEditorUiStore((s) => s.setWalkthroughBackup);
+  const lastStartedWalkthrough = useRef<string | null>(null);
   const [projectLoadError, setProjectLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,12 +56,22 @@ export function EditorBootstrap() {
     const walkthroughId = searchParams.get("walkthrough");
     const walkthrough = getWalkthrough(walkthroughId);
     if (!walkthrough) {
+      lastStartedWalkthrough.current = null;
       setActiveWalkthroughId(null);
       return;
     }
+    if (lastStartedWalkthrough.current === walkthrough.id) return;
 
     const start = () => {
+      const current = useCircuitStore.getState();
+      if (!useEditorUiStore.getState().walkthroughBackup) {
+        setWalkthroughBackup({
+          circuit: structuredClone(current.circuit),
+          projectId: current.currentProjectId,
+        });
+      }
       loadSampleCircuit(walkthrough.circuit);
+      lastStartedWalkthrough.current = walkthrough.id;
       setActiveWalkthroughId(walkthrough.id);
       setInspectMode(true);
       setInspectStep(0);
@@ -73,6 +86,7 @@ export function EditorBootstrap() {
     searchParams,
     loadSampleCircuit,
     setActiveWalkthroughId,
+    setWalkthroughBackup,
     setInspectMode,
     setInspectStep,
   ]);
