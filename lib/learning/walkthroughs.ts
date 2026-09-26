@@ -4,6 +4,7 @@ import { bellStateCircuit, hzhCircuit } from "@/lib/sample-circuits";
 export interface WalkthroughStep {
   title: string;
   text: string;
+  inspectStep: number | null;
 }
 
 export interface Walkthrough {
@@ -24,14 +25,17 @@ export const WALKTHROUGHS: Walkthrough[] = [
       {
         title: "Create superposition",
         text: "Step through the H gate and watch q0 become a 50/50 superposition.",
+        inspectStep: 1,
       },
       {
         title: "Create entanglement",
         text: "The CX correlates q1 with q0, producing the Bell state.",
+        inspectStep: 2,
       },
       {
         title: "Try changing it",
         text: "Delete the CX gate and step to the end — the card now reports a product state and |01⟩/|10⟩ are no longer correlated; press Undo to restore it.",
+        inspectStep: null,
       },
     ],
   },
@@ -44,14 +48,17 @@ export const WALKTHROUGHS: Walkthrough[] = [
       {
         title: "Begin in superposition",
         text: "The first H creates equal probabilities for |0⟩ and |1⟩.",
+        inspectStep: 1,
       },
       {
         title: "Flip the phase",
         text: "After step 2 probabilities are unchanged (50/50), but the |1⟩ phase flipped 0°→180°.",
+        inspectStep: 2,
       },
       {
         title: "Interference reveals it",
         text: "Step 3 shows the interference result |1⟩ — that's why phase matters.",
+        inspectStep: 3,
       },
     ],
   },
