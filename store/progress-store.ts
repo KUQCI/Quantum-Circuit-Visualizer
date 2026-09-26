@@ -261,7 +261,6 @@ export const useProgressStore = create<ProgressState>()(
           | "completedModules"
         >
       >(),
-      version: 2,
       merge: (persisted, current) => {
         const saved = persisted as Partial<ProgressState> | undefined;
         if (!saved) return current;

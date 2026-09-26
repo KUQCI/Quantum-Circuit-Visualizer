@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import {
   DAILY_GOAL_XP,
   LEVEL_THRESHOLDS,
@@ -38,6 +38,11 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  delete (globalThis as { window?: unknown }).window;
+  delete (globalThis as { localStorage?: unknown }).localStorage;
+});
+
 describe("academy progress", () => {
   it("uses the twelve level thresholds and titles", () => {
     expect(LEVEL_THRESHOLDS).toHaveLength(12);
@@ -66,5 +71,37 @@ describe("academy progress", () => {
     expect(state.getLevel()).toBe(2);
     useProgressStore.getState().markLevelCelebrated(2);
     expect(useProgressStore.getState().lastCelebratedLevel).toBe(2);
+  });
+
+  it("rehydrates the original fields from a v0-shaped persisted blob", async () => {
+    const values = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    };
+    (globalThis as { window?: unknown }).window = {};
+    (globalThis as { localStorage?: unknown }).localStorage = storage;
+    values.set(
+      "qiskit-visualizer-progress",
+      JSON.stringify({
+        state: {
+          totalXp: 275,
+          completedLessons: ["what-is-a-qubit"],
+          completedChallenges: [],
+          unlockedAchievements: [],
+          currentStreak: 2,
+          lastActiveDate: "2025-01-01",
+          skillXp: { qubits: 25, gates: 0, measurement: 0, entanglement: 0, qiskit: 0 },
+        },
+        version: 0,
+      })
+    );
+    await useProgressStore.persist.rehydrate();
+    expect(useProgressStore.getState().totalXp).toBe(275);
+    expect(useProgressStore.getState().completedLessons).toEqual([
+      "what-is-a-qubit",
+    ]);
+    expect(useProgressStore.getState().dailyXp).toEqual({});
   });
 });
