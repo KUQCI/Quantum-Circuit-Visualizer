@@ -30,7 +30,7 @@ import {
   PanelLeftOpen,
   RotateCcw,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, pluralize } from "@/lib/utils";
 import { getLevelTitle, xpForNextLevel } from "@/lib/learning/progress";
 
 type ActivityDefinition = LessonDefinition | ChallengeDefinition;
@@ -490,7 +490,8 @@ export function LearningPlayer({
                   Target circuit
                 </h3>
                 <p className="text-sm text-[var(--color-muted-foreground)]">
-                  {targetCircuit.operations.length} gate(s) · {targetCircuit.qubits.length} qubit(s)
+                  {pluralize(targetCircuit.operations.length, "gate")} ·{" "}
+                  {pluralize(targetCircuit.qubits.length, "qubit")}
                 </p>
                 <ul className="mt-2 space-y-1 font-mono text-sm">
                   {targetCircuit.operations
@@ -760,7 +761,12 @@ function DoneCard({
     <div className="space-y-3">
       <QuantaAchievement
         title="Circuit milestone complete!"
-        message={`You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`}
+        layout="column"
+        message={
+          xp === 0
+            ? "This lesson was already completed — no extra XP this time. Keep experimenting and Quanta will be here for the next step."
+            : `You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`
+        }
       />
       <div className="space-y-3 rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
         <h2 className="text-lg font-semibold">Level {level} · {getLevelTitle(level)}</h2>

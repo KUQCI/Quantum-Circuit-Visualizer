@@ -72,7 +72,7 @@ export function GateLibrary({
     <TooltipProvider delayDuration={300}>
       <div
         className={cn(
-          "flex h-full flex-col",
+          "flex h-full min-w-0 flex-col overflow-hidden",
           variant === "learning" && "learning-gate-library"
         )}
       >
@@ -126,7 +126,7 @@ export function GateLibrary({
             />
           </div>
           <div
-            className="mt-2 flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
             aria-label="Gate categories"
           >
@@ -150,7 +150,7 @@ export function GateLibrary({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="min-w-0 flex-1 overflow-y-auto p-2">
           {compact ? (
             GATE_CATEGORIES.map((category) => {
               const gates = filtered.filter((g) => g.category === category.id);
@@ -180,7 +180,7 @@ export function GateLibrary({
               No gates match your search.
             </p>
           ) : (
-            <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 xl:grid-cols-4">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(52px,1fr))] gap-1.5">
               {filteredPalette.map((gate) => (
                 <GateGridItem
                   key={gate.type}

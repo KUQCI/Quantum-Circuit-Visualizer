@@ -109,8 +109,28 @@ export interface AchievementDefinition {
   name: string;
   description: string;
   xpReward: number;
-  icon: string;
+  icon: AchievementIcon;
 }
+
+export type AchievementIcon =
+  | "zap"
+  | "spiral"
+  | "repeat"
+  | "refresh"
+  | "chart"
+  | "link"
+  | "sparkles"
+  | "upload"
+  | "download"
+  | "building"
+  | "wrench"
+  | "duck"
+  | "medal"
+  | "brain"
+  | "flame"
+  | "star"
+  | "graduation"
+  | "trophy";
 
 export interface CheckResult {
   success: boolean;

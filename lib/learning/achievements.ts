@@ -1,4 +1,5 @@
-import type { AchievementDefinition } from "./types";
+import { MODULE_LABELS } from "./progress";
+import type { AchievementDefinition, AchievementIcon } from "./types";
 
 export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
@@ -6,84 +7,84 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     name: "First Gate",
     description: "Place your first gate on the canvas.",
     xpReward: 10,
-    icon: "⚡",
+    icon: "zap",
   },
   {
     id: "superposition-starter",
     name: "Superposition Starter",
     description: "Complete the Create Superposition lesson.",
     xpReward: 25,
-    icon: "🌀",
+    icon: "spiral",
   },
   {
     id: "pauli-pro",
     name: "Pauli Pro",
     description: "Complete the Pauli Flip challenge.",
     xpReward: 30,
-    icon: "🔁",
+    icon: "repeat",
   },
   {
     id: "rotation-rookie",
     name: "Rotation Rookie",
     description: "Complete the Rotate with RX lesson.",
     xpReward: 25,
-    icon: "🔄",
+    icon: "refresh",
   },
   {
     id: "measurement-master",
     name: "Measurement Master",
     description: "Complete the Measure a Qubit lesson.",
     xpReward: 30,
-    icon: "📊",
+    icon: "chart",
   },
   {
     id: "bell-builder",
     name: "Bell Builder",
     description: "Build a Bell state in a lesson or challenge.",
     xpReward: 40,
-    icon: "🔗",
+    icon: "link",
   },
   {
     id: "entanglement-explorer",
     name: "Entanglement Explorer",
     description: "Use a controlled gate in any circuit.",
     xpReward: 35,
-    icon: "✨",
+    icon: "sparkles",
   },
   {
     id: "qiskit-exporter",
     name: "Qiskit Exporter",
     description: "Export Qiskit code for the first time.",
     xpReward: 20,
-    icon: "📤",
+    icon: "upload",
   },
   {
     id: "qiskit-importer",
     name: "Qiskit Importer",
     description: "Import Qiskit code to the canvas.",
     xpReward: 20,
-    icon: "📥",
+    icon: "download",
   },
   {
     id: "circuit-architect",
     name: "Circuit Architect",
     description: "Save your first project.",
     xpReward: 20,
-    icon: "🏗️",
+    icon: "building",
   },
   {
     id: "debugger",
     name: "Debugger",
     description: "Complete Fix the Broken Circuit.",
     xpReward: 35,
-    icon: "🔧",
+    icon: "wrench",
   },
   {
     id: "quantum-explorer",
     name: "Quantum Explorer",
     description: "Complete all beginner lessons.",
     xpReward: 50,
-    icon: "🦆",
+    icon: "duck",
   },
   ...(
     [
@@ -98,45 +99,45 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     ] as const
   ).map((module) => ({
     id: `module-${module}`,
-    name: `${module.replaceAll("-", " ")} complete`,
-    description: `Complete every lesson in the ${module.replaceAll("-", " ")} module.`,
+    name: `${MODULE_LABELS[module]} Complete`,
+    description: `Complete every lesson in the ${MODULE_LABELS[module]} module.`,
     xpReward: 50,
-    icon: "🏅",
+    icon: "medal" as AchievementIcon,
   })),
   {
     id: "quiz-whiz",
     name: "Quiz Whiz",
     description: "Answer five lesson quizzes correctly on the first try.",
     xpReward: 75,
-    icon: "🧠",
+    icon: "brain" as AchievementIcon,
   },
   {
     id: "streak-3",
     name: "Three-Day Streak",
     description: "Stay active for three days in a row.",
     xpReward: 30,
-    icon: "🔥",
+    icon: "flame" as AchievementIcon,
   },
   {
     id: "streak-7",
     name: "Seven-Day Streak",
     description: "Stay active for seven days in a row.",
     xpReward: 75,
-    icon: "🌟",
+    icon: "star" as AchievementIcon,
   },
   {
     id: "capstone-graduate",
     name: "Capstone Graduate",
     description: "Complete the Bell experiment capstone.",
     xpReward: 100,
-    icon: "🎓",
+    icon: "graduation" as AchievementIcon,
   },
   {
     id: "academy-complete",
     name: "Academy Complete",
     description: "Complete every Quantum Academy lesson.",
     xpReward: 250,
-    icon: "🏆",
+    icon: "trophy" as AchievementIcon,
   },
 ];
 

@@ -543,6 +543,8 @@ html[data-theme="light"] .glass-nav-compact {
 
 /* ── Panels ── */
 .composer-panel {
+  min-width: 0;
+  overflow: hidden;
   background: var(--color-surface);
   border-color: color-mix(in srgb, var(--color-cyan-quantum) 14%, transparent);
 }
@@ -1160,7 +1162,7 @@ button:disabled,
 @media (min-width: 1024px) {
   .learning-player-grid {
     grid-template-columns:
-      280px
+      340px
       260px
       minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -1187,7 +1189,7 @@ button:disabled,
 @media (min-width: 1280px) {
   .learning-player-grid {
     grid-template-columns:
-      280px
+      340px
       260px
       minmax(0, 1fr)
       360px;
@@ -1209,6 +1211,56 @@ button:disabled,
 
 .learning-panel-lesson-collapsed {
   display: none !important;
+}
+
+@media (max-width: 767px) {
+  .workspace-shell {
+    height: auto;
+    min-height: 100dvh;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .workspace-main--player {
+    overflow: visible;
+  }
+
+  .learning-workspace-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .learning-player {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .learning-player-grid {
+    flex: none;
+  }
+
+  .learning-panel-lesson {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .learning-panel-lesson > div {
+    overflow: visible;
+  }
+
+  .learning-panel-ops {
+    max-height: 240px;
+  }
+
+  .learning-panel-canvas {
+    min-height: 300px;
+  }
+
+  .learning-panel-code-mobile {
+    max-height: 260px;
+  }
 }
 
 @media (min-width: 768px) {

@@ -6,12 +6,14 @@ import { useProgressStore } from "@/store/progress-store";
 import { getContinueTargets } from "@/lib/navigation/flow";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
+import { pluralize } from "@/lib/utils";
 
 interface ContinueWhereYouLeftOffProps {
   className?: string;
   showProject?: boolean;
   showLesson?: boolean;
   showChallenge?: boolean;
+  excludeChallengeId?: string;
 }
 
 export function ContinueWhereYouLeftOff({
@@ -19,6 +21,7 @@ export function ContinueWhereYouLeftOff({
   showProject = true,
   showLesson = true,
   showChallenge = true,
+  excludeChallengeId,
 }: ContinueWhereYouLeftOffProps) {
   return (
     <div className={className}>
@@ -27,6 +30,7 @@ export function ContinueWhereYouLeftOff({
           showProject={showProject}
           showLesson={showLesson}
           showChallenge={showChallenge}
+          excludeChallengeId={excludeChallengeId}
         />
       </ProgressHydrationGate>
     </div>
@@ -37,9 +41,11 @@ function ContinueWhereYouLeftOffContent({
   showProject = true,
   showLesson = true,
   showChallenge = true,
+  excludeChallengeId,
 }: Pick<
   ContinueWhereYouLeftOffProps,
   "showProject" | "showLesson" | "showChallenge"
+  | "excludeChallengeId"
 >) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
   const completedChallenges = useProgressStore((s) => s.completedChallenges);
@@ -82,7 +88,7 @@ function ContinueWhereYouLeftOffContent({
     cards.push({
       badge: "Continue Building",
       title: targets.project.name,
-      description: `${targets.project.circuit.qubits.length} qubits · ${targets.project.circuit.operations.length} gates`,
+      description: `${pluralize(targets.project.circuit.qubits.length, "qubit")} · ${pluralize(targets.project.circuit.operations.length, "gate")}`,
       href: `/editor?project=${targets.project.id}`,
       ctaLabel: "Open in Build",
       secondaryHref: "/projects",
@@ -90,7 +96,12 @@ function ContinueWhereYouLeftOffContent({
     });
   }
 
-  if (showChallenge && cards.length === 0 && targets.challenge) {
+  if (
+    showChallenge &&
+    cards.length === 0 &&
+    targets.challenge &&
+    targets.challenge.id !== excludeChallengeId
+  ) {
     cards.push({
       badge: "Recommended Challenge",
       title: targets.challenge.title,
@@ -103,6 +114,14 @@ function ContinueWhereYouLeftOffContent({
   }
 
   if (!showProject && !showLesson && !showChallenge && cards.length === 0) {
+    return null;
+  }
+
+  if (
+    excludeChallengeId &&
+    targets.challenge?.id === excludeChallengeId &&
+    cards.length === 0
+  ) {
     return null;
   }
 

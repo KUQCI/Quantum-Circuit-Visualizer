@@ -21,7 +21,7 @@ import {
   getCodeLanguage,
   type CodeLanguageId,
 } from "@/lib/code-adapters";
-import { PenLine, Save, BookOpen, FolderOpen } from "lucide-react";
+import { ExternalLink, PenLine, Save, BookOpen, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ExportPage() {
@@ -146,14 +146,17 @@ export default function ExportPage() {
               filename={filename}
               onExport={recordExport}
             />
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm">
               <Link href="/editor">
                 <PenLine className="h-4 w-4" />
                 Open in Editor
               </Link>
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/docs/api">IBM API Reference</Link>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/docs/api">
+                IBM API Reference
+                <ExternalLink className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </CardContent>

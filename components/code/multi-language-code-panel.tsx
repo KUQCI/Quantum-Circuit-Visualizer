@@ -73,10 +73,10 @@ export function MultiLanguageCodePanel({
   }, [displayedWarnings, parseError]);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-[var(--color-border)] px-2 py-2">
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-xs font-semibold text-[var(--color-foreground)]">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="min-w-0 border-b border-[var(--color-border)] px-2 py-2">
+        <div className="mb-2 flex min-w-0 items-center justify-between gap-2 px-1">
+          <h2 className="min-w-0 truncate text-xs font-semibold text-[var(--color-foreground)]">
             Code editor
           </h2>
           <SyncBadge status={syncStatus} error={parseError} />
@@ -98,7 +98,7 @@ export function MultiLanguageCodePanel({
             </button>
           ))}
         </div>
-        <p className="mt-1.5 px-1 text-[10px] text-[var(--color-muted-foreground)]">
+        <p className="mt-1.5 min-w-0 truncate px-1 text-[10px] text-[var(--color-muted-foreground)]">
           {adapter.description}
           {!adapter.bidirectional && " · Export only"}
         </p>
@@ -153,7 +153,7 @@ export function MultiLanguageCodePanel({
         </div>
       )}
 
-      <div className="code-editor-shell min-h-0 flex-1 p-2">
+      <div className="code-editor-shell min-h-0 min-w-0 flex-1 p-2">
         <div className="h-full min-h-[120px]">
           <CodeEditor
             key={codePanelLanguage}
@@ -168,7 +168,7 @@ export function MultiLanguageCodePanel({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 border-t border-[var(--color-border)] p-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5 border-t border-[var(--color-border)] p-2">
         <CodePanelActions
           code={code}
           filename={filename}
@@ -204,9 +204,9 @@ export function MultiLanguageCodePanel({
             href={adapter.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-auto flex items-center gap-1 text-[10px] text-[var(--color-brand)] hover:underline"
+            className="ml-auto flex min-w-0 max-w-full items-center gap-1 truncate text-[10px] text-[var(--color-brand)] hover:underline"
           >
-            API docs
+            <span className="truncate">API docs</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         )}

@@ -146,7 +146,7 @@ export default function ChallengesPage() {
                 <NextStepCard
                   badge="Continue Challenge"
                   title={nextChallenge.title}
-                  description={`${nextChallenge.description} · ~${nextChallenge.estimatedMinutes} min`}
+                  description={`${nextChallenge.description.replace(/\.$/, "")} · ~${nextChallenge.estimatedMinutes} min`}
                   href={`/challenges/${nextChallenge.id}`}
                   ctaLabel="Continue"
                 />
@@ -164,7 +164,12 @@ export default function ChallengesPage() {
           )}
         </div>
 
-        <ContinueWhereYouLeftOff className="my-6" showProject={false} showLesson={false} />
+        <ContinueWhereYouLeftOff
+          className="my-6"
+          showProject={false}
+          showLesson={false}
+          excludeChallengeId={nextChallenge?.id}
+        />
 
         <QuantaTip
           title="Quanta"

@@ -5,7 +5,50 @@ import { ACHIEVEMENTS } from "@/lib/learning/achievements";
 import { getAchievementHint } from "@/lib/navigation/flow";
 import { useProgressStore } from "@/store/progress-store";
 import { cn } from "@/lib/utils";
-import { Lock, Zap } from "lucide-react";
+import {
+  BarChart3,
+  Bird,
+  Brain,
+  Building2,
+  Download,
+  Flame,
+  GraduationCap,
+  Link2,
+  Lock,
+  Medal,
+  Orbit,
+  RefreshCw,
+  Repeat,
+  Sparkles,
+  Star,
+  Trophy,
+  Upload,
+  Wrench,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+import type { AchievementIcon } from "@/lib/learning/types";
+
+const ACHIEVEMENT_ICONS: Record<AchievementIcon, LucideIcon> = {
+  zap: Zap,
+  spiral: Orbit,
+  repeat: Repeat,
+  refresh: RefreshCw,
+  chart: BarChart3,
+  link: Link2,
+  sparkles: Sparkles,
+  upload: Upload,
+  download: Download,
+  building: Building2,
+  wrench: Wrench,
+  duck: Bird,
+  medal: Medal,
+  brain: Brain,
+  flame: Flame,
+  star: Star,
+  graduation: GraduationCap,
+  trophy: Trophy,
+};
 
 export function AchievementBadge({ achievementId }: { achievementId: string }) {
   const achievement = ACHIEVEMENTS.find((a) => a.id === achievementId);
@@ -13,6 +56,7 @@ export function AchievementBadge({ achievementId }: { achievementId: string }) {
   const hint = getAchievementHint(achievementId);
 
   if (!achievement) return null;
+  const Icon = unlocked ? ACHIEVEMENT_ICONS[achievement.icon] : Lock;
 
   return (
     <div
@@ -24,12 +68,15 @@ export function AchievementBadge({ achievementId }: { achievementId: string }) {
       )}
       aria-label={`${achievement.name}${unlocked ? ", unlocked" : ", locked"}`}
     >
-      <span className="text-3xl" aria-hidden>
-        {unlocked ? achievement.icon : "🔒"}
-      </span>
-      {!unlocked && (
-        <Lock className="mt-1 h-3 w-3 text-[var(--color-muted-foreground)]" aria-hidden />
-      )}
+      <Icon
+        className={cn(
+          "h-6 w-6",
+          unlocked
+            ? "text-[var(--color-brand)]"
+            : "text-[var(--color-muted-foreground)]"
+        )}
+        aria-hidden
+      />
       <h3 className="mt-2 text-xs font-semibold text-[var(--color-foreground)]">
         {achievement.name}
       </h3>

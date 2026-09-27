@@ -16,7 +16,7 @@ import { PageActions } from "@/components/navigation/PageActions";
 import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { PROJECT_TEMPLATES } from "@/lib/project-templates";
-import { formatDate } from "@/lib/utils";
+import { formatDate, pluralize } from "@/lib/utils";
 import { quantaMessages } from "@/lib/mascot/messages";
 import {
   Plus,
@@ -170,7 +170,7 @@ export default function ProjectsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="mb-4 text-sm text-[var(--color-muted-foreground)]">
-                      {tpl.qubits} qubits · {tpl.operations} operations
+                      {pluralize(tpl.qubits, "qubit")} · {pluralize(tpl.operations, "operation")}
                     </p>
                     <Button
                       size="sm"
@@ -222,8 +222,8 @@ export default function ProjectsPage() {
               </CardHeader>
               <CardContent>
                 <div className="mb-4 flex flex-wrap gap-4 text-sm text-[var(--color-muted-foreground)]">
-                  <span>{project.circuit.qubits.length} qubits</span>
-                  <span>{project.circuit.operations.length} operations</span>
+                  <span>{pluralize(project.circuit.qubits.length, "qubit")}</span>
+                  <span>{pluralize(project.circuit.operations.length, "operation")}</span>
                   <span>
                     {project.circuit.classicalBits.length} classical bits
                   </span>
