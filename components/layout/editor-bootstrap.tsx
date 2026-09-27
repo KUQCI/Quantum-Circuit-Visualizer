@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRef } from "react";
 import { useCircuitStore } from "@/store/circuit-store";
+import { useEditorUiStore } from "@/store/editor-ui-store";
+import { getWalkthrough } from "@/lib/learning/walkthroughs";
 import { AlertTriangle } from "lucide-react";
 
 /** Handles ?project=id query param and viewport-aware default panel state. */
@@ -10,6 +13,14 @@ export function EditorBootstrap() {
   const searchParams = useSearchParams();
   const openProject = useCircuitStore((s) => s.openProject);
   const loadProjects = useCircuitStore((s) => s.loadProjects);
+  const loadSampleCircuit = useCircuitStore((s) => s.loadSampleCircuit);
+  const setInspectMode = useEditorUiStore((s) => s.setInspectMode);
+  const setInspectStep = useEditorUiStore((s) => s.setInspectStep);
+  const setActiveWalkthroughId = useEditorUiStore(
+    (s) => s.setActiveWalkthroughId
+  );
+  const setWalkthroughBackup = useEditorUiStore((s) => s.setWalkthroughBackup);
+  const lastStartedWalkthrough = useRef<string | null>(null);
   const [projectLoadError, setProjectLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,6 +51,46 @@ export function EditorBootstrap() {
 
     return useCircuitStore.persist.onFinishHydration(tryOpen);
   }, [searchParams, openProject, loadProjects]);
+
+  useEffect(() => {
+    const walkthroughId = searchParams.get("walkthrough");
+    const walkthrough = getWalkthrough(walkthroughId);
+    if (!walkthrough) {
+      lastStartedWalkthrough.current = null;
+      setActiveWalkthroughId(null);
+      return;
+    }
+    if (lastStartedWalkthrough.current === walkthrough.id) return;
+
+    const start = () => {
+      useCircuitStore.getState().flushActivityExit();
+      const current = useCircuitStore.getState();
+      if (!useEditorUiStore.getState().walkthroughBackup) {
+        setWalkthroughBackup({
+          circuit: structuredClone(current.circuit),
+          projectId: current.currentProjectId,
+        });
+      }
+      loadSampleCircuit(walkthrough.circuit);
+      lastStartedWalkthrough.current = walkthrough.id;
+      setActiveWalkthroughId(walkthrough.id);
+      setInspectMode(true);
+      setInspectStep(0);
+    };
+
+    if (useCircuitStore.persist.hasHydrated()) {
+      start();
+      return;
+    }
+    return useCircuitStore.persist.onFinishHydration(start);
+  }, [
+    searchParams,
+    loadSampleCircuit,
+    setActiveWalkthroughId,
+    setWalkthroughBackup,
+    setInspectMode,
+    setInspectStep,
+  ]);
 
   // Sanitize leftover lesson/challenge titles when opening free Build mode
   useEffect(() => {

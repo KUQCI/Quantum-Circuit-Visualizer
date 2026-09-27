@@ -17,6 +17,8 @@ import {
   getNextLesson,
 } from "@/lib/navigation/flow";
 import { useProgressStore } from "@/store/progress-store";
+import { DAILY_GOAL_XP, getLevelTitle, levelQuantaVariant } from "@/lib/learning/progress";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { PenLine, Swords, BarChart3, Award } from "lucide-react";
 
 export default function LearnPage() {
@@ -26,10 +28,13 @@ export default function LearnPage() {
   const totalXp = useProgressStore((s) => s.totalXp);
   const getLevel = useProgressStore((s) => s.getLevel);
   const streak = useProgressStore((s) => s.currentStreak);
+  const dailyXp = useProgressStore((s) => s.dailyXp);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
+    if (!progressHydrated) return;
     recordActivity();
-  }, [recordActivity]);
+  }, [progressHydrated, recordActivity]);
 
   const level = getLevel();
   const nextLesson = getNextLesson(completedLessons);
@@ -42,6 +47,19 @@ export default function LearnPage() {
     completedLessons.length,
     streak
   );
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const todayXp = dailyXp[todayKey] ?? 0;
+
+  if (!progressHydrated) {
+    return (
+      <div className="page-container max-w-5xl">
+        <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container max-w-5xl">
@@ -49,11 +67,22 @@ export default function LearnPage() {
         <div className="academy-hero overflow-hidden rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
             <div className="relative shrink-0 self-center sm:self-auto">
-              <QuantaImage variant="learning" size="lg" priority />
+              <QuantaImage variant={levelQuantaVariant(level)} size="lg" priority />
             </div>
             <div className="flex-1">
               <p className="qci-section-eyebrow mb-1">Quantum Academy</p>
               <h1 className="page-title mt-1 text-3xl">Learn Quantum Circuits</h1>
+              <p className="mt-2 text-sm font-semibold text-[var(--color-brand)]">
+                Level {level} · {getLevelTitle(level)}
+              </p>
+              <div className="mt-3 max-w-sm">
+                <div className="mb-1 flex justify-between text-xs text-[var(--color-muted-foreground)]">
+                  <span>Daily goal</span><span>{Math.min(todayXp, DAILY_GOAL_XP)}/{DAILY_GOAL_XP} XP</span>
+                </div>
+                <div className="academy-progress-bar h-2 overflow-hidden rounded-full">
+                  <div className="academy-progress-fill h-full rounded-full" style={{ width: `${Math.min(100, todayXp / DAILY_GOAL_XP * 100)}%` }} />
+                </div>
+              </div>
               <p className="page-description mt-2 max-w-xl">
                 A guided QCI learning track — academic and research-focused, with
                 Quanta as your guide.
@@ -135,6 +164,29 @@ export default function LearnPage() {
             />
           </Reveal>
         )}
+
+        <Reveal as="section" className="mb-8">
+          <p className="qci-section-eyebrow">Build mode practice</p>
+          <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
+            Guided walkthroughs
+          </h2>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <NextStepCard
+              badge="Walkthrough 1"
+              title="Bell-state entanglement"
+              description="Step through H and CX to see how entanglement appears in the state."
+              href="/editor?walkthrough=bell"
+              ctaLabel="Open walkthrough"
+            />
+            <NextStepCard
+              badge="Walkthrough 2"
+              title="Why phase matters"
+              description="Use HZH to see a phase change become visible through interference."
+              href="/editor?walkthrough=hzh"
+              ctaLabel="Open walkthrough"
+            />
+          </div>
+        </Reveal>
 
         <Reveal className="mb-8">
           <QuantaMessage

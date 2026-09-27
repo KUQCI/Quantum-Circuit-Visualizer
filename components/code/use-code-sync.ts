@@ -9,7 +9,14 @@ import { decideCodeSync } from "@/lib/code-sync-policy";
 import type { Circuit } from "@/lib/circuit-schema";
 import { debounce } from "@/lib/utils";
 
-export function useCodeSync() {
+interface UseCodeSyncOptions {
+  onCodeApplied?: () => void;
+}
+
+export function useCodeSync(
+  active = true,
+  { onCodeApplied }: UseCodeSyncOptions = {}
+) {
   const circuit = useCircuitStore((s) => s.circuit);
   const setCircuit = useCircuitStore((s) => s.setCircuit);
   const codePanelLanguage = useEditorUiStore((s) => s.codePanelLanguage);
@@ -22,6 +29,10 @@ export function useCodeSync() {
     "synced" | "editing" | "error" | "blocked" | "partial"
   >("synced");
   const parseGenerationRef = useRef(0);
+  const onCodeAppliedRef = useRef(onCodeApplied);
+  useEffect(() => {
+    onCodeAppliedRef.current = onCodeApplied;
+  }, [onCodeApplied]);
   /** Skip one circuit→code sync after the circuit was updated by parsing editor text */
   const skipNextCircuitToCodeSyncRef = useRef(false);
   /** While true, never overwrite the editor from the canvas (user is typing or has a parse error) */
@@ -45,6 +56,7 @@ export function useCodeSync() {
 
   const parseCode = useCallback(
     (newCode: string, generation: number) => {
+      if (!active) return;
       if (generation !== parseGenerationRef.current) return;
 
       if (!adapter.bidirectional) {
@@ -96,9 +108,10 @@ export function useCodeSync() {
       suppressCircuitToCodeSyncRef.current = false;
       setPendingCircuit(null);
       setCircuit(decision.circuit);
+      onCodeAppliedRef.current?.();
       setSyncStatus("synced");
     },
-    [adapter, circuit.name, setCircuit]
+    [active, adapter, circuit.name, setCircuit]
   );
 
   const debouncedParseRef = useRef<
@@ -112,6 +125,12 @@ export function useCodeSync() {
     debouncedParseRef.current = debounced;
     return () => debounced.cancel();
   }, [parseCode]);
+
+  useEffect(() => {
+    if (active) return;
+    debouncedParseRef.current?.cancel();
+    parseGenerationRef.current += 1;
+  }, [active]);
 
   useEffect(() => {
     return () => {
@@ -177,6 +196,7 @@ export function useCodeSync() {
     skipNextCircuitToCodeSyncRef.current = true;
     suppressCircuitToCodeSyncRef.current = false;
     setCircuit(pendingCircuit);
+    onCodeAppliedRef.current?.();
     setPendingCircuit(null);
     setParseError(null);
     setSyncStatus("synced");

@@ -14,6 +14,8 @@ function resetProgress() {
       gates: 0,
       measurement: 0,
       entanglement: 0,
+      algorithms: 0,
+      phase: 0,
       qiskit: 0,
     },
     exportActionCount: 0,

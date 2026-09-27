@@ -10,6 +10,7 @@ import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAn
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -33,6 +34,7 @@ import {
   Palette,
   ExternalLink,
   Bug,
+  Mouse,
 } from "lucide-react";
 
 const primaryNav = [
@@ -59,7 +61,7 @@ const secondaryNav = [
  */
 export function AppHeader() {
   const pathname = usePathname();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme, quantaCursor, setQuantaCursor } = useThemeStore();
 
   return (
     <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
@@ -169,6 +171,13 @@ export function AppHeader() {
                   </>
                 )}
               </DropdownMenuItem>
+              <DropdownMenuCheckboxItem
+                onClick={() => setQuantaCursor(!quantaCursor)}
+                checked={quantaCursor}
+              >
+                <Mouse className="h-4 w-4" aria-hidden />
+                Quanta cursor {quantaCursor ? "on" : "off"}
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -225,6 +234,13 @@ export function AppHeader() {
                   </>
                 )}
               </DropdownMenuItem>
+              <DropdownMenuCheckboxItem
+                onClick={() => setQuantaCursor(!quantaCursor)}
+                checked={quantaCursor}
+              >
+                <Mouse className="h-4 w-4" aria-hidden />
+                Quanta cursor {quantaCursor ? "on" : "off"}
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -27,7 +27,7 @@ describe("circuit-edit", () => {
 
   it("retargetOperation moves single-qubit gate to new qubit", () => {
     const op = baseOp({ type: "x", targets: ["q0"], column: 2 });
-    const next = retargetOperation(op, 3, 1, 3, 0);
+    const next = retargetOperation(op, 3, 1, 3);
     expect(next.column).toBe(3);
     expect(next.targets).toEqual(["q1"]);
   });
@@ -38,9 +38,20 @@ describe("circuit-edit", () => {
       targets: ["q0"],
       classicalTargets: ["c0"],
     });
-    const next = retargetOperation(op, 1, 1, 2, 2);
+    const next = retargetOperation(op, 1, 1, 2);
     expect(next.targets).toEqual(["q1"]);
-    expect(next.classicalTargets).toEqual(["c1"]);
+    expect(next.classicalTargets).toEqual(["c0"]);
+  });
+
+  it("retargetOperation preserves a measurement classical target in either direction", () => {
+    const op = baseOp({
+      type: "measure",
+      targets: ["q1"],
+      classicalTargets: ["c0"],
+    });
+    const next = retargetOperation(op, 2, 0, 2);
+    expect(next.targets).toEqual(["q0"]);
+    expect(next.classicalTargets).toEqual(["c0"]);
   });
 
   it("retargetOperation preserves control/target offset for CX", () => {
@@ -50,10 +61,53 @@ describe("circuit-edit", () => {
       targets: ["q1"],
       column: 0,
     });
-    const next = retargetOperation(op, 2, 1, 4, 0);
+    const next = retargetOperation(op, 2, 1, 4);
     expect(next.controls).toEqual(["q1"]);
     expect(next.targets).toEqual(["q2"]);
     expect(next.column).toBe(2);
+  });
+
+  it("retargetOperation shifts every wire in a controlled block", () => {
+    const op = baseOp({
+      type: "ccx",
+      controls: ["q0", "q1"],
+      targets: ["q2"],
+    });
+    const next = retargetOperation(op, 1, 1, 4);
+    expect(next.controls).toEqual(["q1", "q2"]);
+    expect(next.targets).toEqual(["q3"]);
+  });
+
+  it("retargetOperation keeps both CSWAP targets", () => {
+    const op = baseOp({
+      type: "cswap",
+      controls: ["q0"],
+      targets: ["q1", "q2"],
+    });
+    const next = retargetOperation(op, 1, 1, 4);
+    expect(next.controls).toEqual(["q1"]);
+    expect(next.targets).toEqual(["q2", "q3"]);
+  });
+
+  it("retargetOperation shifts multi-target operations with bounds clamping", () => {
+    const op = baseOp({
+      type: "rzz",
+      targets: ["q0", "q1"],
+    });
+    const next = retargetOperation(op, 1, 2, 3);
+    expect(next.targets).toEqual(["q1", "q2"]);
+  });
+
+  it("retargetOperation only changes the column when a block cannot fit", () => {
+    const op = baseOp({
+      type: "ccx",
+      controls: ["q0", "q1"],
+      targets: ["q2"],
+    });
+    const next = retargetOperation(op, 4, 0, 2);
+    expect(next.column).toBe(4);
+    expect(next.controls).toEqual(op.controls);
+    expect(next.targets).toEqual(op.targets);
   });
 
   it("primaryWireIndex returns minimum wire", () => {

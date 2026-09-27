@@ -5,9 +5,14 @@ import { persist } from "zustand/middleware";
 import type { CodeLanguageId } from "@/lib/code-adapters";
 import { CODE_LANGUAGES } from "@/lib/code-adapters";
 import { asBoolean, createSafeJsonStorage } from "@/lib/safe-persist";
+import type { Circuit } from "@/lib/circuit-schema";
 
 export type AlignmentMode = "freeform" | "left" | "layers";
 export type NarrowActiveTab = "gates" | "inspector" | "results" | "code";
+export interface WalkthroughBackup {
+  circuit: Circuit;
+  projectId: string | null;
+}
 
 export const COMPOSER_LAYOUT_STORAGE_KEYS = [
   "react-resizable-panels:qci-composer-h",
@@ -33,6 +38,9 @@ interface EditorUiState {
   };
   inspectMode: boolean;
   inspectStep: number;
+  inspectPlaying: boolean;
+  activeWalkthroughId: "bell" | "hzh" | null;
+  walkthroughBackup: WalkthroughBackup | null;
   operationsPanelCollapsed: boolean;
   narrowActiveTab: NarrowActiveTab;
   /** Bumps when layout localStorage is cleared — remounts panel groups */
@@ -47,6 +55,9 @@ interface EditorUiState {
   setVizPanel: (panel: keyof EditorUiState["vizPanels"], show: boolean) => void;
   setInspectMode: (on: boolean) => void;
   setInspectStep: (step: number) => void;
+  setInspectPlaying: (on: boolean) => void;
+  setActiveWalkthroughId: (id: "bell" | "hzh" | null) => void;
+  setWalkthroughBackup: (backup: WalkthroughBackup | null) => void;
   setOperationsPanelCollapsed: (collapsed: boolean) => void;
   setNarrowActiveTab: (tab: NarrowActiveTab) => void;
   resetLayout: () => void;
@@ -69,6 +80,9 @@ export const useEditorUiStore = create<EditorUiState>()(
       },
       inspectMode: false,
       inspectStep: 0,
+      inspectPlaying: false,
+      activeWalkthroughId: null,
+      walkthroughBackup: null,
       operationsPanelCollapsed: false,
       narrowActiveTab: "gates",
       layoutResetKey: 0,
@@ -83,8 +97,12 @@ export const useEditorUiStore = create<EditorUiState>()(
         set((state) => ({
           vizPanels: { ...state.vizPanels, [panel]: show },
         })),
-      setInspectMode: (on) => set({ inspectMode: on, inspectStep: 0 }),
+      setInspectMode: (on) =>
+        set({ inspectMode: on, inspectStep: 0, inspectPlaying: false }),
       setInspectStep: (step) => set({ inspectStep: Math.max(0, step) }),
+      setInspectPlaying: (on) => set({ inspectPlaying: on }),
+      setActiveWalkthroughId: (id) => set({ activeWalkthroughId: id }),
+      setWalkthroughBackup: (backup) => set({ walkthroughBackup: backup }),
       setOperationsPanelCollapsed: (collapsed) =>
         set({ operationsPanelCollapsed: collapsed }),
       setNarrowActiveTab: (tab) => set({ narrowActiveTab: tab }),

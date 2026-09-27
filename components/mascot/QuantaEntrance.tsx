@@ -41,6 +41,7 @@ export function QuantaEntrance() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const skipRef = useRef<HTMLButtonElement>(null);
   const previousFocus = useRef<Element | null>(null);
+  const fadeTimeout = useRef<number | null>(null);
   const fadeStarted = useRef(false);
 
   const finish = useCallback(() => {
@@ -48,7 +49,10 @@ export function QuantaEntrance() {
     fadeStarted.current = true;
     markEntranceSeen();
     setPhase("fading");
-    window.setTimeout(() => setPhase("done"), FADE_MS);
+    fadeTimeout.current = window.setTimeout(() => {
+      fadeTimeout.current = null;
+      setPhase("done");
+    }, FADE_MS);
   }, []);
 
   useEffect(() => {
@@ -69,6 +73,7 @@ export function QuantaEntrance() {
   useEffect(() => {
     if (!active) return;
     previousFocus.current = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     skipRef.current?.focus();
 
@@ -96,6 +101,11 @@ export function QuantaEntrance() {
 
     return () => {
       window.clearTimeout(bail);
+      if (fadeTimeout.current !== null) {
+        window.clearTimeout(fadeTimeout.current);
+        fadeTimeout.current = null;
+      }
+      document.body.style.overflow = previousOverflow;
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("ended", finish);
@@ -105,7 +115,6 @@ export function QuantaEntrance() {
 
   useEffect(() => {
     if (phase !== "done" || !fadeStarted.current) return;
-    document.body.style.overflow = "";
     const prev = previousFocus.current;
     if (prev instanceof HTMLElement && document.contains(prev)) prev.focus();
   }, [phase]);

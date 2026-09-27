@@ -223,7 +223,7 @@ function GateBlock({
     <div
       className={cn(
         "absolute flex items-center justify-center",
-        isPaletteDragging || isInspectLocked
+        isPaletteDragging
           ? "pointer-events-none"
           : "cursor-pointer"
       )}
@@ -518,6 +518,22 @@ export function CircuitCanvas({
     () => getExecutionLayers(circuit.operations),
     [circuit.operations]
   );
+  const inspectLayers = useMemo(
+    () =>
+      getExecutionLayers(
+        circuit.operations.filter((operation) => operation.type !== "barrier")
+      ),
+    [circuit.operations]
+  );
+
+  const selectOperationForInspect = (operationId: string) => {
+    setSelectedOperation(operationId);
+    if (!inspectMode) return;
+    const layerIndex = inspectLayers.findIndex((layer) =>
+      layer.some((operation) => operation.id === operationId)
+    );
+    if (layerIndex >= 0) setInspectStep(layerIndex + 1);
+  };
 
   const inspectCircuit = useMemo(() => {
     if (!inspectMode) return circuit;
@@ -797,6 +813,7 @@ export function CircuitCanvas({
         target &&
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
           target.isContentEditable ||
           Boolean(target.closest(".monaco-editor")))
       ) {
@@ -983,23 +1000,6 @@ export function CircuitCanvas({
               >
                 <Minus className="h-3 w-3" />
                 <span className="hidden min-[400px]:inline">Qubit</span>
-              </Button>
-            )}
-            {circuit.classicalBits.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
-                onClick={() =>
-                  removeClassicalBit(
-                    `c${circuit.classicalBits.length - 1}`
-                  )
-                }
-                title="Remove last classical bit"
-                aria-label="Remove last classical bit"
-              >
-                <Minus className="h-3 w-3" />
-                <span className="hidden min-[400px]:inline">Classical</span>
               </Button>
             )}
             {circuit.classicalBits.length > 0 && (
@@ -1228,7 +1228,7 @@ export function CircuitCanvas({
                       key={op.id}
                       operation={op}
                       isSelected={selectedOperationId === op.id}
-                      onSelect={() => setSelectedOperation(op.id)}
+                      onSelect={() => selectOperationForInspect(op.id)}
                       onDelete={() => removeOperation(op.id)}
                       wireIndex={0}
                       numWires={circuit.qubits.length}
@@ -1243,7 +1243,7 @@ export function CircuitCanvas({
                     key={`${op.id}-${wireIdx}`}
                     operation={op}
                     isSelected={selectedOperationId === op.id}
-                    onSelect={() => setSelectedOperation(op.id)}
+                    onSelect={() => selectOperationForInspect(op.id)}
                     onDelete={() => removeOperation(op.id)}
                     wireIndex={wireIdx}
                     numWires={circuit.qubits.length}

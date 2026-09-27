@@ -132,6 +132,27 @@ describe("circuit store register + measure safety", () => {
     expect(restored.circuit.operations[0].type).toBe("h");
   });
 
+  it("flushes a pending activity exit synchronously", () => {
+    const store = useCircuitStore.getState();
+    store.addOperation({
+      type: "h",
+      label: "H",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 0,
+    });
+    const buildCircuit = structuredClone(useCircuitStore.getState().circuit);
+
+    store.enterActivityCircuit(createEmptyCircuit("Lesson", 1, 0));
+    store.exitActivityCircuit();
+    store.flushActivityExit();
+
+    const restored = useCircuitStore.getState();
+    expect(restored.buildWorkspace).toBeNull();
+    expect(restored.circuit).toEqual(buildCircuit);
+  });
+
   it("keeps Build backup across nested activity mounts", () => {
     const store = useCircuitStore.getState();
     store.addOperation({

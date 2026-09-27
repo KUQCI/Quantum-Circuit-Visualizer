@@ -85,6 +85,41 @@ export const simpleSuperpositionCircuit: Circuit = {
   ],
 };
 
+export const hzhCircuit: Circuit = {
+  name: "HZH Phase Walkthrough",
+  qubits: [{ id: "q0", label: "q[0]" }],
+  classicalBits: [],
+  operations: [
+    {
+      id: "op_hzh_h1",
+      type: "h",
+      label: "H",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 0,
+    },
+    {
+      id: "op_hzh_z",
+      type: "z",
+      label: "Z",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 1,
+    },
+    {
+      id: "op_hzh_h2",
+      type: "h",
+      label: "H",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 2,
+    },
+  ],
+};
+
 export const quantumTeleportationCircuit: Circuit = {
   name: "Quantum Teleportation",
   qubits: [
@@ -174,6 +209,7 @@ export const sampleCircuits = [
   bellStateCircuit,
   ghzStateCircuit,
   simpleSuperpositionCircuit,
+  hzhCircuit,
   quantumTeleportationCircuit,
 ];
 
@@ -181,5 +217,6 @@ export const sampleCircuitsMap: Record<string, Circuit> = {
   bell: bellStateCircuit,
   ghz: ghzStateCircuit,
   superposition: simpleSuperpositionCircuit,
+  hzh: hzhCircuit,
   teleportation: quantumTeleportationCircuit,
 };

@@ -62,6 +62,8 @@ interface CircuitState {
   enterActivityCircuit: (circuit: Circuit) => void;
   /** Leave Learn/Challenge and restore Build when no activity remains mounted. */
   exitActivityCircuit: () => void;
+  /** Restore a pending Build workspace exit synchronously when entering Build. */
+  flushActivityExit: () => void;
   /** Keep the current activity circuit as Build (e.g. Open in Build). */
   commitActivityToWorkspace: () => void;
   resetCircuit: () => void;
@@ -211,7 +213,32 @@ export function circuitHasContent(circuit: Circuit): boolean {
 
 export const useCircuitStore = create<CircuitState>()(
   persist(
-    (set, get) => ({
+    (set, get) => {
+      const restoreBuildWorkspace = () => {
+        if (activityMountCount > 0) return;
+        set((state) => {
+          const backup = state.buildWorkspace;
+          if (!backup) return state;
+          const circuit = prepareCircuit(backup.circuit);
+          return {
+            buildWorkspace: null,
+            circuit,
+            currentProjectId: backup.currentProjectId,
+            selectedOperationId: null,
+            history:
+              backup.history.length > 0
+                ? backup.history
+                : [{ circuit: structuredClone(circuit) }],
+            historyIndex: Math.min(
+              Math.max(0, backup.historyIndex),
+              Math.max(0, backup.history.length - 1)
+            ),
+            validationWarnings: validateCircuitPlacement(circuit),
+          };
+        });
+      };
+
+      return {
       circuit: createEmptyCircuit("Untitled Circuit", 2, 0),
       currentProjectId: null,
       selectedOperationId: null,
@@ -273,28 +300,14 @@ export const useCircuitStore = create<CircuitState>()(
         clearPendingActivityExit();
         pendingActivityExit = setTimeout(() => {
           pendingActivityExit = null;
-          if (activityMountCount > 0) return;
-          set((state) => {
-            const backup = state.buildWorkspace;
-            if (!backup) return state;
-            const circuit = prepareCircuit(backup.circuit);
-            return {
-              buildWorkspace: null,
-              circuit,
-              currentProjectId: backup.currentProjectId,
-              selectedOperationId: null,
-              history:
-                backup.history.length > 0
-                  ? backup.history
-                  : [{ circuit: structuredClone(circuit) }],
-              historyIndex: Math.min(
-                Math.max(0, backup.historyIndex),
-                Math.max(0, backup.history.length - 1)
-              ),
-              validationWarnings: validateCircuitPlacement(circuit),
-            };
-          });
+          restoreBuildWorkspace();
         }, 0);
+      },
+
+      flushActivityExit: () => {
+        if (activityMountCount > 0 || !get().buildWorkspace) return;
+        clearPendingActivityExit();
+        restoreBuildWorkspace();
       },
 
       commitActivityToWorkspace: () => {
@@ -539,8 +552,7 @@ export const useCircuitStore = create<CircuitState>()(
             op,
             column,
             qubitIndex,
-            state.circuit.qubits.length,
-            state.circuit.classicalBits.length
+            state.circuit.qubits.length
           );
           const circuit: Circuit = {
             ...state.circuit,
@@ -779,7 +791,8 @@ export const useCircuitStore = create<CircuitState>()(
           ...(get().currentProjectId === id ? { currentProjectId: null } : {}),
         });
       },
-    }),
+      } satisfies CircuitState;
+    },
     {
       name: "qiskit-visualizer-circuit",
       storage: createSafeJsonStorage<

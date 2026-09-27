@@ -14,6 +14,7 @@ import { getNextLesson } from "@/lib/navigation/flow";
 import { LessonCard } from "./LessonCard";
 import { Reveal } from "@/components/motion/Reveal";
 import { cn } from "@/lib/utils";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 const MODULE_ORDER: ModuleId[] = [
   "quantum-basics",
@@ -21,13 +22,24 @@ const MODULE_ORDER: ModuleId[] = [
   "measurement",
   "multi-qubit-gates",
   "entanglement",
+  "algorithms",
   "qiskit",
+  "capstone",
 ];
 
 export function LessonPath() {
   const completedLessons = useProgressStore((s) => s.completedLessons);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
   const lessonMeta = LESSONS.map((l) => ({ id: l.id, order: l.order }));
   const nextLesson = getNextLesson(completedLessons);
+
+  if (!progressHydrated) {
+    return (
+      <div className="flex min-h-24 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+        Loading…
+      </div>
+    );
+  }
 
   return (
     <div className="lesson-journey space-y-10">
@@ -41,6 +53,13 @@ export function LessonPath() {
           completedLessons.includes(l.id)
         ).length;
         const progress = done / moduleLessons.length;
+        const prerequisiteModule = moduleIndex > 0 ? MODULE_ORDER[moduleIndex - 1] : null;
+        const prerequisiteLessons = prerequisiteModule
+          ? LESSONS.filter((lesson) => lesson.module === prerequisiteModule)
+          : [];
+        const moduleUnlocked =
+          !prerequisiteModule ||
+          prerequisiteLessons.every((lesson) => completedLessons.includes(lesson.id));
 
         return (
           <section key={moduleId} className="relative">
@@ -62,8 +81,21 @@ export function LessonPath() {
                   {MODULE_WHY[moduleId]}
                 </p>
               </div>
-              <span className="text-xs text-[var(--color-muted-foreground)]">
-                {done}/{moduleLessons.length} complete
+              <span
+                className={cn(
+                  "rounded-full px-2 py-1 text-xs",
+                  done === moduleLessons.length
+                    ? "bg-[var(--color-success-subtle)] text-[var(--color-success-foreground)]"
+                    : !moduleUnlocked
+                      ? "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
+                      : "text-[var(--color-muted-foreground)]"
+                )}
+              >
+                {done === moduleLessons.length
+                  ? "✓ Complete"
+                  : !moduleUnlocked
+                    ? `Locked · Finish ${MODULE_LABELS[prerequisiteModule!]}`
+                    : `${done}/${moduleLessons.length} complete`}
               </span>
             </div>
             <div
@@ -97,11 +129,13 @@ export function LessonPath() {
                   <Reveal key={lesson.id} delay={(lesson.order % 3) * 60}>
                     <LessonCard
                       lesson={lesson}
-                      unlocked={unlocked}
+                    unlocked={moduleUnlocked && unlocked}
                       completed={completedLessons.includes(lesson.id)}
                       recommended={nextLesson?.id === lesson.id}
                       lockedReason={
-                        !unlocked && prevLesson
+                        !moduleUnlocked
+                          ? `Finish ${MODULE_LABELS[prerequisiteModule!]} to unlock`
+                          : !unlocked && prevLesson
                           ? `Complete “${prevLesson.title}” first`
                           : undefined
                       }

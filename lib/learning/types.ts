@@ -7,7 +7,24 @@ export type SkillTag =
   | "gates"
   | "measurement"
   | "entanglement"
-  | "qiskit";
+  | "qiskit"
+  | "algorithms"
+  | "phase";
+
+export interface LessonSection {
+  heading: string;
+  body: string;
+  circuit?: Circuit;
+  quantaNote?: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  answerIndex: number;
+  explanation: string;
+}
 
 export type CheckCondition =
   | { type: "manual" }
@@ -16,7 +33,7 @@ export type CheckCondition =
   | { type: "hasGate"; gate: string }
   | { type: "hasGateOnQubit"; gate: string; target: string }
   | { type: "hasControlledGate"; gate?: string }
-  | { type: "hasMeasurement"; qubit?: string; classical?: string }
+  | { type: "hasMeasurement"; qubit?: string; classical?: string; count?: number }
   | {
       type: "operationOrder";
       operations: Array<{
@@ -51,6 +68,10 @@ export interface LessonDefinition {
   quantaSuccess: string;
   quantaIncorrect: string;
   order: number;
+  sections: LessonSection[];
+  quiz: QuizQuestion[];
+  prerequisites?: string[];
+  walkthroughId?: "bell" | "hzh";
 }
 
 export type ChallengeType =

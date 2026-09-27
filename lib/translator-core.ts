@@ -288,6 +288,102 @@ export function parseParamExpression(expr: string): number {
   return evalExpr(tokens.slice(0, -1));
 }
 
+export function isSymbolicExpression(expr: string): boolean {
+  let tokens: Token[];
+  try {
+    tokens = tokenize(expr).slice(0, -1);
+  } catch {
+    return false;
+  }
+
+  if (tokens.length === 0) return false;
+
+  let hasSymbol = false;
+  let depth = 0;
+  let previous: Token | undefined;
+  const operators = new Set(["+", "-", "*", "/", "^"]);
+
+  for (let index = 0; index < tokens.length; index++) {
+    const token = tokens[index];
+    if (token.kind === "STR" || token.kind === "EOF") return false;
+
+    if (token.kind === "ID") {
+      if (token.value !== "pi" && !(token.value in FUNCS)) {
+        hasSymbol = true;
+      }
+      if (
+        previous &&
+        (previous.kind === "ID" ||
+          previous.kind === "NUM" ||
+          previous.value === ")")
+      ) {
+        return false;
+      }
+    } else if (token.kind === "NUM") {
+      if (
+        previous &&
+        (previous.kind === "ID" ||
+          previous.kind === "NUM" ||
+          previous.value === ")")
+      ) {
+        return false;
+      }
+    } else if (token.value === "(") {
+      if (
+        previous &&
+        !(
+          previous.kind === "SYM" &&
+          (previous.value === "+" ||
+            previous.value === "-" ||
+            previous.value === "*" ||
+            previous.value === "/" ||
+            previous.value === "^" ||
+            previous.value === "(")
+        ) &&
+        !(previous.kind === "ID" && previous.value in FUNCS)
+      ) {
+        return false;
+      }
+      depth++;
+    } else if (token.value === ")") {
+      if (
+        depth === 0 ||
+        !previous ||
+        previous.value === "(" ||
+        operators.has(previous.value)
+      ) {
+        return false;
+      }
+      depth--;
+    } else if (operators.has(token.value)) {
+      if (previous && operators.has(previous.value)) return false;
+      if (index === 0 && token.value !== "-") return false;
+      if (index === tokens.length - 1) return false;
+    } else {
+      return false;
+    }
+
+    previous = token;
+  }
+
+  if (depth !== 0 || !hasSymbol) return false;
+
+  const substituted = tokens.map((token) =>
+    token.kind === "ID" &&
+    token.value !== "pi" &&
+    !(token.value in FUNCS)
+      ? { ...token, kind: "NUM" as const, value: "1" }
+      : token
+  );
+
+  try {
+    evalExpr(substituted);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function formatParamForDisplay(value: number): string {
   return formatParam(value);
 }

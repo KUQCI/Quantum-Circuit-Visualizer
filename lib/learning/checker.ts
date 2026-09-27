@@ -51,7 +51,7 @@ function checkSingle(
         : {
             success: false,
             message: "Paste the Qiskit code and sync it to the canvas.",
-            hint: "Paste code in the editor and click Mark Import Done, or use Import from the nav.",
+            hint: "Paste code in the editor and wait for it to sync to the canvas.",
           };
 
     case "hasGate": {
@@ -98,7 +98,7 @@ function checkSingle(
     }
 
     case "hasMeasurement": {
-      const found = circuit.operations.some((op) => {
+      const matches = circuit.operations.filter((op) => {
         if (op.type !== "measure") return false;
         if (condition.qubit && !op.targets.includes(condition.qubit)) return false;
         if (
@@ -108,6 +108,7 @@ function checkSingle(
           return false;
         return true;
       });
+      const found = matches.length >= (condition.count ?? 1);
       return found
         ? { success: true, message: "Measurement in place!" }
         : {

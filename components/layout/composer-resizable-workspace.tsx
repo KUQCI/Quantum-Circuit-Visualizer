@@ -135,7 +135,14 @@ function NarrowWorkspace({
               layoutResetKey={layoutResetKey}
             />
           )}
-          {narrowActiveTab === "code" && <MultiLanguageCodePanel />}
+          <div
+            className={cn(
+              "min-h-0 flex-1 flex-col",
+              narrowActiveTab === "code" ? "flex" : "hidden"
+            )}
+          >
+            <MultiLanguageCodePanel active={narrowActiveTab === "code"} />
+          </div>
         </div>
       </div>
     </div>
@@ -353,7 +360,7 @@ export function ComposerResizableWorkspace({
           onExpand={() => useEditorUiStore.getState().setShowCodePanel(true)}
           className="composer-panel composer-panel-code min-w-0 border-l border-[var(--color-border)]"
         >
-          <MultiLanguageCodePanel />
+          <MultiLanguageCodePanel active />
         </Panel>
         </PanelGroup>
       )}

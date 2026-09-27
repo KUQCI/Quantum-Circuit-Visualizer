@@ -5,6 +5,8 @@
   "notes": "Transparent WebP exports generated from original JPEGs (white/blue background removed). intro/ holds the homepage door-opening entrance (H.264 MP4, 1920x1080@60, muted, no alpha; poster JPEG 1600x900). Registry: lib/quanta-assets.ts",
   "basePath": "/assets/quanta/",
   "files": [
+    "cursor/quanta-cursor.svg",
+    "cursor/quanta-cursor-pointer.svg",
     "intro/door-open.mp4",
     "intro/door-poster.jpg",
     "quanta-simple-duck.webp",

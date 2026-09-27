@@ -3,7 +3,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ACHIEVEMENTS, evaluateAchievements } from "@/lib/learning/achievements";
-import { getLevelFromXp, updateStreak } from "@/lib/learning/progress";
+import { LESSONS } from "@/lib/learning/lessons";
+import {
+  getLevelFromXp,
+  MODULE_IDS,
+  updateStreak,
+} from "@/lib/learning/progress";
 import type { SkillTag } from "@/lib/learning/types";
 import {
   asBoolean,
@@ -25,10 +30,17 @@ interface ProgressState {
   projectSaved: boolean;
   hasEverPlacedGate: boolean;
   hasEverUsedControlledGate: boolean;
+  dailyXp: Record<string, number>;
+  quizFirstTryLessons: string[];
+  lastCelebratedLevel: number;
+  completedModules: string[];
 
   recordActivity: () => void;
   completeLesson: (id: string, xp: number, skills?: SkillTag[]) => boolean;
   completeChallenge: (id: string, xp: number) => boolean;
+  recordQuizResult: (lessonId: string, firstTry: boolean) => void;
+  awardXp: (amount: number, reason: string) => void;
+  markLevelCelebrated: (level: number) => void;
   recordExport: () => void;
   recordImport: () => void;
   recordGatePlaced: (hasControlled?: boolean) => void;
@@ -52,6 +64,32 @@ function addSkillXp(
   return next;
 }
 
+function todayKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+function sanitizeDailyXp(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") return {};
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 13);
+  const result: Record<string, number> = {};
+  for (const [date, amount] of Object.entries(value)) {
+    const parsed = new Date(`${date}T12:00:00`);
+    if (!Number.isNaN(parsed.getTime()) && parsed >= cutoff) {
+      result[date] = Math.max(0, asNumber(amount, 0));
+    }
+  }
+  return result;
+}
+
+function completedModulesFor(completedLessons: string[]): string[] {
+  return MODULE_IDS.filter((module) => {
+    const lessons = LESSONS.filter((lesson) => lesson.module === module);
+    return lessons.length > 0 && lessons.every((lesson) => completedLessons.includes(lesson.id));
+  });
+}
+
 function checkAchievements(get: () => ProgressState, set: (p: Partial<ProgressState>) => void) {
   const state = get();
   const newly = evaluateAchievements(
@@ -63,6 +101,10 @@ function checkAchievements(get: () => ProgressState, set: (p: Partial<ProgressSt
       exportDone: state.exportActionCount > 0,
       importDone: state.importActionCount > 0,
       projectSaved: state.projectSaved,
+      completedModules: state.completedModules,
+      firstTryQuizzes: state.quizFirstTryLessons.length,
+      currentStreak: state.currentStreak,
+      completedLessonsCount: state.completedLessons.length,
     },
     state.unlockedAchievements
   );
@@ -93,6 +135,8 @@ export const useProgressStore = create<ProgressState>()(
         gates: 0,
         measurement: 0,
         entanglement: 0,
+        algorithms: 0,
+        phase: 0,
         qiskit: 0,
       },
       exportActionCount: 0,
@@ -100,11 +144,29 @@ export const useProgressStore = create<ProgressState>()(
       projectSaved: false,
       hasEverPlacedGate: false,
       hasEverUsedControlledGate: false,
+      dailyXp: {},
+      quizFirstTryLessons: [],
+      lastCelebratedLevel: 1,
+      completedModules: [],
 
       recordActivity: () => {
         const { lastActiveDate, currentStreak } = get();
         const updated = updateStreak(lastActiveDate, currentStreak);
-        set(updated);
+        set({
+          currentStreak: updated.streak,
+          lastActiveDate: updated.lastActiveDate,
+        });
+        checkAchievements(get, set);
+      },
+
+      awardXp: (amount, reason) => {
+        const safeAmount = Math.max(0, Math.round(amount));
+        if (!safeAmount) return;
+        void reason;
+        const date = todayKey();
+        const dailyXp = sanitizeDailyXp(get().dailyXp);
+        dailyXp[date] = (dailyXp[date] ?? 0) + safeAmount;
+        set({ totalXp: get().totalXp + safeAmount, dailyXp });
       },
 
       completeLesson: (id, xp, skills = []) => {
@@ -113,9 +175,10 @@ export const useProgressStore = create<ProgressState>()(
 
         set({
           completedLessons: [...state.completedLessons, id],
-          totalXp: state.totalXp + xp,
           skillXp: addSkillXp(state.skillXp, skills, xp),
+          completedModules: completedModulesFor([...state.completedLessons, id]),
         });
+        get().awardXp(xp, `Complete ${id}`);
         get().recordActivity();
         checkAchievements(get, set);
         return true;
@@ -127,11 +190,23 @@ export const useProgressStore = create<ProgressState>()(
 
         set({
           completedChallenges: [...state.completedChallenges, id],
-          totalXp: state.totalXp + xp,
         });
+        get().awardXp(xp, `Complete ${id}`);
         get().recordActivity();
         checkAchievements(get, set);
         return true;
+      },
+
+      recordQuizResult: (lessonId, firstTry) => {
+        if (!firstTry || get().quizFirstTryLessons.includes(lessonId)) return;
+        set({
+          quizFirstTryLessons: [...get().quizFirstTryLessons, lessonId],
+        });
+        checkAchievements(get, set);
+      },
+
+      markLevelCelebrated: (level) => {
+        set({ lastCelebratedLevel: Math.max(1, Math.round(level)) });
       },
 
       recordExport: () => {
@@ -183,6 +258,10 @@ export const useProgressStore = create<ProgressState>()(
           | "projectSaved"
           | "hasEverPlacedGate"
           | "hasEverUsedControlledGate"
+          | "dailyXp"
+          | "quizFirstTryLessons"
+          | "lastCelebratedLevel"
+          | "completedModules"
         >
       >(),
       merge: (persisted, current) => {
@@ -215,6 +294,13 @@ export const useProgressStore = create<ProgressState>()(
             saved.hasEverUsedControlledGate,
             current.hasEverUsedControlledGate
           ),
+          dailyXp: sanitizeDailyXp(saved.dailyXp),
+          quizFirstTryLessons: asStringArray(saved.quizFirstTryLessons),
+          lastCelebratedLevel: asNumber(
+            saved.lastCelebratedLevel,
+            current.lastCelebratedLevel
+          ),
+          completedModules: asStringArray(saved.completedModules),
         };
       },
     }

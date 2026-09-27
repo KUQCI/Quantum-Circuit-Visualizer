@@ -8,11 +8,12 @@ import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
 import { LESSONS } from "@/lib/learning/lessons";
 import { CHALLENGES } from "@/lib/learning/challenges";
-import { MODULE_LABELS, MODULE_IDS, xpForNextLevel } from "@/lib/learning/progress";
+import { DAILY_GOAL_XP, getLevelTitle, MODULE_LABELS, MODULE_IDS, xpForNextLevel } from "@/lib/learning/progress";
 import { getNextChallenge, getNextLesson } from "@/lib/navigation/flow";
 import { getProgressQuantaMessage } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
 import { Award, Swords } from "lucide-react";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 const SKILL_LABELS: Record<string, string> = {
   qubits: "Qubits",
@@ -30,10 +31,13 @@ export default function ProgressPage() {
   const currentStreak = useProgressStore((s) => s.currentStreak);
   const getLevel = useProgressStore((s) => s.getLevel);
   const recordActivity = useProgressStore((s) => s.recordActivity);
+  const dailyXp = useProgressStore((s) => s.dailyXp);
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
+    if (!progressHydrated) return;
     recordActivity();
-  }, [recordActivity]);
+  }, [progressHydrated, recordActivity]);
 
   const level = getLevel();
   const quantaMsg = getProgressQuantaMessage(
@@ -43,6 +47,18 @@ export default function ProgressPage() {
   );
   const nextLesson = getNextLesson(completedLessons);
   const nextChallenge = getNextChallenge(completedLessons, completedChallenges);
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  if (!progressHydrated) {
+    return (
+      <div className="page-container max-w-4xl">
+        <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+          Loading…
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container max-w-4xl">
@@ -68,6 +84,15 @@ export default function ProgressPage() {
       </div>
 
       <ProgressSummary />
+      <div className="my-4 rounded-xl border border-[var(--color-border)] p-3 text-sm">
+        <p className="font-semibold">Level {level} · {getLevelTitle(level)}</p>
+        <p className="mt-1 text-[var(--color-muted-foreground)]">
+          Daily goal: {Math.min(dailyXp[todayKey] ?? 0, DAILY_GOAL_XP)}/{DAILY_GOAL_XP} XP
+        </p>
+        <p className="mt-1 text-[var(--color-muted-foreground)]">
+          🔥 Current streak: {currentStreak} day{currentStreak === 1 ? "" : "s"}
+        </p>
+      </div>
 
       {nextLesson && (
         <NextStepCard
@@ -114,8 +139,14 @@ export default function ProgressPage() {
               <div key={mod} className="rounded-xl border border-[var(--color-border)] p-3">
                 <div className="mb-1 flex justify-between text-xs">
                   <span className="font-medium">{MODULE_LABELS[mod]}</span>
-                  <span className="text-[var(--color-muted-foreground)]">
-                    {done}/{total}
+                  <span
+                    className={
+                      done === total && total > 0
+                        ? "rounded-full bg-[var(--color-success-subtle)] px-2 py-0.5 text-[var(--color-success-foreground)]"
+                        : "text-[var(--color-muted-foreground)]"
+                    }
+                  >
+                    {done === total && total > 0 ? "✓ Complete" : `${done}/${total} complete`}
                   </span>
                 </div>
                 <div className="academy-progress-bar h-1.5 overflow-hidden rounded-full">

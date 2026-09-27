@@ -1,5 +1,102 @@
 @import "tailwindcss";
 
+html[data-quanta-cursor="static"] body {
+  cursor: var(--quanta-cursor);
+}
+
+html[data-quanta-cursor="static"]
+  :is(a, button, [role="button"], label[for], summary, select):not(:disabled) {
+  cursor: var(--quanta-cursor-pointer);
+}
+
+html[data-quanta-cursor="on"] body,
+html[data-quanta-cursor="on"] body * {
+  cursor: none !important;
+}
+
+html[data-quanta-cursor="on"]
+  :is(
+    input,
+    textarea,
+    [contenteditable="true"],
+    .monaco-editor,
+    .composer-resize-handle,
+    .composer-resize-handle--horizontal,
+    .composer-resize-handle--vertical,
+    [draggable="true"]:active
+  ) {
+  cursor: revert !important;
+}
+
+html[data-quanta-cursor="on"] .composer-resize-handle--horizontal {
+  cursor: col-resize !important;
+}
+
+html[data-quanta-cursor="on"] .composer-resize-handle--vertical {
+  cursor: row-resize !important;
+}
+
+html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed !important;
+}
+
+.quanta-cursor-duck-img {
+  --quanta-cursor-rotation: 0;
+  --quanta-cursor-scale: 1;
+  display: block;
+  width: 32px;
+  height: 32px;
+  transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg))
+    scale(var(--quanta-cursor-scale));
+  transform-origin: 30px 14px;
+  will-change: transform;
+}
+
+.quanta-cursor-bounce {
+  animation: quanta-cursor-bounce 260ms ease-out;
+}
+
+.quanta-cursor-squash {
+  animation: quanta-cursor-squash 120ms ease-out;
+}
+
+.quanta-cursor-idle {
+  animation: quanta-cursor-idle-wiggle 1400ms ease-in-out infinite;
+}
+
+.quanta-cursor-sparkle {
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-gold-duck);
+  box-shadow: 0 0 5px var(--color-gold-duck);
+  animation: quanta-cursor-sparkle 520ms ease-out forwards;
+}
+
+@keyframes quanta-cursor-bounce {
+  0% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(0.9); }
+  55% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(1.28); }
+  100% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(var(--quanta-cursor-scale)); }
+}
+
+@keyframes quanta-cursor-squash {
+  0% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(var(--quanta-cursor-scale)); }
+  45% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(0.85, 1.1); }
+  100% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(var(--quanta-cursor-scale)); }
+}
+
+@keyframes quanta-cursor-sparkle {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(calc(-50% + var(--spark-x)), calc(-50% + var(--spark-y))) scale(0.2); }
+}
+
+@keyframes quanta-cursor-idle-wiggle {
+  0%, 100% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)); }
+  35% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg - 5deg)); }
+  65% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg + 5deg)); }
+}
+
 @theme {
   --radius: 1rem;
   --font-sans: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
@@ -478,6 +575,14 @@ html[data-theme="light"] .glass-nav-compact {
 
 .composer-resize-handle--vertical {
   height: 4px;
+  cursor: row-resize;
+}
+
+html[data-quanta-cursor="on"] .composer-resize-handle--horizontal {
+  cursor: col-resize;
+}
+
+html[data-quanta-cursor="on"] .composer-resize-handle--vertical {
   cursor: row-resize;
 }
 
