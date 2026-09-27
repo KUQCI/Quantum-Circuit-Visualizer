@@ -9,7 +9,10 @@ type CursorMode = "off" | "static" | "animated";
 const INTERACTIVE_SELECTOR =
   'a,button,[role="button"],label[for],summary,select,[data-quanta-cursor="pointer"]';
 const NATIVE_SELECTOR =
-  'input,textarea,[contenteditable="true"],.monaco-editor,.composer-resize-handle,[draggable="true"],[data-quanta-cursor="native"]';
+  'input,textarea,[contenteditable="true"],.monaco-editor,.composer-resize-handle,[draggable="true"],[data-quanta-cursor="native"],:disabled,[aria-disabled="true"]';
+// Scrollbar gutters keep their own arrow no matter what `cursor` says, so the
+// mascot has to step aside instead of doubling up with it.
+const SCROLLBAR_MIN_SIZE = 4;
 // The mascot art is 189x183 with its beak tip at (8, 117); rendered at 40px
 // that lands on (2, 26), which is the cursor hotspot.
 const CURSOR_SIZE = 40;
@@ -34,6 +37,20 @@ function closestElement(target: EventTarget | null, selector: string): Element |
 
 function isDisabled(element: Element): boolean {
   return element.matches(":disabled,[aria-disabled='true']");
+}
+
+function isOverScrollbar(element: Element, x: number, y: number): boolean {
+  const root = document.documentElement;
+  if (element === root || element === document.body) {
+    return x >= root.clientWidth || y >= root.clientHeight;
+  }
+  const rect = element.getBoundingClientRect();
+  const gutterX = rect.width - element.clientWidth;
+  const gutterY = rect.height - element.clientHeight;
+  return (
+    (gutterX > SCROLLBAR_MIN_SIZE && x > rect.right - gutterX) ||
+    (gutterY > SCROLLBAR_MIN_SIZE && y > rect.bottom - gutterY)
+  );
 }
 
 function setStyleNumber(element: HTMLElement, name: string, value: number) {
@@ -164,7 +181,16 @@ export function QuantaCursorProvider() {
     // shifts, drops), so it is re-derived from the last known coordinates.
     const refreshHoverTarget = () => {
       if (!seenPointer) return;
-      applyHoverTarget(document.elementFromPoint(pointerPosition.x, pointerPosition.y));
+      resolveHoverTarget(pointerPosition.x, pointerPosition.y);
+    };
+
+    const resolveHoverTarget = (x: number, y: number) => {
+      const element = document.elementFromPoint(x, y);
+      if (!element || isOverScrollbar(element, x, y)) {
+        setNativeHidden(true);
+        return;
+      }
+      applyHoverTarget(element);
     };
 
     const handleMove = (event: PointerEvent) => {
@@ -181,7 +207,7 @@ export function QuantaCursorProvider() {
       pointerPosition.x = event.clientX;
       pointerPosition.y = event.clientY;
       scheduleIdle();
-      applyHoverTarget(event.target instanceof Element ? event.target : null);
+      resolveHoverTarget(event.clientX, event.clientY);
       spawnTrail(event.clientX, event.clientY);
     };
 
@@ -230,7 +256,7 @@ export function QuantaCursorProvider() {
       if (event.pointerType !== "mouse") return;
       pointerPosition.x = event.clientX;
       pointerPosition.y = event.clientY;
-      applyHoverTarget(event.target instanceof Element ? event.target : null);
+      resolveHoverTarget(event.clientX, event.clientY);
       if (nativeHidden) return;
       image.classList.remove("quanta-cursor-squash");
       void image.offsetWidth;

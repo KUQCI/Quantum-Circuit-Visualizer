@@ -9,6 +9,7 @@ html[data-quanta-cursor-mode="static"]
   cursor: var(--quanta-cursor-pointer);
 }
 
+html[data-quanta-cursor-mode="on"],
 html[data-quanta-cursor-mode="on"] body,
 html[data-quanta-cursor-mode="on"] body * {
   cursor: none !important;
