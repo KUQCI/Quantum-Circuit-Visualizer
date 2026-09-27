@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
+import { restoreWalkthroughBackup } from "@/lib/learning/walkthrough-backup";
+import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 
 describe("editor UI persistence", () => {
-  it("persists walkthrough backups and drops malformed backups", () => {
+  it("persists valid walkthrough backups and drops malformed backups", () => {
     const backup = {
       circuit: createEmptyCircuit("Build circuit"),
       projectId: "project-1",
@@ -27,5 +29,34 @@ describe("editor UI persistence", () => {
       state
     );
     expect(merged?.walkthroughBackup).toBeNull();
+
+    const invalidCircuit = merge?.(
+      { walkthroughBackup: { circuit: {}, projectId: null } },
+      state
+    );
+    expect(invalidCircuit?.walkthroughBackup).toBeNull();
+
+    const validBackup = merge?.({ walkthroughBackup: backup }, state);
+    expect(validBackup?.walkthroughBackup).toEqual(backup);
+  });
+
+  it("restores a walkthrough backup through the shared helper", () => {
+    const originalState = useCircuitStore.getState();
+    const original = structuredClone(originalState.circuit);
+    const originalProjectId = originalState.currentProjectId;
+    const backup = {
+      circuit: createEmptyCircuit("Build circuit"),
+      projectId: "project-1",
+    };
+
+    useCircuitStore.getState().setCircuit(createEmptyCircuit("Walkthrough"));
+    expect(restoreWalkthroughBackup(backup)).toBe(true);
+    expect(useCircuitStore.getState().circuit).toEqual(backup.circuit);
+    expect(useCircuitStore.getState().currentProjectId).toBe("project-1");
+
+    useCircuitStore.setState({
+      circuit: original,
+      currentProjectId: originalProjectId,
+    });
   });
 });

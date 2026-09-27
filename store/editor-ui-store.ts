@@ -6,6 +6,7 @@ import type { CodeLanguageId } from "@/lib/code-adapters";
 import { CODE_LANGUAGES } from "@/lib/code-adapters";
 import { asBoolean, createSafeJsonStorage } from "@/lib/safe-persist";
 import type { Circuit } from "@/lib/circuit-schema";
+import { validateCircuit } from "@/lib/validation";
 
 export type AlignmentMode = "freeform" | "left" | "layers";
 export type NarrowActiveTab = "gates" | "inspector" | "results" | "code";
@@ -28,8 +29,10 @@ function sanitizeWalkthroughBackup(value: unknown): WalkthroughBackup | null {
   ) {
     return null;
   }
+  const validated = validateCircuit(candidate.circuit);
+  if (!validated.valid) return null;
   return {
-    circuit: candidate.circuit as Circuit,
+    circuit: validated.circuit,
     projectId: candidate.projectId,
   };
 }
