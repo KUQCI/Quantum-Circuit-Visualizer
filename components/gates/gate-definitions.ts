@@ -357,20 +357,24 @@ export function getPaletteGates(): GateDefinition[] {
 }
 
 const GATE_COLOR_MAP: Record<GateDefinition["colorGroup"], string> = {
-  h: "border-transparent bg-[var(--color-gate-h)] text-white",
-  pauli: "border-transparent bg-[var(--color-gate-pauli)] text-white",
-  phase: "border-transparent bg-[var(--color-gate-phase)] text-[var(--color-gate-label)]",
-  rotation: "border-transparent bg-[var(--color-gate-rotation)] text-white",
-  two: "border-transparent bg-[var(--color-gate-two)] text-white",
-  three: "border-transparent bg-[var(--color-gate-three)] text-white",
+  h: "quanta-gate border-transparent bg-[var(--color-gate-h)] text-[var(--color-gate-h-fg)]",
+  pauli:
+    "quanta-gate border-transparent bg-[var(--color-gate-pauli)] text-[var(--color-gate-pauli-fg)]",
+  phase:
+    "quanta-gate border-transparent bg-[var(--color-gate-phase)] text-[var(--color-gate-phase-fg)]",
+  rotation:
+    "quanta-gate border-transparent bg-[var(--color-gate-rotation)] text-[var(--color-gate-rotation-fg)]",
+  two: "quanta-gate border-transparent bg-[var(--color-gate-two)] text-[var(--color-gate-two-fg)]",
+  three:
+    "quanta-gate border-transparent bg-[var(--color-gate-three)] text-[var(--color-gate-three-fg)]",
   measure:
-    "border-transparent bg-[var(--color-gate-measure)] text-[var(--color-gate-measure-fg)]",
+    "quanta-gate border-transparent bg-[var(--color-gate-measure)] text-[var(--color-gate-measure-fg)]",
   nonunitary:
-    "border-transparent bg-[var(--color-gate-nonunitary)] text-[var(--color-gate-measure-fg)]",
+    "quanta-gate border-transparent bg-[var(--color-gate-nonunitary)] text-[var(--color-gate-measure-fg)]",
   barrier:
-    "border-transparent bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-dashed border-[var(--color-gate-measure-fg)]/40",
+    "quanta-gate bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-dashed border-[var(--color-gate-measure-fg)]/40",
   modifier:
-    "border-transparent bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-[var(--color-gate-measure-fg)]/30",
+    "quanta-gate bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-[var(--color-gate-measure-fg)]/30",
 };
 
 export function getGateColor(gate: GateDefinition | string): string {

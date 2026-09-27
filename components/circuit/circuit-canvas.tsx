@@ -155,7 +155,7 @@ function GateBlock({
         <div
           className={cn(
             "h-full w-1 rounded-full bg-[var(--color-gate-barrier)]",
-            isSelected && "ring-2 ring-[var(--color-ring)]"
+            isSelected && "ring-2 ring-[var(--color-gold-duck)]"
           )}
         />
       </div>
@@ -177,17 +177,16 @@ function GateBlock({
 
   const displayLabel = gateDef?.label ?? operation.label;
   const boxClass = cn(
-    "relative flex h-8 w-8 flex-col items-center justify-center rounded-sm text-[11px] font-bold shadow-md transition-all",
+    "relative flex h-8 w-8 flex-col items-center justify-center text-[11px] font-bold",
     getGateColorByType(operation.type),
-    isSelected &&
-      "ring-2 ring-[var(--color-ring)] ring-offset-1 ring-offset-[var(--color-canvas)]",
-    !isPaletteDragging && "hover:brightness-110"
+    isSelected && "quanta-gate--selected",
+    isPaletteDragging && "pointer-events-none"
   );
 
   const renderGateBox = () => {
     if (isControlQubit && isControl && !isTarget) {
       return (
-        <div className="h-3 w-3 rounded-full border-2 border-[var(--color-gate-two)] bg-[var(--color-card)]" />
+        <div className="quanta-control-dot h-3 w-3" />
       );
     }
 
@@ -279,7 +278,7 @@ function GateBlock({
     >
       {isControl && isControlQubit && operation.targets.length > 0 && (
         <div
-          className="absolute w-0.5 bg-[var(--color-gate-two)]"
+          className="absolute w-0.5 rounded-full bg-[var(--color-gate-two)]"
           style={{
             height:
               Math.abs(
@@ -345,16 +344,16 @@ function DropPreview({
       : position.qubitIndex - 1;
 
   const previewStyle = cn(
-    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-sm border-2 border-dashed text-[11px] font-bold",
+    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-lg border-2 border-dashed text-[11px] font-bold",
     isInvalid
       ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20 text-[var(--color-destructive)]"
-      : "border-[var(--color-primary)] bg-[var(--color-primary)]/20 text-[var(--color-primary)]"
+      : "border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20 text-[var(--color-cyan-quantum)]"
   );
 
   if (gateDef.type === "barrier") {
     return (
       <div
-        className="pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary)]/20"
+        className="pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20"
         style={{
           left: columnToX(position.column) + BARRIER_COLUMN_INSET,
           top: 8,
@@ -389,7 +388,7 @@ function DropPreview({
       {!isInvalid && isTwoQubit && targetIdx >= 0 && targetIdx !== controlIdx && (
         <>
           <div
-            className="pointer-events-none absolute z-30 w-0.5 bg-[var(--color-primary)]/60"
+            className="pointer-events-none absolute z-30 w-0.5 bg-[var(--color-cyan-quantum)]/60"
             style={{
               left: columnToX(position.column) + GATE_COLUMN_INSET + 16,
               top:
@@ -414,7 +413,7 @@ function DropPreview({
             )}
           </div>
           <div
-            className="pointer-events-none absolute z-30 h-3 w-3 rounded-full border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/30"
+            className="pointer-events-none absolute z-30 h-3 w-3 rounded-full border-2 border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/30"
             style={{
               left: columnToX(position.column) + GATE_COLUMN_INSET + 10,
               top: qubitToY(controlIdx) + WIRE_HEIGHT / 2 - 6,
@@ -1185,7 +1184,7 @@ export function CircuitCanvas({
                   {qubit.label}
                 </div>
                 <div className="relative flex-1 pr-8">
-                  <div className="absolute left-0 right-0 top-1/2 h-px bg-[var(--color-muted-foreground)]/50" />
+                  <div className="quanta-wire absolute left-0 right-0 top-1/2 h-px" />
                   <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center">
                     {showPhaseDisks && diskProps ? (
                       <Tooltip>
@@ -1211,8 +1210,8 @@ export function CircuitCanvas({
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--color-muted-foreground)] bg-[var(--color-canvas)]">
-                        <div className="h-2.5 w-2.5 rounded-full border border-[var(--color-muted-foreground)]" />
+                      <div className="quanta-wire-cap flex h-5 w-5 items-center justify-center rounded-full border">
+                        <div className="quanta-wire-cap h-2.5 w-2.5 rounded-full border" />
                       </div>
                     )}
                   </div>
@@ -1265,7 +1264,7 @@ export function CircuitCanvas({
                   {bit.label}
                 </div>
                 <div className="relative flex-1">
-                  <div className="absolute left-0 right-0 top-1/2 h-px border-t-2 border-double border-[var(--color-muted-foreground)]" />
+                  <div className="quanta-wire-classical absolute left-0 right-0 top-1/2 h-px border-t-2 border-double" />
                 </div>
               </div>
             ))}

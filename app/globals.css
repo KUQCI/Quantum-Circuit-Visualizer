@@ -237,16 +237,24 @@ html[data-quanta-cursor-mode="on"] :is(:disabled, [aria-disabled="true"]) {
   --color-error-foreground: #fca5a5;
   --color-warning: #f6c453;
   --color-warning-subtle: rgba(246, 196, 83, 0.12);
-  --color-gate-h: #fa4d56;
-  --color-gate-pauli: #0f62fe;
-  --color-gate-phase: #78a9ff;
-  --color-gate-rotation: #ee5396;
-  --color-gate-two: #4589ff;
-  --color-gate-three: #d02670;
-  --color-gate-measure: #525252;
-  --color-gate-measure-fg: #f4f4f4;
-  --color-gate-nonunitary: #525252;
-  --color-gate-barrier: #393939;
+  --color-gate-h: #f6c453;
+  --color-gate-h-fg: #0a1020;
+  --color-gate-pauli: #7dd3fc;
+  --color-gate-pauli-fg: #05131f;
+  --color-gate-phase: #2f80ed;
+  --color-gate-phase-fg: #f3f9ff;
+  --color-gate-rotation: #a78bfa;
+  --color-gate-rotation-fg: #100a25;
+  --color-gate-two: #2dd4bf;
+  --color-gate-two-fg: #042420;
+  --color-gate-three: #6366f1;
+  --color-gate-three-fg: #f2f4ff;
+  --color-gate-measure: #16243c;
+  --color-gate-measure-fg: #dbeafe;
+  --color-gate-nonunitary: #16243c;
+  --color-gate-barrier: #24344f;
+  --color-wire: rgba(125, 211, 252, 0.34);
+  --color-wire-classical: rgba(148, 163, 184, 0.5);
   --shadow-card: 0 0 28px rgba(47, 128, 237, 0.1), 0 2px 12px rgba(0, 0, 0, 0.32);
   --shadow-nav: 0 1px 0 rgba(125, 211, 252, 0.06);
   --shadow-blue-glow: 0 0 32px rgba(47, 128, 237, 0.14), 0 0 12px rgba(125, 211, 252, 0.06);
@@ -300,16 +308,24 @@ html[data-quanta-cursor-mode="on"] :is(:disabled, [aria-disabled="true"]) {
   --color-error-foreground: #b91c1c;
   --color-warning: #d97706;
   --color-warning-subtle: rgba(217, 119, 6, 0.1);
-  --color-gate-h: #da1e28;
-  --color-gate-pauli: #0f62fe;
-  --color-gate-phase: #33b1ff;
-  --color-gate-rotation: #d02670;
-  --color-gate-two: #0f62fe;
-  --color-gate-three: #9f1853;
-  --color-gate-measure: #6f6f6f;
+  --color-gate-h: #d97706;
+  --color-gate-h-fg: #fffaf0;
+  --color-gate-pauli: #0284c7;
+  --color-gate-pauli-fg: #ffffff;
+  --color-gate-phase: #2f80ed;
+  --color-gate-phase-fg: #ffffff;
+  --color-gate-rotation: #7c3aed;
+  --color-gate-rotation-fg: #ffffff;
+  --color-gate-two: #0d9488;
+  --color-gate-two-fg: #ffffff;
+  --color-gate-three: #4f46e5;
+  --color-gate-three-fg: #ffffff;
+  --color-gate-measure: #334155;
   --color-gate-measure-fg: #ffffff;
-  --color-gate-nonunitary: #6f6f6f;
-  --color-gate-barrier: #525252;
+  --color-gate-nonunitary: #334155;
+  --color-gate-barrier: #64748b;
+  --color-wire: rgba(15, 23, 42, 0.3);
+  --color-wire-classical: rgba(71, 85, 105, 0.55);
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(47, 128, 237, 0.06);
   --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06);
   --shadow-blue-glow: 0 0 24px rgba(47, 128, 237, 0.1);
@@ -690,6 +706,79 @@ html[data-quanta-cursor-mode="on"] .composer-resize-handle--vertical {
 
 .composer-panel-rail--collapsed {
   color: var(--color-brand);
+}
+
+/* ── Gate blocks (palette + canvas) ── */
+.quanta-gate {
+  position: relative;
+  isolation: isolate;
+  border-radius: 0.5rem;
+  background-image: linear-gradient(
+    150deg,
+    rgb(255 255 255 / 0.26),
+    rgb(255 255 255 / 0) 58%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 1px 2px rgb(2 6 16 / 0.35),
+    0 6px 14px -10px color-mix(in srgb, var(--color-blue-qci) 70%, transparent);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.quanta-gate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--color-cyan-quantum) 26%, transparent);
+  pointer-events: none;
+}
+
+.quanta-gate:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.28),
+    0 2px 4px rgb(2 6 16 / 0.35),
+    0 0 16px -4px color-mix(in srgb, var(--color-cyan-quantum) 55%, transparent);
+}
+
+.quanta-gate--selected,
+.quanta-gate--selected:hover {
+  box-shadow:
+    0 0 0 2px var(--color-gold-duck),
+    0 0 18px -4px color-mix(in srgb, var(--color-gold-duck) 70%, transparent);
+}
+
+.quanta-control-dot {
+  border-radius: 9999px;
+  background: var(--color-gate-two);
+  box-shadow: 0 0 10px -2px color-mix(in srgb, var(--color-gate-two) 80%, transparent);
+}
+
+.quanta-wire {
+  background: var(--color-wire);
+}
+
+.quanta-wire-classical {
+  border-color: var(--color-wire-classical);
+}
+
+.quanta-wire-cap {
+  border-color: color-mix(in srgb, var(--color-cyan-quantum) 45%, transparent);
+  background: var(--color-canvas);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quanta-gate {
+    transition: none;
+  }
+  .quanta-gate:hover {
+    transform: none;
+  }
 }
 
 /* Minimum touch targets for mobile toolbars and tabs */

@@ -244,12 +244,12 @@ function GateGridItem({
           }}
           onDragEnd={() => onDragEnd?.()}
           className={cn(
-            "flex cursor-grab select-none flex-col items-center justify-center rounded-[3px] shadow-sm transition-transform active:cursor-grabbing active:scale-95 hover:brightness-110",
+            "flex cursor-grab select-none flex-col items-center justify-center active:cursor-grabbing active:scale-95",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
             isLearning ? "aspect-square min-h-[52px]" : "aspect-square",
             isWide && "col-span-2 aspect-[2/1]",
             getGateColor(gate),
-            selected && "ring-2 ring-[var(--color-brand)] ring-offset-1 ring-offset-[var(--color-surface)]"
+            selected && "quanta-gate--selected"
           )}
         >
           <GateSymbol
@@ -310,7 +310,7 @@ function GateListItem({
         >
           <span
             className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] shadow-sm",
+              "flex h-8 w-8 shrink-0 items-center justify-center",
               getGateColor(gate)
             )}
           >
