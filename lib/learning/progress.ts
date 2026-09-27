@@ -105,6 +105,7 @@ export const MODULE_IDS = [
   "algorithms",
   "qiskit",
   "capstone",
+  "quantum-ml",
 ] as const;
 
 export type ModuleId = (typeof MODULE_IDS)[number];
@@ -118,6 +119,7 @@ export const MODULE_LABELS: Record<ModuleId, string> = {
   algorithms: "Algorithms",
   qiskit: "Qiskit Import & Export",
   capstone: "Capstone",
+  "quantum-ml": "Quantum Machine Learning",
 };
 
 /** Short academic “why this matters” copy for each module. */
@@ -138,4 +140,6 @@ export const MODULE_WHY: Record<ModuleId, string> = {
     "Import and export connect the visualizer to research code and real backends.",
   capstone:
     "Bring preparation, entanglement, measurement, and analysis together.",
+  "quantum-ml":
+    "Parameterised circuits become models: encode data, tune angles, read out predictions — the bridge to KUQCI's quantum-learn library.",
 };

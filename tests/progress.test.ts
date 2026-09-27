@@ -25,6 +25,7 @@ beforeEach(() => {
       algorithms: 0,
       phase: 0,
       qiskit: 0,
+      qml: 0,
     },
     exportActionCount: 0,
     importActionCount: 0,
@@ -128,7 +129,7 @@ describe("academy progress", () => {
           unlockedAchievements: [],
           currentStreak: 2,
           lastActiveDate: "2025-01-01",
-          skillXp: { qubits: 25, gates: 0, measurement: 0, entanglement: 0, qiskit: 0 },
+          skillXp: { qubits: 25, gates: 0, measurement: 0, entanglement: 0, qiskit: 0, qml: 0 },
         },
         version: 0,
       })

@@ -96,6 +96,7 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
       "algorithms",
       "qiskit",
       "capstone",
+      "quantum-ml",
     ] as const
   ).map((module) => ({
     id: `module-${module}`,
@@ -131,6 +132,13 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     description: "Complete the Bell experiment capstone.",
     xpReward: 100,
     icon: "graduation" as AchievementIcon,
+  },
+  {
+    id: "qml-graduate",
+    name: "Quantum ML Graduate",
+    description: "Complete the two-feature classifier capstone.",
+    xpReward: 150,
+    icon: "chart" as AchievementIcon,
   },
   {
     id: "academy-complete",
@@ -205,9 +213,10 @@ export function evaluateAchievements(
   unlock("streak-3", (ctx.currentStreak ?? 0) >= 3);
   unlock("streak-7", (ctx.currentStreak ?? 0) >= 7);
   unlock("capstone-graduate", ctx.completedLessons.includes("capstone-bell-experiment"));
+  unlock("qml-graduate", ctx.completedLessons.includes("qml-capstone-classifier"));
   unlock(
     "academy-complete",
-    (ctx.completedLessonsCount ?? ctx.completedLessons.length) >= 30
+    (ctx.completedLessonsCount ?? ctx.completedLessons.length) >= 36
   );
 
   return newly;

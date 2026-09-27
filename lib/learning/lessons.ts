@@ -283,7 +283,8 @@ function op(
   targets: string[],
   column: number,
   controls: string[] = [],
-  classicalTargets: string[] = []
+  classicalTargets: string[] = [],
+  parameters?: Circuit["operations"][number]["parameters"]
 ): Circuit["operations"][number] {
   return {
     id,
@@ -293,7 +294,16 @@ function op(
     controls,
     classicalTargets,
     column,
+    ...(parameters ? { parameters } : {}),
   };
+}
+
+function symbolicParameter(symbol: string, value = 0.5) {
+  return [{ value, symbol, display: symbol }];
+}
+
+function numericParameter(value: number) {
+  return [{ value, display: String(value) }];
 }
 
 const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
@@ -538,6 +548,149 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     },
     hint: "Prepare, entangle, and measure both wires.", quantaIntro: "This is your first complete quantum experiment.",
     quantaHint: "Use Results to inspect probabilities and shots.", quantaSuccess: "Capstone complete — you ran a Bell experiment.", quantaIncorrect: "Build H, CX, and two measurements.", order: 31,
+  },
+  {
+    id: "qml-encode-data",
+    title: "Encode Data into a Qubit",
+    module: "quantum-ml",
+    description: "Turn a classical number into a rotation angle.",
+    story: "Machine learning starts with data. A quantum model starts by writing that data into qubit angles — an RX or RY rotation whose angle is the feature value.",
+    difficulty: "beginner",
+    estimatedMinutes: 7,
+    xpReward: 60,
+    skills: ["qml", "gates"],
+    starterCircuit: lessonCircuit("Encode Data", 1),
+    successCondition: {
+      type: "any",
+      conditions: [
+        { type: "hasParameterGate", gate: "ry", target: "q0" },
+        { type: "hasParameterGate", gate: "rx", target: "q0" },
+      ],
+    },
+    hint: "Place RX or RY on q0 and give it an angle — that angle is your data point.",
+    quantaIntro: "Data goes in as angles. That's the whole trick.",
+    quantaHint: "Any rotation gate with a number works. Try RY(0.8).",
+    quantaSuccess: "One number, one angle, one qubit. That's angle encoding.",
+    quantaIncorrect: "Add a parameterised rotation (RX or RY) on q0.",
+    order: 32,
+    prerequisites: ["bind-parameters"],
+  },
+  {
+    id: "qml-parameterised-ansatz",
+    title: "Build a Trainable Ansatz",
+    module: "quantum-ml",
+    description: "Add symbolic rotation angles that an optimiser can tune.",
+    story: "After encoding data, a model needs knobs. A parameterised circuit — an ansatz — has rotation angles left as symbols like θ that training adjusts.",
+    difficulty: "intermediate",
+    estimatedMinutes: 8,
+    xpReward: 70,
+    skills: ["qml", "gates", "entanglement"],
+    starterCircuit: lessonCircuit("Trainable Ansatz", 2, 0, [
+      op("ans-enc0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+      op("ans-enc1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+    ]),
+    successCondition: {
+      type: "all",
+      conditions: [
+        { type: "hasSymbolicParameter", minCount: 1 },
+        { type: "hasControlledGate", gate: "cx" },
+      ],
+    },
+    hint: "Add RY gates with symbolic angles (type theta in the inspector) and connect the qubits with CX.",
+    quantaIntro: "Numbers are data. Symbols are knobs.",
+    quantaHint: "In the inspector, type a name like theta instead of a number.",
+    quantaSuccess: "Encoding, trainable rotations, entanglement — that's a real ansatz.",
+    quantaIncorrect: "You need at least one symbolic angle (e.g. theta) and a CX gate.",
+    order: 33,
+    prerequisites: ["qml-encode-data"],
+  },
+  {
+    id: "qml-measure-prediction",
+    title: "Read Out a Prediction",
+    module: "quantum-ml",
+    description: "Turn measurement statistics into a class label.",
+    story: "A model has to answer. In a variational classifier the answer is read from measurement statistics — for example P(1) on the first qubit above or below 0.5.",
+    difficulty: "intermediate",
+    estimatedMinutes: 7,
+    xpReward: 60,
+    skills: ["qml", "measurement"],
+    starterCircuit: lessonCircuit("Read Out Prediction", 2, 2, [
+      op("pred-enc0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+      op("pred-enc1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+      op("pred-theta0", "ry", ["q0"], 1, [], [], symbolicParameter("theta0")),
+      op("pred-theta1", "ry", ["q1"], 1, [], [], symbolicParameter("theta1")),
+      op("pred-cx", "cx", ["q1"], 2, ["q0"]),
+    ]),
+    successCondition: {
+      type: "hasMeasurement",
+      qubit: "q0",
+      classical: "c0",
+    },
+    hint: "Add a measurement on q0 to c0 — its 0/1 statistics are the prediction.",
+    quantaIntro: "Ask the circuit a question: measure.",
+    quantaHint: "Measure q0 into c0, then run shots to see P(1).",
+    quantaSuccess: "P(1) ≥ 0.5 → class 1. Your circuit now predicts.",
+    quantaIncorrect: "Measure q0 into c0.",
+    order: 34,
+    prerequisites: ["qml-parameterised-ansatz"],
+  },
+  {
+    id: "qml-training-loop",
+    title: "The Training Loop",
+    module: "quantum-ml",
+    description: "See how gradient descent tunes a rotation angle.",
+    story: "Training means repeating: run the circuit, compute the loss, adjust θ. With one qubit and one θ you can do it by hand.",
+    difficulty: "advanced",
+    estimatedMinutes: 9,
+    xpReward: 80,
+    skills: ["qml", "algorithms"],
+    starterCircuit: lessonCircuit("Training Loop", 1, 1, [
+      op("train-theta", "ry", ["q0"], 0, [], [], symbolicParameter("theta", 0.3)),
+      op("train-measure", "measure", ["q0"], 1, [], ["c0"]),
+    ]),
+    successCondition: {
+      type: "all",
+      conditions: [
+        { type: "hasSymbolicParameter", gate: "ry" },
+        { type: "hasMeasurement", qubit: "q0" },
+      ],
+    },
+    hint: "Keep RY(θ) and the measurement; use the inspector to bind θ to different values and watch P(1) move toward your target.",
+    quantaIntro: "Let's train a model with one knob.",
+    quantaHint: "Bind θ = 0.3, then 1.0, then 2.0. Which gives P(1) closest to 0.9?",
+    quantaSuccess: "You just did gradient descent by hand.",
+    quantaIncorrect: "Keep a symbolic RY(θ) and a measurement on q0.",
+    order: 35,
+    prerequisites: ["qml-measure-prediction"],
+  },
+  {
+    id: "qml-capstone-classifier",
+    title: "Capstone: Two-Feature Classifier",
+    module: "quantum-ml",
+    description: "Assemble encoding, ansatz, entanglement and readout, then export it to quantum-learn.",
+    story: "Put every piece together: two encoded features, trainable rotations, a CX to mix them, and a measured output qubit — a complete variational classifier.",
+    difficulty: "advanced",
+    estimatedMinutes: 12,
+    xpReward: 120,
+    skills: ["qml", "entanglement", "measurement"],
+    starterCircuit: lessonCircuit("Two-Feature Classifier", 2, 2),
+    successCondition: {
+      type: "all",
+      conditions: [
+        { type: "hasParameterGate", gate: "ry", target: "q0" },
+        { type: "hasParameterGate", gate: "ry", target: "q1" },
+        { type: "hasSymbolicParameter", minCount: 2 },
+        { type: "hasControlledGate", gate: "cx" },
+        { type: "hasMeasurement", qubit: "q0", classical: "c0" },
+      ],
+    },
+    hint: "Encode with RY on both qubits, add at least two symbolic RY angles, connect with CX, then measure q0.",
+    quantaIntro: "Final assembly. You know every part.",
+    quantaHint: "Order: encode → symbolic rotations → CX → measure q0.",
+    quantaSuccess: "That's a variational quantum classifier. Export it from the quantum-learn tab and train it for real.",
+    quantaIncorrect: "Check: RY on both qubits, two symbolic angles, a CX, and a measurement on q0.",
+    order: 36,
+    prerequisites: ["qml-training-loop"],
   },
 ];
 
@@ -1766,6 +1919,243 @@ const LESSON_CONTENT: Record<
         options: ["01 and 10 only", "00 and 11", "All strings equally"],
         answerIndex: 1,
         explanation: "The Bell preparation correlates the two measurement results.",
+      },
+    ],
+  },
+  "qml-encode-data": {
+    sections: [
+      {
+        heading: "From features to angles",
+        body:
+          "A classical dataset is a table of numbers. To feed it to a quantum circuit we map each number x to a rotation, most simply RY(x) on its own qubit. This is called angle encoding — quantum-learn's default `AngleEmbedding` does exactly this, one feature per qubit.\n\nTry it: the diagram shows RY(0.8) on a single qubit. Scrub the steps and watch the probability of |1⟩ rise from 0.",
+        circuit: lessonCircuit("QML angle encoding", 1, 0, [
+          op("qml-encode-ry", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+        ]),
+        quantaNote: "0.8 in, a tilted qubit out. Different data → different tilt.",
+      },
+      {
+        heading: "Why the angle matters",
+        body:
+          "RY(x) rotates the qubit from |0⟩ toward |1⟩; the probability of measuring 1 is sin²(x/2). Small features barely move the qubit, features near π flip it. That non-linear response is the first ingredient of a quantum model.\n\nTwo features need two qubits: RY(x₀) on q0 and RY(x₁) on q1.",
+        circuit: lessonCircuit("QML two features", 2, 0, [
+          op("qml-feature0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+          op("qml-feature1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+        ]),
+        quantaNote: "sin²(x/2) is your first activation function.",
+      },
+      {
+        heading: "Encoding in quantum-learn",
+        body:
+          "In KUQCI's quantum-learn, `QuantumFeatureMap.transform(features)` runs an encoding circuit for every row of a dataset and returns the resulting quantum features. The default map is angle encoding, but any circuit you build here can be exported as one.\n\nOpen the Code panel's quantum-learn tab to see your circuit as a PennyLane function.",
+        quantaNote: "Export → quantum-learn tab whenever you want the Python behind a lesson.",
+      },
+    ],
+    quiz: [
+      {
+        id: "qml-encode-data-what",
+        question: "In angle encoding, where does a data value end up?",
+        options: ["As the label of a qubit", "As the rotation angle of a gate", "As the number of shots"],
+        answerIndex: 1,
+        explanation: "Each feature becomes the angle of a rotation gate such as RY(x).",
+      },
+      {
+        id: "qml-encode-data-prob",
+        question: "After RY(x) on |0⟩, the probability of measuring 1 is…",
+        options: ["sin²(x/2)", "x", "always 0.5"],
+        answerIndex: 0,
+        explanation: "RY(x) tilts the qubit; P(1) = sin²(x/2), so 0 stays 0 and π gives 1.",
+      },
+    ],
+  },
+  "qml-parameterised-ansatz": {
+    sections: [
+      {
+        heading: "Data vs. parameters",
+        body:
+          "The encoding layer holds data. The next layer holds parameters: angles the training loop is free to change. In the visualizer you make an angle symbolic by typing a name such as θ or theta instead of a number.\n\nThe diagram adds RY(θ₀) and RY(θ₁) after the encoding rotations.",
+        circuit: lessonCircuit("QML parameter layer", 2, 0, [
+          op("ans-enc0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+          op("ans-enc1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+          op("ans-theta0", "ry", ["q0"], 1, [], [], symbolicParameter("theta0")),
+          op("ans-theta1", "ry", ["q1"], 1, [], [], symbolicParameter("theta1")),
+        ]),
+        quantaNote: "Symbols stay symbols in the exported code — they become params[i].",
+      },
+      {
+        heading: "Entangle to mix features",
+        body:
+          "Rotations alone keep each qubit independent. A CX between the qubits lets the model combine features — the quantum analogue of a hidden layer connecting inputs.\n\nA common pattern is: encode → rotate(θ) → entangle → rotate(θ) again. Each repetition is a layer.",
+        circuit: lessonCircuit("QML entangled ansatz", 2, 0, [
+          op("ans-enc0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+          op("ans-enc1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+          op("ans-theta0", "ry", ["q0"], 1, [], [], symbolicParameter("theta0")),
+          op("ans-theta1", "ry", ["q1"], 1, [], [], symbolicParameter("theta1")),
+          op("ans-cx", "cx", ["q1"], 2, ["q0"]),
+          op("ans-theta2", "ry", ["q0"], 3, [], [], symbolicParameter("theta2")),
+          op("ans-theta3", "ry", ["q1"], 3, [], [], symbolicParameter("theta3")),
+        ]),
+        quantaNote: "No CX, no interaction. Entanglement is what makes it more than two separate models.",
+      },
+      {
+        heading: "What quantum-learn does with it",
+        body:
+          "quantum-learn's `VariationalQuantumCircuit.fit(features, labels, ansatz=...)` calls your ansatz for every data row, measures the output, compares it with the label, and nudges every θ with gradient descent. Your job is the circuit shape; the library does the tuning.\n\nExport this lesson's circuit from the quantum-learn tab and look for `PARAM_NAMES`.",
+        quantaNote: "Training is just: run, compare, nudge θ, repeat.",
+      },
+    ],
+    quiz: [
+      {
+        id: "qml-ansatz-symbol",
+        question: "What makes an angle trainable in the visualizer?",
+        options: ["Setting it to π", "Giving it a symbolic name like theta", "Adding a measurement after it"],
+        answerIndex: 1,
+        explanation: "Symbolic parameters are exported as params[i] and tuned by the optimiser.",
+      },
+      {
+        id: "qml-ansatz-cx",
+        question: "Why include CX gates in an ansatz?",
+        options: ["To reset the qubits", "So the model can combine information from different qubits", "To speed up simulation"],
+        answerIndex: 1,
+        explanation: "Without entangling gates each qubit stays an independent one-feature model.",
+      },
+    ],
+  },
+  "qml-measure-prediction": {
+    sections: [
+      {
+        heading: "Expectation values as outputs",
+        body:
+          "Run the circuit many times and count. The fraction of 1s on a qubit is an estimate of its probability, and quantum-learn's `measurement=\"probabilities\"` returns exactly these numbers for every basis state.\n\nFor a two-class problem a simple rule is: predict class 1 when P(1) on q0 is at least 0.5.",
+        circuit: lessonCircuit("QML prediction readout", 2, 2, [
+          op("pred-enc0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+          op("pred-enc1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+          op("pred-theta0", "ry", ["q0"], 1, [], [], symbolicParameter("theta0")),
+          op("pred-theta1", "ry", ["q1"], 1, [], [], symbolicParameter("theta1")),
+          op("pred-cx", "cx", ["q1"], 2, ["q0"]),
+          op("pred-measure", "measure", ["q0"], 3, [], ["c0"]),
+        ]),
+        quantaNote: "Shots are how a quantum model speaks.",
+      },
+      {
+        heading: "Loss: how wrong were we?",
+        body:
+          "Training compares the predicted probabilities with the true label using a loss such as cross-entropy. Lower loss means the histogram leans toward the right answer. Gradient descent then moves every θ a little in the direction that lowers the loss.\n\nThis is the same loop as classical neural networks — only the model is a circuit.",
+        quantaNote: "Cross-entropy punishes confident wrong answers the most.",
+      },
+      {
+        heading: "Noise changes the answer",
+        body:
+          "You saw in Why Hardware Disagrees that noise leaks probability into other outcomes. For a classifier that means predictions near the 0.5 boundary can flip on hardware. Try this circuit with the Realistic noise preset and compare P(1).\n\nRobust QML models keep decisions away from the boundary.",
+        quantaNote: "Confident models survive noise better than borderline ones.",
+      },
+    ],
+    quiz: [
+      {
+        id: "qml-measure-rule",
+        question: "With the rule 'class 1 if P(1) ≥ 0.5', a run giving 620 ones out of 1000 shots predicts…",
+        options: ["Class 0", "Class 1", "Undefined"],
+        answerIndex: 1,
+        explanation: "P(1) ≈ 0.62 ≥ 0.5, so the model predicts class 1.",
+      },
+      {
+        id: "qml-measure-loss",
+        question: "What does the loss function measure?",
+        options: ["How long the circuit is", "How far the predicted probabilities are from the true labels", "How many qubits are used"],
+        answerIndex: 1,
+        explanation: "Loss quantifies prediction error; training lowers it by adjusting θ.",
+      },
+    ],
+  },
+  "qml-training-loop": {
+    sections: [
+      {
+        heading: "One knob, one target",
+        body:
+          "Suppose the label says P(1) should be 0.9. Our model is RY(θ) followed by a measurement, so P(1) = sin²(θ/2). At θ = 0.3, P(1) ≈ 0.02 — far too low. The loss is large.\n\nScrub the diagram to see the state after RY(0.3).",
+        circuit: lessonCircuit("QML training start", 1, 1, [
+          op("train-ry", "ry", ["q0"], 0, [], [], numericParameter(0.3)),
+          op("train-measure", "measure", ["q0"], 1, [], ["c0"]),
+        ]),
+        quantaNote: "The loss tells you how far; the gradient tells you which way.",
+      },
+      {
+        heading: "Follow the gradient",
+        body:
+          "Increasing θ raises P(1), so the gradient points toward larger θ. A step to θ = 1.0 gives P(1) ≈ 0.23; θ = 2.0 gives ≈ 0.71; θ ≈ 2.5 gives ≈ 0.90. Each step lowers the loss until it stops improving.\n\nquantum-learn does this with PennyLane's automatic differentiation over all parameters at once.",
+        circuit: lessonCircuit("QML training target", 1, 1, [
+          op("train-ry", "ry", ["q0"], 0, [], [], numericParameter(2.5)),
+          op("train-measure", "measure", ["q0"], 1, [], ["c0"]),
+        ]),
+        quantaNote: "Autodiff means nobody types these derivatives by hand.",
+      },
+      {
+        heading: "Epochs, batches, and stopping",
+        body:
+          "Real training repeats the step for every sample (a batch) and over the whole dataset several times (epochs). `fit(features, labels, epochs=..., batch_size=...)` exposes both. Too few epochs under-fit; too many waste hardware time and can over-fit.\n\nBind θ in the inspector and check Results to reproduce the numbers above.",
+        quantaNote: "Stop when the loss flattens — not when you run out of patience.",
+      },
+    ],
+    quiz: [
+      {
+        id: "qml-train-direction",
+        question: "P(1) is 0.02 but the target is 0.9. For RY(θ) starting at θ = 0.3, training should…",
+        options: ["Decrease θ", "Increase θ", "Leave θ unchanged"],
+        answerIndex: 1,
+        explanation: "P(1) = sin²(θ/2) grows with θ up to π, so the gradient step increases θ.",
+      },
+      {
+        id: "qml-train-epoch",
+        question: "What is an epoch?",
+        options: ["One gate in the ansatz", "One pass over the whole training dataset", "One measurement shot"],
+        answerIndex: 1,
+        explanation: "An epoch is a full pass over the data; batches split it into smaller update steps.",
+      },
+    ],
+  },
+  "qml-capstone-classifier": {
+    sections: [
+      {
+        heading: "The full recipe",
+        body:
+          "Encoding: RY(x₀) on q0, RY(x₁) on q1. Ansatz: RY(θ₀), RY(θ₁), then CX q0→q1, then RY(θ₂) on q0. Readout: measure q0.\n\nThe diagram shows the complete circuit; the state preview shows how the θ layer and CX reshape the probabilities.",
+        circuit: lessonCircuit("QML classifier target", 2, 2, [
+          op("cap-enc0", "ry", ["q0"], 0, [], [], numericParameter(0.8)),
+          op("cap-enc1", "ry", ["q1"], 0, [], [], numericParameter(2.4)),
+          op("cap-theta0", "ry", ["q0"], 1, [], [], symbolicParameter("theta0")),
+          op("cap-theta1", "ry", ["q1"], 1, [], [], symbolicParameter("theta1")),
+          op("cap-cx", "cx", ["q1"], 2, ["q0"]),
+          op("cap-theta2", "ry", ["q0"], 3, [], [], symbolicParameter("theta2")),
+          op("cap-measure", "measure", ["q0"], 4, [], ["c0"]),
+        ]),
+        quantaNote: "Four kinds of gate, one model.",
+      },
+      {
+        heading: "Export and train",
+        body:
+          "Open the Code panel, choose quantum-learn, and copy the code. It defines `ansatz(features, params, n_qubits)` with `PARAM_NAMES = [\"theta0\", \"theta1\", \"theta2\"]` and a `VariationalQuantumClassifier` ready for `fit`. Install with `pip install \"quantum-learn[pennylane]\"`, pass a pandas DataFrame of two features and a Series of 0/1 labels, and train.\n\nThe encoding RY gates in the export become the library's AngleEmbedding — same idea, one line.",
+        quantaNote: "From canvas to trained model in one copy-paste.",
+      },
+      {
+        heading: "Where to go next",
+        body:
+          "quantum-learn also offers `VariationalQuantumRegressor` for continuous targets, `HybridClassification` that feeds quantum features into a classical scikit-learn model, and Hugging Face Hub saving with `push_to_hub`. Read the docs at quantum-learn.readthedocs.io and try the Iris dataset.\n\nEverything you built in the Academy — superposition, entanglement, measurement, noise — is what makes these models tick.",
+        quantaNote: "You started with a blank wire. Now you train quantum models. Go build something.",
+      },
+    ],
+    quiz: [
+      {
+        id: "qml-capstone-order",
+        question: "Which order describes a variational classifier?",
+        options: ["Measure → encode → rotate", "Encode → trainable rotations + CX → measure", "CX → measure → encode"],
+        answerIndex: 1,
+        explanation: "Data goes in first, the trainable ansatz reshapes it, and measurement reads the answer.",
+      },
+      {
+        id: "qml-capstone-export",
+        question: "In the quantum-learn export, symbolic angles appear as…",
+        options: ["Entries of params listed in PARAM_NAMES", "Fixed numbers", "Extra qubits"],
+        answerIndex: 0,
+        explanation: "Each symbol becomes params[i]; PARAM_NAMES records the order.",
       },
     ],
   },

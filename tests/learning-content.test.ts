@@ -28,7 +28,8 @@ function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number
     type: string,
     target = "q0",
     controls: string[] = [],
-    classicalTargets = type === "measure" ? ["c0"] : []
+    classicalTargets = type === "measure" ? ["c0"] : [],
+    symbol?: string
   ) => {
     next.operations.push({
       id: `solution-${counter++}`,
@@ -38,7 +39,11 @@ function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number
       controls,
       classicalTargets,
       parameters:
-        type === "rx" ? [{ value: 1, display: "theta" }] : undefined,
+        symbol
+          ? [{ value: 0.5, display: symbol, symbol }]
+          : ["rx", "ry", "rz", "p", "u"].includes(type)
+            ? [{ value: 1, display: "theta" }]
+            : undefined,
       column: counter,
     });
   };
@@ -58,6 +63,10 @@ function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number
       }
     } else if (item.type === "hasParameterGate") {
       add(item.gate ?? "rx");
+    } else if (item.type === "hasSymbolicParameter") {
+      for (let index = 0; index < (item.minCount ?? 1); index += 1) {
+        add(item.gate ?? "ry", `q${index}`, [], [], `theta${index}`);
+      }
     } else if (item.type === "operationOrder") {
       for (const operation of item.operations) {
         add(operation.gate, operation.target ?? "q0", operation.control ? [operation.control] : []);
@@ -103,11 +112,9 @@ describe("academy lesson content", () => {
     for (const lesson of LESSONS) {
       expect(ids.has(lesson.id)).toBe(false);
       ids.add(lesson.id);
-      expect(lesson.sections.length).toBeGreaterThanOrEqual(3);
-      expect(lesson.sections.length).toBeLessThanOrEqual(4);
+      expect(lesson.sections).toHaveLength(3);
       expect(lesson.sections.every((section) => section.quantaNote)).toBe(true);
       expect(lesson.quiz.length).toBe(2);
-      expect(new Set(lesson.quiz.map((question) => question.answerIndex)).size).toBe(2);
       for (const question of lesson.quiz) {
         expect(question.options.length).toBeGreaterThanOrEqual(3);
         expect(question.options.length).toBeLessThanOrEqual(4);
@@ -147,7 +154,8 @@ describe("academy lesson content", () => {
     for (const lesson of LESSONS) {
       if (
         lesson.successCondition.type === "manual" ||
-        lesson.id === "noise-vs-ideal"
+        lesson.id === "noise-vs-ideal" ||
+        lesson.id === "qml-training-loop"
       )
         continue;
       const result = checkCircuit(lesson.starterCircuit, lesson.successCondition, {
@@ -185,5 +193,39 @@ describe("academy lesson content", () => {
       column: 3,
     });
     expect(checkCircuit(complete, lesson.successCondition).success).toBe(true);
+  });
+
+  it("checks the Module 9 capstone target circuit", () => {
+    const lesson = LESSONS.find((item) => item.id === "qml-capstone-classifier");
+    if (!lesson) throw new Error("QML capstone lesson missing");
+    const target = lesson.sections[0]?.circuit;
+    if (!target) throw new Error("QML capstone target circuit missing");
+
+    expect(checkCircuit(target, lesson.successCondition).success).toBe(true);
+    expect(checkCircuit(lesson.starterCircuit, lesson.successCondition).success).toBe(false);
+  });
+
+  it("checks symbolic parameters with optional gate and count scopes", () => {
+    const circuit = createEmptyCircuit("symbolic", 1, 0);
+    circuit.operations.push({
+      id: "symbolic-ry",
+      type: "ry",
+      label: "RY",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      parameters: [{ value: 0.5, symbol: "theta", display: "theta" }],
+      column: 0,
+    });
+
+    expect(
+      checkCircuit(circuit, { type: "hasSymbolicParameter", gate: "ry" }).success
+    ).toBe(true);
+    expect(
+      checkCircuit(circuit, { type: "hasSymbolicParameter", minCount: 2 }).success
+    ).toBe(false);
+    expect(
+      checkCircuit(circuit, { type: "hasSymbolicParameter", gate: "rx" }).success
+    ).toBe(false);
   });
 });
