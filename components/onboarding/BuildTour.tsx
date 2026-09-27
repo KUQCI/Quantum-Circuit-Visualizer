@@ -243,12 +243,12 @@ export function BuildTour() {
   return (
     <div className="fixed inset-0 z-[60]" onKeyDown={handleKeyDown}>
       <div
-        className="absolute inset-x-0 top-0 bg-black/65"
+        className="absolute inset-x-0 top-0 bg-[var(--color-tour-backdrop)]"
         style={{ height: highlight.top }}
         aria-hidden
       />
       <div
-        className="absolute left-0 bg-black/65"
+        className="absolute left-0 bg-[var(--color-tour-backdrop)]"
         style={{
           top: highlight.top,
           width: highlight.left,
@@ -257,7 +257,7 @@ export function BuildTour() {
         aria-hidden
       />
       <div
-        className="absolute right-0 bg-black/65"
+        className="absolute right-0 bg-[var(--color-tour-backdrop)]"
         style={{
           top: highlight.top,
           left: highlight.left + highlight.width,
@@ -266,7 +266,7 @@ export function BuildTour() {
         aria-hidden
       />
       <div
-        className="absolute inset-x-0 bottom-0 bg-black/65"
+        className="absolute inset-x-0 bottom-0 bg-[var(--color-tour-backdrop)]"
         style={{ top: highlight.top + highlight.height }}
         aria-hidden
       />

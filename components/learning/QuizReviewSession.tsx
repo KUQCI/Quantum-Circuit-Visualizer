@@ -118,7 +118,7 @@ export function QuizReviewSession() {
       {questions.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>All caught up</CardTitle>
+            <CardTitle as="h2">All caught up</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <p>Quanta says: all caught up — come back tomorrow</p>
@@ -132,7 +132,7 @@ export function QuizReviewSession() {
       ) : finished ? (
         <Card>
           <CardHeader>
-            <CardTitle>Review complete</CardTitle>
+            <CardTitle as="h2">Review complete</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-[var(--color-muted-foreground)]">
@@ -150,7 +150,7 @@ export function QuizReviewSession() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle>{current.lessonTitle}</CardTitle>
+              <CardTitle as="h2">{current.lessonTitle}</CardTitle>
               <span className="text-xs text-[var(--color-muted-foreground)]">
                 Question {index + 1} of {questions.length}
               </span>

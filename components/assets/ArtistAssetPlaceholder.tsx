@@ -73,14 +73,14 @@ export function ArtistAssetPlaceholder({
           className="motion-aurora absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse at 28% 20%, rgba(47,128,237,0.28), transparent 55%), radial-gradient(ellipse at 78% 75%, rgba(125,211,252,0.12), transparent 50%), linear-gradient(160deg, #07111f 0%, #0a1628 45%, #050914 100%)",
+              "radial-gradient(ellipse at 28% 20%, color-mix(in srgb, var(--color-blue-qci) 28%, transparent), transparent 55%), radial-gradient(ellipse at 78% 75%, color-mix(in srgb, var(--color-cyan-quantum) 12%, transparent), transparent 50%), linear-gradient(160deg, var(--color-art-bg-start) 0%, var(--color-art-bg-mid) 45%, var(--color-art-bg-end) 100%)",
           }}
         />
         <div
           className="motion-grid-drift pointer-events-none absolute inset-0 opacity-[0.35]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(47,128,237,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(47,128,237,0.12) 1px, transparent 1px)",
+              "linear-gradient(color-mix(in srgb, var(--color-blue-qci) 12%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--color-blue-qci) 12%, transparent) 1px, transparent 1px)",
             backgroundSize: "48px 48px",
           }}
         />

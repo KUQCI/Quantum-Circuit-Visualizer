@@ -279,10 +279,12 @@ export function VisualizationPanels({
       <div className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
         <div
           className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--color-border)] p-1.5"
-          role="tablist"
-          aria-label="Visualization panels"
         >
-          <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+          <div
+            className="flex min-w-0 flex-1 gap-1 overflow-x-auto"
+            role="tablist"
+            aria-label="Visualization panels"
+          >
             {activePanels.map((panelId) => (
               <button
                 key={panelId}
@@ -317,9 +319,9 @@ export function VisualizationPanels({
           role="tabpanel"
           aria-label={PANEL_LABELS[activeTab]}
         >
-          <h3 className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+          <p className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
             {PANEL_LABELS[activeTab]}
-          </h3>
+          </p>
           <PanelBody panelId={activeTab} result={result} lastResult={lastResult} />
         </div>
       </div>

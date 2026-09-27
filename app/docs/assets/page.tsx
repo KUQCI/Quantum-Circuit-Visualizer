@@ -17,7 +17,7 @@ const priorityClass: Record<AssetPriority, string> = {
 };
 
 const statusClass: Record<AssetStatus, string> = {
-  needed: "text-[#c084fc]",
+  needed: "text-[var(--color-status)]",
   "in-progress": "text-[var(--color-brand)]",
   review: "text-[var(--color-gold-duck)]",
   done: "text-[var(--color-success)]",
