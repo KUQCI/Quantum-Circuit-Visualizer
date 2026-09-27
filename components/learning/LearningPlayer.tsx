@@ -579,6 +579,7 @@ export function LearningPlayer({
             placementGate={selectedGate}
             onPlacementComplete={() => setSelectedGate(null)}
             canvasLabel="Circuit viewport"
+            variant="learning"
           />
         </section>
 

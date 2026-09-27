@@ -77,15 +77,17 @@ export function GateLibrary({
         )}
       >
         <div className="border-b border-[var(--color-border)] px-3 py-2.5">
-          <div className="flex items-center justify-between">
-            <h2
-              className={cn(
-                "font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]",
-                "text-xs"
-              )}
-            >
-              Operations
-            </h2>
+          <div className="flex items-center gap-1.5">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search gates..."
+                aria-label="Search gates"
+                className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
+              />
+            </div>
             <div className="flex gap-0.5">
               <button
                 type="button"
@@ -114,16 +116,6 @@ export function GateLibrary({
                 <List className="h-3.5 w-3.5" />
               </button>
             </div>
-          </div>
-          <div className="relative mt-2">
-            <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search gates..."
-              aria-label="Search gates"
-              className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
-            />
           </div>
           <div
             className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -180,19 +172,37 @@ export function GateLibrary({
               No gates match your search.
             </p>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(52px,1fr))] gap-1.5">
-              {filteredPalette.map((gate) => (
-                <GateGridItem
-                  key={gate.type}
-                  gate={gate}
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                  variant={variant}
-                  selected={selectedGate === gate.type}
-                  onGateSelect={onGateSelect}
-                />
-              ))}
-            </div>
+            (categoryFilter === "all"
+              ? GATE_CATEGORIES.map((category) => ({
+                  category,
+                  gates: filteredPalette.filter((g) => g.category === category.id),
+                }))
+              : [{ category: null, gates: filteredPalette }]
+            ).map(({ category, gates }) => {
+              if (gates.length === 0) return null;
+              return (
+                <div key={category?.id ?? "filtered"} className="mb-3 last:mb-0">
+                  {category && (
+                    <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                      {category.label}
+                    </h3>
+                  )}
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
+                    {gates.map((gate) => (
+                      <GateGridItem
+                        key={gate.type}
+                        gate={gate}
+                        onDragStart={onDragStart}
+                        onDragEnd={onDragEnd}
+                        variant={variant}
+                        selected={selectedGate === gate.type}
+                        onGateSelect={onGateSelect}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -215,7 +225,6 @@ function GateGridItem({
   selected?: boolean;
   onGateSelect?: (gateType: string | null) => void;
 }) {
-  const isWide = gate.type === "rccx" || gate.type === "rc3x";
   const isLearning = variant === "learning";
 
   return (
@@ -247,7 +256,6 @@ function GateGridItem({
             "flex cursor-grab select-none flex-col items-center justify-center active:cursor-grabbing active:scale-95",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
             isLearning ? "aspect-square min-h-[52px]" : "aspect-square",
-            isWide && "col-span-2 aspect-[2/1]",
             getGateColor(gate),
             selected && "quanta-gate--selected"
           )}

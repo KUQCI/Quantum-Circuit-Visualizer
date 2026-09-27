@@ -207,7 +207,13 @@ export function VisualizationPanels({
   resizable = false,
   layoutResetKey = 0,
 }: VisualizationPanelsProps) {
-  const { vizPanels, inspectMode, inspectStep, setVizPanel } = useEditorUiStore();
+  const {
+    vizPanels,
+    inspectMode,
+    inspectStep,
+    setVizPanel,
+    setVizLayout,
+  } = useEditorUiStore();
   const lastResult = useExecutionStore((s) => s.lastResult);
 
   const effectiveCircuit = useMemo(() => {
@@ -272,27 +278,39 @@ export function VisualizationPanels({
     return (
       <div className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
         <div
-          className="flex shrink-0 gap-1 overflow-x-auto border-b border-[var(--color-border)] p-1.5"
+          className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--color-border)] p-1.5"
           role="tablist"
           aria-label="Visualization panels"
         >
-          {activePanels.map((panelId) => (
+          <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+            {activePanels.map((panelId) => (
+              <button
+                key={panelId}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === panelId}
+                className={cn(
+                  "touch-target-sm shrink-0 rounded-md px-3 text-xs font-medium transition-colors",
+                  activeTab === panelId
+                    ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
+                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
+                )}
+                onClick={() => setActiveTab(panelId)}
+              >
+                {PANEL_LABELS[panelId]}
+              </button>
+            ))}
+          </div>
+          {layoutTier === "desktop" && (
             <button
-              key={panelId}
               type="button"
-              role="tab"
-              aria-selected={activeTab === panelId}
-              className={cn(
-                "touch-target-sm shrink-0 rounded-md px-3 text-xs font-medium transition-colors",
-                activeTab === panelId
-                  ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
-                  : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"
-              )}
-              onClick={() => setActiveTab(panelId)}
+              className="shrink-0 rounded px-2 py-1 text-[10px] font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+              onClick={() => setVizLayout("split")}
+              aria-label="Switch to split results"
             >
-              {PANEL_LABELS[panelId]}
+              Split
             </button>
-          ))}
+          )}
         </div>
         <div
           className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-3"
@@ -310,12 +328,26 @@ export function VisualizationPanels({
 
   if (resizable && activePanels.length > 1) {
     return (
-      <ResizableVizRow
-        activePanels={activePanels}
-        result={result}
-        lastResult={lastResult}
-        layoutResetKey={layoutResetKey}
-      />
+      <div className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
+        <div className="flex h-7 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2">
+          <button
+            type="button"
+            className="rounded px-2 py-1 text-[10px] font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+            onClick={() => setVizLayout("tabs")}
+            aria-label="Switch to tabbed results"
+          >
+            Tabs
+          </button>
+        </div>
+        <div className="min-h-0 flex-1">
+          <ResizableVizRow
+            activePanels={activePanels}
+            result={result}
+            lastResult={lastResult}
+            layoutResetKey={layoutResetKey}
+          />
+        </div>
+      </div>
     );
   }
 
