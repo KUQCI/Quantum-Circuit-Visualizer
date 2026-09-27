@@ -30,7 +30,7 @@ import {
   PanelLeftOpen,
   RotateCcw,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, pluralize } from "@/lib/utils";
 import { getLevelTitle, xpForNextLevel } from "@/lib/learning/progress";
 
 type ActivityDefinition = LessonDefinition | ChallengeDefinition;
@@ -317,7 +317,7 @@ export function LearningPlayer({
   }
 
   return (
-    <div className="learning-player flex h-full min-h-0 w-full flex-col overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-background)]">
+    <div className="learning-player flex min-h-0 w-full flex-col border-y border-[var(--color-border)] bg-[var(--color-background)] md:h-full md:overflow-hidden">
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
@@ -490,7 +490,8 @@ export function LearningPlayer({
                   Target circuit
                 </h3>
                 <p className="text-sm text-[var(--color-muted-foreground)]">
-                  {targetCircuit.operations.length} gate(s) · {targetCircuit.qubits.length} qubit(s)
+                  {pluralize(targetCircuit.operations.length, "gate")} ·{" "}
+                  {pluralize(targetCircuit.qubits.length, "qubit")}
                 </p>
                 <ul className="mt-2 space-y-1 font-mono text-sm">
                   {targetCircuit.operations
@@ -760,7 +761,12 @@ function DoneCard({
     <div className="space-y-3">
       <QuantaAchievement
         title="Circuit milestone complete!"
-        message={`You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`}
+        layout="column"
+        message={
+          xp === 0
+            ? "This lesson was already completed — no extra XP this time. Keep experimenting and Quanta will be here for the next step."
+            : `You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`
+        }
       />
       <div className="space-y-3 rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
         <h2 className="text-lg font-semibold">Level {level} · {getLevelTitle(level)}</h2>
@@ -798,7 +804,7 @@ function LearningCodePanel({
   onImportSync: () => void;
 }) {
   return (
-    <div className="learning-code-panel flex h-full min-h-[220px] flex-col">
+    <div className="learning-code-panel flex h-full min-h-0 flex-col">
       <MultiLanguageCodePanel
         active
         onExport={onExport}

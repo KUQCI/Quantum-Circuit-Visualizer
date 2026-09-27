@@ -53,6 +53,11 @@ export function Reveal({
       return;
     }
 
+    if (!("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -62,7 +67,10 @@ export function Reveal({
           setVisible(false);
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.12 }
+      {
+        rootMargin: "0px 0px -8% 0px",
+        threshold: 0,
+      }
     );
 
     observer.observe(node);

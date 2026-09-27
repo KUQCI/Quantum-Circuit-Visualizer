@@ -12,7 +12,8 @@ import { DAILY_GOAL_XP, getLevelTitle, MODULE_LABELS, MODULE_IDS, xpForNextLevel
 import { getNextChallenge, getNextLesson } from "@/lib/navigation/flow";
 import { getProgressQuantaMessage } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
-import { Award, Swords } from "lucide-react";
+import { Award, Flame, Swords } from "lucide-react";
+import { pluralize } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 const SKILL_LABELS: Record<string, string> = {
@@ -21,6 +22,8 @@ const SKILL_LABELS: Record<string, string> = {
   measurement: "Measurement",
   entanglement: "Entanglement",
   qiskit: "Qiskit Syntax",
+  algorithms: "Algorithms",
+  phase: "Phase",
 };
 
 export default function ProgressPage() {
@@ -90,7 +93,8 @@ export default function ProgressPage() {
           Daily goal: {Math.min(dailyXp[todayKey] ?? 0, DAILY_GOAL_XP)}/{DAILY_GOAL_XP} XP
         </p>
         <p className="mt-1 text-[var(--color-muted-foreground)]">
-          🔥 Current streak: {currentStreak} day{currentStreak === 1 ? "" : "s"}
+          <Flame className="mr-1 inline h-4 w-4 text-[var(--color-brand)]" aria-hidden />
+          Current streak: {pluralize(currentStreak, "day")}
         </p>
       </div>
 

@@ -18,7 +18,7 @@ import { QuantaEntrance } from "@/components/mascot/QuantaEntrance";
 import { Reveal } from "@/components/motion/Reveal";
 import { quantaMessages } from "@/lib/mascot/messages";
 import { useCircuitStore } from "@/store/circuit-store";
-import { formatDate } from "@/lib/utils";
+import { formatDate, pluralize } from "@/lib/utils";
 import {
   PenLine,
   Upload,
@@ -294,8 +294,8 @@ export default function HomePage() {
                     {project.name}
                   </h3>
                   <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-                    {project.circuit.qubits.length} qubits ·{" "}
-                    {project.circuit.operations.length} gates ·{" "}
+                    {pluralize(project.circuit.qubits.length, "qubit")} ·{" "}
+                    {pluralize(project.circuit.operations.length, "gate")} ·{" "}
                     {formatDate(project.updatedAt)}
                   </p>
                   <Button asChild variant="outline" size="sm" className="mt-4">

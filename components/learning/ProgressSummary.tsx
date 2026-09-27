@@ -4,6 +4,7 @@ import { xpForNextLevel } from "@/lib/learning/progress";
 import { useProgressStore } from "@/store/progress-store";
 import { Flame, Star, Trophy, Zap } from "lucide-react";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
+import { pluralize } from "@/lib/utils";
 
 export function ProgressSummary({ compact = false }: { compact?: boolean }) {
   const totalXp = useProgressStore((s) => s.totalXp);
@@ -47,7 +48,7 @@ export function ProgressSummary({ compact = false }: { compact?: boolean }) {
         icon={Trophy}
         label="Completed"
         value={`${completedLessons.length + completedChallenges.length}`}
-        sub={`${completedLessons.length} lessons · ${completedChallenges.length} challenges`}
+        sub={`${pluralize(completedLessons.length, "lesson")} · ${pluralize(completedChallenges.length, "challenge")}`}
       />
       {xpInfo.nextLevel && (
         <div className="col-span-full">

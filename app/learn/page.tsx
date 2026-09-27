@@ -132,7 +132,7 @@ export default function LearnPage() {
             <NextStepCard
               badge="Next recommended lesson"
               title={nextLesson.title}
-              description={`${nextLesson.description} · ~${nextLesson.estimatedMinutes} min · +${nextLesson.xpReward} XP`}
+              description={`${nextLesson.description.replace(/\.$/, "")} · ~${nextLesson.estimatedMinutes} min · +${nextLesson.xpReward} XP`}
               href={`/learn/${nextLesson.id}`}
               ctaLabel="Start lesson"
               secondaryHref="/challenges"

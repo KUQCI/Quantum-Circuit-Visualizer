@@ -6,7 +6,6 @@ import { AchievementGrid } from "@/components/learning/AchievementBadge";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { PageActions } from "@/components/navigation/PageActions";
 import { ACHIEVEMENTS } from "@/lib/learning/achievements";
-import { quantaMessages } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
 import { BarChart3, GraduationCap } from "lucide-react";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
@@ -50,7 +49,8 @@ export default function AchievementsPage() {
       <ProgressSummary compact />
 
       <QuantaAchievement
-        message={quantaMessages.achievementsTip}
+        title="Collect badges as you master circuits."
+        message="Unlock badges by finishing lessons, challenges, and streaks."
         unlockedCount={unlocked.length}
         totalCount={ACHIEVEMENTS.length}
         className="my-6"
