@@ -310,10 +310,10 @@ export const GATE_LIBRARY_UI: GateDefinition[] = [
 ];
 
 export const GATE_CATEGORIES = [
-  { id: "single", label: "Single Qubit" },
-  { id: "two", label: "Two Qubit" },
-  { id: "three", label: "Three Qubit" },
-  { id: "measurement", label: "Measurement & Reset" },
+  { id: "single", label: "Single qubit" },
+  { id: "two", label: "Two qubit" },
+  { id: "three", label: "Three qubit" },
+  { id: "measurement", label: "Measurement & reset" },
   { id: "barrier", label: "Barrier" },
   { id: "modifier", label: "Modifiers" },
 ] as const;

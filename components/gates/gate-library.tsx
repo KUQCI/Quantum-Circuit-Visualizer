@@ -100,7 +100,7 @@ export function GateLibrary({
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search gates..."
+                  placeholder="Search gates…"
                   aria-label="Search gates"
                   className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
                 />

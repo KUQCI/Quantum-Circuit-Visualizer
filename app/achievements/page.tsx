@@ -40,7 +40,7 @@ export default function AchievementsPage() {
         <PageActions
           className="mt-4"
           secondary={[
-            { label: "View Progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
+            { label: "View progress", href: "/progress", icon: <BarChart3 className="h-4 w-4" /> },
             { label: "Learn", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
           ]}
         />

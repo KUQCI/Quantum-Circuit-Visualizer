@@ -73,7 +73,7 @@ function CircuitSummary() {
         </p>
       </div>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-xs">
-        <SummaryRow label="Name" value={circuit.name || "Untitled Circuit"} />
+        <SummaryRow label="Name" value={circuit.name || "Untitled circuit"} />
         <SummaryRow label="Qubits" value={String(circuit.qubits.length)} />
         <SummaryRow
           label="Classical bits"

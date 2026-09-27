@@ -15,7 +15,7 @@ export function MeasurementHistogram({
   shots,
   registerLabel,
   error,
-  emptyMessage = "Run the circuit to see measurement results",
+  emptyMessage = "Run circuit to see measurement results",
 }: MeasurementHistogramProps) {
   if (error) {
     return (

@@ -21,7 +21,7 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center text-sm text-[var(--color-muted-foreground)]">
-      Loading editor...
+      Loading editor…
     </div>
   ),
 });
@@ -124,7 +124,7 @@ export function CodeEditor({
         className="flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)] text-sm text-[var(--color-muted-foreground)]"
         style={{ height }}
       >
-        Loading editor...
+        Loading editor…
       </div>
     );
   }

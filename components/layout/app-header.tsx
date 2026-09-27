@@ -9,6 +9,7 @@ import { useThemeStore } from "@/store/theme-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { Button } from "@/components/ui/button";
+import { requestOpenShortcuts } from "@/lib/shortcuts";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -178,6 +179,9 @@ export function AppHeader() {
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={requestOpenShortcuts}>
+                Keyboard shortcuts
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -238,6 +242,9 @@ export function AppHeader() {
               <DropdownMenuItem onClick={() => setTourCompleted(false)}>
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={requestOpenShortcuts}>
+                Keyboard shortcuts
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

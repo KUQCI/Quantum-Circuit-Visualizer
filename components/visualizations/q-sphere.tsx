@@ -10,7 +10,7 @@ const QSphere3D = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-full items-center justify-center text-xs text-[var(--color-muted-foreground)]">
-        Loading 3D view...
+        Loading 3D view…
       </div>
     ),
   }

@@ -82,7 +82,7 @@ export default function LearnPage() {
           description="Take the first lesson to learn the ideas behind every circuit you build."
           actions={[
             {
-              label: "Start Module 1",
+              label: "Start module 1",
               href: `/learn/${LESSONS[0]?.id ?? "what-is-a-qubit"}`,
               primary: true,
             },
@@ -123,11 +123,11 @@ export default function LearnPage() {
                           href: `/learn/${nextLesson.id}`,
                         },
                       ]
-                    : [{ label: "Review Lessons", href: "/learn/what-is-a-qubit" }]
+                    : [{ label: "Review lessons", href: "/learn/what-is-a-qubit" }]
                 }
                 secondary={[
                   {
-                    label: "Build Mode",
+                    label: "Build mode",
                     href: "/editor",
                     icon: <PenLine className="h-4 w-4" />,
                   },
@@ -198,8 +198,8 @@ export default function LearnPage() {
               href={`/challenges/${beginnerChallenge.id}`}
               ctaLabel="Start Challenge"
               secondaryActions={[
-                { href: "/challenges", label: "All Challenges" },
-                { href: "/achievements", label: "View Achievements" },
+                { href: "/challenges", label: "All challenges" },
+                { href: "/achievements", label: "View achievements" },
               ]}
             />
           </Reveal>
@@ -253,7 +253,7 @@ export default function LearnPage() {
             className="mt-4"
             secondary={[
               {
-                label: "View Progress",
+                label: "View progress",
                 href: "/progress",
                 icon: <BarChart3 className="h-4 w-4" />,
               },
