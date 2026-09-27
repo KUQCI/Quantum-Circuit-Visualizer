@@ -77,6 +77,8 @@ export function LearningPlayer({
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const completeChallenge = useProgressStore((s) => s.completeChallenge);
   const recordQuizResult = useProgressStore((s) => s.recordQuizResult);
+  const recordQuizAnswer = useProgressStore((s) => s.recordQuizAnswer);
+  const recordSandboxCompleted = useProgressStore((s) => s.recordSandboxCompleted);
   const awardXp = useProgressStore((s) => s.awardXp);
   const recordExport = useProgressStore((s) => s.recordExport);
   const recordImport = useProgressStore((s) => s.recordImport);
@@ -117,6 +119,7 @@ export function LearningPlayer({
   const [quizIndex, setQuizIndex] = useState(0);
   const [quizWrongAttempts, setQuizWrongAttempts] = useState(0);
   const [quizFirstTry, setQuizFirstTry] = useState(true);
+  const sandboxCompletionRef = useRef(false);
   const [maxStageReached, setMaxStageReached] = useState(
     mode === "lesson" ? (isComplete ? 3 : 0) : 2
   );
@@ -158,6 +161,7 @@ export function LearningPlayer({
     setMaxStageReached(
       currentMode === "lesson" ? (completed ? 3 : 0) : 2
     );
+    sandboxCompletionRef.current = false;
     setQuantaFeedback("");
     useEditorUiStore.getState().setInspectMode(false);
 
@@ -256,6 +260,7 @@ export function LearningPlayer({
         return;
       }
       setQuizChecked(true);
+      recordQuizAnswer(activity.id, question.id, correct);
       if (!correct) {
         setQuizFirstTry(false);
         const attempts = quizWrongAttempts + 1;
@@ -298,8 +303,17 @@ export function LearningPlayer({
           const didAward = completeLesson(activity.id, activity.xpReward, activity.skills);
           if (didAward) awarded = activity.xpReward;
         } else if (mode === "challenge" && !isLesson(activity)) {
-          const didAward = completeChallenge(activity.id, activity.xpReward);
-          if (didAward) awarded = activity.xpReward;
+          if (activity.id.startsWith("sandbox-")) {
+            if (!sandboxCompletionRef.current) {
+              awardXp(activity.xpReward, `Complete ${activity.id}`);
+              recordSandboxCompleted();
+              sandboxCompletionRef.current = true;
+              awarded = activity.xpReward;
+            }
+          } else {
+            const didAward = completeChallenge(activity.id, activity.xpReward);
+            if (didAward) awarded = activity.xpReward;
+          }
         }
       }
       if (

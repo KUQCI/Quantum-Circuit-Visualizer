@@ -1,5 +1,8 @@
 import type { Project } from "@/store/circuit-store";
-import type { PersistedProgress } from "@/store/progress-store";
+import type {
+  PersistedProgress,
+  QuizHistoryEntry,
+} from "@/store/progress-store";
 import type { SkillTag } from "@/lib/learning/types";
 import { LESSONS } from "@/lib/learning/lessons";
 import { MODULE_IDS } from "@/lib/learning/progress";
@@ -58,6 +61,34 @@ export function sanitizeSkillXp(
       (value as Record<string, unknown>)[skill],
       result[skill] ?? 0
     );
+  }
+  return result;
+}
+
+export function sanitizeQuizHistory(
+  value: unknown
+): Record<string, QuizHistoryEntry> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const result: Record<string, QuizHistoryEntry> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const record = entry as Record<string, unknown>;
+    const box = asNumber(record.box, 0);
+    if (
+      typeof record.due !== "string" ||
+      !Number.isFinite(Date.parse(record.due)) ||
+      !Number.isInteger(box) ||
+      box < 0 ||
+      box > 3
+    ) {
+      continue;
+    }
+    result[key] = {
+      box: box as QuizHistoryEntry["box"],
+      due: record.due,
+      correct: nonNegativeNumber(record.correct, 0),
+      wrong: nonNegativeNumber(record.wrong, 0),
+    };
   }
   return result;
 }
@@ -122,6 +153,8 @@ function sanitizeProgress(value: unknown): PersistedProgress {
     quizFirstTryLessons: asStringArray(record.quizFirstTryLessons),
     lastCelebratedLevel: nonNegativeNumber(record.lastCelebratedLevel, 1),
     completedModules: completedModulesFor(completedLessons),
+    quizHistory: sanitizeQuizHistory(record.quizHistory),
+    sandboxCompleted: nonNegativeNumber(record.sandboxCompleted, 0),
   };
 }
 
@@ -186,6 +219,20 @@ export function parseProgressBackup(
 
 function union(current: string[], incoming: string[]): string[] {
   return Array.from(new Set([...current, ...incoming]));
+}
+
+function mergeQuizHistory(
+  current: Record<string, QuizHistoryEntry>,
+  incoming: Record<string, QuizHistoryEntry>
+): Record<string, QuizHistoryEntry> {
+  const result = { ...current };
+  for (const [key, entry] of Object.entries(incoming)) {
+    const existing = result[key];
+    if (!existing || Date.parse(entry.due) > Date.parse(existing.due)) {
+      result[key] = entry;
+    }
+  }
+  return result;
 }
 
 function mergeStreakPair(
@@ -297,6 +344,14 @@ export function mergeProgress(
       incomingSafe.lastCelebratedLevel
     ),
     completedModules: completedModulesFor(completedLessons),
+    quizHistory: mergeQuizHistory(
+      currentSafe.quizHistory,
+      incomingSafe.quizHistory
+    ),
+    sandboxCompleted: Math.max(
+      currentSafe.sandboxCompleted,
+      incomingSafe.sandboxCompleted
+    ),
   };
 }
 

@@ -35,6 +35,8 @@ beforeEach(() => {
     quizFirstTryLessons: [],
     lastCelebratedLevel: 1,
     completedModules: [],
+    quizHistory: {},
+    sandboxCompleted: 0,
   });
 });
 
@@ -63,6 +65,29 @@ describe("academy progress", () => {
     ]);
     expect(Object.values(useProgressStore.getState().dailyXp)).toContain(25);
     expect(DAILY_GOAL_XP).toBe(50);
+  });
+
+  it("schedules quiz answers with Leitner intervals", () => {
+    const state = useProgressStore.getState();
+    state.recordQuizAnswer("what-is-a-qubit", "q1", true, "2026-01-01");
+    expect(useProgressStore.getState().quizHistory["what-is-a-qubit:q1"]).toEqual({
+      box: 1,
+      due: "2026-01-04",
+      correct: 1,
+      wrong: 0,
+    });
+    state.recordQuizAnswer("what-is-a-qubit", "q1", true, "2026-01-04");
+    expect(useProgressStore.getState().quizHistory["what-is-a-qubit:q1"]).toMatchObject({
+      box: 2,
+      due: "2026-01-11",
+    });
+    state.recordQuizAnswer("what-is-a-qubit", "q1", false, "2026-01-11");
+    expect(useProgressStore.getState().quizHistory["what-is-a-qubit:q1"]).toMatchObject({
+      box: 0,
+      due: "2026-01-12",
+      correct: 2,
+      wrong: 1,
+    });
   });
 
   it("includes achievement XP in today's daily XP", () => {

@@ -35,6 +35,8 @@ const emptyProgress = (): PersistedProgress => ({
   quizFirstTryLessons: [],
   lastCelebratedLevel: 1,
   completedModules: [],
+  quizHistory: {},
+  sandboxCompleted: 0,
 });
 
 describe("progress backups", () => {
@@ -126,6 +128,22 @@ describe("progress backups", () => {
     }
   });
 
+  it("accepts older backups without optional review fields", () => {
+    const parsed = parseProgressBackup(
+      JSON.stringify({
+        kind: "qci-progress-backup",
+        version: 1,
+        progress: emptyProgress(),
+        projects: [],
+      })
+    );
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.backup.progress.quizHistory).toEqual({});
+      expect(parsed.backup.progress.sandboxCompleted).toBe(0);
+    }
+  });
+
   it("merges progress with unions, maxima, boolean OR, and module recomputation", () => {
     const current = {
       ...emptyProgress(),
@@ -206,5 +224,33 @@ describe("progress backups", () => {
       currentStreak: 6,
       lastActiveDate: "2026-09-27",
     });
+  });
+
+  it("keeps the quiz history entry with the later due date", () => {
+    const current = {
+      ...emptyProgress(),
+      quizHistory: {
+        "lesson:q1": {
+          box: 1 as const,
+          due: "2026-01-03",
+          correct: 1,
+          wrong: 0,
+        },
+      },
+    };
+    const incoming = {
+      ...emptyProgress(),
+      quizHistory: {
+        "lesson:q1": {
+          box: 3 as const,
+          due: "2026-01-07",
+          correct: 3,
+          wrong: 1,
+        },
+      },
+    };
+    expect(mergeProgress(current, incoming).quizHistory["lesson:q1"]).toEqual(
+      incoming.quizHistory["lesson:q1"]
+    );
   });
 });

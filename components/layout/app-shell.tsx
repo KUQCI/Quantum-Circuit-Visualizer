@@ -23,6 +23,12 @@ function getContentBreadcrumbs(pathname: string) {
   if (path === "/") return [];
   if (isEditorPath(path)) return [];
   if (path === "/learn") return [{ label: "Home", href: "/" }, { label: "Learn" }];
+  if (path === "/review")
+    return [
+      { label: "Home", href: "/" },
+      { label: "Learn", href: "/learn" },
+      { label: "Quiz review" },
+    ];
   if (path === "/challenges")
     return [{ label: "Home", href: "/" }, { label: "Challenges" }];
   if (path === "/progress")

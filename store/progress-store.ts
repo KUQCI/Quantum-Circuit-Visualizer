@@ -12,6 +12,7 @@ import {
   completedModulesFor,
   mergeProgress,
   sanitizeDailyXp,
+  sanitizeQuizHistory,
   sanitizeProgressSnapshot,
   sanitizeSkillXp,
 } from "@/lib/learning/progress-backup";
@@ -41,6 +42,15 @@ export interface PersistedProgress {
   quizFirstTryLessons: string[];
   lastCelebratedLevel: number;
   completedModules: string[];
+  quizHistory: Record<string, QuizHistoryEntry>;
+  sandboxCompleted: number;
+}
+
+export interface QuizHistoryEntry {
+  box: 0 | 1 | 2 | 3;
+  due: string;
+  correct: number;
+  wrong: number;
 }
 
 interface ProgressState extends PersistedProgress {
@@ -48,6 +58,13 @@ interface ProgressState extends PersistedProgress {
   completeLesson: (id: string, xp: number, skills?: SkillTag[]) => boolean;
   completeChallenge: (id: string, xp: number) => boolean;
   recordQuizResult: (lessonId: string, firstTry: boolean) => void;
+  recordQuizAnswer: (
+    lessonId: string,
+    questionId: string,
+    correct: boolean,
+    today?: string
+  ) => void;
+  recordSandboxCompleted: () => void;
   awardXp: (amount: number, reason: string) => void;
   markLevelCelebrated: (level: number) => void;
   recordExport: () => void;
@@ -78,7 +95,7 @@ function addSkillXp(
   return next;
 }
 
-function todayKey(): string {
+export function todayIso(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
@@ -90,7 +107,7 @@ function addXp(
   const safeAmount = Math.max(0, Math.round(amount));
   const dailyXp = sanitizeDailyXp(state.dailyXp);
   if (!safeAmount) return { totalXp: state.totalXp, dailyXp };
-  const date = todayKey();
+  const date = todayIso();
   dailyXp[date] = (dailyXp[date] ?? 0) + safeAmount;
   return {
     totalXp: state.totalXp + safeAmount,
@@ -157,6 +174,8 @@ export const useProgressStore = create<ProgressState>()(
       quizFirstTryLessons: [],
       lastCelebratedLevel: 1,
       completedModules: [],
+      quizHistory: {},
+      sandboxCompleted: 0,
 
       recordActivity: () => {
         const { lastActiveDate, currentStreak } = get();
@@ -207,6 +226,37 @@ export const useProgressStore = create<ProgressState>()(
           quizFirstTryLessons: [...get().quizFirstTryLessons, lessonId],
         });
         checkAchievements(get, set);
+      },
+
+      recordQuizAnswer: (lessonId, questionId, correct, today = todayIso()) => {
+        const key = `${lessonId}:${questionId}`;
+        const previous = get().quizHistory[key];
+        const previousBox =
+          previous && previous.box >= 0 && previous.box <= 3 ? previous.box : 0;
+        const box = correct
+          ? (Math.min(3, previousBox + 1) as 0 | 1 | 2 | 3)
+          : 0;
+        const intervalDays = [1, 3, 7, 14][box];
+        const dueDate = new Date(`${today}T12:00:00`);
+        dueDate.setDate(dueDate.getDate() + intervalDays);
+        const due = `${dueDate.getFullYear()}-${String(
+          dueDate.getMonth() + 1
+        ).padStart(2, "0")}-${String(dueDate.getDate()).padStart(2, "0")}`;
+        set({
+          quizHistory: {
+            ...get().quizHistory,
+            [key]: {
+              box,
+              due,
+              correct: (previous?.correct ?? 0) + (correct ? 1 : 0),
+              wrong: (previous?.wrong ?? 0) + (correct ? 0 : 1),
+            },
+          },
+        });
+      },
+
+      recordSandboxCompleted: () => {
+        set({ sandboxCompleted: get().sandboxCompleted + 1 });
       },
 
       markLevelCelebrated: (level) => {
@@ -264,6 +314,8 @@ export const useProgressStore = create<ProgressState>()(
           quizFirstTryLessons: [...state.quizFirstTryLessons],
           lastCelebratedLevel: state.lastCelebratedLevel,
           completedModules: [...state.completedModules],
+          quizHistory: structuredClone(state.quizHistory),
+          sandboxCompleted: state.sandboxCompleted,
         };
       },
 
@@ -297,6 +349,8 @@ export const useProgressStore = create<ProgressState>()(
           | "quizFirstTryLessons"
           | "lastCelebratedLevel"
           | "completedModules"
+          | "quizHistory"
+          | "sandboxCompleted"
         >
       >(),
       merge: (persisted, current) => {
@@ -333,6 +387,8 @@ export const useProgressStore = create<ProgressState>()(
             current.lastCelebratedLevel
           ),
           completedModules: asStringArray(saved.completedModules),
+          quizHistory: sanitizeQuizHistory(saved.quizHistory),
+          sandboxCompleted: asNumber(saved.sandboxCompleted, current.sandboxCompleted),
         };
       },
     }

@@ -23,6 +23,7 @@ import {
 import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
 import { BarChart3, Award, GraduationCap } from "lucide-react";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
+import { generateSandboxChallenge, todaySandboxSeed } from "@/lib/learning/sandbox";
 
 function challengeLockReason(
   difficulty: "beginner" | "intermediate" | "advanced",
@@ -127,6 +128,15 @@ export default function ChallengesPage() {
 
       <ProgressHydrationGate>
         <ProgressSummary compact />
+
+        <NextStepCard
+          className="my-6"
+          badge="Daily practice"
+          title="Sandbox"
+          description={generateSandboxChallenge(todaySandboxSeed()).title}
+          href="/challenges/sandbox"
+          ctaLabel="Open today’s sandbox"
+        />
 
         <div className="my-6 grid gap-3 lg:grid-cols-2">
           {allComplete ? (
