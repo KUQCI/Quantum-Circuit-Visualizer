@@ -95,6 +95,7 @@ function PanelBody({
               shots={lastResult?.shots ?? 0}
               registerLabel={lastResult?.registerLabel}
               error={lastResult?.error}
+              noise={lastResult?.noise}
               emptyMessage="Run circuit to see results."
             />
           </div>

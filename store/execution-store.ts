@@ -7,17 +7,24 @@ import { BACKENDS, getBackend } from "@/lib/backends";
 import type { ExecutionResult } from "@/lib/shot-simulator";
 import { runCircuitShots } from "@/lib/shot-simulator";
 import type { Circuit } from "@/lib/circuit-schema";
+import {
+  clampNoiseModel,
+  IDEAL_NOISE,
+  type NoiseModel,
+} from "@/lib/noise-model";
 import { asNumber, createSafeJsonStorage } from "@/lib/safe-persist";
 
 interface ExecutionState {
   backendId: BackendId;
   shots: number;
+  noise: NoiseModel;
   lastResult: ExecutionResult | null;
   isRunning: boolean;
   runError: string | null;
 
   setBackendId: (id: BackendId) => void;
   setShots: (shots: number) => void;
+  setNoise: (noise: NoiseModel) => void;
   runCircuit: (circuit: Circuit) => Promise<ExecutionResult | null>;
   clearResult: () => void;
 }
@@ -27,6 +34,7 @@ export const useExecutionStore = create<ExecutionState>()(
     (set, get) => ({
       backendId: "local-sampler",
       shots: 1024,
+      noise: IDEAL_NOISE,
       lastResult: null,
       isRunning: false,
       runError: null,
@@ -48,8 +56,10 @@ export const useExecutionStore = create<ExecutionState>()(
         set({ shots: clamped });
       },
 
+      setNoise: (noise) => set({ noise: clampNoiseModel(noise) }),
+
       runCircuit: async (circuit) => {
-        const { backendId, shots } = get();
+        const { backendId, shots, noise } = get();
         const backend = getBackend(backendId);
 
         if (backend.requiresIbmApi) {
@@ -73,7 +83,7 @@ export const useExecutionStore = create<ExecutionState>()(
         // Yield to UI so the running state renders
         await new Promise((r) => setTimeout(r, 0));
 
-        const result = runCircuitShots(circuit, shots, backendId);
+        const result = runCircuitShots(circuit, shots, backendId, noise);
 
         set({
           isRunning: false,
@@ -88,7 +98,9 @@ export const useExecutionStore = create<ExecutionState>()(
     }),
     {
       name: "qiskit-visualizer-execution",
-      storage: createSafeJsonStorage<Pick<ExecutionState, "backendId" | "shots">>(),
+      storage: createSafeJsonStorage<
+        Pick<ExecutionState, "backendId" | "shots" | "noise">
+      >(),
       merge: (persisted, current) => {
         const saved = persisted as Partial<ExecutionState> | undefined;
         if (!saved) return current;
@@ -102,11 +114,13 @@ export const useExecutionStore = create<ExecutionState>()(
           ...current,
           backendId,
           shots: Math.min(backend.maxShots, Math.max(1, asNumber(saved.shots, current.shots))),
+          noise: clampNoiseModel(saved.noise),
         };
       },
       partialize: (state) => ({
         backendId: state.backendId,
         shots: state.shots,
+        noise: state.noise,
       }),
     }
   )

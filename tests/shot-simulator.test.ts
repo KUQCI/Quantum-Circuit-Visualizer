@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { runCircuitShots } from "@/lib/shot-simulator";
 import {
   bellStateCircuit,
@@ -6,6 +6,11 @@ import {
 } from "@/lib/sample-circuits";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
 import type { Circuit } from "@/lib/circuit-schema";
+import { IDEAL_NOISE } from "@/lib/noise-model";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function bellWithMeasure(): Circuit {
   return {
@@ -95,5 +100,67 @@ describe("Shot simulator", () => {
       { id: "m0", type: "measure", label: "M", targets: ["q0"], controls: [], classicalTargets: ["c0"], column: 1 }
     );
     expect(runCircuitShots(circuit, 1).counts).toEqual({ "01": 1 });
+  });
+
+  it("keeps an ideal Bell measurement at 00 or 11", () => {
+    const result = runCircuitShots(bellWithMeasure(), 4096, "local-sampler", IDEAL_NOISE);
+    expect(result.counts["01"] ?? 0).toBe(0);
+    expect(result.counts["10"] ?? 0).toBe(0);
+  });
+
+  it("adds readout noise to a Bell measurement", () => {
+    let seed = 0x12345678;
+    vi.spyOn(Math, "random").mockImplementation(() => {
+      seed = (1664525 * seed + 1013904223) >>> 0;
+      return seed / 0x100000000;
+    });
+    const result = runCircuitShots(bellWithMeasure(), 4096, "local-sampler", {
+      enabled: true,
+      depolarizing1q: 0,
+      depolarizing2q: 0,
+      readoutError: 0.2,
+    });
+    const mismatched = (result.counts["01"] ?? 0) + (result.counts["10"] ?? 0);
+    expect(mismatched / 4096).toBeGreaterThan(0.15);
+    expect(mismatched / 4096).toBeLessThan(0.5);
+  });
+
+  it("does not depolarize a circuit with no gates", () => {
+    const circuit = createEmptyCircuit("Empty measurement", 1, 1);
+    circuit.operations.push({
+      id: "measure",
+      type: "measure",
+      label: "M",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: ["c0"],
+      column: 0,
+    });
+    const result = runCircuitShots(circuit, 4096, "local-sampler", {
+      enabled: true,
+      depolarizing1q: 1,
+      depolarizing2q: 1,
+      readoutError: 0,
+    });
+    expect(result.counts).toEqual({ "0": 4096 });
+  });
+
+  it("treats disabled noise as ideal", () => {
+    let seed = 0xabcdef01;
+    const random = () => {
+      seed = (1664525 * seed + 1013904223) >>> 0;
+      return seed / 0x100000000;
+    };
+    vi.spyOn(Math, "random").mockImplementation(random);
+    const ideal = runCircuitShots(bellWithMeasure(), 512);
+    seed = 0xabcdef01;
+    const disabled = runCircuitShots(bellWithMeasure(), 512, "local-sampler", {
+      enabled: false,
+      depolarizing1q: 0.2,
+      depolarizing2q: 0.2,
+      readoutError: 0.2,
+    });
+    expect(disabled.counts).toEqual(ideal.counts);
+    expect(disabled.histogram).toEqual(ideal.histogram);
   });
 });

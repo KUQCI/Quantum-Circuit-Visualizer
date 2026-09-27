@@ -12,6 +12,7 @@ import {
   type Complex,
 } from "./quantum-state";
 import type { BackendId } from "./backends";
+import { clampNoiseModel, IDEAL_NOISE, type NoiseModel } from "./noise-model";
 
 export interface HistogramEntry {
   label: string;
@@ -23,6 +24,7 @@ export interface HistogramEntry {
 export interface ExecutionResult {
   backendId: BackendId;
   shots: number;
+  noise: NoiseModel;
   counts: Record<string, number>;
   histogram: HistogramEntry[];
   registerLabel: string;
@@ -42,9 +44,38 @@ function sortedOperations(circuit: Circuit): Operation[] {
     .sort((a, b) => a.column - b.column || a.id.localeCompare(b.id));
 }
 
+function applyPauliNoise(
+  state: Complex[],
+  circuit: Circuit,
+  qubitIndexes: number[],
+  probability: number,
+  numQubits: number,
+  rng: () => number
+): Complex[] {
+  let next = state;
+  for (const qubitIndex of qubitIndexes) {
+    if (rng() >= probability) continue;
+    const pauli = ["x", "y", "z"][Math.floor(rng() * 3)]!;
+    const qubitId = circuit.qubits[qubitIndex]?.id;
+    if (!qubitId) continue;
+    const operation: Operation = {
+      id: `noise-${pauli}-${qubitIndex}`,
+      type: pauli,
+      label: pauli.toUpperCase(),
+      targets: [qubitId],
+      controls: [],
+      classicalTargets: [],
+      column: 0,
+    };
+    next = applyGateToState(next, operation, numQubits) ?? next;
+  }
+  return next;
+}
+
 function runSingleShot(
   circuit: Circuit,
-  rng: () => number
+  rng: () => number,
+  noise: NoiseModel
 ): { key: string; error: string | null } {
   const numQubits = circuit.qubits.length;
   const numClassical = circuit.classicalBits.length;
@@ -61,7 +92,12 @@ function runSingleShot(
       if (op.classicalTargets.length > 0) {
         const cIdx = classicalBitIndexFromId(op.classicalTargets[0]);
         if (cIdx >= 0 && cIdx < numClassical) {
-          classical[cIdx] = outcome;
+          classical[cIdx] =
+            noise.enabled && rng() < noise.readoutError
+              ? outcome === 0
+                ? 1
+                : 0
+              : outcome;
         }
       }
       continue;
@@ -78,6 +114,22 @@ function runSingleShot(
       return { key: "", error: `Unsupported gate for simulation: ${op.type}` };
     }
     state = next;
+
+    if (noise.enabled) {
+      const involved = [
+        ...op.controls.map(qubitIndexFromId),
+        ...op.targets.map(qubitIndexFromId),
+      ].filter((index, position, indexes) => indexes.indexOf(index) === position);
+      const singleQubitGate = op.controls.length === 0 && op.targets.length === 1;
+      state = applyPauliNoise(
+        state,
+        circuit,
+        singleQubitGate ? [involved[0]!] : involved,
+        singleQubitGate ? noise.depolarizing1q : noise.depolarizing2q,
+        numQubits,
+        rng
+      );
+    }
   }
 
   const hasMeasurements = circuit.operations.some((op) => op.type === "measure");
@@ -100,9 +152,11 @@ function runSingleShot(
 export function runCircuitShots(
   circuit: Circuit,
   shots: number,
-  backendId: BackendId = "local-sampler"
+  backendId: BackendId = "local-sampler",
+  noise: NoiseModel = IDEAL_NOISE
 ): ExecutionResult {
   const start = performance.now();
+  const effectiveNoise = clampNoiseModel(noise);
   const numQubits = circuit.qubits.length;
   const numClassical = circuit.classicalBits.length;
 
@@ -110,6 +164,7 @@ export function runCircuitShots(
     return {
       backendId,
       shots,
+      noise: effectiveNoise,
       counts: {},
       histogram: [],
       registerLabel: "—",
@@ -122,6 +177,7 @@ export function runCircuitShots(
     return {
       backendId,
       shots,
+      noise: effectiveNoise,
       counts: {},
       histogram: [],
       registerLabel: "—",
@@ -144,6 +200,7 @@ export function runCircuitShots(
     return {
       backendId,
       shots,
+      noise: effectiveNoise,
       counts: {},
       histogram: [],
       registerLabel: "—",
@@ -155,11 +212,12 @@ export function runCircuitShots(
   const counts: Record<string, number> = {};
 
   for (let i = 0; i < shots; i++) {
-    const { key, error } = runSingleShot(circuit, Math.random);
+    const { key, error } = runSingleShot(circuit, Math.random, effectiveNoise);
     if (error) {
       return {
         backendId,
         shots,
+        noise: effectiveNoise,
         counts: {},
         histogram: [],
         registerLabel: "—",
@@ -187,6 +245,7 @@ export function runCircuitShots(
   return {
     backendId,
     shots,
+    noise: effectiveNoise,
     counts,
     histogram,
     registerLabel,
