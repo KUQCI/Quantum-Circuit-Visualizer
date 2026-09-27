@@ -57,7 +57,7 @@ export default function ProgressPage() {
 
   if (!progressHydrated) {
     return (
-      <div className="page-container max-w-4xl">
+      <div className="page-container min-h-[1800px] max-w-4xl">
         <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
           Loading…
         </div>

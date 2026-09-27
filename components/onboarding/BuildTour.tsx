@@ -324,6 +324,7 @@ export function BuildTour() {
         <div className="mt-4 flex items-center justify-between gap-3">
           <div
             className="flex shrink-0 items-center gap-1.5"
+            role="group"
             aria-label="Tour progress"
           >
             {steps.map((item, index) => (
