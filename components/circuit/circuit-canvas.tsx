@@ -35,7 +35,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatParam, parseParamExpression } from "@/lib/translator-core";
+import {
+  formatParam,
+  isSymbolicExpression,
+  parseParamExpression,
+} from "@/lib/translator-core";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import {
   Undo2,
@@ -815,6 +819,25 @@ export function CircuitCanvas({
     (op) => op.id === selectedOperationId
   );
 
+  const applySelectedParam = () => {
+    if (!selectedOp) return;
+    const display = paramValue.trim();
+    if (!display) return;
+
+    try {
+      const value = parseParamExpression(display);
+      updateOperation(selectedOp.id, {
+        parameters: [{ value, display: formatParam(value) }],
+      });
+    } catch {
+      if (isSymbolicExpression(display)) {
+        updateOperation(selectedOp.id, {
+          parameters: [{ value: 0, display, symbol: display }],
+        });
+      }
+    }
+  };
+
   const selectedWireIndex = selectedOp
     ? Math.min(
         ...[
@@ -1357,7 +1380,7 @@ export function CircuitCanvas({
           !inspectMode && (
             <div className="border-t border-[var(--color-border)] px-4 py-3">
               <label className="text-xs font-medium text-[var(--color-muted-foreground)]">
-                Rotation parameter (e.g. pi/2, 3*pi/4)
+                Angle (e.g. pi/2, 1.57, or a name like theta)
               </label>
               <div className="mt-1 flex gap-2">
                 <Input
@@ -1373,16 +1396,15 @@ export function CircuitCanvas({
                     );
                   }}
                   onChange={(e) => setParamValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      applySelectedParam();
+                      setEditingParam(null);
+                    }
+                  }}
                   onBlur={() => {
                     if (editingParam === selectedOp.id) {
-                      try {
-                        const value = parseParamExpression(paramValue);
-                        updateOperation(selectedOp.id, {
-                          parameters: [{ value, display: formatParam(value) }],
-                        });
-                      } catch {
-                        /* keep existing value */
-                      }
+                      applySelectedParam();
                       setEditingParam(null);
                     }
                   }}

@@ -6,7 +6,11 @@ import { getGateByType } from "@/components/gates/gate-definitions";
 import { getCircuitDepth } from "@/lib/circuit-schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatParam, parseParamExpression } from "@/lib/translator-core";
+import {
+  formatParam,
+  isSymbolicExpression,
+  parseParamExpression,
+} from "@/lib/translator-core";
 import { Copy, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEditorUiStore } from "@/store/editor-ui-store";
@@ -197,13 +201,20 @@ export function OperationInspector() {
   const opWarnings = validationWarnings.filter((w) => w.includes(selected.id));
 
   const applyParam = () => {
+    const display = paramDraft.trim();
+    if (!display) return;
+
     try {
-      const value = parseParamExpression(paramDraft);
+      const value = parseParamExpression(display);
       updateOperation(selected.id, {
         parameters: [{ value, display: formatParam(value) }],
       });
     } catch {
-      /* keep existing */
+      if (isSymbolicExpression(display)) {
+        updateOperation(selected.id, {
+          parameters: [{ value: 0, display, symbol: display }],
+        });
+      }
     }
   };
 
@@ -379,7 +390,7 @@ export function OperationInspector() {
         {["rx", "ry", "rz"].includes(selected.type) && (
           <div>
             <label className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
-              Angle (e.g. pi/2, 1.57)
+              Angle (e.g. pi/2, 1.57, or a name like theta)
             </label>
             <div className="mt-1 flex gap-2">
               <Input
