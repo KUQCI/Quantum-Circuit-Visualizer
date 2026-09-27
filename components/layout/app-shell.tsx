@@ -15,7 +15,6 @@ import {
   normalizePath,
 } from "@/lib/routes";
 import { cn } from "@/lib/utils";
-import { QuantaCursorProvider } from "@/components/mascot/QuantaCursorProvider";
 import { XpToast } from "@/components/learning/XpToast";
 import { LevelUpDialog } from "@/components/learning/LevelUpDialog";
 
@@ -87,7 +86,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider>
-      <QuantaCursorProvider />
       <XpToast />
       <LevelUpDialog />
       <AppBootstrap />
