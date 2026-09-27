@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
+import { ProgressBackupCard } from "@/components/learning/ProgressBackupCard";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
 import { LESSONS } from "@/lib/learning/lessons";
@@ -163,6 +164,13 @@ export default function ProgressPage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
+          Backup
+        </h2>
+        <ProgressBackupCard />
       </section>
 
       <section className="mb-8">
