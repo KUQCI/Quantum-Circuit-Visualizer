@@ -974,6 +974,10 @@ button:disabled,
   }
 }
 
+.quanta-bob {
+  animation: quanta-bob 3s ease-in-out infinite;
+}
+
 /* ── Motion system (public / academy polish) ── */
 @keyframes motion-fade-up {
   from {
@@ -1261,6 +1265,29 @@ button:disabled,
 
 .quanta-popout-bubble {
   position: relative;
+  background: var(--color-card);
+  border-color: var(--color-border);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 0.28);
+}
+
+.quanta-popout-bubble.quanta-bubble-default {
+  border-color: var(--color-brand-border);
+  border-left-color: var(--color-brand);
+}
+
+.quanta-popout-bubble.quanta-bubble-hint {
+  border-color: var(--color-brand-border);
+  border-left-color: #a78bfa;
+}
+
+.quanta-popout-bubble.quanta-bubble-success {
+  border-color: var(--color-success);
+  border-left-color: var(--color-success);
+}
+
+.quanta-popout-bubble.quanta-bubble-error {
+  border-color: var(--color-error-border);
+  border-left-color: var(--color-error-foreground);
 }
 
 .quanta-popout-bubble::before {
@@ -1270,7 +1297,7 @@ button:disabled,
   width: 14px;
   height: 14px;
   content: "";
-  background: inherit;
+  background: var(--color-card);
   border-top: inherit;
   border-right: inherit;
   transform: rotate(45deg);

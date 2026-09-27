@@ -61,18 +61,23 @@ export function QuantaPopout() {
   return (
     <div
       key={message.id}
-      className="quanta-popout fixed bottom-20 right-4 z-40 flex max-w-xs items-end gap-2 max-[639px]:bottom-28 sm:bottom-6"
+      className="quanta-popout fixed bottom-20 right-4 z-40 flex max-w-[calc(100vw-2rem)] items-end gap-2 max-[639px]:bottom-28 sm:bottom-6 sm:max-w-xs"
       role="status"
       aria-live="polite"
     >
       <QuantaImage
         variant={imageVariant}
+        size="md"
+        className="quanta-popout-image quanta-bob hidden rounded-xl border-[var(--color-border)] bg-[var(--color-card)] p-1.5 shadow-2xl sm:block"
+      />
+      <QuantaImage
+        variant={imageVariant}
         size="sm"
-        className="quanta-popout-image"
+        className="quanta-popout-image quanta-bob rounded-xl border-[var(--color-border)] bg-[var(--color-card)] p-1.5 shadow-2xl sm:hidden"
       />
       <div
         className={cn(
-          "quanta-popout-bubble quanta-bubble min-w-0 flex-1 rounded-xl border p-3 shadow-lg",
+          "quanta-popout-bubble quanta-bubble min-w-0 flex-1 rounded-xl border border-[var(--color-border)] border-l-4 bg-[var(--color-card)] p-3 text-sm shadow-2xl",
           message.variant === "success" && "quanta-bubble-success",
           message.variant === "hint" && "quanta-bubble-hint",
           message.variant === "error" && "quanta-bubble-error",
