@@ -30,6 +30,7 @@ export function ComposerEditorLayout() {
         description="The circuit editor hit an unexpected error. Your saved data may need repair."
         resetHref="/"
       >
+        <h1 className="sr-only">Build workspace</h1>
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden lg:pb-4 lg:pl-4 lg:pr-4">
           <ComposerResizableWorkspace
             draggingGate={draggingGate}

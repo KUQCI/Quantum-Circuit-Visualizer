@@ -82,7 +82,11 @@ export function StatevectorChart({
       </div>
 
       {view === "table" ? (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div
+          className="min-h-0 flex-1 overflow-auto"
+          tabIndex={0}
+          aria-label="Statevector table"
+        >
           <table className="w-full text-[10px]">
             <thead className="sticky top-0 bg-[var(--color-background)]">
               <tr className="border-b border-[var(--color-border)] text-left text-[var(--color-muted-foreground)]">
@@ -129,7 +133,11 @@ export function StatevectorChart({
           </table>
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div
+          className="min-h-0 flex-1 overflow-auto"
+          tabIndex={0}
+          aria-label="Statevector chart"
+        >
           <svg
             width="100%"
             height={140}

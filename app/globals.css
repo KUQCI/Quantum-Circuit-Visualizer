@@ -133,6 +133,7 @@ html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
   --color-input-border: rgba(125, 211, 252, 0.2);
   --color-ring: #2f80ed;
   --color-destructive: #f87171;
+  --color-destructive-foreground: #1a0505;
   --color-viz-accent: #7dd3fc;
   --color-toolbar: #08111f;
   --color-brand: #7dd3fc;
@@ -195,6 +196,7 @@ html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
   --color-input-border: rgba(15, 23, 42, 0.12);
   --color-ring: #2f80ed;
   --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
   --color-viz-accent: #2f80ed;
   --color-toolbar: #ffffff;
   --color-brand: #2f80ed;

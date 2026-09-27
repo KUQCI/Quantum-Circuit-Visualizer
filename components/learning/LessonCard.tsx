@@ -71,9 +71,9 @@ export function LessonCard({
         ) : null}
       </div>
 
-      <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
+      <h2 className="text-sm font-semibold text-[var(--color-foreground)]">
         {lesson.title}
-      </h3>
+      </h2>
       <p className="mt-1 flex-1 text-sm leading-relaxed text-[var(--color-muted-foreground)]">
         {lesson.description}
       </p>

@@ -40,9 +40,9 @@ export function NextStepCard({
               {badge}
             </p>
           )}
-          <h3 className="text-base font-semibold text-[var(--color-foreground)]">
+          <h2 className="text-base font-semibold text-[var(--color-foreground)]">
             {title}
-          </h3>
+          </h2>
           <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
             {description}
           </p>

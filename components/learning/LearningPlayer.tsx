@@ -389,7 +389,7 @@ export function LearningPlayer({
               className={cn(
                 "rounded-full px-2 py-1 text-[10px] font-semibold uppercase",
                 stage === item
-                  ? "bg-[var(--color-brand)] text-white"
+                  ? "bg-[var(--color-brand)] text-[var(--color-primary-foreground)]"
                   : index < (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage)
                     ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)] hover:underline"
                     : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
@@ -420,6 +420,7 @@ export function LearningPlayer({
             "learning-panel learning-panel-lesson flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r",
             !lessonPanelOpen && "learning-panel-lesson-collapsed"
           )}
+          aria-label="Lesson"
         >
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <QuantaMessage
@@ -511,7 +512,10 @@ export function LearningPlayer({
         </aside>
 
         {/* Operations panel */}
-        <aside className="learning-panel learning-panel-ops flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r">
+        <aside
+          className="learning-panel learning-panel-ops flex min-h-0 flex-col border-b border-[var(--color-border)] lg:border-b-0 lg:border-r"
+          aria-label="Gate operations"
+        >
           <GateLibrary
             variant="learning"
             selectedGate={selectedGate}
@@ -522,18 +526,25 @@ export function LearningPlayer({
         </aside>
 
         {/* Circuit canvas — primary focus */}
-        <main className="learning-panel learning-panel-canvas min-h-[280px] min-w-0 overflow-hidden bg-[var(--color-canvas)] md:min-h-0">
+        <section
+          className="learning-panel learning-panel-canvas min-h-[280px] min-w-0 overflow-hidden bg-[var(--color-canvas)] md:min-h-0"
+          aria-label="Circuit canvas"
+        >
           <CircuitCanvas
             draggingGate={draggingGate}
             onDragEnd={() => setDraggingGate(null)}
             placementGate={selectedGate}
             onPlacementComplete={() => setSelectedGate(null)}
+            canvasLabel="Circuit viewport"
           />
-        </main>
+        </section>
 
         {/* Code editor — single instance to avoid duplicate Monaco/sync */}
         {isWideLayout ? (
-          <aside className="learning-panel learning-panel-code flex min-h-0 flex-col border-l border-[var(--color-border)]">
+          <aside
+            className="learning-panel learning-panel-code flex min-h-0 flex-col border-l border-[var(--color-border)]"
+            aria-label="Code editor"
+          >
             <LearningCodePanel
               onExport={handleExportAction}
               onImportSync={handleImportSync}

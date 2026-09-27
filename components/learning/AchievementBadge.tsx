@@ -77,9 +77,9 @@ export function AchievementBadge({ achievementId }: { achievementId: string }) {
         )}
         aria-hidden
       />
-      <h3 className="mt-2 text-xs font-semibold text-[var(--color-foreground)]">
+      <h2 className="mt-2 text-xs font-semibold text-[var(--color-foreground)]">
         {achievement.name}
-      </h3>
+      </h2>
       <p className="mt-1 text-[10px] leading-snug text-[var(--color-muted-foreground)]">
         {achievement.description}
       </p>

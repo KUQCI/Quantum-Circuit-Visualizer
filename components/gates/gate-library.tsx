@@ -225,6 +225,7 @@ function GateGridItem({
           draggable
           role="button"
           tabIndex={0}
+          aria-label={`${gate.fullName} gate`}
           aria-pressed={selected}
           onClick={() => {
             onGateSelect?.(selected ? null : gate.type);
@@ -244,6 +245,7 @@ function GateGridItem({
           onDragEnd={() => onDragEnd?.()}
           className={cn(
             "flex cursor-grab select-none flex-col items-center justify-center rounded-[3px] shadow-sm transition-transform active:cursor-grabbing active:scale-95 hover:brightness-110",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
             isLearning ? "aspect-square min-h-[52px]" : "aspect-square",
             isWide && "col-span-2 aspect-[2/1]",
             getGateColor(gate),
@@ -284,8 +286,15 @@ function GateListItem({
           draggable
           role="button"
           tabIndex={0}
+          aria-label={`${gate.fullName} gate`}
           aria-pressed={selected}
           onClick={() => onGateSelect?.(selected ? null : gate.type)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onGateSelect?.(selected ? null : gate.type);
+            }
+          }}
           onDragStart={(e) => {
             e.dataTransfer.setData("text/plain", gate.type);
             e.dataTransfer.setData("gateType", gate.type);
@@ -295,6 +304,7 @@ function GateListItem({
           onDragEnd={() => onDragEnd?.()}
           className={cn(
             "flex cursor-grab select-none items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-[var(--color-secondary)] active:cursor-grabbing",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
             selected && "bg-[var(--color-brand-subtle)] ring-1 ring-[var(--color-brand-border)]"
           )}
         >

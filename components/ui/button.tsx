@@ -17,7 +17,7 @@ const buttonVariants = cva(
         ghost:
           "text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]",
         destructive:
-          "bg-[var(--color-destructive)] text-white hover:brightness-110",
+          "bg-[var(--color-destructive)] text-[var(--color-destructive-foreground)] hover:brightness-110",
       },
       size: {
         default: "h-9 px-4 py-2",
