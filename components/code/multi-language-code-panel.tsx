@@ -163,6 +163,7 @@ export function MultiLanguageCodePanel({
             language={adapter.monacoLanguage}
             completionProfile={codePanelLanguage}
             height="100%"
+            active={active}
             diagnostics={diagnostics}
           />
         </div>

@@ -14,7 +14,10 @@ import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-pa
 import { VisualizationPanels } from "@/components/visualizations/visualization-panels";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { getLayoutTier } from "@/lib/composer-layout";
+import {
+  getLayoutTier,
+  shouldAutoOpenNarrowInspector,
+} from "@/lib/composer-layout";
 import { useElementSize } from "@/lib/use-element-size";
 import {
   PanelLeftClose,
@@ -60,7 +63,19 @@ function NarrowWorkspace({
   layoutResetKey: number;
 }) {
   const { narrowActiveTab, setNarrowActiveTab } = useEditorUiStore();
+  const selectedOperationId = useCircuitStore((s) => s.selectedOperationId);
+  const previousSelectedOperationId = useRef(selectedOperationId);
   const activeIndex = NARROW_TABS.findIndex((tab) => tab.id === narrowActiveTab);
+
+  useEffect(() => {
+    const shouldOpen = shouldAutoOpenNarrowInspector(
+      previousSelectedOperationId.current,
+      selectedOperationId,
+      narrowActiveTab
+    );
+    previousSelectedOperationId.current = selectedOperationId;
+    if (shouldOpen) setNarrowActiveTab("inspector");
+  }, [narrowActiveTab, selectedOperationId, setNarrowActiveTab]);
 
   const selectTab = (id: NarrowActiveTab) => setNarrowActiveTab(id);
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -117,7 +132,7 @@ function NarrowWorkspace({
           ))}
         </div>
         <div
-          className="min-h-0 flex-1 overflow-auto"
+          className="flex min-h-0 flex-1 flex-col overflow-auto"
           tabIndex={0}
           aria-label="Composer panel content"
         >
@@ -141,8 +156,8 @@ function NarrowWorkspace({
           )}
           <div
             className={cn(
-              "min-h-0 flex-1 flex-col",
-              narrowActiveTab === "code" ? "flex" : "hidden"
+              "min-w-0 min-h-[160px] flex-1 flex-col",
+              narrowActiveTab === "code" ? "flex h-full" : "hidden"
             )}
           >
             <MultiLanguageCodePanel active={narrowActiveTab === "code"} />

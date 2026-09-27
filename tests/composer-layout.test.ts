@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeComposerLayout, getLayoutTier } from "@/lib/composer-layout";
+import {
+  computeComposerLayout,
+  getLayoutTier,
+  shouldAutoOpenNarrowInspector,
+} from "@/lib/composer-layout";
 
 describe("composer-layout", () => {
   it("classifies tiers from width and height", () => {
@@ -54,5 +58,12 @@ describe("composer-layout", () => {
     });
 
     expect(layout.topHeightPx + layout.vizHeightPx).toBe(420);
+  });
+
+  it("opens the narrow inspector only for a new operation selection", () => {
+    expect(shouldAutoOpenNarrowInspector(null, "op-1", "gates")).toBe(true);
+    expect(shouldAutoOpenNarrowInspector("op-1", "op-1", "gates")).toBe(false);
+    expect(shouldAutoOpenNarrowInspector("op-1", null, "gates")).toBe(false);
+    expect(shouldAutoOpenNarrowInspector(null, "op-1", "inspector")).toBe(false);
   });
 });
