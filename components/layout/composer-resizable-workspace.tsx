@@ -162,11 +162,13 @@ export function ComposerResizableWorkspace({
   onPlacementComplete,
 }: ComposerResizableWorkspaceProps) {
   const circuit = useCircuitStore((s) => s.circuit);
+  const selectedOperationId = useCircuitStore((s) => s.selectedOperationId);
 
   const {
     showCodePanel,
     showVizPanels,
     showInspector,
+    vizLayout,
     operationsPanelCollapsed,
     layoutResetKey,
   } = useEditorUiStore();
@@ -208,6 +210,12 @@ export function ComposerResizableWorkspace({
     else panel.expand();
   }, [showInspector, layoutResetKey]);
 
+  useEffect(() => {
+    if (selectedOperationId && !showInspector) {
+      useEditorUiStore.getState().setShowInspector(true);
+    }
+  }, [selectedOperationId, showInspector]);
+
   return (
     <div ref={workspaceRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {tier !== "desktop" ? (
@@ -233,7 +241,7 @@ export function ComposerResizableWorkspace({
           ref={opsPanelRef}
           id="composer-ops"
           order={0}
-          defaultSize={18}
+          defaultSize={16}
           minSize={12}
           maxSize={28}
           collapsible
@@ -257,7 +265,7 @@ export function ComposerResizableWorkspace({
 
         <PanelResizeHandle className="composer-resize-handle composer-resize-handle--horizontal" />
 
-        <Panel id="composer-main" order={1} minSize={32} defaultSize={52}>
+        <Panel id="composer-main" order={1} minSize={32} defaultSize={58}>
           <PanelGroup
             key={`composer-v-${layoutResetKey}`}
             direction="vertical"
@@ -268,7 +276,7 @@ export function ComposerResizableWorkspace({
               id="composer-canvas-stack"
               order={0}
               minSize={28}
-              defaultSize={showVizPanels ? 64 : 100}
+              defaultSize={showVizPanels ? 70 : 100}
             >
               <PanelGroup direction="horizontal" className="h-full min-h-0">
                 <Panel
@@ -322,7 +330,7 @@ export function ComposerResizableWorkspace({
               ref={vizPanelRef}
               id="composer-viz"
               order={1}
-              defaultSize={36}
+              defaultSize={30}
               minSize={16}
               collapsible
               collapsedSize={0}
@@ -336,7 +344,7 @@ export function ComposerResizableWorkspace({
             >
               <VisualizationPanels
                 circuit={circuit}
-                useVizTabs={useVizTabs}
+                useVizTabs={useVizTabs || vizLayout === "tabs"}
                 layoutTier={tier}
                 resizable={tier === "desktop"}
                 layoutResetKey={layoutResetKey}
@@ -351,7 +359,7 @@ export function ComposerResizableWorkspace({
           ref={codePanelRef}
           id="composer-code"
           order={2}
-          defaultSize={30}
+          defaultSize={26}
           minSize={18}
           maxSize={42}
           collapsible

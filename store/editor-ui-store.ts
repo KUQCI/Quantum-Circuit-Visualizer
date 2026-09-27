@@ -10,6 +10,7 @@ import { validateCircuit } from "@/lib/validation";
 
 export type AlignmentMode = "freeform" | "left" | "layers";
 export type NarrowActiveTab = "gates" | "inspector" | "results" | "code";
+export type VizLayout = "tabs" | "split";
 export interface WalkthroughBackup {
   circuit: Circuit;
   projectId: string | null;
@@ -53,6 +54,7 @@ interface EditorUiState {
   showVizPanels: boolean;
   showPhaseDisks: boolean;
   showInspector: boolean;
+  vizLayout: VizLayout;
   vizPanels: {
     probabilities: boolean;
     qsphere: boolean;
@@ -75,6 +77,7 @@ interface EditorUiState {
   setShowVizPanels: (show: boolean) => void;
   setShowPhaseDisks: (show: boolean) => void;
   setShowInspector: (show: boolean) => void;
+  setVizLayout: (layout: VizLayout) => void;
   setVizPanel: (panel: keyof EditorUiState["vizPanels"], show: boolean) => void;
   setInspectMode: (on: boolean) => void;
   setInspectStep: (step: number) => void;
@@ -94,7 +97,8 @@ export const useEditorUiStore = create<EditorUiState>()(
       showCodePanel: true,
       showVizPanels: true,
       showPhaseDisks: true,
-      showInspector: true,
+      showInspector: false,
+      vizLayout: "tabs",
       vizPanels: {
         probabilities: true,
         qsphere: true,
@@ -116,6 +120,7 @@ export const useEditorUiStore = create<EditorUiState>()(
       setShowVizPanels: (show) => set({ showVizPanels: show }),
       setShowPhaseDisks: (show) => set({ showPhaseDisks: show }),
       setShowInspector: (show) => set({ showInspector: show }),
+      setVizLayout: (layout) => set({ vizLayout: layout }),
       setVizPanel: (panel, show) =>
         set((state) => ({
           vizPanels: { ...state.vizPanels, [panel]: show },
@@ -145,7 +150,8 @@ export const useEditorUiStore = create<EditorUiState>()(
           narrowActiveTab: "gates",
           showCodePanel: true,
           showVizPanels: true,
-          showInspector: true,
+          showInspector: false,
+          vizLayout: "tabs",
           vizPanels: {
             probabilities: true,
             qsphere: true,
@@ -166,6 +172,7 @@ export const useEditorUiStore = create<EditorUiState>()(
           | "showVizPanels"
           | "showPhaseDisks"
           | "showInspector"
+          | "vizLayout"
           | "operationsPanelCollapsed"
           | "narrowActiveTab"
           | "vizPanels"
@@ -201,6 +208,10 @@ export const useEditorUiStore = create<EditorUiState>()(
             saved.showInspector,
             current.showInspector
           ),
+          vizLayout:
+            saved.vizLayout === "tabs" || saved.vizLayout === "split"
+              ? saved.vizLayout
+              : current.vizLayout,
           operationsPanelCollapsed: asBoolean(
             saved.operationsPanelCollapsed,
             current.operationsPanelCollapsed
@@ -240,11 +251,18 @@ export const useEditorUiStore = create<EditorUiState>()(
         showVizPanels: state.showVizPanels,
         showPhaseDisks: state.showPhaseDisks,
         showInspector: state.showInspector,
+        vizLayout: state.vizLayout,
         operationsPanelCollapsed: state.operationsPanelCollapsed,
         narrowActiveTab: state.narrowActiveTab,
         vizPanels: state.vizPanels,
         walkthroughBackup: state.walkthroughBackup,
       }),
+      version: 2,
+      migrate: (persistedState) => ({
+        ...(persistedState as Partial<EditorUiState>),
+        showInspector: false,
+        vizLayout: "tabs" as VizLayout,
+      }) as EditorUiState,
     }
   )
 );

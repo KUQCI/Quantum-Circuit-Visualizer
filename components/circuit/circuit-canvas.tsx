@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCircuitStore, createOperationFromGateType } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
-import { countOpsUsingQubit, countOpsUsingClassical } from "@/lib/circuit-edit";
 import {
   getGateByType,
   getGateColorByType,
@@ -27,7 +26,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dialog";
+import { QuantaImage } from "@/components/mascot/QuantaImage";
+import { useElementSize } from "@/lib/use-element-size";
 import {
   Tooltip,
   TooltipContent,
@@ -40,7 +41,6 @@ import {
   Undo2,
   Redo2,
   Plus,
-  Minus,
   Trash2,
   AlertTriangle,
   AlignLeft,
@@ -64,6 +64,7 @@ interface CircuitCanvasProps {
   placementGate?: string | null;
   onPlacementComplete?: () => void;
   canvasLabel?: string;
+  variant?: "default" | "learning";
 }
 
 function resolveDropPosition(
@@ -496,6 +497,7 @@ export function CircuitCanvas({
   placementGate = null,
   onPlacementComplete,
   canvasLabel = "Circuit canvas",
+  variant = "default",
 }: CircuitCanvasProps) {
   const {
     circuit,
@@ -513,9 +515,6 @@ export function CircuitCanvas({
     pasteOperation,
     alignOperationsLeft,
     addQubit,
-    removeQubit,
-    addClassicalBit,
-    removeClassicalBit,
     undo,
     redo,
     canUndo,
@@ -539,10 +538,9 @@ export function CircuitCanvas({
   const [movingOperationId, setMovingOperationId] = useState<string | null>(null);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [paramValue, setParamValue] = useState("");
-  const [pendingRemoveQubit, setPendingRemoveQubit] = useState<string | null>(null);
-  const [pendingRemoveClassical, setPendingRemoveClassical] = useState<string | null>(
-    null
-  );
+  const [registersOpen, setRegistersOpen] = useState(false);
+  const { ref: canvasRootRef, size: canvasRootSize } =
+    useElementSize<HTMLDivElement>();
 
   const isPaletteDragging = draggingGate !== null;
   const isPlacementMode = placementGate !== null;
@@ -814,30 +812,6 @@ export function CircuitCanvas({
       )
     : 0;
 
-  const requestRemoveQubit = useCallback(
-    (qubitId: string) => {
-      const count = countOpsUsingQubit(circuit, qubitId);
-      if (count > 0) {
-        setPendingRemoveQubit(qubitId);
-        return;
-      }
-      removeQubit(qubitId);
-    },
-    [circuit, removeQubit]
-  );
-
-  const requestRemoveClassical = useCallback(
-    (bitId: string) => {
-      const count = countOpsUsingClassical(circuit, bitId);
-      if (count > 0) {
-        setPendingRemoveClassical(bitId);
-        return;
-      }
-      removeClassicalBit(bitId);
-    },
-    [circuit, removeClassicalBit]
-  );
-
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
@@ -928,7 +902,10 @@ export function CircuitCanvas({
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="flex h-full flex-col bg-[var(--color-canvas)]">
+      <div
+        ref={canvasRootRef}
+        className="flex h-full flex-col bg-[var(--color-canvas)]"
+      >
         <div className="composer-canvas-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
           <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
             <button
@@ -1022,42 +999,11 @@ export function CircuitCanvas({
               variant="ghost"
               size="sm"
               className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
-              onClick={addClassicalBit}
+              onClick={() => setRegistersOpen(true)}
+              title="Manage registers"
             >
-              <Plus className="h-3 w-3" />
-              <span className="hidden min-[400px]:inline">Classical</span>
+              Registers…
             </Button>
-            {circuit.qubits.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
-                onClick={() =>
-                  requestRemoveQubit(`q${circuit.qubits.length - 1}`)
-                }
-                title="Remove last qubit"
-                aria-label="Remove last qubit"
-              >
-                <Minus className="h-3 w-3" />
-                <span className="hidden min-[400px]:inline">Qubit</span>
-              </Button>
-            )}
-            {circuit.classicalBits.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
-                onClick={() =>
-                  requestRemoveClassical(
-                    `c${circuit.classicalBits.length - 1}`
-                  )
-                }
-                title="Remove last classical bit"
-              >
-                <Minus className="h-3 w-3" />
-                <span className="hidden min-[400px]:inline">Classical</span>
-              </Button>
-            )}
           </div>
         </div>
 
@@ -1138,7 +1084,7 @@ export function CircuitCanvas({
             {Array.from({ length: numColumns }).map((_, col) => (
               <div
                 key={col}
-                className="absolute top-0 border-l border-dashed border-[var(--color-border)]/60"
+                className="absolute top-0 border-l border-dashed border-[var(--color-border)]/25"
                 style={{
                   left: WIRE_LABEL_WIDTH + col * COLUMN_WIDTH,
                   height: circuit.qubits.length * WIRE_HEIGHT,
@@ -1341,6 +1287,19 @@ export function CircuitCanvas({
               />
             )}
           </div>
+          {circuit.operations.length === 0 &&
+            !(
+              variant === "learning" &&
+              canvasRootSize.height > 0 &&
+              canvasRootSize.height < 200
+            ) && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 px-4 text-center text-xs text-[var(--color-muted-foreground)]">
+                <QuantaImage variant="learning" size="xs" />
+                <span>
+                  Drag a gate onto a wire — or click a gate, then a wire.
+                </span>
+              </div>
+            )}
         </div>
 
         {inspectMode && selectedOp && (
@@ -1413,30 +1372,7 @@ export function CircuitCanvas({
           )}
       </div>
 
-      <ConfirmDialog
-        open={pendingRemoveQubit !== null}
-        onOpenChange={(open) => !open && setPendingRemoveQubit(null)}
-        title="Remove qubit?"
-        description="This qubit is used by existing gates. Removing it will delete those operations."
-        confirmLabel="Remove qubit and gates"
-        destructive
-        onConfirm={() => {
-          if (pendingRemoveQubit) removeQubit(pendingRemoveQubit);
-          setPendingRemoveQubit(null);
-        }}
-      />
-      <ConfirmDialog
-        open={pendingRemoveClassical !== null}
-        onOpenChange={(open) => !open && setPendingRemoveClassical(null)}
-        title="Remove classical bit?"
-        description="This classical bit is targeted by measurements. Removing it will update or remove those measurements."
-        confirmLabel="Remove classical bit"
-        destructive
-        onConfirm={() => {
-          if (pendingRemoveClassical) removeClassicalBit(pendingRemoveClassical);
-          setPendingRemoveClassical(null);
-        }}
-      />
+      <ManageRegistersDialog open={registersOpen} onOpenChange={setRegistersOpen} />
     </TooltipProvider>
   );
 }
