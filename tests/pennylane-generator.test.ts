@@ -54,12 +54,16 @@ def ansatz(features, params, n_qubits=N_QUBITS):
 
 # --- Train it with quantum-learn ---
 # pip install "quantum-learn[pennylane]"
+import numpy as np
+import pandas as pd
 from qlearn import VariationalQuantumClassifier
 
 clf = VariationalQuantumClassifier(
     fit_kwargs={"n_qubits": N_QUBITS, "ansatz": ansatz},
 )
-# clf.fit(X_train, y_train)
+# X_train: pandas DataFrame with N_QUBITS feature columns, y_train: pandas Series
+# params = np.random.uniform(0, 2 * pi, N_PARAMS)
+# clf.fit(X_train, y_train, params=params)
 # print(clf.predict(X_test))
 `);
   });
