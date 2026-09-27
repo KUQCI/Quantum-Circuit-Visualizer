@@ -1,15 +1,25 @@
-import type { Circuit } from "@/lib/circuit-schema";
+import type { Circuit, Operation, Parameter } from "@/lib/circuit-schema";
+import { getGateLabel } from "@/lib/circuit-schema";
 import { validateCircuit } from "@/lib/validation";
 
 const MAX_SHARE_BYTES = 32 * 1024;
 const SHARE_VERSION = 1;
 
+type ShareParameter = [number, string?, string?];
+type ShareOperation = [string, number[], number, ...unknown[]];
+
+interface ShareLabels {
+  q?: [number, string][];
+  c?: [number, string][];
+}
+
 interface SharePayload {
   v: number;
-  name: string;
-  qubits: Circuit["qubits"];
-  clbits: Circuit["classicalBits"];
-  ops: Circuit["operations"];
+  n: string;
+  q: number;
+  c: number;
+  l?: ShareLabels;
+  o: ShareOperation[];
 }
 
 function toBase64Url(bytes: Uint8Array): string {
@@ -27,95 +37,162 @@ function fromBase64Url(value: string): Uint8Array | null {
     const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
     if (typeof atob === "function") {
       const binary = atob(padded);
-      return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+      return toBase64Url(bytes) === value ? bytes : null;
     }
-    return new Uint8Array(Buffer.from(normalized, "base64url"));
+    const bytes = new Uint8Array(Buffer.from(normalized, "base64url"));
+    return toBase64Url(bytes) === value ? bytes : null;
   } catch {
     return null;
   }
 }
 
-function adler32(bytes: Uint8Array): number {
-  let a = 1;
-  let b = 0;
-  for (const byte of bytes) {
-    a = (a + byte) % 65521;
-    b = (b + a) % 65521;
+function parameterToTuple(parameter: Parameter): ShareParameter {
+  const tuple: ShareParameter = [parameter.value];
+  if (parameter.display !== undefined || parameter.symbol !== undefined) {
+    tuple[1] = parameter.display;
   }
-  return ((b << 16) | a) >>> 0;
+  if (parameter.symbol !== undefined) tuple[2] = parameter.symbol;
+  return tuple;
 }
 
-/**
- * Synchronous DEFLATE fallback using stored blocks. This keeps share-link
- * encoding available in static-export browsers without adding a dependency.
- */
-function deflateStored(bytes: Uint8Array): Uint8Array {
-  const output = [0x78, 0x01];
-  for (let offset = 0; offset < bytes.length || offset === 0; ) {
-    const length = Math.min(0xffff, bytes.length - offset);
-    const final = offset + length >= bytes.length;
-    output.push(final ? 0x01 : 0x00, length & 0xff, length >> 8);
-    const inverse = (~length) & 0xffff;
-    output.push(inverse & 0xff, inverse >> 8);
-    output.push(...bytes.slice(offset, offset + length));
-    offset += length;
+function parameterFromTuple(value: unknown): Parameter | null {
+  if (!Array.isArray(value) || typeof value[0] !== "number") return null;
+  if (value.length > 1 && value[1] !== undefined && typeof value[1] !== "string") {
+    return null;
   }
-  const checksum = adler32(bytes);
-  output.push(
-    checksum >>> 24,
-    (checksum >>> 16) & 0xff,
-    (checksum >>> 8) & 0xff,
-    checksum & 0xff
-  );
-  return Uint8Array.from(output);
-}
-
-function inflateStored(bytes: Uint8Array): Uint8Array | null {
-  if (bytes.length < 6 || bytes[0] !== 0x78) return null;
-  let offset = 2;
-  const output: number[] = [];
-  let final = false;
-  while (!final) {
-    if (offset + 5 > bytes.length) return null;
-    const header = bytes[offset++];
-    final = (header & 1) === 1;
-    if ((header >> 1) & 0x03) return null;
-    const length = bytes[offset] | (bytes[offset + 1] << 8);
-    const inverse = bytes[offset + 2] | (bytes[offset + 3] << 8);
-    offset += 4;
-    if ((length ^ inverse) !== 0xffff || offset + length > bytes.length) {
-      return null;
-    }
-    output.push(...bytes.slice(offset, offset + length));
-    offset += length;
+  if (value.length > 2 && value[2] !== undefined && typeof value[2] !== "string") {
+    return null;
   }
-  if (offset + 4 !== bytes.length) return null;
-  const result = Uint8Array.from(output);
-  const checksum =
-    (bytes[offset] << 24) |
-    (bytes[offset + 1] << 16) |
-    (bytes[offset + 2] << 8) |
-    bytes[offset + 3];
-  return (checksum >>> 0) === adler32(result) ? result : null;
-}
-
-function createPayload(circuit: Circuit): SharePayload {
   return {
-    v: SHARE_VERSION,
-    name: circuit.name,
-    qubits: circuit.qubits,
-    clbits: circuit.classicalBits,
-    ops: circuit.operations,
+    value: value[0],
+    ...(value[1] !== undefined ? { display: value[1] } : {}),
+    ...(value[2] !== undefined ? { symbol: value[2] } : {}),
   };
 }
 
+function indexForId(
+  id: string,
+  values: Circuit["qubits"] | Circuit["classicalBits"]
+): number {
+  return values.findIndex((value) => value.id === id);
+}
+
+function createLabels(
+  values: Circuit["qubits"] | Circuit["classicalBits"],
+  prefix: "q" | "c"
+): [number, string][] | undefined {
+  const labels = values.flatMap((value, index) => {
+    const defaultLabel = `${prefix}[${index}]`;
+    return value.label === defaultLabel ? [] : [[index, value.label] as [number, string]];
+  });
+  return labels.length > 0 ? labels : undefined;
+}
+
+function createOperation(
+  operation: Operation,
+  circuit: Circuit
+): ShareOperation {
+  const targets = operation.targets.map((id) => indexForId(id, circuit.qubits));
+  const controls = operation.controls.map((id) => indexForId(id, circuit.qubits));
+  const classicalTargets = operation.classicalTargets.map((id) =>
+    indexForId(id, circuit.classicalBits)
+  );
+  const tuple: ShareOperation = [operation.type, targets, operation.column];
+
+  if (
+    controls.length > 0 ||
+    (operation.parameters?.length ?? 0) > 0 ||
+    classicalTargets.length > 0
+  ) {
+    tuple[3] = controls.length > 0 ? controls : null;
+  }
+  if ((operation.parameters?.length ?? 0) > 0 || classicalTargets.length > 0) {
+    tuple[4] = operation.parameters?.map(parameterToTuple) ?? null;
+  }
+  if (classicalTargets.length > 0) tuple[5] = classicalTargets;
+
+  const defaultLabel = getGateLabel(operation.type);
+  if (operation.label !== defaultLabel || operation.metadata !== undefined) {
+    tuple[6] = operation.label !== defaultLabel ? operation.label : undefined;
+  }
+  if (operation.metadata !== undefined) tuple[7] = operation.metadata;
+  return tuple;
+}
+
+function createPayload(circuit: Circuit): SharePayload {
+  const labels: ShareLabels = {
+    q: createLabels(circuit.qubits, "q"),
+    c: createLabels(circuit.classicalBits, "c"),
+  };
+  if (!labels.q) delete labels.q;
+  if (!labels.c) delete labels.c;
+
+  return {
+    v: SHARE_VERSION,
+    n: circuit.name,
+    q: circuit.qubits.length,
+    c: circuit.classicalBits.length,
+    ...(Object.keys(labels).length > 0 ? { l: labels } : {}),
+    o: circuit.operations.map((operation) => createOperation(operation, circuit)),
+  };
+}
+
+function readIndexes(value: unknown, count: number): number[] | null {
+  if (!Array.isArray(value)) return null;
+  if (
+    value.some(
+      (index) =>
+        typeof index !== "number" ||
+        !Number.isInteger(index) ||
+        index < 0 ||
+        index >= count
+    )
+  ) {
+    return null;
+  }
+  return value;
+}
+
+function readLabels(
+  value: unknown,
+  count: number,
+  prefix: "q" | "c"
+): Record<number, string> | null {
+  if (value === undefined) return {};
+  if (!Array.isArray(value)) return null;
+  const labels: Record<number, string> = {};
+  for (const entry of value) {
+    if (
+      !Array.isArray(entry) ||
+      entry.length !== 2 ||
+      typeof entry[0] !== "number" ||
+      !Number.isInteger(entry[0]) ||
+      entry[0] < 0 ||
+      entry[0] >= count ||
+      typeof entry[1] !== "string" ||
+      entry[1] === `${prefix}[${entry[0]}]`
+    ) {
+      return null;
+    }
+    labels[entry[0]] = entry[1];
+  }
+  return labels;
+}
+
+/**
+ * Encode a compact versioned circuit payload as UTF-8 base64url.
+ *
+ * The payload stores register counts, only non-default register labels, and
+ * operation tuples with deterministic register indexes and generated IDs.
+ */
 export function encodeCircuitToShare(circuit: Circuit): string {
   const json = JSON.stringify(createPayload(circuit));
   const bytes = new TextEncoder().encode(json);
   if (bytes.length > MAX_SHARE_BYTES) {
     throw new Error("Circuit is too large to share");
   }
-  return `d${SHARE_VERSION}.${toBase64Url(deflateStored(bytes))}`;
+  return `s${SHARE_VERSION}.${toBase64Url(bytes)}`;
 }
 
 export function decodeShareParam(param: string): Circuit | null {
@@ -124,26 +201,100 @@ export function decodeShareParam(param: string): Circuit | null {
     const separator = param.indexOf(".");
     if (separator < 1) return null;
     const version = Number(param.slice(1, separator));
-    if (!param.startsWith("d") || version !== SHARE_VERSION) return null;
-    const compressed = fromBase64Url(param.slice(separator + 1));
-    if (!compressed || compressed.length > MAX_SHARE_BYTES * 2) return null;
-    const bytes = inflateStored(compressed);
+    if (!param.startsWith("s") || version !== SHARE_VERSION) return null;
+    const bytes = fromBase64Url(param.slice(separator + 1));
     if (!bytes || bytes.length > MAX_SHARE_BYTES) return null;
     const payload = JSON.parse(new TextDecoder().decode(bytes)) as Partial<SharePayload>;
+    const qubitCount = payload.q;
+    const classicalCount = payload.c;
     if (
       payload.v !== SHARE_VERSION ||
-      typeof payload.name !== "string" ||
-      !Array.isArray(payload.qubits) ||
-      !Array.isArray(payload.clbits) ||
-      !Array.isArray(payload.ops)
+      typeof payload.n !== "string" ||
+      typeof qubitCount !== "number" ||
+      !Number.isInteger(qubitCount) ||
+      qubitCount < 1 ||
+      qubitCount > 64 ||
+      typeof classicalCount !== "number" ||
+      !Number.isInteger(classicalCount) ||
+      classicalCount < 0 ||
+      !Array.isArray(payload.o)
     ) {
       return null;
     }
+
+    const validQubitCount = qubitCount;
+    const validClassicalCount = classicalCount;
+    const qubitLabels = readLabels(payload.l?.q, validQubitCount, "q");
+    const classicalLabels = readLabels(payload.l?.c, validClassicalCount, "c");
+    if (!qubitLabels || !classicalLabels) return null;
+    const qubits = Array.from({ length: validQubitCount }, (_, index) => ({
+      id: `q${index}`,
+      label: qubitLabels[index] ?? `q[${index}]`,
+    }));
+    const classicalBits = Array.from({ length: validClassicalCount }, (_, index) => ({
+      id: `c${index}`,
+      label: classicalLabels[index] ?? `c[${index}]`,
+    }));
+
+    const operations: Operation[] = [];
+    for (const [index, tuple] of (payload.o as ShareOperation[]).entries()) {
+      if (!Array.isArray(tuple) || typeof tuple[0] !== "string") return null;
+      const targets = readIndexes(tuple[1], validQubitCount);
+      if (
+        !targets ||
+        typeof tuple[2] !== "number" ||
+        !Number.isInteger(tuple[2]) ||
+        tuple[2] < 0
+      ) {
+        return null;
+      }
+      const controls =
+        tuple[3] === null || tuple[3] === undefined
+          ? []
+          : readIndexes(tuple[3], validQubitCount);
+      const parameterTuples =
+        tuple[4] === null || tuple[4] === undefined ? [] : tuple[4];
+      if (!controls || !Array.isArray(parameterTuples)) return null;
+      const parameters = parameterTuples.map(parameterFromTuple);
+      if (parameters.some((parameter) => parameter === null)) return null;
+      const classicalTargets =
+        tuple[5] === undefined
+          ? []
+          : readIndexes(tuple[5], validClassicalCount);
+      if (!classicalTargets) return null;
+      if (
+        tuple[6] !== undefined &&
+        tuple[6] !== null &&
+        typeof tuple[6] !== "string"
+      ) {
+        return null;
+      }
+      if (
+        tuple[7] !== undefined &&
+        (typeof tuple[7] !== "object" || tuple[7] === null)
+      ) {
+        return null;
+      }
+      operations.push({
+        id: `op_${index}`,
+        type: tuple[0],
+        label: tuple[6] ?? getGateLabel(tuple[0]),
+        targets: targets.map((target) => `q${target}`),
+        controls: controls.map((control) => `q${control}`),
+        classicalTargets: classicalTargets.map((target) => `c${target}`),
+        column: tuple[2] as number,
+        ...(parameters.length > 0 ? { parameters: parameters as Parameter[] } : {}),
+        ...(tuple[7] !== undefined
+          ? { metadata: tuple[7] as Record<string, unknown> }
+          : {}),
+      });
+    }
+
     const validated = validateCircuit({
-      name: payload.name,
-      qubits: payload.qubits,
-      classicalBits: payload.clbits,
-      operations: payload.ops,
+      name: payload.n,
+      qubits,
+      classicalBits,
+      operations,
     });
     return validated.valid ? validated.circuit : null;
   } catch {

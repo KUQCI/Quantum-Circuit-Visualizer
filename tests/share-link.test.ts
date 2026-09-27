@@ -46,10 +46,51 @@ function sampleCircuit(): Circuit {
   return circuit;
 }
 
+function bellCircuit(): Circuit {
+  const circuit = createEmptyCircuit("Bell", 2, 0);
+  circuit.operations = [
+    {
+      id: "h0",
+      type: "h",
+      label: "H",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 0,
+    },
+    {
+      id: "cx",
+      type: "cx",
+      label: "CX",
+      targets: ["q1"],
+      controls: ["q0"],
+      classicalTargets: [],
+      column: 1,
+    },
+  ];
+  return circuit;
+}
+
 describe("share links", () => {
   it("round-trips parameterized and measured circuits", () => {
     const circuit = sampleCircuit();
-    expect(decodeShareParam(encodeCircuitToShare(circuit))).toEqual(circuit);
+    const decoded = decodeShareParam(encodeCircuitToShare(circuit));
+    const withoutIds = (operation: Circuit["operations"][number]) => {
+      const { id, ...rest } = operation;
+      void id;
+      return rest;
+    };
+    expect(decoded).not.toBeNull();
+    expect(decoded?.name).toBe(circuit.name);
+    expect(decoded?.qubits).toEqual(circuit.qubits);
+    expect(decoded?.classicalBits).toEqual(circuit.classicalBits);
+    expect(decoded?.operations.map(withoutIds)).toEqual(circuit.operations.map(withoutIds));
+    expect(decoded?.operations.map((operation) => operation.id)).toEqual([
+      "op_0",
+      "op_1",
+      "op_2",
+      "op_3",
+    ]);
   });
 
   it("rejects tampered input", () => {
@@ -57,5 +98,9 @@ describe("share links", () => {
     const tampered = `${encoded.slice(0, -1)}${encoded.endsWith("a") ? "b" : "a"}`;
     expect(decodeShareParam(tampered)).toBeNull();
     expect(decodeShareParam("d1.not-a-circuit")).toBeNull();
+  });
+
+  it("keeps a Bell circuit link under 120 characters", () => {
+    expect(encodeCircuitToShare(bellCircuit()).length).toBeLessThan(120);
   });
 });
