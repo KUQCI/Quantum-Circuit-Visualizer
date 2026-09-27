@@ -75,6 +75,7 @@ export function GateLibrary({
           "flex h-full min-w-0 flex-col overflow-hidden",
           variant === "learning" && "learning-gate-library"
         )}
+        data-tour="gates"
       >
         <div className="border-b border-[var(--color-border)] px-3 py-2.5">
           <div className="flex items-center gap-1.5">

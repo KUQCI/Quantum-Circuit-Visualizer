@@ -118,6 +118,7 @@ function NarrowWorkspace({
               aria-selected={narrowActiveTab === tab.id}
               tabIndex={narrowActiveTab === tab.id ? 0 : -1}
               data-narrow-tab={tab.id}
+              data-tour={tab.id}
               className={cn(
                 "flex-1 px-2 py-2 text-xs font-medium",
                 narrowActiveTab === tab.id

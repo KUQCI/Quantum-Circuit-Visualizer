@@ -40,6 +40,26 @@ describe("editor UI persistence", () => {
     expect(validBackup?.walkthroughBackup).toEqual(backup);
   });
 
+  it("persists and migrates the onboarding tour completion flag", () => {
+    const state = useEditorUiStore.getState();
+    const options = useEditorUiStore.persist.getOptions();
+
+    expect(options.partialize?.({ ...state, tourCompleted: true })).toMatchObject({
+      tourCompleted: true,
+    });
+
+    expect(options.migrate?.({ tourCompleted: true }, 2)).toMatchObject({
+      tourCompleted: true,
+      showInspector: false,
+      vizLayout: "tabs",
+    });
+    expect(options.migrate?.({ showInspector: true }, 2)).toMatchObject({
+      tourCompleted: false,
+      showInspector: false,
+      vizLayout: "tabs",
+    });
+  });
+
   it("restores a walkthrough backup through the shared helper", () => {
     const originalState = useCircuitStore.getState();
     const original = structuredClone(originalState.circuit);

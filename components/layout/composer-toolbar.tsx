@@ -458,6 +458,7 @@ export function ComposerToolbar() {
             onClick={() => setRunOpen(true)}
             title="Set up and run on simulator"
             aria-label="Run circuit"
+            data-tour="run"
           >
             <Play className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Run circuit</span>

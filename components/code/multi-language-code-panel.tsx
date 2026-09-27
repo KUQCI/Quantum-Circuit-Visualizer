@@ -73,7 +73,7 @@ export function MultiLanguageCodePanel({
   }, [displayedWarnings, parseError]);
 
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden" data-tour="code">
       <div className="min-w-0 border-b border-[var(--color-border)] px-2 py-2">
         <div className="mb-2 flex min-w-0 items-center justify-between gap-2 px-1">
           <h2 className="min-w-0 truncate text-xs font-semibold text-[var(--color-foreground)]">

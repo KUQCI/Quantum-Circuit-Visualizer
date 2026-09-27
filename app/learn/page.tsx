@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaCard } from "@/components/mascot/QuantaCard";
+import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { LessonPath } from "@/components/learning/LessonPath";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
@@ -73,6 +74,21 @@ export default function LearnPage() {
 
   return (
     <div className="page-container max-w-5xl">
+      {completedLessons.length === 0 && totalXp === 0 && (
+        <QuantaEmptyState
+          className="mb-6"
+          variant="learning"
+          title="New here? Start with Module 1: Bits vs Qubits"
+          description="Take the first lesson to learn the ideas behind every circuit you build."
+          actions={[
+            {
+              label: "Start Module 1",
+              href: `/learn/${LESSONS[0]?.id ?? "what-is-a-qubit"}`,
+              primary: true,
+            },
+          ]}
+        />
+      )}
       <Reveal variant="scale" className="mb-8">
         <div className="academy-hero overflow-hidden rounded-2xl border border-[var(--color-border)] p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center">

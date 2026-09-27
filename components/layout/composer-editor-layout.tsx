@@ -11,6 +11,7 @@ import {
 } from "@/components/layout/composer-resizable-workspace";
 import { ComposerStatusBar } from "@/components/layout/composer-status-bar";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
+import { BuildTour } from "@/components/onboarding/BuildTour";
 
 export function ComposerEditorLayout() {
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
@@ -46,6 +47,7 @@ export function ComposerEditorLayout() {
 
       <ComposerStatusBar />
       <ComposerFooter />
+      <BuildTour />
     </div>
   );
 }

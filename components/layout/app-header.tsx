@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isPathActive } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
+import { useEditorUiStore } from "@/store/editor-ui-store";
 import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,7 @@ import {
   Palette,
   ExternalLink,
   Bug,
+  RotateCcw,
 } from "lucide-react";
 
 const primaryNav = [
@@ -60,6 +62,7 @@ const secondaryNav = [
 export function AppHeader() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
+  const setTourCompleted = useEditorUiStore((state) => state.setTourCompleted);
 
   return (
     <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
@@ -169,6 +172,10 @@ export function AppHeader() {
                   </>
                 )}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTourCompleted(false)}>
+                <RotateCcw className="h-4 w-4" aria-hidden />
+                Replay tour
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -224,6 +231,10 @@ export function AppHeader() {
                     Dark theme
                   </>
                 )}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTourCompleted(false)}>
+                <RotateCcw className="h-4 w-4" aria-hidden />
+                Replay tour
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
