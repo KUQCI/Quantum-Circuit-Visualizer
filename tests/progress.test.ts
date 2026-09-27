@@ -65,6 +65,12 @@ describe("academy progress", () => {
     expect(DAILY_GOAL_XP).toBe(50);
   });
 
+  it("includes achievement XP in today's daily XP", () => {
+    useProgressStore.getState().recordGatePlaced();
+    expect(useProgressStore.getState().unlockedAchievements).toContain("first-gate");
+    expect(Object.values(useProgressStore.getState().dailyXp)).toContain(10);
+  });
+
   it("detects level-up progress and can mark it celebrated", () => {
     const state = useProgressStore.getState();
     state.awardXp(100, "level test");
