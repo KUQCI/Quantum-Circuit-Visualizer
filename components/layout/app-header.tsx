@@ -102,6 +102,7 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "kuqci-nav-link flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
@@ -138,6 +139,7 @@ export function AppHeader() {
                   <DropdownMenuItem key={item.href} asChild>
                     <Link
                       href={item.href}
+                      prefetch={false}
                       className={cn(
                         "flex items-center gap-2",
                         active && "text-[var(--color-brand)]"
@@ -198,6 +200,7 @@ export function AppHeader() {
                   <DropdownMenuItem key={item.href} asChild>
                     <Link
                       href={item.href}
+                      prefetch={false}
                       className={cn(
                         "flex items-center gap-2",
                         active && "text-[var(--color-brand)]"
