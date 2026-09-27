@@ -13,6 +13,7 @@ import {
 } from "@/lib/learning/lesson-diagram";
 import { ProbabilityChart } from "@/components/visualizations/probability-chart";
 import { QubitPhaseDisks } from "@/components/visualizations/phase-disk";
+import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 
 interface LessonCircuitPreviewProps {
   circuit: Circuit;
@@ -274,6 +275,7 @@ export function LessonCircuitPreview({
   const [selectedStep, setSelectedStep] = useState(
     () => Math.max(0, snapshots.length - 1)
   );
+  const sayQuanta = useQuantaPopoutStore((state) => state.say);
 
   useEffect(() => {
     setSelectedStep(Math.max(0, snapshots.length - 1));
@@ -309,7 +311,16 @@ export function LessonCircuitPreview({
               key={step.step}
               type="button"
               aria-pressed={safeStep === step.step}
-              onClick={() => setSelectedStep(step.step)}
+              onClick={() => {
+                setSelectedStep(step.step);
+                const stepExplanation = explainStep(step, circuit);
+                sayQuanta({
+                  text: stepExplanation.computed.join(" "),
+                  title: stepExplanation.title,
+                  variant: "hint",
+                  imageVariant: "thinking",
+                });
+              }}
               className="rounded-full border border-[var(--color-border)] px-2 py-1 text-[10px] font-medium text-[var(--color-muted-foreground)] transition hover:border-[var(--color-brand)] hover:text-[var(--color-foreground)] aria-pressed:border-[var(--color-brand)] aria-pressed:bg-[var(--color-brand-subtle)] aria-pressed:text-[var(--color-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
             >
               {step.step === 0 ? "Start" : `Step ${step.step}`}

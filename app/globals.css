@@ -1255,6 +1255,48 @@ button:disabled,
   background: var(--color-error-subtle);
 }
 
+.quanta-popout {
+  animation: quanta-popout-in 450ms cubic-bezier(0.22, 1.25, 0.36, 1) both;
+}
+
+.quanta-popout-bubble {
+  position: relative;
+}
+
+.quanta-popout-bubble::before {
+  position: absolute;
+  right: -7px;
+  bottom: 16px;
+  width: 14px;
+  height: 14px;
+  content: "";
+  background: inherit;
+  border-top: inherit;
+  border-right: inherit;
+  transform: rotate(45deg);
+}
+
+@keyframes quanta-popout-in {
+  0% {
+    opacity: 0;
+    transform: translate(24px, 24px) scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-3px, -2px) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quanta-popout {
+    animation: none;
+  }
+}
+
 /* ── Learning workspace (lesson / challenge player) ── */
 .learning-workspace-shell {
   width: 100%;
