@@ -73,6 +73,34 @@ describe("progress backups", () => {
     ).toEqual({ ok: false, error: "Unsupported backup version" });
   });
 
+  it("rejects backups missing progress or project data", () => {
+    expect(
+      parseProgressBackup(
+        JSON.stringify({ kind: "qci-progress-backup", version: 1 })
+      )
+    ).toEqual({ ok: false, error: "Backup is missing progress data" });
+
+    expect(
+      parseProgressBackup(
+        JSON.stringify({
+          kind: "qci-progress-backup",
+          version: 1,
+          progress: emptyProgress(),
+        })
+      )
+    ).toEqual({ ok: false, error: "Backup is missing project data" });
+
+    const parsed = parseProgressBackup(
+      JSON.stringify({
+        kind: "qci-progress-backup",
+        version: 1,
+        progress: emptyProgress(),
+        projects: [],
+      })
+    );
+    expect(parsed.ok).toBe(true);
+  });
+
   it("sanitizes lesson ids and negative XP", () => {
     const raw: ProgressBackup = {
       kind: "qci-progress-backup",
@@ -147,5 +175,36 @@ describe("progress backups", () => {
     ]);
 
     expect(projects.map((project) => project.id)).toEqual(["valid"]);
+  });
+
+  it("merges streaks with their active dates as a pair", () => {
+    const current = {
+      ...emptyProgress(),
+      currentStreak: 2,
+      lastActiveDate: "2026-09-27",
+    };
+    const incoming = {
+      ...emptyProgress(),
+      currentStreak: 6,
+      lastActiveDate: "2026-09-01",
+    };
+
+    expect(mergeProgress(current, incoming)).toMatchObject({
+      currentStreak: 2,
+      lastActiveDate: "2026-09-27",
+    });
+    expect(mergeProgress(incoming, current)).toMatchObject({
+      currentStreak: 2,
+      lastActiveDate: "2026-09-27",
+    });
+    expect(
+      mergeProgress(
+        { ...current, currentStreak: 2 },
+        { ...current, currentStreak: 6 }
+      )
+    ).toMatchObject({
+      currentStreak: 6,
+      lastActiveDate: "2026-09-27",
+    });
   });
 });
