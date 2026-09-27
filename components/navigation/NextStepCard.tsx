@@ -13,6 +13,7 @@ interface NextStepCardProps {
   secondaryActions?: { href: string; label: string }[];
   badge?: string;
   className?: string;
+  external?: boolean;
 }
 
 export function NextStepCard({
@@ -25,6 +26,7 @@ export function NextStepCard({
   secondaryActions = [],
   badge,
   className,
+  external = false,
 }: NextStepCardProps) {
   return (
     <div
@@ -59,10 +61,17 @@ export function NextStepCard({
             </Button>
           ))}
           <Button asChild size="sm" className="gap-1.5">
-            <Link href={href}>
-              {ctaLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {external ? (
+              <a href={href} target="_blank" rel="noreferrer">
+                {ctaLabel}
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            ) : (
+              <Link href={href}>
+                {ctaLabel}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </Button>
         </div>
       </div>
