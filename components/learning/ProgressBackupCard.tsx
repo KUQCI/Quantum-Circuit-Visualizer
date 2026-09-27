@@ -133,6 +133,7 @@ export function ProgressBackupCard() {
               Import backup
             </Button>
             <input
+              aria-label="Choose a backup file"
               ref={inputRef}
               type="file"
               accept="application/json,.json"

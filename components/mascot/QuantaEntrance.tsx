@@ -163,7 +163,7 @@ export function QuantaEntrance() {
         ref={skipRef}
         type="button"
         onClick={finish}
-        className="absolute bottom-6 right-6 rounded-md border border-white/30 bg-black/60 px-3 py-1.5 font-mono text-xs uppercase tracking-wider text-white/90 backdrop-blur transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)]"
+        className="quanta-entrance-skip absolute bottom-6 right-6 rounded-md border px-3 py-1.5 font-mono text-xs uppercase tracking-wider backdrop-blur transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand)]"
       >
         Skip intro
       </button>

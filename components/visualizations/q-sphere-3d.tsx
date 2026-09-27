@@ -17,9 +17,9 @@ function useVizColors() {
   const theme = useThemeStore((s) => s.theme);
   return useMemo(
     () => ({
-      wire: theme === "dark" ? "#484f58" : "#94a3b8",
-      accent: theme === "dark" ? "#58a6ff" : "#2f80ed",
-      axis: theme === "dark" ? "#388bfd" : "#2563eb",
+      wire: theme === "dark" ? "#484f58" : "#64748b",
+      accent: theme === "dark" ? "#58a6ff" : "#1d4ed8",
+      axis: theme === "dark" ? "#388bfd" : "#1d4ed8",
     }),
     [theme]
   );

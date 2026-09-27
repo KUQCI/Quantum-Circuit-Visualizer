@@ -164,9 +164,9 @@ export function GateLibrary({
           {lessonScoped && !showAllGates && (
             <div className="mb-3">
               <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
-                <h3 className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
                   For this lesson
-                </h3>
+                </p>
                 <button
                   type="button"
                   className="text-[10px] text-[var(--color-brand)] hover:underline"
@@ -212,9 +212,9 @@ export function GateLibrary({
                 if (gates.length === 0) return null;
                 return (
                   <div key={category.id} className="mb-3">
-                    <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                    <p className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
                       {category.label}
-                    </h3>
+                    </p>
                     <div className="space-y-0.5">
                       {gates.map((gate) => (
                         <GateListItem
@@ -246,9 +246,9 @@ export function GateLibrary({
                 return (
                   <div key={category?.id ?? "filtered"} className="mb-3 last:mb-0">
                     {category && (
-                      <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                      <p className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
                         {category.label}
-                      </h3>
+                      </p>
                     )}
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
                       {gates.map((gate) => (

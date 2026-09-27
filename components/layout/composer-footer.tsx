@@ -25,7 +25,7 @@ export function ComposerFooter() {
           Back to QCI
           <ExternalLink className="h-2.5 w-2.5" />
         </ExternalAnchor>
-        <span className="hidden shrink-0 text-[var(--color-muted-foreground)]/70 sm:inline">
+        <span className="composer-footer-project-label hidden shrink-0 text-[var(--color-muted-foreground)]/70 sm:inline">
           A QCI R&amp;D project.
         </span>
         <Link
