@@ -12,6 +12,10 @@ interface MeasurementHistogramProps {
   noise?: NoiseModel;
 }
 
+export function histogramAxisMax(maxPct: number): number {
+  return Math.min(100, Math.ceil(maxPct / 25) * 25 || 25);
+}
+
 export function MeasurementHistogram({
   histogram,
   shots,
@@ -43,6 +47,7 @@ export function MeasurementHistogram({
   const chartWidth = padding.left + innerW + padding.right;
   const barWidth = Math.min(48, innerW / histogram.length - 4);
   const maxPct = Math.max(...histogram.map((h) => h.percentage), 1);
+  const axisMax = histogramAxisMax(maxPct);
   const scrollable = histogram.length > 16;
 
   return (
@@ -87,10 +92,11 @@ export function MeasurementHistogram({
           Count (%)
         </text>
 
-        {[0, 25, 50, 75, 100].map((tick) => {
-          const y = padding.top + innerH - (tick / 100) * innerH;
+        {[0, 1, 2, 3, 4].map((step) => {
+          const tick = (axisMax / 4) * step;
+          const y = padding.top + innerH - (tick / axisMax) * innerH;
           return (
-            <g key={tick}>
+            <g key={step}>
               <line
                 x1={padding.left - 4}
                 y1={y}
@@ -105,7 +111,7 @@ export function MeasurementHistogram({
                 fontSize={9}
                 textAnchor="end"
               >
-                {tick}
+                {Math.round(tick)}
               </text>
               <line
                 x1={padding.left}
@@ -125,7 +131,7 @@ export function MeasurementHistogram({
             padding.left +
             (i + 0.5) * (innerW / histogram.length) -
             barWidth / 2;
-          const barH = (entry.percentage / maxPct) * innerH;
+          const barH = (entry.percentage / axisMax) * innerH;
           const y = padding.top + innerH - barH;
 
           return (

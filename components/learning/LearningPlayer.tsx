@@ -119,7 +119,9 @@ export function LearningPlayer({
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
   const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
-  const [actionBarHeight, setActionBarHeight] = useState(0);
+  const [quantaPopoutBottomOffset, setQuantaPopoutBottomOffset] = useState<
+    number | undefined
+  >();
   const actionBarRef = useRef<HTMLDivElement>(null);
   const [lessonPanelOpen, setLessonPanelOpen] = useState(() =>
     typeof window !== "undefined"
@@ -183,11 +185,28 @@ export function LearningPlayer({
   useLayoutEffect(() => {
     const node = actionBarRef.current;
     if (!node) return;
-    const updateHeight = () => setActionBarHeight(node.getBoundingClientRect().height);
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
+    let frame = 0;
+    const updateOffset = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const { top } = node.getBoundingClientRect();
+        setQuantaPopoutBottomOffset(
+          Math.max(12, window.innerHeight - top + 12)
+        );
+      });
+    };
+    const observer = new ResizeObserver(updateOffset);
     observer.observe(node);
-    return () => observer.disconnect();
+    window.addEventListener("resize", updateOffset);
+    window.addEventListener("scroll", updateOffset, { passive: true });
+    updateOffset();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateOffset);
+      window.removeEventListener("scroll", updateOffset);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, [isCompact]);
 
   useEffect(() => {
@@ -522,7 +541,7 @@ export function LearningPlayer({
         ))}
       </div>
       <QuantaPopout
-        bottomOffset={actionBarHeight > 0 ? actionBarHeight + 12 : undefined}
+        bottomOffset={quantaPopoutBottomOffset}
       />
 
       {/* Main workspace */}
