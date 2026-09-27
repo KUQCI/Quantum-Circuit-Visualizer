@@ -137,6 +137,7 @@ function GateBlock({
         tabIndex={0}
         aria-pressed={isSelected}
         aria-label={accessibleLabel}
+        data-operation-id={operation.id}
         style={{
           left: columnToX(operation.column) + BARRIER_COLUMN_INSET,
           width: 4,
@@ -235,7 +236,9 @@ function GateBlock({
   if (!gateBox && !(isControl && isControlQubit && operation.targets.length > 0)) {
     return null;
   }
-  const isFocusableGate = Boolean(gateBox && isTarget);
+  const isFocusableGate = Boolean(
+    gateBox && operation.targets[0] === `q${wireIndex}`
+  );
 
   const gateBody = (
     <div
@@ -249,6 +252,7 @@ function GateBlock({
       tabIndex={isFocusableGate ? 0 : undefined}
       aria-pressed={isFocusableGate ? isSelected : undefined}
       aria-label={isFocusableGate ? accessibleLabel : undefined}
+      data-operation-id={isFocusableGate ? operation.id : undefined}
       style={{
         left: columnToX(operation.column) + GATE_COLUMN_INSET,
         top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
@@ -837,6 +841,7 @@ export function CircuitCanvas({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (inspectMode) return;
       const target = e.target as HTMLElement | null;
       if (
@@ -864,6 +869,12 @@ export function CircuitCanvas({
           return;
         }
       }
+
+      const focusInCanvas =
+        target === null ||
+        target === document.body ||
+        Boolean(scrollRef.current?.contains(target));
+      if (!focusInCanvas) return;
 
       if ((e.key === "Delete" || e.key === "Backspace") && selectedOperationId) {
         e.preventDefault();
@@ -1215,7 +1226,16 @@ export function CircuitCanvas({
                         ...circuit.operations.map((op) => op.column + 1)
                       );
                       const id = placeGate(placementGate, idx, col);
-                      if (id) setSelectedOperation(id);
+                      if (id) {
+                        setSelectedOperation(id);
+                        requestAnimationFrame(() =>
+                          scrollRef.current
+                            ?.querySelector<HTMLElement>(
+                              `[data-operation-id="${id}"]`
+                            )
+                            ?.focus()
+                        );
+                      }
                       onPlacementComplete?.();
                     }}
                   >
