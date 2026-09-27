@@ -1,12 +1,10 @@
 import type { Circuit, Operation } from "@/lib/circuit-schema";
-import type {
-  CheckCondition,
-  CheckResult,
-  CheckerContext,
-} from "./types";
+import type { CheckCondition, CheckResult, CheckerContext } from "./types";
 
 function sortedOps(ops: Operation[]): Operation[] {
-  return [...ops].sort((a, b) => a.column - b.column || a.id.localeCompare(b.id));
+  return [...ops].sort(
+    (a, b) => a.column - b.column || a.id.localeCompare(b.id),
+  );
 }
 
 function opSignature(op: Operation): string {
@@ -27,7 +25,7 @@ function normalizeCircuit(circuit: Circuit): string[] {
 function checkSingle(
   circuit: Circuit,
   condition: CheckCondition,
-  ctx: CheckerContext
+  ctx: CheckerContext,
 ): CheckResult {
   switch (condition.type) {
     case "manual":
@@ -49,7 +47,7 @@ function checkSingle(
       return exported
         ? { success: true, message: "Code exported successfully!" }
         : {
-          success: false,
+            success: false,
             message: languageName
               ? `Export the circuit as ${languageName} from the Code panel.`
               : "Copy or download the Qiskit code to complete this step.",
@@ -69,7 +67,10 @@ function checkSingle(
     case "hasGate": {
       const found = circuit.operations.some((op) => op.type === condition.gate);
       return found
-        ? { success: true, message: `Found ${condition.gate.toUpperCase()} gate.` }
+        ? {
+            success: true,
+            message: `Found ${condition.gate.toUpperCase()} gate.`,
+          }
         : {
             success: false,
             message: `Add a ${condition.gate.toUpperCase()} gate to your circuit.`,
@@ -79,8 +80,7 @@ function checkSingle(
     case "hasGateOnQubit": {
       const found = circuit.operations.some(
         (op) =>
-          op.type === condition.gate &&
-          op.targets.includes(condition.target)
+          op.type === condition.gate && op.targets.includes(condition.target),
       );
       return found
         ? {
@@ -98,7 +98,7 @@ function checkSingle(
       const found = circuit.operations.some(
         (op) =>
           op.controls.length > 0 &&
-          (!condition.gate || op.type === condition.gate)
+          (!condition.gate || op.type === condition.gate),
       );
       return found
         ? { success: true, message: "Controlled gate detected!" }
@@ -112,7 +112,8 @@ function checkSingle(
     case "hasMeasurement": {
       const matches = circuit.operations.filter((op) => {
         if (op.type !== "measure") return false;
-        if (condition.qubit && !op.targets.includes(condition.qubit)) return false;
+        if (condition.qubit && !op.targets.includes(condition.qubit))
+          return false;
         if (
           condition.classical &&
           !op.classicalTargets.includes(condition.classical)
@@ -207,7 +208,7 @@ function checkSingle(
 
     case "noExtraGates": {
       const extra = circuit.operations.filter(
-        (op) => !condition.allowed.includes(op.type)
+        (op) => !condition.allowed.includes(op.type),
       );
       return extra.length === 0
         ? { success: true, message: "No extra gates." }
@@ -223,10 +224,13 @@ function checkSingle(
           op.type === condition.gate &&
           op.parameters &&
           op.parameters.length > 0 &&
-          (!condition.target || op.targets.includes(condition.target))
+          (!condition.target || op.targets.includes(condition.target)),
       );
       return found
-        ? { success: true, message: `${condition.gate.toUpperCase()} with parameter found.` }
+        ? {
+            success: true,
+            message: `${condition.gate.toUpperCase()} with parameter found.`,
+          }
         : {
             success: false,
             message: `Add ${condition.gate.toUpperCase()} with a rotation parameter.`,
@@ -261,7 +265,7 @@ function checkSingle(
 export function checkCircuit(
   circuit: Circuit,
   condition: CheckCondition,
-  ctx: CheckerContext = {}
+  ctx: CheckerContext = {},
 ): CheckResult {
   return checkSingle(circuit, condition, ctx);
 }
