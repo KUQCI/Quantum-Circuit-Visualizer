@@ -92,71 +92,73 @@ export function GateLibrary({
         )}
         data-tour="gates"
       >
-        <div className="border-b border-[var(--color-border)] px-3 py-2.5">
-          <div className="flex items-center gap-1.5">
-            <div className="relative min-w-0 flex-1">
-              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search gates..."
-                aria-label="Search gates"
-                className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
-              />
+        {(!lessonScoped || showAllGates) && (
+          <div className="border-b border-[var(--color-border)] px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search gates..."
+                  aria-label="Search gates"
+                  className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
+                />
+              </div>
+              <div className="flex gap-0.5">
+                <button
+                  type="button"
+                  className={cn(
+                    "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
+                    !compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
+                  )}
+                  onClick={() => setCompact(false)}
+                  title="Grid view"
+                  aria-label="Grid view"
+                  aria-pressed={!compact}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
+                    compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
+                  )}
+                  onClick={() => setCompact(true)}
+                  title="List view"
+                  aria-label="List view"
+                  aria-pressed={compact}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-0.5">
-              <button
-                type="button"
-                className={cn(
-                  "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
-                  !compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
-                )}
-                onClick={() => setCompact(false)}
-                title="Grid view"
-                aria-label="Grid view"
-                aria-pressed={!compact}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
-                  compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
-                )}
-                onClick={() => setCompact(true)}
-                title="List view"
-                aria-label="List view"
-                aria-pressed={compact}
-              >
-                <List className="h-3.5 w-3.5" />
-              </button>
+            <div
+              className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="tablist"
+              aria-label="Gate categories"
+            >
+              {categoryTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={categoryFilter === tab.id}
+                  className={cn(
+                    "shrink-0 rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
+                    categoryFilter === tab.id
+                      ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
+                      : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]"
+                  )}
+                  onClick={() => setCategoryFilter(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-          <div
-            className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            role="tablist"
-            aria-label="Gate categories"
-          >
-            {categoryTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={categoryFilter === tab.id}
-                className={cn(
-                  "shrink-0 rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
-                  categoryFilter === tab.id
-                    ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
-                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]"
-                )}
-                onClick={() => setCategoryFilter(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         <div className="min-w-0 flex-1 overflow-y-auto p-2">
           {lessonScoped && !showAllGates && (

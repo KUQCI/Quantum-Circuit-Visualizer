@@ -150,11 +150,9 @@ export function LearningPlayer({
   ]);
 
   const toggleLessonCode = () => {
-    setLessonCodeOpen((open) => {
-      const next = !open;
-      setLessonCodeOpenPreference(next);
-      return next;
-    });
+    const next = !lessonCodeOpen;
+    setLessonCodeOpen(next);
+    setLessonCodeOpenPreference(next);
   };
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "success" | "error">("idle");
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -676,6 +674,7 @@ export function LearningPlayer({
               <LessonCodeDisclosure
                 open={lessonCodeOpen}
                 onToggle={toggleLessonCode}
+                collapsed={!lessonCodeOpen && isWideLayout}
               >
                 {lessonCodeOpen && (
                   <LearningCodePanel
@@ -830,11 +829,6 @@ function LessonSectionCard({
       {miniCircuit && (
         <LessonCircuitPreview circuit={miniCircuit} />
       )}
-      <QuantaMessage
-        title="Quanta hint"
-        message={section.quantaNote ?? lesson.quantaHint}
-        variant="hint"
-      />
       <div className="flex justify-between gap-2">
         <Button variant="outline" size="sm" onClick={onPrevious} disabled={index === 0}>
           Previous
@@ -961,23 +955,36 @@ function DoneCard({
 function LessonCodeDisclosure({
   open,
   onToggle,
+  collapsed = false,
   children,
 }: {
   open: boolean;
   onToggle: () => void;
+  collapsed?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-0 h-full flex-col">
+    <div className={cn("flex min-h-0 h-full flex-col", collapsed && "w-11")}>
       <button
         type="button"
-        className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3 text-left text-sm font-semibold hover:bg-[var(--color-secondary)]"
+        className={cn(
+          "flex shrink-0 items-center justify-between border-b border-[var(--color-border)] text-left text-sm font-semibold hover:bg-[var(--color-secondary)]",
+          collapsed
+            ? "h-full w-11 flex-col gap-3 px-0 py-3"
+            : "h-10 px-3"
+        )}
         onClick={onToggle}
         aria-expanded={open}
+        aria-label={collapsed ? "Expand code editor" : undefined}
       >
-        <span>Code (Qiskit)</span>
+        <span className={cn(collapsed && "-rotate-90 whitespace-nowrap")}>
+          {collapsed ? "Code" : "Code (Qiskit)"}
+        </span>
         <ChevronRight
-          className={cn("h-4 w-4 transition-transform", open && "rotate-90")}
+          className={cn(
+            "h-4 w-4 transition-transform",
+            open && "rotate-90"
+          )}
           aria-hidden
         />
       </button>

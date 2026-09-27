@@ -1270,7 +1270,8 @@ button:disabled,
 }
 
 .learning-panel-code-collapsed {
-  min-width: 176px;
+  width: 44px;
+  min-width: 44px;
 }
 
 .learning-panel-lesson-collapsed {
