@@ -75,18 +75,33 @@ export function ShortcutsDialog() {
               <ul className="space-y-2">
                 {group.items.map((item) => (
                   <li
-                    key={item.description + item.keys.join("-")}
+                    key={item.description}
                     className="flex items-center justify-between gap-4 text-sm"
                   >
                     <span>{item.description}</span>
                     <span className="flex shrink-0 items-center gap-1">
-                      {item.keys.map((key) => (
-                        <kbd
-                          key={key}
-                          className="rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--color-foreground)]"
+                      {item.keys.map((alternative, alternativeIndex) => (
+                        <span
+                          key={alternative.join("-")}
+                          className="flex items-center gap-1"
                         >
-                          {key === "Mod" ? modifierLabel : key}
-                        </kbd>
+                          {alternativeIndex > 0 && (
+                            <span
+                              className="px-0.5 text-xs text-[var(--color-muted-foreground)]"
+                              aria-hidden="true"
+                            >
+                              or
+                            </span>
+                          )}
+                          {alternative.map((key) => (
+                            <kbd
+                              key={key}
+                              className="rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--color-foreground)]"
+                            >
+                              {key === "Mod" ? modifierLabel : key}
+                            </kbd>
+                          ))}
+                        </span>
                       ))}
                     </span>
                   </li>

@@ -1,5 +1,5 @@
 export interface ShortcutItem {
-  keys: string[];
+  keys: string[][];
   description: string;
 }
 
@@ -12,48 +12,47 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: "Editing",
     items: [
-      { keys: ["Mod", "Z"], description: "Undo the last change" },
+      { keys: [["Mod", "Z"]], description: "Undo" },
       {
-        keys: ["Mod", "Shift", "Z"],
-        description: "Redo the last change with the Shift shortcut",
+        keys: [
+          ["Mod", "Shift", "Z"],
+          ["Mod", "Y"],
+        ],
+        description: "Redo",
       },
+      { keys: [["Mod", "D"]], description: "Duplicate selected gate" },
       {
-        keys: ["Mod", "Y"],
-        description: "Redo the last change with the Y shortcut",
-      },
-      { keys: ["Mod", "D"], description: "Duplicate the selected gate" },
-      {
-        keys: ["Delete"],
-        description: "Delete the selected gate with Delete",
-      },
-      {
-        keys: ["Backspace"],
-        description: "Delete the selected gate with Backspace",
+        keys: [["Delete"], ["Backspace"]],
+        description: "Delete selected gate",
       },
     ],
   },
   {
     title: "Canvas",
     items: [
-      { keys: ["Arrow keys"], description: "Move the selected gate" },
       {
-        keys: ["Enter"],
-        description: "Select a focused gate or place it with Enter",
+        keys: [["Arrow keys"]],
+        description: "Move selected gate",
       },
       {
-        keys: ["Space"],
-        description: "Select a focused gate or place it with Space",
+        keys: [["Enter"], ["Space"]],
+        description: "Select focused gate / place it on a wire",
       },
-      { keys: ["Escape"], description: "Dismiss an active overlay" },
+      { keys: [["Escape"]], description: "Dismiss overlay or selection" },
     ],
   },
   {
     title: "Navigation",
     items: [
-      { keys: ["←", "→"], description: "Move between narrow workspace tabs" },
-      { keys: ["Home"], description: "Jump to the first narrow workspace tab" },
-      { keys: ["End"], description: "Jump to the last narrow workspace tab" },
-      { keys: ["?"], description: "Open keyboard shortcuts" },
+      {
+        keys: [["←"], ["→"]],
+        description: "Switch narrow workspace tab",
+      },
+      {
+        keys: [["Home"], ["End"]],
+        description: "First / last narrow tab",
+      },
+      { keys: [["?"]], description: "Open this dialog" },
     ],
   },
 ];

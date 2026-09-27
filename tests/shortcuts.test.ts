@@ -12,6 +12,10 @@ describe("keyboard shortcut definitions", () => {
       for (const item of group.items) {
         expect(item.keys.length).toBeGreaterThan(0);
         expect(item.description.trim()).not.toBe("");
+        for (const alternative of item.keys) {
+          expect(alternative.length).toBeGreaterThan(0);
+          expect(alternative.every((key) => key.trim() !== "")).toBe(true);
+        }
         expect(descriptions.has(item.description)).toBe(false);
         descriptions.add(item.description);
       }
