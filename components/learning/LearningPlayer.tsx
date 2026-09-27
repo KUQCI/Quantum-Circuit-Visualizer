@@ -9,6 +9,7 @@ import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-pa
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaAchievement } from "@/components/mascot/QuantaAchievement";
 import { QuantaHint } from "@/components/mascot/QuantaHint";
+import { QuantaPopout } from "@/components/mascot/QuantaPopout";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
 import { LessonCircuitPreview } from "@/components/learning/LessonCircuitPreview";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
@@ -19,6 +20,7 @@ import type { CodeLanguageId } from "@/lib/code-adapters";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 import { useMediaQuery, COMPACT_VIEWPORT_QUERY } from "@/lib/use-media-query";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { Button } from "@/components/ui/button";
@@ -79,6 +81,8 @@ export function LearningPlayer({
   const recordExport = useProgressStore((s) => s.recordExport);
   const recordImport = useProgressStore((s) => s.recordImport);
   const recordActivity = useProgressStore((s) => s.recordActivity);
+  const sayQuanta = useQuantaPopoutStore((s) => s.say);
+  const dismissQuanta = useQuantaPopoutStore((s) => s.dismiss);
   const isComplete = useProgressStore((s) =>
     mode === "lesson"
       ? s.isLessonComplete(activity.id)
@@ -125,6 +129,10 @@ export function LearningPlayer({
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
+
+  useEffect(() => {
+    return () => dismissQuanta();
+  }, [activity.id, dismissQuanta]);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,6 +194,19 @@ export function LearningPlayer({
     }
   }, [circuit.operations]);
 
+  useEffect(() => {
+    if (stage !== "learn" || !isLesson(activity)) return;
+    const section = activity.sections[sectionIndex];
+    if (!section) return;
+    const note = section.quantaNote ?? activity.quantaHint;
+    setQuantaFeedback(note);
+    sayQuanta({
+      text: note,
+      variant: "hint",
+      imageVariant: "learning",
+    });
+  }, [activity, sayQuanta, sectionIndex, stage]);
+
   const targetCircuit = useMemo(() => {
     if (!isLesson(activity) && "targetCircuit" in activity && activity.targetCircuit) {
       return activity.targetCircuit;
@@ -241,14 +262,24 @@ export function LearningPlayer({
         setQuizWrongAttempts(attempts);
         setFeedbackStatus("error");
         setFeedbackMessage("Not quite — try again.");
-        setQuantaFeedback(
+        const feedback =
           attempts >= 2
             ? `Here's the explanation: ${question.explanation}`
-            : activity.quantaIncorrect
-        );
+            : activity.quantaIncorrect;
+        setQuantaFeedback(feedback);
+        sayQuanta({
+          text: feedback,
+          variant: "error",
+          imageVariant: "thinking",
+        });
         return;
       }
       setQuantaFeedback(question.explanation);
+      sayQuanta({
+        text: question.explanation,
+        variant: "success",
+        imageVariant: "success",
+      });
       setFeedbackStatus("success");
       setFeedbackMessage("Quiz answer correct!");
       return;
@@ -285,10 +316,20 @@ export function LearningPlayer({
       setFeedbackStatus("success");
       setFeedbackMessage(result.message);
       setQuantaFeedback(activity.quantaSuccess);
+      sayQuanta({
+        text: activity.quantaSuccess,
+        variant: "success",
+        imageVariant: "success",
+      });
     } else {
       setFeedbackStatus("error");
       setFeedbackMessage(result.message);
       setQuantaFeedback(activity.quantaIncorrect);
+      sayQuanta({
+        text: activity.quantaIncorrect,
+        variant: "error",
+        imageVariant: "thinking",
+      });
     }
   };
 
@@ -402,6 +443,7 @@ export function LearningPlayer({
           </div>
         ))}
       </div>
+      <QuantaPopout />
 
       {/* Main workspace */}
       <FeatureErrorBoundary
@@ -593,7 +635,19 @@ export function LearningPlayer({
               Check Answer
             </Button>
           )}
-          <Button size="default" variant="outline" className="gap-2" onClick={() => setShowHint(true)}>
+          <Button
+            size="default"
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              setShowHint(true);
+              sayQuanta({
+                text: activity.quantaHint,
+                variant: "hint",
+                imageVariant: "thinking",
+              });
+            }}
+          >
             <Lightbulb className="h-4 w-4" />
             Show Hint
           </Button>
