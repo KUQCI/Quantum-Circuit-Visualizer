@@ -25,8 +25,6 @@ export const quantaAssets = {
   contactSheet: "/assets/quanta/quanta-contact-sheet.webp",
   introVideo: "/assets/quanta/intro/door-open.mp4",
   introPoster: "/assets/quanta/intro/door-poster.jpg",
-  cursorDefault: "/assets/quanta/cursor/quanta-cursor.svg",
-  cursorPointer: "/assets/quanta/cursor/quanta-cursor-pointer.svg",
 } as const;
 
 export type QuantaAssetKey = keyof typeof quantaAssets;
