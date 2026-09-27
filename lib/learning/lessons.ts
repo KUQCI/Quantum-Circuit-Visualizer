@@ -191,7 +191,7 @@ const BASE_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     quantaSuccess: "Entangled! You've built a Bell pair.",
     quantaIncorrect: "Order matters: H on q[0], then CX q[0]→q[1].",
     walkthroughId: "bell",
-    order: 19,
+    order: 20,
   },
   {
     id: "entangle-two-qubits",
@@ -217,7 +217,7 @@ const BASE_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     quantaHint: "CX is the easiest — control on one wire, ⊕ on the other.",
     quantaSuccess: "Entanglement achieved! Spooky action, duck-approved.",
     quantaIncorrect: "Add a controlled gate connecting two qubits.",
-    order: 20,
+    order: 21,
   },
   {
     id: "export-first-qiskit",
@@ -247,7 +247,7 @@ const BASE_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     quantaHint: "Use the Copy button in the Qiskit panel on the right.",
     quantaSuccess: "Exported! You're speaking Qiskit now.",
     quantaIncorrect: "Copy or download the generated Qiskit code first.",
-    order: 26,
+    order: 27,
   },
   {
     id: "import-qiskit-visualize",
@@ -273,7 +273,7 @@ const BASE_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     quantaHint: "Paste the Qiskit snippet and wait for sync — H should appear on q[0].",
     quantaSuccess: "Imported! Code and canvas are in sync.",
     quantaIncorrect: "Sync Qiskit code so H appears on q[0].",
-    order: 27,
+    order: 28,
   },
 ];
 
@@ -389,13 +389,46 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     quantaHint: "The order matters: prepare first, measure second.", quantaSuccess: "Superposition measured successfully.", quantaIncorrect: "Use H followed by Measure.", order: 14,
   },
   {
+    id: "noise-vs-ideal",
+    title: "Why Hardware Disagrees",
+    module: "measurement",
+    description: "Compare ideal simulation with a noisy Bell experiment.",
+    story:
+      "Real quantum hardware introduces gate and readout errors. Run the Bell experiment with Ideal and Realistic noise, then compare the histograms.",
+    difficulty: "intermediate",
+    estimatedMinutes: 8,
+    xpReward: 60,
+    skills: ["measurement"],
+    starterCircuit: lessonCircuit("Noisy Bell", 2, 2, [
+      op("noise-h", "h", ["q0"], 0),
+      op("noise-cx", "cx", ["q1"], 1, ["q0"]),
+      op("noise-m0", "measure", ["q0"], 2, [], ["c0"]),
+      op("noise-m1", "measure", ["q1"], 2, [], ["c1"]),
+    ]),
+    successCondition: {
+      type: "all",
+      conditions: [
+        { type: "hasGate", gate: "h" },
+        { type: "hasControlledGate", gate: "cx" },
+        { type: "hasMeasurement", qubit: "q0", classical: "c0" },
+        { type: "hasMeasurement", qubit: "q1", classical: "c1" },
+      ],
+    },
+    hint: "Build the Bell circuit, then use Run with the Realistic noise preset.",
+    quantaIntro: "Ideal math is neat. Hardware adds a little static.",
+    quantaHint: "Run the same Bell circuit twice: Ideal, then Realistic.",
+    quantaSuccess: "You spotted the difference between a model and a device.",
+    quantaIncorrect: "Complete the Bell circuit with both measurements.",
+    order: 15,
+  },
+  {
     id: "two-qubits-four-states", title: "Two Qubits, Four States", module: "multi-qubit-gates",
     description: "Create a two-qubit circuit and inspect its four basis states.",
     story: "Two qubits have four computational basis states: |00⟩, |01⟩, |10⟩, and |11⟩.",
     difficulty: "beginner", estimatedMinutes: 5, xpReward: 40, skills: ["qubits"],
     starterCircuit: lessonCircuit("Four States", 1), successCondition: { type: "minQubits", count: 2 },
     hint: "Add a second qubit if needed and inspect the Results panel.", quantaIntro: "Adding one qubit doubles the basis-state vocabulary.",
-    quantaHint: "Count the two-bit strings: 00, 01, 10, 11.", quantaSuccess: "Four states understood.", quantaIncorrect: "This lesson needs two qubit wires.", order: 15,
+    quantaHint: "Count the two-bit strings: 00, 01, 10, 11.", quantaSuccess: "Four states understood.", quantaIncorrect: "This lesson needs two qubit wires.", order: 16,
   },
   {
     id: "cx-basics", title: "CX Basics", module: "multi-qubit-gates",
@@ -405,7 +438,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     starterCircuit: lessonCircuit("CX Basics", 2, 0, [op("cx-preview", "x", ["q1"], 0)]),
     successCondition: { type: "hasControlledGate", gate: "cx" }, hint: "Place CX with q0 as control and q1 as target.",
     quantaIntro: "Now qubits can condition one another.", quantaHint: "The small control dot and target symbol must connect.",
-    quantaSuccess: "Controlled logic online.", quantaIncorrect: "Add a CX controlled gate.", order: 16,
+    quantaSuccess: "Controlled logic online.", quantaIncorrect: "Add a CX controlled gate.", order: 17,
   },
   {
     id: "cz-and-swap", title: "CZ and SWAP", module: "multi-qubit-gates",
@@ -415,7 +448,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     starterCircuit: lessonCircuit("CZ SWAP", 2, 0, [op("cz-preview", "x", ["q1"], 0)]),
     successCondition: { type: "any", conditions: [{ type: "hasGate", gate: "cz" }, { type: "hasGate", gate: "swap" }] },
     hint: "Try CZ or SWAP and inspect the operation explanation.", quantaIntro: "Two gates, two different kinds of coordination.",
-    quantaHint: "CZ is phase-focused; SWAP moves states between wires.", quantaSuccess: "Multi-qubit vocabulary expanded.", quantaIncorrect: "Place CZ or SWAP.", order: 17,
+    quantaHint: "CZ is phase-focused; SWAP moves states between wires.", quantaSuccess: "Multi-qubit vocabulary expanded.", quantaIncorrect: "Place CZ or SWAP.", order: 18,
   },
   {
     id: "toffoli", title: "Toffoli (CCX)", module: "multi-qubit-gates",
@@ -423,7 +456,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     story: "The Toffoli gate flips its target only when both controls are |1⟩. It is a universal classical reversible primitive.",
     difficulty: "advanced", estimatedMinutes: 7, xpReward: 75, skills: ["gates", "algorithms"],
     starterCircuit: lessonCircuit("Toffoli", 3, 0, [op("ccx-preview", "x", ["q2"], 0)]),
-    successCondition: { type: "hasGate", gate: "ccx" }, hint: "Use q0 and q1 as controls and q2 as target.", quantaIntro: "Two conditions can control one flip.", quantaHint: "CCX needs three wires.", quantaSuccess: "Toffoli mastered.", quantaIncorrect: "Add a CCX gate.", order: 18,
+    successCondition: { type: "hasGate", gate: "ccx" }, hint: "Use q0 and q1 as controls and q2 as target.", quantaIntro: "Two conditions can control one flip.", quantaHint: "CCX needs three wires.", quantaSuccess: "Toffoli mastered.", quantaIncorrect: "Add a CCX gate.", order: 19,
   },
   {
     id: "ghz-state", title: "Build a GHZ State", module: "entanglement",
@@ -433,7 +466,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     starterCircuit: lessonCircuit("GHZ Preview", 3, 0, [op("h", "h", ["q0"], 0)]),
     successCondition: { type: "all", conditions: [{ type: "minQubits", count: 3 }, { type: "operationOrder", operations: [{ gate: "h", target: "q0" }, { gate: "cx" }, { gate: "cx" }] }] },
     hint: "Start with H, then connect q0 to q1 and q1 to q2.", quantaIntro: "Bell pairs can grow into a shared three-qubit state.",
-    quantaHint: "Look for two controlled links after the H.", quantaSuccess: "GHZ correlation achieved.", quantaIncorrect: "Build H plus two CX gates on three qubits.", order: 21,
+    quantaHint: "Look for two controlled links after the H.", quantaSuccess: "GHZ correlation achieved.", quantaIncorrect: "Build H plus two CX gates on three qubits.", order: 22,
   },
   {
     id: "phase-kickback", title: "Phase Kickback", module: "entanglement",
@@ -441,7 +474,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     story: "A controlled phase can imprint information on a control/target pair. Hadamards can convert that phase into a probability difference.",
     difficulty: "advanced", estimatedMinutes: 8, xpReward: 90, skills: ["entanglement", "phase"],
     starterCircuit: lessonCircuit("Phase Kickback", 2, 0, [op("h0", "h", ["q0"], 0)]),
-    successCondition: { type: "hasControlledGate", gate: "cz" }, hint: "Place CZ between q0 and q1.", quantaIntro: "Phase can travel through a controlled interaction.", quantaHint: "Use H before or after CZ to reveal interference.", quantaSuccess: "You have seen phase kickback in action.", quantaIncorrect: "Add a controlled-Z gate.", order: 22,
+    successCondition: { type: "hasControlledGate", gate: "cz" }, hint: "Place CZ between q0 and q1.", quantaIntro: "Phase can travel through a controlled interaction.", quantaHint: "Use H before or after CZ to reveal interference.", quantaSuccess: "You have seen phase kickback in action.", quantaIncorrect: "Add a controlled-Z gate.", order: 23,
   },
   {
     id: "deutsch-problem", title: "Deutsch's Problem", module: "algorithms",
@@ -450,7 +483,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     difficulty: "advanced", estimatedMinutes: 10, xpReward: 100, skills: ["algorithms", "phase"],
     starterCircuit: lessonCircuit("Deutsch", 2, 0, [op("h0", "h", ["q0"], 0)]),
     successCondition: { type: "operationOrder", operations: [{ gate: "h" }, { gate: "h" }, { gate: "cx" }, { gate: "h" }] },
-    hint: "Build the H, H, CX, H interference pattern.", quantaIntro: "Algorithms are choreography: prepare, query, interfere.", quantaHint: "Use two qubits and inspect the final probabilities.", quantaSuccess: "Deutsch's pattern is in place.", quantaIncorrect: "Follow the H–H–CX–H sequence.", order: 23,
+    hint: "Build the H, H, CX, H interference pattern.", quantaIntro: "Algorithms are choreography: prepare, query, interfere.", quantaHint: "Use two qubits and inspect the final probabilities.", quantaSuccess: "Deutsch's pattern is in place.", quantaIncorrect: "Follow the H–H–CX–H sequence.", order: 24,
   },
   {
     id: "teleportation-tour", title: "Quantum Teleportation Tour", module: "algorithms",
@@ -459,7 +492,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     difficulty: "advanced", estimatedMinutes: 12, xpReward: 110, skills: ["algorithms", "entanglement"],
     starterCircuit: lessonCircuit("Teleportation Preview", 2), successCondition: { type: "minQubits", count: 3 },
     hint: "Add a third qubit (Edit → Add qubit) so the circuit has all three roles, then trace the wires.", quantaIntro: "Teleportation is a protocol, not science-fiction transport.",
-    quantaHint: "Follow preparation, Bell interaction, measurement, and correction.", quantaSuccess: "Teleportation tour complete.", quantaIncorrect: "Teleportation needs three wires — add a qubit so the receiver has a place to live.", order: 25,
+    quantaHint: "Follow preparation, Bell interaction, measurement, and correction.", quantaSuccess: "Teleportation tour complete.", quantaIncorrect: "Teleportation needs three wires — add a qubit so the receiver has a place to live.", order: 26,
   },
   {
     id: "grover-two-qubits", title: "Grover with Two Qubits", module: "algorithms",
@@ -468,7 +501,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     difficulty: "advanced", estimatedMinutes: 10, xpReward: 100, skills: ["algorithms", "phase"],
     starterCircuit: lessonCircuit("Grover Two Qubits", 2, 0, [op("h0", "h", ["q0"], 0)]),
     successCondition: { type: "all", conditions: [{ type: "hasGate", gate: "h" }, { type: "hasGate", gate: "cz" }] },
-    hint: "Use H to prepare and CZ as a simple phase oracle.", quantaIntro: "Search becomes interference when amplitudes are amplified.", quantaHint: "Look at how the oracle changes phase, not just probability.", quantaSuccess: "Grover's two-qubit intuition is taking shape.", quantaIncorrect: "Add H and CZ gates.", order: 24,
+    hint: "Use H to prepare and CZ as a simple phase oracle.", quantaIntro: "Search becomes interference when amplitudes are amplified.", quantaHint: "Look at how the oracle changes phase, not just probability.", quantaSuccess: "Grover's two-qubit intuition is taking shape.", quantaIncorrect: "Add H and CZ gates.", order: 25,
   },
   {
     id: "openqasm-export", title: "OpenQASM Export", module: "qiskit",
@@ -477,7 +510,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     difficulty: "intermediate", estimatedMinutes: 6, xpReward: 50, skills: ["qiskit"],
     starterCircuit: lessonCircuit("OpenQASM", 1, 0, [op("h", "h", ["q0"], 0)]), successCondition: { type: "actionExport", language: "openqasm" },
     hint: "Choose OpenQASM in the Code panel and export it.", quantaIntro: "One circuit can travel between visual and textual tools.",
-    quantaHint: "Select the OpenQASM language tab first.", quantaSuccess: "OpenQASM exported.", quantaIncorrect: "Use the export action in the Code panel.", order: 28,
+    quantaHint: "Select the OpenQASM language tab first.", quantaSuccess: "OpenQASM exported.", quantaIncorrect: "Use the export action in the Code panel.", order: 29,
   },
   {
     id: "bind-parameters", title: "Bind Parameters", module: "qiskit",
@@ -486,7 +519,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
     difficulty: "intermediate", estimatedMinutes: 7, xpReward: 60, skills: ["qiskit", "phase"],
     starterCircuit: lessonCircuit("Bind Parameters", 1), successCondition: { type: "hasParameterGate", gate: "rx" },
     hint: "Add RX and enter a numeric parameter.", quantaIntro: "Parameters let one circuit describe many experiments.",
-    quantaHint: "An unbound symbol is intentionally blocked from simulation.", quantaSuccess: "Parameter binding understood.", quantaIncorrect: "Place an RX parameter gate.", order: 29,
+    quantaHint: "An unbound symbol is intentionally blocked from simulation.", quantaSuccess: "Parameter binding understood.", quantaIncorrect: "Place an RX parameter gate.", order: 30,
   },
   {
     id: "capstone-bell-experiment", title: "Capstone: Bell Experiment", module: "capstone",
@@ -504,7 +537,7 @@ const EXTRA_LESSONS: Array<Omit<LessonDefinition, "sections" | "quiz">> = [
       ],
     },
     hint: "Prepare, entangle, and measure both wires.", quantaIntro: "This is your first complete quantum experiment.",
-    quantaHint: "Use Results to inspect probabilities and shots.", quantaSuccess: "Capstone complete — you ran a Bell experiment.", quantaIncorrect: "Build H, CX, and two measurements.", order: 30,
+    quantaHint: "Use Results to inspect probabilities and shots.", quantaSuccess: "Capstone complete — you ran a Bell experiment.", quantaIncorrect: "Build H, CX, and two measurements.", order: 31,
   },
 ];
 
@@ -1231,6 +1264,52 @@ const LESSON_CONTENT: Record<
         options: ["100% 0 every time", "About 50% 0 and 50% 1", "Four equally likely two-bit strings"],
         answerIndex: 1,
         explanation: "A single-qubit H state has equal computational-basis probabilities.",
+      },
+    ],
+  },
+  "noise-vs-ideal": {
+    sections: [
+      {
+        heading: "Ideal math and real devices",
+        body:
+          "An ideal simulator applies the circuit's matrices exactly. Hardware has imperfect gates, drifting calibration, and readout electronics that can turn a correct state into a surprising bit string.\n\nRun the Bell circuit with Ideal noise first. Its matching 00 and 11 outcomes are the clean mathematical prediction.",
+        quantaNote: "The ideal result is a reference, not a promise from hardware.",
+      },
+      {
+        heading: "Random Pauli kicks and readout errors",
+        body:
+          "Depolarizing noise models an occasional random X, Y, or Z kick after a gate. One-qubit and two-qubit gates can have different error rates because entangling hardware is harder to control.\n\nReadout error happens after measurement: the state may be right, but the classical electronics can report the opposite bit. Choose Realistic in Run and compare it with Ideal.",
+        quantaNote: "A tiny random kick can change a whole experiment's story.",
+      },
+      {
+        heading: "Read the noisy histogram",
+        body:
+          "The Realistic Bell histogram should still favor 00 and 11, but 01 and 10 can leak into the bars. More shots make the pattern easier to see; they do not remove hardware noise.\n\nEngineers use calibration, error mitigation, and eventually error correction to reduce these effects. A noisy result is information about the device, not a failed idea.",
+        quantaNote: "Look for the shape of the signal, then measure the leakage.",
+      },
+    ],
+    quiz: [
+      {
+        id: "noise-vs-ideal-reference",
+        question: "What does the Ideal noise setting represent?",
+        options: [
+          "Exact circuit evolution without modeled errors",
+          "A circuit with random readout flips",
+          "A circuit with no measurements",
+        ],
+        answerIndex: 0,
+        explanation: "Ideal mode applies the circuit operations and measurements without added noise.",
+      },
+      {
+        id: "noise-vs-ideal-leak",
+        question: "What can 01 and 10 bars show in a noisy Bell histogram?",
+        options: [
+          "That the circuit has three qubits",
+          "Leakage caused by gate or readout errors",
+          "That probabilities are never sampled",
+        ],
+        answerIndex: 1,
+        explanation: "Noise can break the perfect correlation, causing mismatched classical outcomes.",
       },
     ],
   },

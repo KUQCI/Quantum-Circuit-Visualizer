@@ -15,6 +15,7 @@ import { useCircuitStore } from "@/store/circuit-store";
 import { useExecutionStore } from "@/store/execution-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { BACKENDS } from "@/lib/backends";
+import { NOISE_PRESETS } from "@/lib/noise-model";
 import { MeasurementHistogram } from "@/components/visualizations/measurement-histogram";
 import { cn } from "@/lib/utils";
 import { Loader2, Play, ExternalLink, CheckCircle2 } from "lucide-react";
@@ -29,15 +30,18 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
   const {
     backendId,
     shots,
+    noise,
     lastResult,
     isRunning,
     runError,
     setBackendId,
     setShots,
+    setNoise,
     runCircuit,
   } = useExecutionStore();
   const { setShowVizPanels, setVizPanel } = useEditorUiStore();
   const [localShots, setLocalShots] = useState(String(shots));
+  const [showAdvancedNoise, setShowAdvancedNoise] = useState(false);
 
   const selectedBackend = BACKENDS.find((b) => b.id === backendId)!;
 
@@ -123,6 +127,81 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
             </div>
           )}
 
+          {selectedBackend.local &&
+            !selectedBackend.requiresIbmApi &&
+            backendId === "local-sampler" && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-[var(--color-muted-foreground)]">
+                  Noise
+                </p>
+                <div className="grid grid-cols-4 gap-1 rounded-lg bg-[var(--color-muted)] p-1">
+                  {NOISE_PRESETS.map((preset) => {
+                    const selected =
+                      noise.enabled === preset.model.enabled &&
+                      noise.depolarizing1q === preset.model.depolarizing1q &&
+                      noise.depolarizing2q === preset.model.depolarizing2q &&
+                      noise.readoutError === preset.model.readoutError;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={cn(
+                          "rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          selected
+                            ? "bg-[var(--color-background)] text-[var(--color-brand)] shadow-sm"
+                            : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+                        )}
+                        onClick={() => setNoise(preset.model)}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="mt-2 text-xs font-medium text-[var(--color-brand)] hover:underline"
+                  onClick={() => setShowAdvancedNoise((open) => !open)}
+                  aria-expanded={showAdvancedNoise}
+                >
+                  {showAdvancedNoise ? "Hide advanced" : "Advanced"}
+                </button>
+                {showAdvancedNoise && (
+                  <div className="mt-3 space-y-3 rounded-lg border border-[var(--color-border)] p-3">
+                    {(
+                      [
+                        ["depolarizing1q", "1-qubit depolarizing", 0.1],
+                        ["depolarizing2q", "2-qubit depolarizing", 0.2],
+                        ["readoutError", "Readout error", 0.1],
+                      ] as const
+                    ).map(([key, label, max]) => (
+                      <label key={key} className="block text-xs">
+                        <span className="mb-1 flex justify-between gap-2 text-[var(--color-muted-foreground)]">
+                          <span>{label}</span>
+                          <span>{(noise[key] * 100).toFixed(1)}%</span>
+                        </span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={max}
+                          step={0.001}
+                          value={noise[key]}
+                          onChange={(event) =>
+                            setNoise({
+                              ...noise,
+                              enabled: true,
+                              [key]: Number(event.target.value),
+                            })
+                          }
+                          className="w-full accent-[var(--color-brand)]"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           {selectedBackend.requiresIbmApi && (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)] p-3 text-sm">
               <p className="text-[var(--color-muted-foreground)]">
@@ -163,6 +242,7 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
                   histogram={lastResult.histogram}
                   shots={lastResult.shots}
                   registerLabel={lastResult.registerLabel}
+                  noise={lastResult.noise}
                 />
               </div>
             </div>

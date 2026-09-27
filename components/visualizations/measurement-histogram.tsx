@@ -1,6 +1,7 @@
 "use client";
 
 import type { HistogramEntry } from "@/lib/shot-simulator";
+import { getNoisePresetLabel, type NoiseModel } from "@/lib/noise-model";
 
 interface MeasurementHistogramProps {
   histogram: HistogramEntry[];
@@ -8,6 +9,7 @@ interface MeasurementHistogramProps {
   registerLabel?: string;
   error?: string | null;
   emptyMessage?: string;
+  noise?: NoiseModel;
 }
 
 export function MeasurementHistogram({
@@ -16,6 +18,7 @@ export function MeasurementHistogram({
   registerLabel,
   error,
   emptyMessage = "Run circuit to see measurement results",
+  noise,
 }: MeasurementHistogramProps) {
   if (error) {
     return (
@@ -45,9 +48,16 @@ export function MeasurementHistogram({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {registerLabel && (
-        <p className="mb-1 shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
-          Register: {registerLabel} · {shots.toLocaleString()} shots
-        </p>
+        <div className="mb-1 flex shrink-0 items-center justify-between gap-2 text-[10px] text-[var(--color-muted-foreground)]">
+          <p>
+            Register: {registerLabel} · {shots.toLocaleString()} shots
+          </p>
+          {noise && (
+            <span className="shrink-0 rounded-full bg-[var(--color-brand-subtle)] px-2 py-0.5 font-medium text-[var(--color-brand)]">
+              Noise: {getNoisePresetLabel(noise)}
+            </span>
+          )}
+        </div>
       )}
       <div className={`min-h-0 flex-1 ${scrollable ? "overflow-x-auto" : ""}`}>
         <svg
