@@ -16,6 +16,7 @@ import { useProgressStore } from "@/store/progress-store";
 import { Award, Flame, Swords, RotateCcw } from "lucide-react";
 import { pluralize } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
+import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 
 const SKILL_LABELS: Record<string, string> = {
   qubits: "Qubits",
@@ -88,7 +89,30 @@ export default function ProgressPage() {
         />
       </div>
 
-      <ProgressSummary />
+      {completedLessons.length === 0 && totalXp === 0 ? (
+        <QuantaEmptyState
+          className="my-6"
+          variant="learning"
+          title="No progress yet — finish your first lesson to earn XP"
+          description="Start learning or restore progress from a backup whenever you are ready."
+          actions={[
+            {
+              label: "Start learning",
+              href: `/learn/${LESSONS[0]?.id ?? "what-is-a-qubit"}`,
+              primary: true,
+            },
+            {
+              label: "Import a backup",
+              onClick: () =>
+                document
+                  .getElementById("progress-backup")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+            },
+          ]}
+        />
+      ) : (
+        <ProgressSummary />
+      )}
       <div className="my-4 rounded-xl border border-[var(--color-border)] p-3 text-sm">
         <p className="font-semibold">Level {level} · {getLevelTitle(level)}</p>
         <p className="mt-1 text-[var(--color-muted-foreground)]">
@@ -176,7 +200,7 @@ export default function ProgressPage() {
         </div>
       </section>
 
-      <section className="mb-8">
+      <section id="progress-backup" className="mb-8 scroll-mt-20">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
           Backup
         </h2>

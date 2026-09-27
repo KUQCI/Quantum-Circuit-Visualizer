@@ -175,7 +175,10 @@ export function OperationInspector() {
 
   if (!selected) {
     return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]">
+      <div
+        className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]"
+        data-tour="inspector"
+      >
         {inspectMode && (
           <div className="shrink-0 space-y-3 overflow-y-auto border-b border-[var(--color-border)] p-3">
             {walkthroughContent}
@@ -229,7 +232,10 @@ export function OperationInspector() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]">
+    <div
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]"
+      data-tour="inspector"
+    >
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3 py-2">
         <div>
           <h3 className="text-xs font-semibold text-[var(--color-foreground)]">

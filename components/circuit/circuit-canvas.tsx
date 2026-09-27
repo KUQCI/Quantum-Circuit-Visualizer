@@ -1023,6 +1023,7 @@ export function CircuitCanvas({
           tabIndex={0}
           role="region"
           aria-label={canvasLabel}
+          data-tour="canvas"
           className={cn(
             "relative flex-1 overflow-auto p-3",
             isPaletteDragging && "cursor-copy",

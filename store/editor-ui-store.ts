@@ -55,6 +55,7 @@ interface EditorUiState {
   showPhaseDisks: boolean;
   showInspector: boolean;
   vizLayout: VizLayout;
+  tourCompleted: boolean;
   vizPanels: {
     probabilities: boolean;
     qsphere: boolean;
@@ -78,6 +79,7 @@ interface EditorUiState {
   setShowPhaseDisks: (show: boolean) => void;
   setShowInspector: (show: boolean) => void;
   setVizLayout: (layout: VizLayout) => void;
+  setTourCompleted: (completed: boolean) => void;
   setVizPanel: (panel: keyof EditorUiState["vizPanels"], show: boolean) => void;
   setInspectMode: (on: boolean) => void;
   setInspectStep: (step: number) => void;
@@ -99,6 +101,7 @@ export const useEditorUiStore = create<EditorUiState>()(
       showPhaseDisks: true,
       showInspector: false,
       vizLayout: "tabs",
+      tourCompleted: false,
       vizPanels: {
         probabilities: true,
         qsphere: true,
@@ -121,6 +124,7 @@ export const useEditorUiStore = create<EditorUiState>()(
       setShowPhaseDisks: (show) => set({ showPhaseDisks: show }),
       setShowInspector: (show) => set({ showInspector: show }),
       setVizLayout: (layout) => set({ vizLayout: layout }),
+      setTourCompleted: (completed) => set({ tourCompleted: completed }),
       setVizPanel: (panel, show) =>
         set((state) => ({
           vizPanels: { ...state.vizPanels, [panel]: show },
@@ -173,6 +177,7 @@ export const useEditorUiStore = create<EditorUiState>()(
           | "showPhaseDisks"
           | "showInspector"
           | "vizLayout"
+          | "tourCompleted"
           | "operationsPanelCollapsed"
           | "narrowActiveTab"
           | "vizPanels"
@@ -207,6 +212,10 @@ export const useEditorUiStore = create<EditorUiState>()(
           showInspector: asBoolean(
             saved.showInspector,
             current.showInspector
+          ),
+          tourCompleted: asBoolean(
+            saved.tourCompleted,
+            current.tourCompleted
           ),
           vizLayout:
             saved.vizLayout === "tabs" || saved.vizLayout === "split"
@@ -252,14 +261,19 @@ export const useEditorUiStore = create<EditorUiState>()(
         showPhaseDisks: state.showPhaseDisks,
         showInspector: state.showInspector,
         vizLayout: state.vizLayout,
+        tourCompleted: state.tourCompleted,
         operationsPanelCollapsed: state.operationsPanelCollapsed,
         narrowActiveTab: state.narrowActiveTab,
         vizPanels: state.vizPanels,
         walkthroughBackup: state.walkthroughBackup,
       }),
-      version: 2,
+      version: 3,
       migrate: (persistedState) => ({
         ...(persistedState as Partial<EditorUiState>),
+        tourCompleted: asBoolean(
+          (persistedState as Partial<EditorUiState>)?.tourCompleted,
+          false
+        ),
         showInspector: false,
         vizLayout: "tabs" as VizLayout,
       }) as EditorUiState,
