@@ -64,7 +64,7 @@ export default function LearnPage() {
 
   if (!progressHydrated) {
     return (
-      <div className="page-container max-w-5xl">
+      <div className="page-container min-h-[2200px] max-w-5xl">
         <div className="flex min-h-64 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
           Loading…
         </div>

@@ -16,9 +16,34 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    "https://qcinit.tech/Quantum-Circuit-Visualizer/"
+  ),
   title: "Quantum Circuit Visualizer | QCI",
   description:
     "An open-source QCI R&D project for learning and prototyping quantum circuits — build, view, and convert between visual diagrams and Qiskit, OpenQASM, and Cirq.",
+  openGraph: {
+    title: "Quantum Circuit Visualizer | QCI",
+    description:
+      "Learn and prototype quantum circuits with an approachable visual builder from the Khalifa University Quantum Computing Initiative.",
+    siteName: "Quantum Circuit Visualizer",
+    type: "website",
+    images: [
+      {
+        url: "/assets/quanta/intro/door-poster.jpg",
+        width: 1600,
+        height: 900,
+        alt: "Quanta welcomes you to Quantum Circuit Visualizer",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Quantum Circuit Visualizer | QCI",
+    description:
+      "Learn and prototype quantum circuits with an approachable visual builder from the Khalifa University Quantum Computing Initiative.",
+    images: ["/assets/quanta/intro/door-poster.jpg"],
+  },
 };
 
 export default function RootLayout({
