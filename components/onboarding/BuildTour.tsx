@@ -23,6 +23,11 @@ interface HighlightRect {
   height: number;
 }
 
+interface CardPosition {
+  left: number;
+  top: number;
+}
+
 const EMPTY_RECT: HighlightRect = { left: 0, top: 0, width: 0, height: 0 };
 
 function focusableElements(root: HTMLElement): HTMLElement[] {
@@ -47,14 +52,18 @@ export function BuildTour() {
   const [stepIndex, setStepIndex] = useState(0);
   const [active, setActive] = useState(false);
   const [highlight, setHighlight] = useState(EMPTY_RECT);
+  const [cardPosition, setCardPosition] = useState<CardPosition | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [compactLayout, setCompactLayout] = useState(true);
   const cardRef = useRef<HTMLDivElement>(null);
   const steps = getTourSteps(layoutTier);
   const step = steps[stepIndex] ?? steps[0];
 
   useEffect(() => {
-    const updateTier = () =>
+    const updateTier = () => {
       setLayoutTier(getLayoutTier(window.innerWidth, window.innerHeight));
+      setCompactLayout(window.innerWidth < 768);
+    };
     updateTier();
     window.addEventListener("resize", updateTier);
     return () => window.removeEventListener("resize", updateTier);
@@ -133,6 +142,62 @@ export function BuildTour() {
       window.removeEventListener("scroll", refresh, true);
     };
   }, [active, narrowActiveTab, showInspector, updateHighlight]);
+
+  useEffect(() => {
+    if (!active || compactLayout || !cardRef.current || highlight.width === 0) {
+      setCardPosition(null);
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const card = cardRef.current;
+      if (!card) return;
+
+      const { width, height } = card.getBoundingClientRect();
+      const margin = 16;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const candidates = [
+        {
+          left: highlight.left + highlight.width + margin,
+          top: highlight.top,
+          fits:
+            highlight.left + highlight.width + margin + width <=
+            viewportWidth - margin,
+        },
+        {
+          left: highlight.left - margin - width,
+          top: highlight.top,
+          fits: highlight.left - margin - width >= margin,
+        },
+        {
+          left: highlight.left,
+          top: highlight.top + highlight.height + margin,
+          fits:
+            highlight.top + highlight.height + margin + height <=
+            viewportHeight - margin,
+        },
+        {
+          left: highlight.left,
+          top: highlight.top - margin - height,
+          fits: highlight.top - margin - height >= margin,
+        },
+      ];
+      const preferred = candidates.find((candidate) => candidate.fits) ?? candidates[2];
+      setCardPosition({
+        left: Math.min(
+          viewportWidth - margin - width,
+          Math.max(margin, preferred.left)
+        ),
+        top: Math.min(
+          viewportHeight - margin - height,
+          Math.max(margin, preferred.top)
+        ),
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [active, compactLayout, highlight, stepIndex]);
 
   useEffect(() => {
     if (!active || !cardRef.current) return;
@@ -220,14 +285,26 @@ export function BuildTour() {
         aria-modal="true"
         aria-labelledby="build-tour-title"
         aria-describedby="build-tour-body"
-        className="technical-panel absolute bottom-4 left-4 right-4 mx-auto max-w-md border-[var(--color-brand-border)] bg-[var(--color-card)] p-4 shadow-2xl sm:bottom-8 sm:left-auto sm:right-8 sm:p-5"
+        className={cn(
+          "technical-panel absolute mx-auto max-w-md border-[var(--color-brand-border)] bg-[var(--color-surface)] shadow-2xl",
+          compactLayout
+            ? "bottom-4 left-4 right-4 p-4"
+            : "p-5"
+        )}
+        style={
+          compactLayout
+            ? { backgroundColor: "var(--color-surface)" }
+            : {
+                left: cardPosition?.left,
+                top: cardPosition?.top,
+                backgroundColor: "var(--color-surface)",
+              }
+        }
       >
         <div className="flex items-start gap-3">
-          <QuantaImage
-            variant="learning"
-            size="sm"
-            className="hidden shrink-0 sm:block"
-          />
+          <div className="hidden shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-2xl sm:block">
+            <QuantaImage variant="learning" size="sm" bare />
+          </div>
           <div className="min-w-0 flex-1">
             <p className="qci-section-eyebrow">Build tour · {stepIndex + 1} of {steps.length}</p>
             <h2
@@ -245,15 +322,18 @@ export function BuildTour() {
           </div>
         </div>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1" aria-label="Tour progress">
+          <div
+            className="flex shrink-0 items-center gap-1.5"
+            aria-label="Tour progress"
+          >
             {steps.map((item, index) => (
               <span
                 key={item.id}
                 className={cn(
-                  "h-1.5 w-1.5 rounded-full",
+                  "h-2 w-2 shrink-0 rounded-full",
                   index === stepIndex
                     ? "bg-[var(--color-brand)]"
-                    : "bg-[var(--color-muted)]"
+                    : "bg-[var(--color-muted-foreground)]/60"
                 )}
                 aria-hidden
               />
