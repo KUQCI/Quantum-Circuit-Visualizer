@@ -132,10 +132,12 @@ export function getLessonBreadcrumbs(lesson: LessonDefinition) {
 }
 
 export function getChallengeBreadcrumbs(challenge: ChallengeDefinition) {
+  const difficulty =
+    challenge.difficulty.charAt(0).toUpperCase() + challenge.difficulty.slice(1);
   return [
     { label: "Home", href: "/" },
     { label: "Challenges", href: "/challenges" },
-    { label: challenge.difficulty, href: "/challenges" },
+    { label: difficulty, href: "/challenges" },
     { label: challenge.title },
   ];
 }

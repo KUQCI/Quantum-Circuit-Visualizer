@@ -77,7 +77,7 @@ export function buildSandboxSolution(seed: number): {
       circuit,
       condition: conditionForSingle(singleGate, target),
       title: `${getGateLabel(singleGate)} on ${target}`,
-      description: `Place a ${getGateLabel(singleGate)} gate on ${target}.`,
+      description: `Place the ${getGateLabel(singleGate)} gate on ${target}.`,
       successCriteria: `Place ${getGateLabel(singleGate)} on ${target}.`,
       hint: `Use the ${getGateLabel(singleGate)} gate on the ${target} wire.`,
       quantaHint: `${getGateLabel(singleGate)} on ${target} — a tiny circuit with a clear goal.`,
@@ -175,12 +175,12 @@ export function buildSandboxSolution(seed: number): {
       circuit,
       condition: { type: "hasControlledGate", gate: "cz" },
       title: "Controlled Phase",
-      description: `Add a controlled-Z from ${control} to ${targetQubit}.`,
-      successCriteria: "Place a controlled-Z gate between two qubits.",
+      description: `Add the controlled-Z from ${control} to ${targetQubit}.`,
+      successCriteria: "Place the controlled-Z gate between two qubits.",
       hint: "Use the controlled-Z operation with one control and one target.",
       quantaHint: "Controlled phase is a quiet but powerful connection.",
       quantaSuccess: "Controlled phase unlocked!",
-      quantaIncorrect: "Add a controlled-Z gate.",
+      quantaIncorrect: "Add the controlled-Z gate.",
     };
   }
 
@@ -196,12 +196,12 @@ export function buildSandboxSolution(seed: number): {
       circuit,
       condition: { type: "hasParameterGate", gate, target },
       title: `${getGateLabel(gate)} Rotation`,
-      description: `Add a parameterized ${getGateLabel(gate)} to ${target}.`,
+      description: `Add the parameterized ${getGateLabel(gate)} to ${target}.`,
       successCriteria: `Place ${getGateLabel(gate)} with an angle on ${target}.`,
       hint: "Choose a rotation gate and enter a parameter such as pi/2.",
       quantaHint: "Parameterized rotations let you tune the quantum motion.",
       quantaSuccess: "Rotation parameter dialed in!",
-      quantaIncorrect: `Add a parameterized ${getGateLabel(gate)} on ${target}.`,
+      quantaIncorrect: `Add the parameterized ${getGateLabel(gate)} on ${target}.`,
     };
   }
 
@@ -257,7 +257,6 @@ export function generateSandboxChallenge(seed: number): ChallengeDefinition {
     estimatedMinutes: 4,
     successCriteria: solution.successCriteria,
     starterCircuit: createEmptyCircuit(`Sandbox ${safeSeed}`, solution.circuit.qubits.length, solution.circuit.classicalBits.length),
-    targetCircuit: solution.circuit,
     successCondition: solution.condition,
     hint: solution.hint,
     quantaIntro: "A fresh sandbox challenge is ready.",

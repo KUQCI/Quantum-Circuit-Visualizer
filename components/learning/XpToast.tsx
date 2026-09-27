@@ -30,7 +30,11 @@ export function XpToast() {
 
   if (!delta) return null;
   return (
-    <div className="fixed bottom-5 right-5 z-50 rounded-lg border border-[var(--color-brand-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-brand)] shadow-lg">
+    <div
+      className="fixed top-20 right-4 z-50 max-w-[calc(100vw-2rem)] rounded-lg border border-[var(--color-brand-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-brand)] shadow-lg sm:right-6"
+      role="status"
+      aria-live="polite"
+    >
       +{delta} XP · Academy progress
     </div>
   );
