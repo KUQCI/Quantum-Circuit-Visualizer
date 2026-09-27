@@ -30,9 +30,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/assets/quanta/intro/door-poster.jpg",
-        width: 1600,
-        height: 900,
+        url: "/assets/og-card.jpg",
+        width: 1200,
+        height: 630,
         alt: "Quanta welcomes you to Quantum Circuit Visualizer",
       },
     ],
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     title: "Quantum Circuit Visualizer | QCI",
     description:
       "Learn and prototype quantum circuits with an approachable visual builder from the Khalifa University Quantum Computing Initiative.",
-    images: ["/assets/quanta/intro/door-poster.jpg"],
+    images: ["/assets/og-card.jpg"],
   },
 };
 
