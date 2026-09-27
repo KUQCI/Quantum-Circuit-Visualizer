@@ -36,14 +36,26 @@ function checkSingle(
         message: "Great — you're ready for the next step!",
       };
 
-    case "actionExport":
-      return ctx.actionExportDone
+    case "actionExport": {
+      const exported = condition.language
+        ? ctx.exportedLanguages?.includes(condition.language)
+        : ctx.actionExportDone;
+      const languageName =
+        condition.language === "openqasm"
+          ? "OpenQASM"
+          : condition.language === "qiskit"
+            ? "Qiskit"
+            : condition.language;
+      return exported
         ? { success: true, message: "Code exported successfully!" }
         : {
-            success: false,
-            message: "Copy or download the Qiskit code to complete this step.",
+          success: false,
+            message: languageName
+              ? `Export the circuit as ${languageName} from the Code panel.`
+              : "Copy or download the Qiskit code to complete this step.",
             hint: "Use the Copy button in the code panel on the right.",
           };
+    }
 
     case "actionImport":
       return ctx.actionImportDone

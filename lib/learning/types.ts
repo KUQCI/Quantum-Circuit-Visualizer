@@ -1,4 +1,5 @@
 import type { Circuit } from "@/lib/circuit-schema";
+import type { CodeLanguageId } from "@/lib/code-adapters";
 
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 
@@ -28,7 +29,7 @@ export interface QuizQuestion {
 
 export type CheckCondition =
   | { type: "manual" }
-  | { type: "actionExport" }
+  | { type: "actionExport"; language?: CodeLanguageId }
   | { type: "actionImport" }
   | { type: "hasGate"; gate: string }
   | { type: "hasGateOnQubit"; gate: string; target: string }
@@ -119,5 +120,6 @@ export interface CheckResult {
 
 export interface CheckerContext {
   actionExportDone?: boolean;
+  exportedLanguages?: string[];
   actionImportDone?: boolean;
 }

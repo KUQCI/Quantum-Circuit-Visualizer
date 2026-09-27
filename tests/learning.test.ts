@@ -49,6 +49,24 @@ describe("Learning checker", () => {
         .success
     ).toBe(true);
   });
+
+  it("requires the configured export language when specified", () => {
+    const circuit = simpleSuperpositionCircuit;
+    expect(
+      checkCircuit(
+        circuit,
+        { type: "actionExport", language: "openqasm" },
+        { actionExportDone: true, exportedLanguages: ["qiskit"] }
+      ).success
+    ).toBe(false);
+    expect(
+      checkCircuit(
+        circuit,
+        { type: "actionExport", language: "openqasm" },
+        { actionExportDone: true, exportedLanguages: ["openqasm"] }
+      ).success
+    ).toBe(true);
+  });
 });
 
 describe("Progress levels", () => {

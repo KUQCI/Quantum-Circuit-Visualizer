@@ -26,7 +26,7 @@ export function MultiLanguageCodePanel({
   onCodeApplied,
 }: {
   active?: boolean;
-  onExport?: () => void;
+  onExport?: (language: CodeLanguageId) => void;
   onCodeApplied?: () => void;
 }) {
   const { resetCircuit, circuit } = useCircuitStore();
@@ -172,7 +172,7 @@ export function MultiLanguageCodePanel({
         <CodePanelActions
           code={code}
           filename={filename}
-          onExport={onExport}
+          onExport={() => onExport?.(codePanelLanguage)}
         />
         <Button
           variant="ghost"
