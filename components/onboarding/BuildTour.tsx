@@ -203,12 +203,23 @@ export function BuildTour() {
     if (!active || !cardRef.current) return;
     const focusables = focusableElements(cardRef.current);
     focusables[0]?.focus();
-  }, [active, stepIndex]);
+  }, [active, highlight.width, stepIndex]);
 
   const finish = useCallback(() => {
     setActive(false);
     setTourCompleted(true);
   }, [setTourCompleted]);
+
+  useEffect(() => {
+    if (!active) return;
+    const handleEscape = (event: WindowEventMap["keydown"]) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      finish();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [active, finish]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") {

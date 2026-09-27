@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -118,6 +119,8 @@ export function LearningPlayer({
   const [draggingGate, setDraggingGate] = useState<string | null>(null);
   const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [actionBarHeight, setActionBarHeight] = useState(0);
+  const actionBarRef = useRef<HTMLDivElement>(null);
   const [lessonPanelOpen, setLessonPanelOpen] = useState(() =>
     typeof window !== "undefined"
       ? !window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
@@ -176,6 +179,16 @@ export function LearningPlayer({
   );
   const isCompleteRef = useRef(isComplete);
   const modeRef = useRef(mode);
+
+  useLayoutEffect(() => {
+    const node = actionBarRef.current;
+    if (!node) return;
+    const updateHeight = () => setActionBarHeight(node.getBoundingClientRect().height);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isCompact]);
 
   useEffect(() => {
     isCompleteRef.current = isComplete;
@@ -508,7 +521,9 @@ export function LearningPlayer({
           </div>
         ))}
       </div>
-      <QuantaPopout />
+      <QuantaPopout
+        bottomOffset={actionBarHeight > 0 ? actionBarHeight + 12 : undefined}
+      />
 
       {/* Main workspace */}
       <FeatureErrorBoundary
@@ -725,7 +740,10 @@ export function LearningPlayer({
       </FeatureErrorBoundary>
 
       {/* Bottom actions */}
-      <div className="shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4">
+      <div
+        ref={actionBarRef}
+        className="learning-action-bar shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4"
+      >
         {(mode === "challenge"
           ? feedbackStatus === "success"
           : stage === "done") &&
