@@ -19,6 +19,9 @@ import {
 import { useProgressStore } from "@/store/progress-store";
 import { DAILY_GOAL_XP, getLevelTitle, levelQuantaVariant } from "@/lib/learning/progress";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
+import { getReviewStats } from "@/lib/learning/quiz-review";
+import { todayIso } from "@/store/progress-store";
+import { LESSONS } from "@/lib/learning/lessons";
 import { PenLine, Swords, BarChart3, Award } from "lucide-react";
 
 export default function LearnPage() {
@@ -29,6 +32,7 @@ export default function LearnPage() {
   const getLevel = useProgressStore((s) => s.getLevel);
   const streak = useProgressStore((s) => s.currentStreak);
   const dailyXp = useProgressStore((s) => s.dailyXp);
+  const quizHistory = useProgressStore((s) => s.quizHistory);
   const progressHydrated = usePersistHydrated(useProgressStore.persist);
 
   useEffect(() => {
@@ -50,6 +54,12 @@ export default function LearnPage() {
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const todayXp = dailyXp[todayKey] ?? 0;
+  const reviewStats = getReviewStats(
+    quizHistory,
+    LESSONS,
+    completedLessons,
+    todayIso()
+  );
 
   if (!progressHydrated) {
     return (
@@ -140,6 +150,20 @@ export default function LearnPage() {
             />
           </Reveal>
         )}
+
+        <Reveal className="mb-6">
+          <NextStepCard
+            badge="Spaced learning"
+            title={`Review due: ${reviewStats.due}`}
+            description={
+              reviewStats.due > 0
+                ? "Revisit a few quiz questions to keep your quantum intuition sharp."
+                : "No questions are due right now. Quanta will queue more for you."
+            }
+            href="/review"
+            ctaLabel="Open review"
+          />
+        </Reveal>
 
         <Reveal className="mb-6">
           <ContinueWhereYouLeftOff

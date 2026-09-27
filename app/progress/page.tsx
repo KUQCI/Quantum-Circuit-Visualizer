@@ -13,7 +13,7 @@ import { DAILY_GOAL_XP, getLevelTitle, MODULE_LABELS, MODULE_IDS, xpForNextLevel
 import { getNextChallenge, getNextLesson } from "@/lib/navigation/flow";
 import { getProgressQuantaMessage } from "@/lib/mascot/messages";
 import { useProgressStore } from "@/store/progress-store";
-import { Award, Flame, Swords } from "lucide-react";
+import { Award, Flame, Swords, RotateCcw } from "lucide-react";
 import { pluralize } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
@@ -83,6 +83,7 @@ export default function ProgressPage() {
           secondary={[
             { label: "Achievements", href: "/achievements", icon: <Award className="h-4 w-4" /> },
             { label: "Challenges", href: "/challenges", icon: <Swords className="h-4 w-4" /> },
+            { label: "Quiz Review", href: "/review", icon: <RotateCcw className="h-4 w-4" /> },
           ]}
         />
       </div>
@@ -98,6 +99,15 @@ export default function ProgressPage() {
           Current streak: {pluralize(currentStreak, "day")}
         </p>
       </div>
+
+      <NextStepCard
+        className="my-6"
+        badge="Spaced learning"
+        title="Quiz review"
+        description="Refresh completed lessons with short, scheduled practice."
+        href="/review"
+        ctaLabel="Review due questions"
+      />
 
       {nextLesson && (
         <NextStepCard
