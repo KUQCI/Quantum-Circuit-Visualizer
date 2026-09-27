@@ -50,7 +50,7 @@ import {
   ChevronRight,
   ChevronsDown,
 } from "lucide-react";
-import type { Operation } from "@/lib/circuit-schema";
+import type { Circuit, Operation } from "@/lib/circuit-schema";
 
 interface DropPosition {
   column: number;
@@ -65,6 +65,8 @@ interface CircuitCanvasProps {
   onPlacementComplete?: () => void;
   canvasLabel?: string;
   variant?: "default" | "learning";
+  readOnly?: boolean;
+  circuitOverride?: Circuit;
 }
 
 function resolveDropPosition(
@@ -498,10 +500,12 @@ export function CircuitCanvas({
   onPlacementComplete,
   canvasLabel = "Circuit canvas",
   variant = "default",
+  readOnly = false,
+  circuitOverride,
 }: CircuitCanvasProps) {
   const {
-    circuit,
-    selectedOperationId,
+    circuit: storeCircuit,
+    selectedOperationId: storedSelectedOperationId,
     validationWarnings,
     clipboard,
     setSelectedOperation,
@@ -520,6 +524,8 @@ export function CircuitCanvas({
     canUndo,
     canRedo,
   } = useCircuitStore();
+  const circuit = circuitOverride ?? storeCircuit;
+  const selectedOperationId = readOnly ? null : storedSelectedOperationId;
   const hydrated = usePersistHydrated(useCircuitStore.persist);
 
   const {
@@ -558,6 +564,7 @@ export function CircuitCanvas({
   );
 
   const selectOperationForInspect = (operationId: string) => {
+    if (readOnly) return;
     setSelectedOperation(operationId);
     if (!inspectMode) return;
     const layerIndex = inspectLayers.findIndex((layer) =>
@@ -593,7 +600,7 @@ export function CircuitCanvas({
 
   const placeGate = useCallback(
     (gateType: string, qubitIndex: number, column: number) => {
-      if (inspectMode) return null;
+      if (inspectMode || readOnly) return null;
 
       const gateDef = getGateByType(gateType);
       if (!gateDef) return null;
@@ -719,12 +726,14 @@ export function CircuitCanvas({
       alignOperationsLeft,
       alignmentMode,
       inspectMode,
+      readOnly,
       setShowInspector,
     ]
   );
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
+      if (readOnly) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "copy";
 
@@ -740,11 +749,12 @@ export function CircuitCanvas({
       );
       setDropPreview(pos);
     },
-    [draggingGate, circuit.qubits.length]
+    [draggingGate, circuit.qubits.length, readOnly]
   );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
+      if (readOnly) return;
       e.preventDefault();
       e.stopPropagation();
 
@@ -790,14 +800,16 @@ export function CircuitCanvas({
       alignmentMode,
       inspectMode,
       onDragEnd,
+      readOnly,
     ]
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (readOnly) return;
     const related = e.relatedTarget as Node | null;
     if (related && scrollRef.current?.contains(related)) return;
     setDropPreview(null);
-  }, []);
+  }, [readOnly]);
 
   const selectedOp = circuit.operations.find(
     (op) => op.id === selectedOperationId
@@ -813,6 +825,7 @@ export function CircuitCanvas({
     : 0;
 
   useEffect(() => {
+    if (readOnly) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
       if (inspectMode) return;
@@ -886,6 +899,7 @@ export function CircuitCanvas({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
+    readOnly,
     inspectMode,
     selectedOperationId,
     selectedOp,
@@ -906,7 +920,12 @@ export function CircuitCanvas({
         ref={canvasRootRef}
         className="flex h-full flex-col bg-[var(--color-canvas)]"
       >
-        <div className="composer-canvas-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3">
+        <div
+          className={cn(
+            "composer-canvas-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3",
+            readOnly && "hidden"
+          )}
+        >
           <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
             <button
               type="button"
@@ -1030,6 +1049,7 @@ export function CircuitCanvas({
             isPlacementMode && "cursor-crosshair"
           )}
           onClick={(e) => {
+            if (readOnly) return;
             if (!placementGate || inspectMode || !canvasRef.current) return;
             const pos = resolveDropPosition(
               e.clientX,
@@ -1047,6 +1067,7 @@ export function CircuitCanvas({
           onDrop={handleDrop}
           onDragLeave={handleDragLeave}
           onContextMenu={(e) => {
+            if (readOnly) return;
             if (!clipboard || inspectMode) return;
             e.preventDefault();
             const pos = canvasRef.current
@@ -1067,7 +1088,9 @@ export function CircuitCanvas({
               width: WIRE_LABEL_WIDTH + numColumns * COLUMN_WIDTH + 60,
               height: canvasHeight,
             }}
-            onClick={() => setSelectedOperation(null)}
+            onClick={() => {
+              if (!readOnly) setSelectedOperation(null);
+            }}
           >
             <div
               className="pointer-events-none absolute top-0 z-10 border-r border-[var(--color-border)]"

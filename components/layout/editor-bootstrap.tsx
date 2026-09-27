@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { getWalkthrough } from "@/lib/learning/walkthroughs";
 import { restoreWalkthroughBackup } from "@/lib/learning/walkthrough-backup";
 import { AlertTriangle } from "lucide-react";
+import { decodeShareParam } from "@/lib/share-link";
+import { showAppToast } from "@/lib/app-toast";
 
 /** Handles ?project=id query param and viewport-aware default panel state. */
 export function EditorBootstrap() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const openProject = useCircuitStore((s) => s.openProject);
   const loadProjects = useCircuitStore((s) => s.loadProjects);
   const loadSampleCircuit = useCircuitStore((s) => s.loadSampleCircuit);
+  const setActivityCircuit = useCircuitStore((s) => s.setActivityCircuit);
   const setInspectMode = useEditorUiStore((s) => s.setInspectMode);
   const setInspectStep = useEditorUiStore((s) => s.setInspectStep);
   const setActiveWalkthroughId = useEditorUiStore(
@@ -22,11 +26,41 @@ export function EditorBootstrap() {
   );
   const setWalkthroughBackup = useEditorUiStore((s) => s.setWalkthroughBackup);
   const lastStartedWalkthrough = useRef<string | null>(null);
+  const handledShare = useRef<string | null>(null);
   const [projectLoadError, setProjectLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    const shareParam = searchParams.get("share");
+    if (!shareParam || handledShare.current === shareParam) return;
+    handledShare.current = shareParam;
+
+    const loadSharedCircuit = () => {
+      const shared = decodeShareParam(shareParam);
+      if (!shared) {
+        showAppToast("This share link is invalid or too old");
+      } else {
+        setActivityCircuit({
+          ...shared,
+          name: `${shared.name || "Untitled Circuit"} (shared)`,
+        });
+        showAppToast("Loaded shared circuit");
+      }
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("share");
+      const suffix = next.toString() ? `?${next.toString()}` : "";
+      router.replace(`${pathname}${suffix}`, { scroll: false });
+    };
+
+    if (useCircuitStore.persist.hasHydrated()) {
+      loadSharedCircuit();
+      return;
+    }
+    return useCircuitStore.persist.onFinishHydration(loadSharedCircuit);
+  }, [pathname, router, searchParams, setActivityCircuit]);
 
   useEffect(() => {
     const projectId = searchParams.get("project");
