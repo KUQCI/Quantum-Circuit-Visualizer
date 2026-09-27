@@ -91,6 +91,25 @@ qc.rz(pi/2, 0)
     expect(result.circuit.operations[2].parameters?.[0].display).toBe("pi/2");
   });
 
+  it("accepts signed symbolic parameter expressions", () => {
+    for (const expression of ["pi*-theta", "-theta", "theta/-2", "2*(-theta)"]) {
+      expect(isSymbolicExpression(expression)).toBe(true);
+    }
+    for (const expression of ["pi/", "theta**", "+*theta", "theta 2"]) {
+      expect(isSymbolicExpression(expression)).toBe(false);
+    }
+  });
+
+  it("preserves signed symbolic Qiskit parameters", () => {
+    const result = parseQiskitCode(`from qiskit import QuantumCircuit
+qc = QuantumCircuit(1)
+qc.rx(pi*-theta, 0)
+`);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.circuit.operations[0].parameters?.[0].symbol).toBe("pi*-theta");
+  });
+
   it("rejects malformed parameter expressions", () => {
     const result = parseQiskitCode(`from qiskit import QuantumCircuit
 qc = QuantumCircuit(1)

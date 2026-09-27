@@ -14,6 +14,26 @@ export interface WalkthroughBackup {
   projectId: string | null;
 }
 
+function sanitizeWalkthroughBackup(value: unknown): WalkthroughBackup | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const candidate = value as {
+    circuit?: unknown;
+    projectId?: unknown;
+  };
+  if (
+    !candidate.circuit ||
+    typeof candidate.circuit !== "object" ||
+    Array.isArray(candidate.circuit) ||
+    (candidate.projectId !== null && typeof candidate.projectId !== "string")
+  ) {
+    return null;
+  }
+  return {
+    circuit: candidate.circuit as Circuit,
+    projectId: candidate.projectId,
+  };
+}
+
 export const COMPOSER_LAYOUT_STORAGE_KEYS = [
   "react-resizable-panels:qci-composer-h",
   "react-resizable-panels:qci-composer-v",
@@ -146,6 +166,7 @@ export const useEditorUiStore = create<EditorUiState>()(
           | "operationsPanelCollapsed"
           | "narrowActiveTab"
           | "vizPanels"
+          | "walkthroughBackup"
         >
       >(),
       merge: (persisted, current) => {
@@ -206,6 +227,7 @@ export const useEditorUiStore = create<EditorUiState>()(
               current.vizPanels.histogram
             ),
           },
+          walkthroughBackup: sanitizeWalkthroughBackup(saved.walkthroughBackup),
         };
       },
       partialize: (state) => ({
@@ -218,6 +240,7 @@ export const useEditorUiStore = create<EditorUiState>()(
         operationsPanelCollapsed: state.operationsPanelCollapsed,
         narrowActiveTab: state.narrowActiveTab,
         vizPanels: state.vizPanels,
+        walkthroughBackup: state.walkthroughBackup,
       }),
     }
   )

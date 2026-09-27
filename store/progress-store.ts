@@ -90,6 +90,21 @@ function completedModulesFor(completedLessons: string[]): string[] {
   });
 }
 
+function addXp(
+  state: Pick<ProgressState, "totalXp" | "dailyXp">,
+  amount: number
+): { totalXp: number; dailyXp: Record<string, number> } {
+  const safeAmount = Math.max(0, Math.round(amount));
+  const dailyXp = sanitizeDailyXp(state.dailyXp);
+  if (!safeAmount) return { totalXp: state.totalXp, dailyXp };
+  const date = todayKey();
+  dailyXp[date] = (dailyXp[date] ?? 0) + safeAmount;
+  return {
+    totalXp: state.totalXp + safeAmount,
+    dailyXp,
+  };
+}
+
 function checkAchievements(get: () => ProgressState, set: (p: Partial<ProgressState>) => void) {
   const state = get();
   const newly = evaluateAchievements(
@@ -115,9 +130,10 @@ function checkAchievements(get: () => ProgressState, set: (p: Partial<ProgressSt
     (sum, id) => sum + (ACHIEVEMENTS.find((achievement) => achievement.id === id)?.xpReward ?? 0),
     0
   );
+  const xp = addXp(state, achievementXp);
   set({
     unlockedAchievements: [...state.unlockedAchievements, ...newly],
-    totalXp: state.totalXp + achievementXp,
+    ...xp,
   });
 }
 
@@ -160,13 +176,8 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       awardXp: (amount, reason) => {
-        const safeAmount = Math.max(0, Math.round(amount));
-        if (!safeAmount) return;
         void reason;
-        const date = todayKey();
-        const dailyXp = sanitizeDailyXp(get().dailyXp);
-        dailyXp[date] = (dailyXp[date] ?? 0) + safeAmount;
-        set({ totalXp: get().totalXp + safeAmount, dailyXp });
+        set(addXp(get(), amount));
       },
 
       completeLesson: (id, xp, skills = []) => {

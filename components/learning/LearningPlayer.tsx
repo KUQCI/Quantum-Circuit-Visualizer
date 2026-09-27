@@ -14,6 +14,7 @@ import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { checkCircuit } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
+import type { CodeLanguageId } from "@/lib/code-adapters";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
@@ -100,6 +101,7 @@ export function LearningPlayer({
   const [quantaFeedback, setQuantaFeedback] = useState("");
   const [xpAwarded, setXpAwarded] = useState(0);
   const [exportDone, setExportDone] = useState(false);
+  const [exportedLanguages, setExportedLanguages] = useState<CodeLanguageId[]>([]);
   const [importDone, setImportDone] = useState(false);
   const [stage, setStage] = useState<LessonStage>(
     mode === "lesson" ? (isComplete ? "done" : "learn") : "build"
@@ -133,6 +135,7 @@ export function LearningPlayer({
     setFeedbackStatus("idle");
     setShowHint(false);
     setExportDone(false);
+    setExportedLanguages([]);
     setImportDone(false);
     setStage(
       currentMode === "lesson" ? (completed ? "done" : "learn") : "build"
@@ -195,8 +198,11 @@ export function LearningPlayer({
     setShowHint(false);
   };
 
-  const handleExportAction = useCallback(() => {
+  const handleExportAction = useCallback((language: CodeLanguageId) => {
     setExportDone(true);
+    setExportedLanguages((current) =>
+      current.includes(language) ? current : [...current, language]
+    );
     recordExport();
   }, [recordExport]);
 
@@ -249,6 +255,7 @@ export function LearningPlayer({
     if (mode === "lesson" && stage !== "build") return;
     const result = checkCircuit(circuit, activity.successCondition, {
       actionExportDone: exportDone,
+      exportedLanguages,
       actionImportDone: importDone,
     });
 
@@ -787,7 +794,7 @@ function LearningCodePanel({
   onExport,
   onImportSync,
 }: {
-  onExport: () => void;
+  onExport: (language: CodeLanguageId) => void;
   onImportSync: () => void;
 }) {
   return (

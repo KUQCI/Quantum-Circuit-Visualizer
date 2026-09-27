@@ -24,14 +24,19 @@ function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number
   inspect(condition);
   const next = createEmptyCircuit("solution", qubitCount, classicalCount);
   let counter = 0;
-  const add = (type: string, target = "q0", controls: string[] = []) => {
+  const add = (
+    type: string,
+    target = "q0",
+    controls: string[] = [],
+    classicalTargets = type === "measure" ? ["c0"] : []
+  ) => {
     next.operations.push({
       id: `solution-${counter++}`,
       type,
       label: type.toUpperCase(),
       targets: [target],
       controls,
-      classicalTargets: type === "measure" ? ["c0"] : [],
+      classicalTargets,
       parameters:
         type === "rx" ? [{ value: 1, display: "theta" }] : undefined,
       column: counter,
@@ -44,7 +49,12 @@ function solutionFor(condition: CheckCondition, circuit: (typeof LESSONS)[number
       add(item.gate ?? "cx", "q1", ["q0"]);
     } else if (item.type === "hasMeasurement") {
       for (let index = 0; index < (item.count ?? 1); index += 1) {
-        add("measure", item.qubit ?? `q${index}`);
+        add(
+          "measure",
+          item.qubit ?? `q${index}`,
+          [],
+          item.classical ? [item.classical] : undefined
+        );
       }
     } else if (item.type === "hasParameterGate") {
       add(item.gate ?? "rx");
@@ -126,6 +136,7 @@ describe("academy lesson content", () => {
     for (const lesson of LESSONS) {
       const result = checkCircuit(solutionFor(lesson.successCondition, lesson.starterCircuit), lesson.successCondition, {
         actionExportDone: includesAction(lesson.successCondition, "actionExport"),
+        exportedLanguages: ["qiskit", "openqasm", "cirq", "qiskit-runtime", "json"],
         actionImportDone: includesAction(lesson.successCondition, "actionImport"),
       });
       expect(result.success, `${lesson.id}: ${result.message}`).toBe(true);
@@ -141,5 +152,34 @@ describe("academy lesson content", () => {
       });
       expect(result.success, `${lesson.id}: starter already passes`).toBe(false);
     }
+  });
+
+  it("requires one measurement on each Bell qubit and classical bit", () => {
+    const lesson = LESSONS.find((item) => item.id === "capstone-bell-experiment");
+    if (!lesson) throw new Error("Capstone lesson missing");
+
+    const q0Only = structuredClone(lesson.starterCircuit);
+    q0Only.operations.push({
+      id: "extra-q0-measure",
+      type: "measure",
+      label: "Measure",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: ["c0"],
+      column: 3,
+    });
+    expect(checkCircuit(q0Only, lesson.successCondition).success).toBe(false);
+
+    const complete = structuredClone(lesson.starterCircuit);
+    complete.operations.push({
+      id: "q1-measure",
+      type: "measure",
+      label: "Measure",
+      targets: ["q1"],
+      controls: [],
+      classicalTargets: ["c1"],
+      column: 3,
+    });
+    expect(checkCircuit(complete, lesson.successCondition).success).toBe(true);
   });
 });
