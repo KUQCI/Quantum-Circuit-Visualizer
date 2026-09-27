@@ -155,7 +155,7 @@ export function QuantaEntrance() {
         src={getQuantaAssetUrl("introVideo")}
         muted
         playsInline
-        preload="auto"
+        preload="none"
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover mix-blend-screen"
       />
