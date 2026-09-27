@@ -1214,6 +1214,19 @@ button:disabled,
 }
 
 @media (max-width: 767px) {
+  html[data-workspace="true"] {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  html[data-workspace="true"] body {
+    height: auto;
+    max-height: none;
+    min-height: 100%;
+    overflow: visible;
+  }
+
   .workspace-shell {
     height: auto;
     min-height: 100dvh;
@@ -1252,6 +1265,7 @@ button:disabled,
 
   .learning-panel-ops {
     max-height: 240px;
+    overflow: hidden;
   }
 
   .learning-panel-canvas {
@@ -1259,6 +1273,7 @@ button:disabled,
   }
 
   .learning-panel-code-mobile {
+    height: 260px;
     max-height: 260px;
   }
 }

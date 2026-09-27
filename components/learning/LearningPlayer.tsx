@@ -317,7 +317,7 @@ export function LearningPlayer({
   }
 
   return (
-    <div className="learning-player flex h-full min-h-0 w-full flex-col overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-background)]">
+    <div className="learning-player flex min-h-0 w-full flex-col border-y border-[var(--color-border)] bg-[var(--color-background)] md:h-full md:overflow-hidden">
       {/* Top bar */}
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
@@ -804,7 +804,7 @@ function LearningCodePanel({
   onImportSync: () => void;
 }) {
   return (
-    <div className="learning-code-panel flex h-full min-h-[220px] flex-col">
+    <div className="learning-code-panel flex h-full min-h-0 flex-col">
       <MultiLanguageCodePanel
         active
         onExport={onExport}

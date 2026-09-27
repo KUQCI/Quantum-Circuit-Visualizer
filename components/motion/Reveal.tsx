@@ -69,7 +69,7 @@ export function Reveal({
       },
       {
         rootMargin: "0px 0px -8% 0px",
-        threshold: Math.min(0.12, 48 / Math.max(node.offsetHeight, 1)),
+        threshold: 0,
       }
     );
 
