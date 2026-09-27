@@ -2,6 +2,7 @@ import type { Circuit } from "./circuit-schema";
 import { generateQiskitCode } from "./qiskit-generator";
 import { generateOpenQasm } from "./openqasm-generator";
 import { generateCirqCode } from "./cirq-generator";
+import { generatePennylaneAnsatz } from "./pennylane-generator";
 import { parseQiskitCode } from "./qiskit-parser";
 import { parseOpenQasm } from "./openqasm-parser";
 import { validateCircuit } from "./validation";
@@ -10,6 +11,7 @@ export type CodeLanguageId =
   | "qiskit"
   | "openqasm"
   | "cirq"
+  | "quantum-learn"
   | "qiskit-runtime"
   | "json";
 
@@ -180,6 +182,20 @@ export const CODE_LANGUAGES: CodeLanguageAdapter[] = [
       error: "Cirq import is not supported. Switch to Qiskit or OpenQASM to edit visually.",
     }),
     generate: wrapGenerate(generateCirqCode),
+  },
+  {
+    id: "quantum-learn",
+    label: "quantum-learn",
+    description: "PennyLane ansatz for KUQCI quantum-learn — export only",
+    monacoLanguage: "python",
+    defaultFilename: "ansatz_qlearn.py",
+    bidirectional: false,
+    docsUrl: "https://quantum-learn.readthedocs.io/en/latest/",
+    parse: () => ({
+      success: false,
+      error: "quantum-learn export is one-way. Edit visually or in Qiskit/OpenQASM.",
+    }),
+    generate: wrapGenerate(generatePennylaneAnsatz),
   },
   {
     id: "qiskit-runtime",

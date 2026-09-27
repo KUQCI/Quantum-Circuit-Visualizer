@@ -35,6 +35,7 @@ const EXAMPLES: Record<CodeLanguageId, string> = {
   qiskit: bellStateQiskitCode,
   openqasm: bellStateOpenQasmCode,
   cirq: "",
+  "quantum-learn": "",
   "qiskit-runtime": "",
   json: JSON.stringify(bellStateCircuit, null, 2),
 };

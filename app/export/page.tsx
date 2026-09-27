@@ -51,8 +51,8 @@ export default function ExportPage() {
       <div className="page-header">
         <h1 className="page-title">Export Circuit</h1>
         <p className="page-description">
-          Generate code in Qiskit, OpenQASM, Cirq, IBM Runtime, or JSON from your
-          visual circuit
+          Generate code in Qiskit, OpenQASM, Cirq, quantum-learn, IBM Runtime, or
+          JSON from your visual circuit
         </p>
       </div>
 
