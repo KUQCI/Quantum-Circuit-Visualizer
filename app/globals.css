@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
-html[data-quanta-cursor="static"] body {
+html[data-quanta-cursor-mode="static"] body {
   cursor: var(--quanta-cursor);
 }
 
-html[data-quanta-cursor="static"]
+html[data-quanta-cursor-mode="static"]
   :is(a, button, [role="button"], label[for], summary, select):not(:disabled) {
   cursor: var(--quanta-cursor-pointer);
 }
 
-html[data-quanta-cursor="on"] body,
-html[data-quanta-cursor="on"] body * {
+html[data-quanta-cursor-mode="on"] body,
+html[data-quanta-cursor-mode="on"] body * {
   cursor: none !important;
 }
 
-html[data-quanta-cursor="on"]
+html[data-quanta-cursor-mode="on"]
   :is(
     input,
     textarea,
@@ -29,28 +29,106 @@ html[data-quanta-cursor="on"]
   cursor: revert !important;
 }
 
-html[data-quanta-cursor="on"] .composer-resize-handle--horizontal {
+html[data-quanta-cursor-mode="on"] .composer-resize-handle--horizontal {
   cursor: col-resize !important;
 }
 
-html[data-quanta-cursor="on"] .composer-resize-handle--vertical {
+html[data-quanta-cursor-mode="on"] .composer-resize-handle--vertical {
   cursor: row-resize !important;
 }
 
-html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
+html[data-quanta-cursor-mode="on"] :is(:disabled, [aria-disabled="true"]) {
   cursor: not-allowed !important;
+}
+
+.quanta-cursor-duck {
+  filter: drop-shadow(0 2px 6px rgb(3 10 24 / 0.45));
 }
 
 .quanta-cursor-duck-img {
   --quanta-cursor-rotation: 0;
   --quanta-cursor-scale: 1;
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg))
     scale(var(--quanta-cursor-scale));
-  transform-origin: 30px 14px;
+  transform-origin: 2px 26px;
   will-change: transform;
+}
+
+/* Electrons orbiting the mascot, centred on the head. */
+.quanta-cursor-orbits {
+  position: absolute;
+  inset: 0;
+  transform: scale(var(--quanta-orbit-scale, 1));
+  transition: transform 180ms ease-out;
+}
+
+.quanta-cursor-duck[data-interactive="true"] .quanta-cursor-orbits {
+  --quanta-orbit-scale: 1.18;
+}
+
+.quanta-cursor-orbit {
+  --orbit-squash: 0.36;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--orbit-tilt)) scaleY(var(--orbit-squash));
+}
+
+.quanta-cursor-orbit::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--orbit-radius) * -1);
+  top: calc(var(--orbit-radius) * -1);
+  width: calc(var(--orbit-radius) * 2);
+  height: calc(var(--orbit-radius) * 2);
+  border: 1px solid color-mix(in srgb, var(--orbit-color) 40%, transparent);
+  border-radius: 999px;
+}
+
+.quanta-cursor-electron {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  animation: quanta-cursor-orbit-spin var(--orbit-duration) linear infinite;
+  animation-delay: var(--orbit-delay);
+  will-change: transform;
+}
+
+.quanta-cursor-duck[data-interactive="true"] .quanta-cursor-electron {
+  animation-duration: calc(var(--orbit-duration) / 2);
+}
+
+.quanta-cursor-electron::before {
+  content: "";
+  position: absolute;
+  left: var(--orbit-radius);
+  top: 0;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 999px;
+  background: var(--orbit-color);
+  box-shadow: 0 0 6px var(--orbit-color);
+  /* Undo the ellipse squash so the electron itself stays round. */
+  transform: scaleY(calc(1 / var(--orbit-squash)));
+}
+
+.quanta-cursor-trail {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-cyan-quantum) 70%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-cyan-quantum) 60%, transparent);
+  animation: quanta-cursor-trail-fade 600ms ease-out forwards;
 }
 
 .quanta-cursor-bounce {
@@ -85,6 +163,16 @@ html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
   0% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(var(--quanta-cursor-scale)); }
   45% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(0.85, 1.1); }
   100% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(var(--quanta-cursor-scale)); }
+}
+
+@keyframes quanta-cursor-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes quanta-cursor-trail-fade {
+  from { opacity: 0.75; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.25); }
 }
 
 @keyframes quanta-cursor-sparkle {
@@ -583,11 +671,11 @@ html[data-theme="light"] .glass-nav-compact {
   cursor: row-resize;
 }
 
-html[data-quanta-cursor="on"] .composer-resize-handle--horizontal {
+html[data-quanta-cursor-mode="on"] .composer-resize-handle--horizontal {
   cursor: col-resize;
 }
 
-html[data-quanta-cursor="on"] .composer-resize-handle--vertical {
+html[data-quanta-cursor-mode="on"] .composer-resize-handle--vertical {
   cursor: row-resize;
 }
 

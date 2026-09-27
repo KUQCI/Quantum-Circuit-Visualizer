@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { getQuantaAssetUrl } from "@/lib/quanta-assets";
 import { useThemeStore } from "@/store/theme-store";
 
@@ -10,11 +10,23 @@ const INTERACTIVE_SELECTOR =
   'a,button,[role="button"],label[for],summary,select,[data-quanta-cursor="pointer"]';
 const NATIVE_SELECTOR =
   'input,textarea,[contenteditable="true"],.monaco-editor,.composer-resize-handle,[draggable="true"],[data-quanta-cursor="native"]';
-const HOTSPOT_X = 30;
-const HOTSPOT_Y = 14;
+// The mascot art is 189x183 with its beak tip at (8, 117); rendered at 40px
+// that lands on (2, 26), which is the cursor hotspot.
+const CURSOR_SIZE = 40;
+const HOTSPOT_X = 2;
+const HOTSPOT_Y = 26;
 const IDLE_DELAY = 3000;
 const SPARKLE_LIFETIME = 520;
 const MAX_SPARKLES = 24;
+const TRAIL_INTERVAL = 55;
+const TRAIL_SPEED = 6;
+const MAX_TRAIL = 12;
+
+const ORBITS = [
+  { tilt: -18, radius: 19, duration: 2.6, color: "var(--color-cyan-quantum)", delay: 0 },
+  { tilt: 48, radius: 22, duration: 3.4, color: "var(--color-gold-duck)", delay: -1.1 },
+  { tilt: 112, radius: 16, duration: 2.1, color: "var(--color-blue-qci)", delay: -0.6 },
+];
 
 function closestElement(target: EventTarget | null, selector: string): Element | null {
   return target instanceof Element ? target.closest(selector) : null;
@@ -64,16 +76,16 @@ export function QuantaCursorProvider() {
     root.style.setProperty("--quanta-cursor-pointer", `url(${pointerUrl}) 30 10, pointer`);
 
     if (mode === "static") {
-      root.dataset.quantaCursor = "static";
+      root.dataset.quantaCursorMode = "static";
       return () => {
-        root.removeAttribute("data-quanta-cursor");
+        root.removeAttribute("data-quanta-cursor-mode");
         root.style.removeProperty("--quanta-cursor");
         root.style.removeProperty("--quanta-cursor-pointer");
       };
     }
 
     if (mode !== "animated") {
-      root.removeAttribute("data-quanta-cursor");
+      root.removeAttribute("data-quanta-cursor-mode");
       root.style.removeProperty("--quanta-cursor");
       root.style.removeProperty("--quanta-cursor-pointer");
       return;
@@ -81,7 +93,7 @@ export function QuantaCursorProvider() {
 
     // Stay on the native cursor until a real mouse shows up, so the page is
     // never left with no visible cursor at all.
-    root.dataset.quantaCursor = "native";
+    root.dataset.quantaCursorMode = "native";
     const duck = duckRef.current;
     const layer = layerRef.current;
     const image = imageRef.current;
@@ -97,6 +109,8 @@ export function QuantaCursorProvider() {
     let frame = 0;
     let bounceTimeout: number | undefined;
     let idleTimeout: number | undefined;
+    let lastTrailAt = 0;
+    const lastTrailPosition = { x: pointerPosition.x, y: pointerPosition.y };
 
     const scheduleIdle = () => {
       if (idleTimeout !== undefined) window.clearTimeout(idleTimeout);
@@ -111,7 +125,7 @@ export function QuantaCursorProvider() {
       if (hidden === nativeHidden) return;
       nativeHidden = hidden;
       duck.style.opacity = hidden ? "0" : "1";
-      root.dataset.quantaCursor = hidden ? "native" : "on";
+      root.dataset.quantaCursorMode = hidden ? "native" : "on";
       if (hidden) {
         image.classList.remove("quanta-cursor-idle", "quanta-cursor-squash");
         if (idleTimeout !== undefined) window.clearTimeout(idleTimeout);
@@ -123,7 +137,7 @@ export function QuantaCursorProvider() {
     const setInteractive = (element: Element | null) => {
       if (element === lastInteractive) return;
       lastInteractive = element;
-      image.src = element ? pointerUrl : defaultUrl;
+      duck.dataset.interactive = element ? "true" : "false";
       setStyleNumber(image, "--quanta-cursor-scale", element ? 1.15 : 1);
       if (element) {
         image.classList.remove("quanta-cursor-bounce");
@@ -168,6 +182,29 @@ export function QuantaCursorProvider() {
       pointerPosition.y = event.clientY;
       scheduleIdle();
       applyHoverTarget(event.target instanceof Element ? event.target : null);
+      spawnTrail(event.clientX, event.clientY);
+    };
+
+    // Quantum "probability cloud" left behind while the mascot moves.
+    const spawnTrail = (x: number, y: number) => {
+      if (nativeHidden) return;
+      const now = performance.now();
+      if (now - lastTrailAt < TRAIL_INTERVAL) return;
+      if (Math.hypot(x - lastTrailPosition.x, y - lastTrailPosition.y) < TRAIL_SPEED) return;
+      lastTrailAt = now;
+      lastTrailPosition.x = x;
+      lastTrailPosition.y = y;
+
+      const existing = Array.from(layer.querySelectorAll(".quanta-cursor-trail"));
+      existing.slice(0, Math.max(0, existing.length + 1 - MAX_TRAIL)).forEach((dot) => dot.remove());
+
+      const dot = document.createElement("span");
+      dot.className = "quanta-cursor-trail";
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
+      dot.addEventListener("animationend", () => dot.remove(), { once: true });
+      window.setTimeout(() => dot.remove(), 2000);
+      layer.appendChild(dot);
     };
 
     const spawnSparkles = (x: number, y: number) => {
@@ -287,7 +324,9 @@ export function QuantaCursorProvider() {
       window.cancelAnimationFrame(frame);
       if (bounceTimeout !== undefined) window.clearTimeout(bounceTimeout);
       if (idleTimeout !== undefined) window.clearTimeout(idleTimeout);
-      layer.querySelectorAll(".quanta-cursor-sparkle").forEach((sparkle) => sparkle.remove());
+      layer
+        .querySelectorAll(".quanta-cursor-sparkle,.quanta-cursor-trail")
+        .forEach((particle) => particle.remove());
       image.classList.remove(
         "quanta-cursor-idle",
         "quanta-cursor-bounce",
@@ -295,7 +334,7 @@ export function QuantaCursorProvider() {
       );
       duck.style.transform = "";
       duck.style.opacity = "";
-      root.removeAttribute("data-quanta-cursor");
+      root.removeAttribute("data-quanta-cursor-mode");
       root.style.removeProperty("--quanta-cursor");
       root.style.removeProperty("--quanta-cursor-pointer");
     };
@@ -313,11 +352,32 @@ export function QuantaCursorProvider() {
       <div
         ref={duckRef}
         data-quanta-cursor-duck
-        className="absolute left-0 top-0 h-8 w-8 opacity-0"
+        data-interactive="false"
+        className="quanta-cursor-duck absolute left-0 top-0 opacity-0"
+        style={{ width: CURSOR_SIZE, height: CURSOR_SIZE }}
       >
+        <div className="quanta-cursor-orbits">
+          {ORBITS.map((orbit) => (
+            <span
+              key={orbit.tilt}
+              className="quanta-cursor-orbit"
+              style={
+                {
+                  "--orbit-tilt": `${orbit.tilt}deg`,
+                  "--orbit-radius": `${orbit.radius}px`,
+                  "--orbit-duration": `${orbit.duration}s`,
+                  "--orbit-delay": `${orbit.delay}s`,
+                  "--orbit-color": orbit.color,
+                } as CSSProperties
+              }
+            >
+              <i className="quanta-cursor-electron" />
+            </span>
+          ))}
+        </div>
         <img
           ref={imageRef}
-          src={getQuantaAssetUrl("cursorDefault")}
+          src={getQuantaAssetUrl("avatar")}
           alt=""
           className="quanta-cursor-duck-img"
           draggable={false}
