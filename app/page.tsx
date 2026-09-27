@@ -111,19 +111,19 @@ export default function HomePage() {
             className="justify-center"
             primary={[
               {
-                label: "Start Building",
+                label: "Start building",
                 href: "/editor",
                 icon: <PenLine className="h-4 w-4" />,
               },
             ]}
             secondary={[
               {
-                label: "Start Learning",
+                label: "Start learning",
                 href: "/learn",
                 icon: <GraduationCap className="h-4 w-4" />,
               },
               {
-                label: "Open Projects",
+                label: "Open projects",
                 href: "/projects",
                 icon: <FolderOpen className="h-4 w-4" />,
               },
@@ -143,7 +143,7 @@ export default function HomePage() {
           variant="welcome"
           title="Meet Quanta"
           description={quantaMessages.meetQuanta}
-          ctaLabel="Start Learning"
+          ctaLabel="Start learning"
           ctaHref="/learn"
           imageSize="md"
         />

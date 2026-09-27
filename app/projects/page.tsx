@@ -95,14 +95,14 @@ export default function ProjectsPage() {
         <PageActions
           primary={[
             {
-              label: "Start Blank Circuit",
+              label: "Start blank circuit",
               onClick: handleNewProject,
               icon: <Plus className="h-4 w-4" />,
             },
           ]}
           secondary={[
             {
-              label: "Save Project",
+              label: "Save project",
               onClick: () => saveProject(circuit.name),
               icon: <Save className="h-4 w-4" />,
               disabled: !canSaveCurrent,
@@ -121,7 +121,7 @@ export default function ProjectsPage() {
               icon: <Download className="h-4 w-4" />,
             },
             {
-              label: "Continue Learning",
+              label: "Continue learning",
               href: "/learn",
               icon: <GraduationCap className="h-4 w-4" />,
             },
@@ -137,12 +137,12 @@ export default function ProjectsPage() {
             description="Open a template, import Qiskit, or start from a blank canvas — then save to keep it here."
             actions={[
               {
-                label: "Start Blank Circuit",
+                label: "Start blank circuit",
                 onClick: handleNewProject,
                 primary: true,
               },
               {
-                label: "Open Bell State Template",
+                label: "Open Bell state template",
                 onClick: () => handleOpenTemplate("tpl-bell"),
               },
               { label: "Import Qiskit", href: "/import" },

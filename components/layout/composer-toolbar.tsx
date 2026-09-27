@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getCodeLanguage } from "@/lib/code-adapters";
 import { downloadTextFile } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
+import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { sampleCircuitsMap } from "@/lib/sample-circuits";
 import {
   Save,
@@ -105,11 +106,11 @@ export function ComposerToolbar() {
   };
 
   const fileItems = [
-    { label: "New Circuit", action: handleNewCircuit },
-    { label: "Open Project", action: () => router.push("/projects") },
-    { label: "Save Project", action: handleSaveProject },
+    { label: "New circuit", action: handleNewCircuit },
+    { label: "Open project", action: () => router.push("/projects") },
+    { label: "Save project", action: handleSaveProject },
     { label: "Import Qiskit", action: () => router.push("/import") },
-    { label: "Export Code", action: () => router.push("/export") },
+    { label: "Export code", action: () => router.push("/export") },
     { label: "Download .py", action: handleDownloadFile },
   ];
 
@@ -124,24 +125,24 @@ export function ComposerToolbar() {
     { label: "Undo", action: undo, disabled: !hydrated || !canUndo() },
     { label: "Redo", action: redo, disabled: !hydrated || !canRedo() },
     {
-      label: "Duplicate Gate",
+      label: "Duplicate gate",
       action: () => selectedOperationId && duplicateOperation(selectedOperationId),
       disabled: !selectedOperationId,
     },
     {
-      label: "Delete Gate",
+      label: "Delete gate",
       action: () => selectedOperationId && removeOperation(selectedOperationId),
       disabled: !selectedOperationId,
     },
-    { label: "Clear Circuit", action: () => setConfirmClearOpen(true) },
+    { label: "Clear circuit", action: () => setConfirmClearOpen(true) },
     { label: "Manage registers", action: () => setRegistersOpen(true) },
   ];
 
   const helpItems = [
-    { label: "Supported Gates", action: () => router.push("/docs/composer") },
-    { label: "Keyboard Shortcuts", action: () => router.push("/docs/composer") },
-    { label: "Translator Limitations", action: () => router.push("/docs/debug") },
-    { label: "About this Visualizer", action: () => router.push("/") },
+    { label: "Supported gates", action: () => router.push("/docs/composer") },
+    { label: "Keyboard shortcuts", action: requestOpenShortcuts },
+    { label: "Translator limitations", action: () => router.push("/docs/debug") },
+    { label: "About this visualizer", action: () => router.push("/") },
   ];
 
   return (
@@ -159,7 +160,7 @@ export function ComposerToolbar() {
                 circuit: { ...circuit, name: e.target.value },
               })
             }
-            placeholder="Untitled Circuit"
+            placeholder="Untitled circuit"
             aria-label="Circuit name"
             className="h-7 min-w-0 max-w-[160px] border-none bg-transparent px-1 text-sm font-medium shadow-none focus-visible:ring-1 sm:max-w-[220px]"
           />
@@ -287,6 +288,9 @@ export function ComposerToolbar() {
                       {item.label}
                     </DropdownMenuItem>
                   ))}
+                  <div className="px-2 py-1.5 text-[10px] text-[var(--color-muted-foreground)]">
+                    Press ? to open shortcuts
+                  </div>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             </DropdownMenuContent>
@@ -425,7 +429,12 @@ export function ComposerToolbar() {
                 </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
-            <ToolbarMenu label="Help" icon={HelpCircle} items={helpItems} />
+            <ToolbarMenu
+              label="Help"
+              icon={HelpCircle}
+              items={helpItems}
+              footer="Press ? to open shortcuts"
+            />
           </nav>
         </div>
 
@@ -436,10 +445,10 @@ export function ComposerToolbar() {
             className="h-7 gap-1.5 px-2 text-xs sm:px-3"
             onClick={handleSaveProject}
             aria-label="Save project to browser"
-            title="Save Project — stores this circuit in Projects (localStorage)"
+            title="Save project — stores this circuit in Projects (localStorage)"
           >
             <Save className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Save Project</span>
+            <span className="hidden sm:inline">Save project</span>
           </Button>
           <Button
             variant="ghost"
@@ -496,10 +505,12 @@ function ToolbarMenu({
   label,
   icon: Icon,
   items,
+  footer,
 }: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: { label: string; action: () => void; disabled?: boolean }[];
+  footer?: string;
 }) {
   return (
     <DropdownMenu>
@@ -521,6 +532,11 @@ function ToolbarMenu({
             {item.label}
           </DropdownMenuItem>
         ))}
+        {footer && (
+          <div className="px-2 py-1.5 text-[10px] text-[var(--color-muted-foreground)]">
+            {footer}
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

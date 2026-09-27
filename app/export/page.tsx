@@ -62,8 +62,8 @@ export default function ExportPage() {
           { label: "Open in Build", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
         ]}
         secondary={[
-          { label: "Save Project", href: "/projects", icon: <Save className="h-4 w-4" /> },
-          { label: "Composer Guide", href: "/docs/composer", icon: <BookOpen className="h-4 w-4" /> },
+          { label: "Save project", href: "/projects", icon: <Save className="h-4 w-4" /> },
+          { label: "Composer guide", href: "/docs/composer", icon: <BookOpen className="h-4 w-4" /> },
           { label: "Projects", href: "/projects", icon: <FolderOpen className="h-4 w-4" /> },
         ]}
       />
@@ -78,8 +78,8 @@ export default function ExportPage() {
           </CardHeader>
           <CardContent>
             <PageActions
-              primary={[{ label: "Start Building", href: "/editor" }]}
-              secondary={[{ label: "Open Projects", href: "/projects" }]}
+              primary={[{ label: "Start building", href: "/editor" }]}
+              secondary={[{ label: "Open projects", href: "/projects" }]}
             />
           </CardContent>
         </Card>

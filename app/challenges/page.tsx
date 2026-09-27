@@ -103,7 +103,7 @@ export default function ChallengesPage() {
                   },
                 ]
               : allComplete
-                ? [{ label: "View Achievements", href: "/achievements" }]
+                ? [{ label: "View achievements", href: "/achievements" }]
                 : []
           }
           secondary={[
@@ -146,7 +146,7 @@ export default function ChallengesPage() {
               title="Quantum champion!"
               description="You have finished every challenge. Review achievements or keep building circuits."
               href="/achievements"
-              ctaLabel="View Achievements"
+              ctaLabel="View achievements"
               secondaryHref="/editor"
               secondaryLabel="Open Build"
             />

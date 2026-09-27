@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { XpToast } from "@/components/learning/XpToast";
 import { LevelUpDialog } from "@/components/learning/LevelUpDialog";
+import { ShortcutsDialog } from "@/components/help/ShortcutsDialog";
 
 function getContentBreadcrumbs(pathname: string) {
   const path = normalizePath(pathname);
@@ -94,6 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <XpToast />
       <LevelUpDialog />
+      <ShortcutsDialog />
       <AppBootstrap />
       <a href="#main-content" className="skip-link">
         Skip to content

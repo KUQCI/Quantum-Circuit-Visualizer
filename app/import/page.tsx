@@ -119,9 +119,9 @@ export default function ImportPage() {
       <PageActions
         className="mb-6"
         secondary={[
-          { label: "Build Mode", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
-          { label: "Learn Basics", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
-          { label: "Composer Guide", href: "/docs/composer", icon: <BookOpen className="h-4 w-4" /> },
+          { label: "Build mode", href: "/editor", icon: <PenLine className="h-4 w-4" /> },
+          { label: "Learn basics", href: "/learn", icon: <GraduationCap className="h-4 w-4" /> },
+          { label: "Composer guide", href: "/docs/composer", icon: <BookOpen className="h-4 w-4" /> },
         ]}
       />
 
@@ -158,7 +158,7 @@ export default function ImportPage() {
           />
           <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={handleParse} disabled={loading}>
-              {loading ? "Parsing..." : `Parse ${adapter.label}`}
+              {loading ? "Parsing…" : `Parse ${adapter.label}`}
             </Button>
             {EXAMPLES[language] && (
               <Button
