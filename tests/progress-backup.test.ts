@@ -25,6 +25,7 @@ const emptyProgress = (): PersistedProgress => ({
     qiskit: 0,
     algorithms: 0,
     phase: 0,
+    qml: 0,
   },
   exportActionCount: 0,
   importActionCount: 0,

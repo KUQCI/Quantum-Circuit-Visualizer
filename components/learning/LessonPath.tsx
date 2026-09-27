@@ -25,6 +25,7 @@ const MODULE_ORDER: ModuleId[] = [
   "algorithms",
   "qiskit",
   "capstone",
+  "quantum-ml",
 ];
 
 export function LessonPath() {

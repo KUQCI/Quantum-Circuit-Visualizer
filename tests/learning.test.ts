@@ -38,6 +38,25 @@ describe("Learning checker", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts the symbolic parameter shape used by the operation inspector", () => {
+    const circuit = createEmptyCircuit("Symbolic", 1);
+    circuit.operations.push({
+      id: "symbolic-ry",
+      type: "ry",
+      label: "RY",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      parameters: [{ value: 0, display: "theta", symbol: "theta" }],
+      column: 0,
+    });
+
+    expect(
+      checkCircuit(circuit, { type: "hasSymbolicParameter", gate: "ry" })
+        .success
+    ).toBe(true);
+  });
+
   it("requires export action when configured", () => {
     const circuit = simpleSuperpositionCircuit;
     expect(

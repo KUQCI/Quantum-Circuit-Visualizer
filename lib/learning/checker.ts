@@ -254,6 +254,31 @@ function checkSingle(
       };
     }
 
+    case "hasSymbolicParameter": {
+      const minCount = condition.minCount ?? 1;
+      const count = circuit.operations.filter(
+        (op) =>
+          (!condition.gate || op.type === condition.gate) &&
+          op.parameters?.some(
+            (parameter) =>
+              typeof parameter.symbol === "string" &&
+              parameter.symbol.trim().length > 0
+          )
+      ).length;
+      return count >= minCount
+        ? {
+            success: true,
+            message: `Found ${count} symbolic parameter${count === 1 ? "" : "s"}.`,
+          }
+        : {
+            success: false,
+            message: condition.gate
+              ? `Add a symbolic ${condition.gate.toUpperCase()} parameter.`
+              : `Add at least ${minCount} symbolic parameter${minCount === 1 ? "" : "s"}.`,
+            hint: "Use a name such as theta instead of a numeric angle.",
+          };
+    }
+
     default:
       return { success: false, message: "Unknown check type." };
   }
@@ -316,6 +341,10 @@ export function getLessonGateTypes(
       case "hasGateOnQubit":
       case "hasParameterGate":
         add(item.gate);
+        return;
+      case "hasSymbolicParameter":
+        if (item.gate) add(item.gate);
+        else ["rx", "ry", "rz", "p", "u"].forEach(add);
         return;
       case "hasControlledGate":
         if (item.gate) add(item.gate);

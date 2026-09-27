@@ -28,6 +28,7 @@ const SKILL_TAGS: SkillTag[] = [
   "qiskit",
   "algorithms",
   "phase",
+  "qml",
 ];
 
 function nonNegativeNumber(value: unknown, fallback: number): number {

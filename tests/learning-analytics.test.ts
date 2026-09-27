@@ -34,7 +34,7 @@ describe("learner analytics", () => {
 
   it("returns all module rows and falls back to lesson share without quiz history", () => {
     const mastery = getModuleMastery(LESSONS, [], {});
-    expect(mastery).toHaveLength(8);
+    expect(mastery).toHaveLength(9);
     expect(mastery.every((module) => module.mastery === 0)).toBe(true);
     expect(mastery.map((module) => module.title)).toContain("Measurement");
   });

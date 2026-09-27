@@ -10,7 +10,8 @@ export type SkillTag =
   | "entanglement"
   | "qiskit"
   | "algorithms"
-  | "phase";
+  | "phase"
+  | "qml";
 
 export interface LessonSection {
   heading: string;
@@ -48,6 +49,7 @@ export type CheckCondition =
   | { type: "minQubits"; count: number }
   | { type: "noExtraGates"; allowed: string[] }
   | { type: "hasParameterGate"; gate: string; target?: string }
+  | { type: "hasSymbolicParameter"; gate?: string; minCount?: number }
   | { type: "all"; conditions: CheckCondition[] }
   | { type: "any"; conditions: CheckCondition[] };
 

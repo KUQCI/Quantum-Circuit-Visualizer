@@ -164,6 +164,7 @@ export const useProgressStore = create<ProgressState>()(
         algorithms: 0,
         phase: 0,
         qiskit: 0,
+        qml: 0,
       },
       exportActionCount: 0,
       importActionCount: 0,
