@@ -71,7 +71,7 @@ export default function ExportPage() {
       {!hasContent && (
         <Card className="mb-6 border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)]">
           <CardHeader>
-            <CardTitle className="text-base">No circuit to export yet</CardTitle>
+            <CardTitle as="h2" className="text-base">No circuit to export yet</CardTitle>
             <CardDescription>
               Build a circuit in the editor or open a saved project before exporting code.
             </CardDescription>
@@ -87,7 +87,7 @@ export default function ExportPage() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-base">Circuit Summary</CardTitle>
+          <CardTitle as="h2" className="text-base">Circuit Summary</CardTitle>
           <CardDescription>{circuit.name}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,7 +114,7 @@ export default function ExportPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Export format</CardTitle>
+          <CardTitle as="h2" className="text-base">Export format</CardTitle>
           <CardDescription>{adapter.description}</CardDescription>
         </CardHeader>
         <CardContent>

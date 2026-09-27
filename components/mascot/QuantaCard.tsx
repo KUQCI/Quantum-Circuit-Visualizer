@@ -34,9 +34,9 @@ export function QuantaCard({
     >
       <QuantaImage variant={variant} size={imageSize} className="mx-auto sm:mx-0" />
       <div className="min-w-0 flex-1 text-center sm:text-left">
-        <h3 className="text-base font-semibold text-[var(--color-foreground)]">
+        <h2 className="text-base font-semibold text-[var(--color-foreground)]">
           {title}
-        </h3>
+        </h2>
         <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted-foreground)]">
           {description}
         </p>

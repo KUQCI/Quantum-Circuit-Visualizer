@@ -62,7 +62,7 @@ export default function RoadmapPage() {
 
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle as="h2" className="flex items-center gap-2 text-base">
             <Layers className="h-4 w-4 text-[var(--color-brand)]" />
             Architecture Foundation
           </CardTitle>

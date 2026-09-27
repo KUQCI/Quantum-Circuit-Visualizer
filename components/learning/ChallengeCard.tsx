@@ -56,9 +56,9 @@ export function ChallengeCard({
           <Lock className="h-4 w-4 text-[var(--color-muted-foreground)]" aria-label="Locked" />
         ) : null}
       </div>
-      <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
+      <h2 className="text-sm font-semibold text-[var(--color-foreground)]">
         {challenge.title}
-      </h3>
+      </h2>
       <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted-foreground)]">
         {challenge.description}
       </p>

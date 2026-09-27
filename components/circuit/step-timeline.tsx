@@ -129,9 +129,9 @@ export function StepTimeline() {
             role="listitem"
             aria-label={step === 0 ? "Initial state" : `Step ${step}`}
             aria-current={inspectStep === step ? "step" : undefined}
-            className={`shrink-0 rounded px-2 py-1 text-[10px] ${
-              inspectStep === step
-                ? "bg-[var(--color-brand)] text-white"
+              className={`shrink-0 rounded px-2 py-1 text-[10px] ${
+                inspectStep === step
+                ? "bg-[var(--color-brand)] text-[var(--color-primary-foreground)]"
                 : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
             }`}
             onClick={() => chooseStep(step)}

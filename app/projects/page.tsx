@@ -213,7 +213,7 @@ export default function ProjectsPage() {
                       </Button>
                     </div>
                   ) : (
-                    <CardTitle className="text-base">{project.name}</CardTitle>
+                    <CardTitle as="h2" className="text-base">{project.name}</CardTitle>
                   )}
                   <CardDescription>
                     Last edited {formatDate(project.updatedAt)}

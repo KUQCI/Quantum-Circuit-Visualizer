@@ -127,7 +127,7 @@ export default function ImportPage() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-base">Source format</CardTitle>
+          <CardTitle as="h2" className="text-base">Source format</CardTitle>
           <CardDescription>
             Choose the language of your circuit code
           </CardDescription>
@@ -176,7 +176,7 @@ export default function ImportPage() {
         <div className="mb-6 space-y-3">
           <Card className="alert-error">
             <CardHeader>
-              <CardTitle className="alert-error-title flex items-center gap-2 text-base">
+              <CardTitle as="h2" className="alert-error-title flex items-center gap-2 text-base">
                 <AlertCircle className="h-4 w-4" />
                 Parse Error
               </CardTitle>
@@ -204,7 +204,7 @@ export default function ImportPage() {
       {circuit && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="alert-success-title flex items-center gap-2 text-base">
+            <CardTitle as="h2" className="alert-success-title flex items-center gap-2 text-base">
               <CheckCircle2 className="h-4 w-4" />
               Circuit Detected: {circuit.name}
             </CardTitle>

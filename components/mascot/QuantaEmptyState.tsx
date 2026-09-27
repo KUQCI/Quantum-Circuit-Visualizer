@@ -37,9 +37,9 @@ export function QuantaEmptyState({
     >
       <QuantaImage variant={variant} size="lg" />
       <div className="max-w-md">
-        <h3 className="text-lg font-semibold text-[var(--color-foreground)]">
+        <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
           {title}
-        </h3>
+        </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted-foreground)]">
           {description}
         </p>

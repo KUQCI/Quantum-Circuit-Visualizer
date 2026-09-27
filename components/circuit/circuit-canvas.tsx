@@ -63,6 +63,7 @@ interface CircuitCanvasProps {
   /** Tap-to-place: gate selected from palette, placed on canvas click */
   placementGate?: string | null;
   onPlacementComplete?: () => void;
+  canvasLabel?: string;
 }
 
 function resolveDropPosition(
@@ -117,6 +118,12 @@ function GateBlock({
   const isControlQubit = operation.controls.some((c) => c === `q${wireIndex}`);
   const isBarrier = operation.type === "barrier";
   const isMeasure = operation.type === "measure";
+  const paramDisplay = operation.parameters?.[0]?.display;
+  const accessibleLabel = `${gateDef?.fullName ?? operation.label} on ${operation.targets.join(", ")}${
+    operation.controls.length
+      ? `, controlled by ${operation.controls.join(", ")}`
+      : ""
+  }${paramDisplay ? ` (${paramDisplay})` : ""}`;
 
   if (isBarrier) {
     if (wireIndex !== 0) return null;
@@ -126,12 +133,23 @@ function GateBlock({
           "absolute inset-y-2 flex items-center",
           isPaletteDragging ? "pointer-events-none" : "cursor-pointer"
         )}
+        role="button"
+        tabIndex={0}
+        aria-pressed={isSelected}
+        aria-label={accessibleLabel}
         style={{
           left: columnToX(operation.column) + BARRIER_COLUMN_INSET,
           width: 4,
           height: numWires * WIRE_HEIGHT - 16,
         }}
         onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            onSelect();
+          }
+        }}
       >
         <div
           className={cn(
@@ -156,7 +174,6 @@ function GateBlock({
 
   if (isControl && !isControlQubit && !isTarget) return null;
 
-  const paramDisplay = operation.parameters?.[0]?.display;
   const displayLabel = gateDef?.label ?? operation.label;
   const boxClass = cn(
     "relative flex h-8 w-8 flex-col items-center justify-center rounded-sm text-[11px] font-bold shadow-md transition-all",
@@ -218,6 +235,7 @@ function GateBlock({
   if (!gateBox && !(isControl && isControlQubit && operation.targets.length > 0)) {
     return null;
   }
+  const isFocusableGate = Boolean(gateBox && isTarget);
 
   const gateBody = (
     <div
@@ -227,6 +245,10 @@ function GateBlock({
           ? "pointer-events-none"
           : "cursor-pointer"
       )}
+      role={isFocusableGate ? "button" : undefined}
+      tabIndex={isFocusableGate ? 0 : undefined}
+      aria-pressed={isFocusableGate ? isSelected : undefined}
+      aria-label={isFocusableGate ? accessibleLabel : undefined}
       style={{
         left: columnToX(operation.column) + GATE_COLUMN_INSET,
         top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
@@ -242,6 +264,13 @@ function GateBlock({
       onClick={(e) => {
         e.stopPropagation();
         onSelect();
+      }}
+      onKeyDown={(e) => {
+        if (isFocusableGate && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelect();
+        }
       }}
     >
       {isControl && isControlQubit && operation.targets.length > 0 && (
@@ -463,6 +492,7 @@ export function CircuitCanvas({
   onDragEnd,
   placementGate = null,
   onPlacementComplete,
+  canvasLabel = "Circuit canvas",
 }: CircuitCanvasProps) {
   const {
     circuit,
@@ -1034,6 +1064,9 @@ export function CircuitCanvas({
 
         <div
           ref={scrollRef}
+          tabIndex={0}
+          role="region"
+          aria-label={canvasLabel}
           className={cn(
             "relative flex-1 overflow-auto p-3",
             isPaletteDragging && "cursor-copy",
@@ -1170,6 +1203,25 @@ export function CircuitCanvas({
                     )}
                   </div>
                 </div>
+                {isPlacementMode && !inspectMode && (
+                  <button
+                    type="button"
+                    className="sr-only focus:not-sr-only focus:absolute focus:left-1 focus:z-20 focus:rounded focus:bg-[var(--color-surface)] focus:px-2 focus:py-0.5 focus:text-xs"
+                    aria-label={`Place ${getGateByType(placementGate)?.fullName ?? placementGate} on ${qubit.label}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const col = Math.max(
+                        0,
+                        ...circuit.operations.map((op) => op.column + 1)
+                      );
+                      const id = placeGate(placementGate, idx, col);
+                      if (id) setSelectedOperation(id);
+                      onPlacementComplete?.();
+                    }}
+                  >
+                    Place on {qubit.label}
+                  </button>
+                )}
               </div>
             );
             })}
