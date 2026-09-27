@@ -10,7 +10,7 @@ import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { PageActions } from "@/components/navigation/PageActions";
 import { LESSONS } from "@/lib/learning/lessons";
 import { CHALLENGES } from "@/lib/learning/challenges";
-import { DAILY_GOAL_XP, getLevelTitle, MODULE_LABELS, MODULE_IDS, xpForNextLevel } from "@/lib/learning/progress";
+import { DAILY_GOAL_XP, getLevelTitle, xpForNextLevel } from "@/lib/learning/progress";
 import {
   getLevelProjection,
   getModuleMastery,
@@ -150,6 +150,47 @@ export default function ProgressPage() {
         )}
       </div>
 
+      {totalXp > 0 && (
+        <section className="mb-8 rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">Work on these</h2>
+              <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
+                Everyone misses these at first — a quick review fixes it fast.
+              </p>
+            </div>
+            <Link
+              href="/review"
+              className="shrink-0 text-xs font-semibold text-[var(--color-brand)] hover:underline"
+            >
+              Review now
+            </Link>
+          </div>
+          {weakestTopics.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {weakestTopics.map((topic) => (
+                <li
+                  key={`${topic.lessonId}:${topic.questionId}`}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-3 py-2"
+                >
+                  <p className="text-xs font-medium">{topic.lessonTitle}</p>
+                  <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+                    {topic.question}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[var(--color-muted-foreground)]">
+                    {topic.wrong} missed · {topic.correct} correct
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
+              Keep answering quiz questions to discover your best next review.
+            </p>
+          )}
+        </section>
+      )}
+
       <NextStepCard
         className="my-6"
         badge="Spaced learning"
@@ -231,83 +272,8 @@ export default function ProgressPage() {
             </div>
           </section>
 
-          <section className="mb-8 rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold">Work on these</h2>
-                <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-                  Everyone misses these at first — a quick review fixes it fast.
-                </p>
-              </div>
-              <Link
-                href="/review"
-                className="shrink-0 text-xs font-semibold text-[var(--color-brand)] hover:underline"
-              >
-                Review now
-              </Link>
-            </div>
-            {weakestTopics.length > 0 ? (
-              <ul className="mt-3 space-y-2">
-                {weakestTopics.map((topic) => (
-                  <li
-                    key={`${topic.lessonId}:${topic.questionId}`}
-                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/70 px-3 py-2"
-                  >
-                    <p className="text-xs font-medium">{topic.lessonTitle}</p>
-                    <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
-                      {topic.question}
-                    </p>
-                    <p className="mt-1 text-[10px] text-[var(--color-muted-foreground)]">
-                      {topic.wrong} missed · {topic.correct} correct
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 text-xs text-[var(--color-muted-foreground)]">
-                Keep answering quiz questions to discover your best next review.
-              </p>
-            )}
-          </section>
         </>
       )}
-
-      <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
-          Module Progress
-        </h2>
-        <div className="space-y-3">
-          {MODULE_IDS.map((mod) => {
-            const total = LESSONS.filter((l) => l.module === mod).length;
-            const done = LESSONS.filter(
-              (l) => l.module === mod && completedLessons.includes(l.id)
-            ).length;
-            const pct = total > 0 ? (done / total) * 100 : 0;
-            return (
-              <div key={mod} className="rounded-xl border border-[var(--color-border)] p-3">
-                <div className="mb-1 flex justify-between text-xs">
-                  <span className="font-medium">{MODULE_LABELS[mod]}</span>
-                  <span
-                    className={
-                      done === total && total > 0
-                        ? "rounded-full bg-[var(--color-success-subtle)] px-2 py-0.5 text-[var(--color-success-foreground)]"
-                        : "text-[var(--color-muted-foreground)]"
-                    }
-                  >
-                    {done === total && total > 0 ? "✓ Complete" : `${done}/${total} complete`}
-                  </span>
-                </div>
-                <div className="academy-progress-bar h-1.5 overflow-hidden rounded-full">
-                  <div
-                    className="academy-progress-fill h-full rounded-full"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       <section id="progress-backup" className="mb-8 scroll-mt-20">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
