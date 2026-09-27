@@ -1,4 +1,5 @@
 export type LayoutTier = "mobile" | "tablet" | "desktop";
+export type NarrowPanelTab = "gates" | "inspector" | "results" | "code";
 
 export interface ComposerLayoutInput {
   width: number;
@@ -24,6 +25,18 @@ export function getLayoutTier(width: number, height: number): LayoutTier {
   if (width < 640 || height < 480) return "mobile";
   if (width < 1024) return "tablet";
   return "desktop";
+}
+
+export function shouldAutoOpenNarrowInspector(
+  previousSelectedOperationId: string | null,
+  selectedOperationId: string | null,
+  activeTab: NarrowPanelTab
+): boolean {
+  return (
+    selectedOperationId !== null &&
+    selectedOperationId !== previousSelectedOperationId &&
+    activeTab !== "inspector"
+  );
 }
 
 /**

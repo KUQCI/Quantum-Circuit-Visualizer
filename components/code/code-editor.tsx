@@ -34,6 +34,7 @@ interface CodeEditorProps {
   language?: string;
   completionProfile?: CodeLanguageId;
   diagnostics?: CodeDiagnostic[];
+  active?: boolean;
 }
 
 export function CodeEditor({
@@ -44,11 +45,13 @@ export function CodeEditor({
   language = "python",
   completionProfile,
   diagnostics = [],
+  active = true,
 }: CodeEditorProps) {
   const [mounted, setMounted] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const theme = useThemeStore((s) => s.theme);
   const editorLanguage = monacoLanguageForProfile(language, completionProfile);
 
@@ -99,6 +102,22 @@ export function CodeEditor({
     );
   }, [diagnostics, editorReady]);
 
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor || !active) return;
+    const frame = window.requestAnimationFrame(() => editor.layout());
+    return () => window.cancelAnimationFrame(frame);
+  }, [active, editorReady]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const editor = editorRef.current;
+    if (!container || !editor || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => editor.layout());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [editorReady]);
+
   if (!mounted) {
     return (
       <div
@@ -111,7 +130,10 @@ export function CodeEditor({
   }
 
   return (
-    <div className="code-editor-root h-full rounded-lg border border-[var(--color-border)]">
+    <div
+      ref={containerRef}
+      className="code-editor-root h-full min-h-0 rounded-lg border border-[var(--color-border)]"
+    >
       <MonacoEditor
         height={height}
         language={editorLanguage}
