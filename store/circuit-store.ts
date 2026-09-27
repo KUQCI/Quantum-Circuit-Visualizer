@@ -12,10 +12,11 @@ import {
 import { generateQiskitCode } from "@/lib/qiskit-generator";
 import { prepareCircuit, prepareHistory } from "@/lib/circuit-guard";
 import { runAppStorageMigrations } from "@/lib/app-storage";
-import { validateCircuit, validateCircuitPlacement } from "@/lib/validation";
+import { validateCircuitPlacement } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
 import { retargetOperation } from "@/lib/circuit-edit";
 import { useProgressStore } from "@/store/progress-store";
+import { sanitizeProjects as sanitizeProjectList } from "@/lib/learning/progress-backup";
 import {
   asNumber,
   createSafeJsonStorage,
@@ -28,6 +29,8 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
 }
+
+export const sanitizeProjects = sanitizeProjectList;
 
 interface HistoryEntry {
   circuit: Circuit;
@@ -108,6 +111,7 @@ interface CircuitState {
 
   projects: Project[];
   loadProjects: () => void;
+  importProjects: (projects: Project[], mode: "replace" | "merge") => void;
   saveProject: (name?: string) => string;
   openProject: (id: string) => Circuit | null;
   renameProject: (id: string, name: string) => void;
@@ -162,31 +166,7 @@ function loadProjectsFromStorage(): Project[] {
   try {
     const raw = localStorage.getItem(PROJECTS_KEY);
     if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    const projects: Project[] = [];
-    for (const item of parsed) {
-      if (!item || typeof item !== "object") continue;
-      const record = item as Partial<Project>;
-      if (typeof record.id !== "string" || typeof record.name !== "string") continue;
-      const circuitResult = validateCircuit(record.circuit);
-      if (!circuitResult.valid) continue;
-      projects.push({
-        id: record.id,
-        name: record.name,
-        circuit: prepareCircuit(circuitResult.circuit),
-        createdAt:
-          typeof record.createdAt === "string"
-            ? record.createdAt
-            : new Date().toISOString(),
-        updatedAt:
-          typeof record.updatedAt === "string"
-            ? record.updatedAt
-            : new Date().toISOString(),
-      });
-    }
-    return projects;
+    return sanitizeProjects(JSON.parse(raw));
   } catch {
     return [];
   }
@@ -689,6 +669,22 @@ export const useCircuitStore = create<CircuitState>()(
       getValidationWarnings: () => validateCircuitPlacement(get().circuit),
 
       loadProjects: () => set({ projects: loadProjectsFromStorage() }),
+
+      importProjects: (incoming, mode) => {
+        const safeIncoming = sanitizeProjects(incoming);
+        const projects =
+          mode === "replace"
+            ? safeIncoming
+            : (() => {
+                const byId = new Map(get().projects.map((project) => [project.id, project]));
+                for (const project of safeIncoming) {
+                  byId.set(project.id, project);
+                }
+                return Array.from(byId.values());
+              })();
+        saveProjectsToStorage(projects);
+        set({ projects });
+      },
 
       saveProject: (name) => {
         const { circuit, projects, currentProjectId } = get();

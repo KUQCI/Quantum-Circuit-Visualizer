@@ -3,13 +3,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ACHIEVEMENTS, evaluateAchievements } from "@/lib/learning/achievements";
-import { LESSONS } from "@/lib/learning/lessons";
 import {
   getLevelFromXp,
-  MODULE_IDS,
   updateStreak,
 } from "@/lib/learning/progress";
 import type { SkillTag } from "@/lib/learning/types";
+import {
+  completedModulesFor,
+  mergeProgress,
+  sanitizeDailyXp,
+  sanitizeProgressSnapshot,
+  sanitizeSkillXp,
+} from "@/lib/learning/progress-backup";
 import {
   asBoolean,
   asNumber,
@@ -17,7 +22,9 @@ import {
   createSafeJsonStorage,
 } from "@/lib/safe-persist";
 
-interface ProgressState {
+export { completedModulesFor };
+
+export interface PersistedProgress {
   totalXp: number;
   completedLessons: string[];
   completedChallenges: string[];
@@ -34,7 +41,9 @@ interface ProgressState {
   quizFirstTryLessons: string[];
   lastCelebratedLevel: number;
   completedModules: string[];
+}
 
+interface ProgressState extends PersistedProgress {
   recordActivity: () => void;
   completeLesson: (id: string, xp: number, skills?: SkillTag[]) => boolean;
   completeChallenge: (id: string, xp: number) => boolean;
@@ -49,6 +58,11 @@ interface ProgressState {
   isChallengeComplete: (id: string) => boolean;
   isAchievementUnlocked: (id: string) => boolean;
   getLevel: () => number;
+  exportSnapshot: () => PersistedProgress;
+  restoreSnapshot: (
+    snapshot: PersistedProgress,
+    mode: "replace" | "merge"
+  ) => void;
 }
 
 function addSkillXp(
@@ -67,27 +81,6 @@ function addSkillXp(
 function todayKey(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-
-function sanitizeDailyXp(value: unknown): Record<string, number> {
-  if (!value || typeof value !== "object") return {};
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 13);
-  const result: Record<string, number> = {};
-  for (const [date, amount] of Object.entries(value)) {
-    const parsed = new Date(`${date}T12:00:00`);
-    if (!Number.isNaN(parsed.getTime()) && parsed >= cutoff) {
-      result[date] = Math.max(0, asNumber(amount, 0));
-    }
-  }
-  return result;
-}
-
-function completedModulesFor(completedLessons: string[]): string[] {
-  return MODULE_IDS.filter((module) => {
-    const lessons = LESSONS.filter((lesson) => lesson.module === module);
-    return lessons.length > 0 && lessons.every((lesson) => completedLessons.includes(lesson.id));
-  });
 }
 
 function addXp(
@@ -251,6 +244,37 @@ export const useProgressStore = create<ProgressState>()(
       isAchievementUnlocked: (id) => get().unlockedAchievements.includes(id),
 
       getLevel: () => getLevelFromXp(get().totalXp),
+
+      exportSnapshot: () => {
+        const state = get();
+        return {
+          totalXp: state.totalXp,
+          completedLessons: [...state.completedLessons],
+          completedChallenges: [...state.completedChallenges],
+          unlockedAchievements: [...state.unlockedAchievements],
+          currentStreak: state.currentStreak,
+          lastActiveDate: state.lastActiveDate,
+          skillXp: { ...state.skillXp },
+          exportActionCount: state.exportActionCount,
+          importActionCount: state.importActionCount,
+          projectSaved: state.projectSaved,
+          hasEverPlacedGate: state.hasEverPlacedGate,
+          hasEverUsedControlledGate: state.hasEverUsedControlledGate,
+          dailyXp: { ...state.dailyXp },
+          quizFirstTryLessons: [...state.quizFirstTryLessons],
+          lastCelebratedLevel: state.lastCelebratedLevel,
+          completedModules: [...state.completedModules],
+        };
+      },
+
+      restoreSnapshot: (snapshot, mode) => {
+        const next =
+          mode === "merge"
+            ? mergeProgress(get().exportSnapshot(), snapshot)
+            : sanitizeProgressSnapshot(snapshot);
+        set(next);
+        checkAchievements(get, set);
+      },
     }),
     {
       name: "qiskit-visualizer-progress",
@@ -279,13 +303,7 @@ export const useProgressStore = create<ProgressState>()(
         const saved = persisted as Partial<ProgressState> | undefined;
         if (!saved) return current;
 
-        const skillXp = { ...current.skillXp };
-        if (saved.skillXp && typeof saved.skillXp === "object") {
-          for (const key of Object.keys(skillXp) as SkillTag[]) {
-            const value = (saved.skillXp as Record<string, unknown>)[key];
-            skillXp[key] = asNumber(value, skillXp[key]);
-          }
-        }
+        const skillXp = sanitizeSkillXp(saved.skillXp, current.skillXp);
 
         return {
           ...current,
@@ -300,7 +318,10 @@ export const useProgressStore = create<ProgressState>()(
           exportActionCount: asNumber(saved.exportActionCount, current.exportActionCount),
           importActionCount: asNumber(saved.importActionCount, current.importActionCount),
           projectSaved: asBoolean(saved.projectSaved, current.projectSaved),
-          hasEverPlacedGate: asBoolean(saved.hasEverPlacedGate, current.hasEverPlacedGate),
+          hasEverPlacedGate: asBoolean(
+            saved.hasEverPlacedGate,
+            current.hasEverPlacedGate
+          ),
           hasEverUsedControlledGate: asBoolean(
             saved.hasEverUsedControlledGate,
             current.hasEverUsedControlledGate
