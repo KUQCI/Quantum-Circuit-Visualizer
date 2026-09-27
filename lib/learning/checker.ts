@@ -1,4 +1,5 @@
 import type { Circuit, Operation } from "@/lib/circuit-schema";
+import { GATE_LIBRARY_UI } from "@/components/gates/gate-definitions";
 import type {
   CheckCondition,
   CheckResult,
@@ -272,4 +273,77 @@ export function circuitHasControlledGate(circuit: Circuit): boolean {
 
 export function circuitHasAnyGate(circuit: Circuit): boolean {
   return circuit.operations.length > 0;
+}
+
+const GATE_ALIASES: Record<string, string> = {
+  cnot: "cx",
+  "controlled-not": "cx",
+  "controlled-x": "cx",
+  measure: "measure",
+  measurement: "measure",
+};
+
+function lessonGateType(value: string): string | null {
+  const normalized = value.trim().toLowerCase();
+  const type = GATE_ALIASES[normalized] ?? normalized;
+  return GATE_LIBRARY_UI.some((gate) => gate.type === type) ? type : null;
+}
+
+/**
+ * Returns the operation tiles relevant to a lesson or challenge condition.
+ * An action-based or manual condition needs the complete library instead.
+ */
+export function getLessonGateTypes(
+  condition: CheckCondition,
+  starterCircuit: Circuit
+): string[] | null {
+  const types = new Set<string>();
+  let unrestricted = false;
+
+  const add = (value: string) => {
+    const type = lessonGateType(value);
+    if (type) types.add(type);
+  };
+
+  const visit = (item: CheckCondition) => {
+    switch (item.type) {
+      case "manual":
+      case "actionExport":
+      case "actionImport":
+        unrestricted = true;
+        return;
+      case "hasGate":
+      case "hasGateOnQubit":
+      case "hasParameterGate":
+        add(item.gate);
+        return;
+      case "hasControlledGate":
+        if (item.gate) add(item.gate);
+        else ["cx", "cz", "ccx", "rccx", "rc3x"].forEach(add);
+        return;
+      case "hasMeasurement":
+        add("measure");
+        return;
+      case "operationOrder":
+        item.operations.forEach((operation) => add(operation.gate));
+        return;
+      case "exactCircuitMatch":
+        item.circuit.operations.forEach((operation) => add(operation.type));
+        return;
+      case "noExtraGates":
+        item.allowed.forEach(add);
+        return;
+      case "all":
+      case "any":
+        item.conditions.forEach(visit);
+        return;
+      default:
+        return;
+    }
+  };
+
+  starterCircuit.operations.forEach((operation) => add(operation.type));
+  visit(condition);
+
+  return unrestricted || types.size === 0 ? null : [...types];
 }

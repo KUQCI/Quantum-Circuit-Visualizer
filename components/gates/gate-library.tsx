@@ -26,6 +26,8 @@ interface GateLibraryProps {
   /** Tap-to-select gate for touch / click placement */
   selectedGate?: string | null;
   onGateSelect?: (gateType: string | null) => void;
+  /** Restricts the default palette to gates relevant to a lesson or challenge. */
+  allowedTypes?: string[] | null;
 }
 
 export function GateLibrary({
@@ -34,10 +36,13 @@ export function GateLibrary({
   variant = "default",
   selectedGate = null,
   onGateSelect,
+  allowedTypes,
 }: GateLibraryProps) {
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [showAllGates, setShowAllGates] = useState(false);
+  const lessonScoped = allowedTypes !== undefined && allowedTypes !== null;
 
   const paletteGates = useMemo(() => getPaletteGates(), []);
 
@@ -60,8 +65,18 @@ export function GateLibrary({
 
   const filteredPalette = useMemo(() => {
     const types = new Set(filtered.map((g) => g.type));
-    return paletteGates.filter((g) => types.has(g.type));
-  }, [filtered, paletteGates]);
+    const allowed = new Set(allowedTypes ?? []);
+    return paletteGates.filter(
+      (g) => types.has(g.type) && (!lessonScoped || showAllGates || allowed.has(g.type))
+    );
+  }, [allowedTypes, filtered, lessonScoped, paletteGates, showAllGates]);
+
+  const lessonPalette = useMemo(() => {
+    if (!lessonScoped) return [];
+    const types = new Set(filtered.map((g) => g.type));
+    const allowed = new Set(allowedTypes ?? []);
+    return paletteGates.filter((g) => types.has(g.type) && allowed.has(g.type));
+  }, [allowedTypes, filtered, lessonScoped, paletteGates]);
 
   const categoryTabs = [
     { id: "all", label: "All" },
@@ -77,134 +92,181 @@ export function GateLibrary({
         )}
         data-tour="gates"
       >
-        <div className="border-b border-[var(--color-border)] px-3 py-2.5">
-          <div className="flex items-center gap-1.5">
-            <div className="relative min-w-0 flex-1">
-              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search gates..."
-                aria-label="Search gates"
-                className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
-              />
+        {(!lessonScoped || showAllGates) && (
+          <div className="border-b border-[var(--color-border)] px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted-foreground)]" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search gates..."
+                  aria-label="Search gates"
+                  className="h-7 border-[var(--color-border)] bg-[var(--color-surface)] pl-7 text-xs"
+                />
+              </div>
+              <div className="flex gap-0.5">
+                <button
+                  type="button"
+                  className={cn(
+                    "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
+                    !compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
+                  )}
+                  onClick={() => setCompact(false)}
+                  title="Grid view"
+                  aria-label="Grid view"
+                  aria-pressed={!compact}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
+                    compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
+                  )}
+                  onClick={() => setCompact(true)}
+                  title="List view"
+                  aria-label="List view"
+                  aria-pressed={compact}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-0.5">
-              <button
-                type="button"
-                className={cn(
-                  "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
-                  !compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
-                )}
-                onClick={() => setCompact(false)}
-                title="Grid view"
-                aria-label="Grid view"
-                aria-pressed={!compact}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "rounded p-1 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]",
-                  compact && "bg-[var(--color-secondary)] text-[var(--color-foreground)]"
-                )}
-                onClick={() => setCompact(true)}
-                title="List view"
-                aria-label="List view"
-                aria-pressed={compact}
-              >
-                <List className="h-3.5 w-3.5" />
-              </button>
+            <div
+              className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="tablist"
+              aria-label="Gate categories"
+            >
+              {categoryTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={categoryFilter === tab.id}
+                  className={cn(
+                    "shrink-0 rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
+                    categoryFilter === tab.id
+                      ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
+                      : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]"
+                  )}
+                  onClick={() => setCategoryFilter(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-          <div
-            className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            role="tablist"
-            aria-label="Gate categories"
-          >
-            {categoryTabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={categoryFilter === tab.id}
-                className={cn(
-                  "shrink-0 rounded px-2 py-0.5 text-[10px] font-medium transition-colors",
-                  categoryFilter === tab.id
-                    ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
-                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)]"
-                )}
-                onClick={() => setCategoryFilter(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         <div className="min-w-0 flex-1 overflow-y-auto p-2">
-          {compact ? (
-            GATE_CATEGORIES.map((category) => {
-              const gates = filtered.filter((g) => g.category === category.id);
-              if (gates.length === 0) return null;
-              return (
-                <div key={category.id} className="mb-3">
-                  <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
-                    {category.label}
-                  </h3>
-                  <div className="space-y-0.5">
-                    {gates.map((gate) => (
-                      <GateListItem
-                        key={gate.type}
-                        gate={gate}
-                        onDragStart={onDragStart}
-                        onDragEnd={onDragEnd}
-                        selected={selectedGate === gate.type}
-                        onGateSelect={onGateSelect}
-                      />
-                    ))}
-                  </div>
+          {lessonScoped && !showAllGates && (
+            <div className="mb-3">
+              <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
+                <h3 className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                  For this lesson
+                </h3>
+                <button
+                  type="button"
+                  className="text-[10px] text-[var(--color-brand)] hover:underline"
+                  onClick={() => setShowAllGates(true)}
+                >
+                  Show all gates
+                </button>
+              </div>
+              {lessonPalette.length === 0 ? (
+                <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
+                  No gates match your search.
+                </p>
+              ) : (
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
+                  {lessonPalette.map((gate) => (
+                    <GateGridItem
+                      key={gate.type}
+                      gate={gate}
+                      onDragStart={onDragStart}
+                      onDragEnd={onDragEnd}
+                      variant={variant}
+                      selected={selectedGate === gate.type}
+                      onGateSelect={onGateSelect}
+                    />
+                  ))}
                 </div>
-              );
-            })
-          ) : filteredPalette.length === 0 ? (
-            <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
-              No gates match your search.
-            </p>
-          ) : (
-            (categoryFilter === "all"
-              ? GATE_CATEGORIES.map((category) => ({
-                  category,
-                  gates: filteredPalette.filter((g) => g.category === category.id),
-                }))
-              : [{ category: null, gates: filteredPalette }]
-            ).map(({ category, gates }) => {
-              if (gates.length === 0) return null;
-              return (
-                <div key={category?.id ?? "filtered"} className="mb-3 last:mb-0">
-                  {category && (
+              )}
+            </div>
+          )}
+          {lessonScoped && showAllGates && (
+            <button
+              type="button"
+              className="mb-2 px-1 text-[10px] text-[var(--color-brand)] hover:underline"
+              onClick={() => setShowAllGates(false)}
+            >
+              Show lesson gates
+            </button>
+          )}
+          {(!lessonScoped || showAllGates) &&
+            (compact ? (
+              GATE_CATEGORIES.map((category) => {
+                const gates = filtered.filter((g) => g.category === category.id);
+                if (gates.length === 0) return null;
+                return (
+                  <div key={category.id} className="mb-3">
                     <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
                       {category.label}
                     </h3>
-                  )}
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
-                    {gates.map((gate) => (
-                      <GateGridItem
-                        key={gate.type}
-                        gate={gate}
-                        onDragStart={onDragStart}
-                        onDragEnd={onDragEnd}
-                        variant={variant}
-                        selected={selectedGate === gate.type}
-                        onGateSelect={onGateSelect}
-                      />
-                    ))}
+                    <div className="space-y-0.5">
+                      {gates.map((gate) => (
+                        <GateListItem
+                          key={gate.type}
+                          gate={gate}
+                          onDragStart={onDragStart}
+                          onDragEnd={onDragEnd}
+                          selected={selectedGate === gate.type}
+                          onGateSelect={onGateSelect}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            ) : filteredPalette.length === 0 ? (
+              <p className="px-2 py-4 text-center text-[11px] text-[var(--color-muted-foreground)]">
+                No gates match your search.
+              </p>
+            ) : (
+              (categoryFilter === "all"
+                ? GATE_CATEGORIES.map((category) => ({
+                    category,
+                    gates: filteredPalette.filter((g) => g.category === category.id),
+                  }))
+                : [{ category: null, gates: filteredPalette }]
+              ).map(({ category, gates }) => {
+                if (gates.length === 0) return null;
+                return (
+                  <div key={category?.id ?? "filtered"} className="mb-3 last:mb-0">
+                    {category && (
+                      <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--color-muted-foreground)]">
+                        {category.label}
+                      </h3>
+                    )}
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
+                      {gates.map((gate) => (
+                        <GateGridItem
+                          key={gate.type}
+                          gate={gate}
+                          onDragStart={onDragStart}
+                          onDragEnd={onDragEnd}
+                          variant={variant}
+                          selected={selectedGate === gate.type}
+                          onGateSelect={onGateSelect}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            ))}
         </div>
       </div>
     </TooltipProvider>
