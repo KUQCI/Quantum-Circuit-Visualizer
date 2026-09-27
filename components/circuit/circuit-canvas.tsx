@@ -1067,6 +1067,9 @@ export function CircuitCanvas({
           tabIndex={0}
           role="region"
           aria-label={canvasLabel}
+          data-quanta-cursor={
+            isPlacementMode || isPaletteDragging ? "native" : undefined
+          }
           className={cn(
             "relative flex-1 overflow-auto p-3",
             isPaletteDragging && "cursor-copy",

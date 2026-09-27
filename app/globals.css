@@ -23,7 +23,8 @@ html[data-quanta-cursor="on"]
     .composer-resize-handle,
     .composer-resize-handle--horizontal,
     .composer-resize-handle--vertical,
-    [draggable="true"]:active
+    [draggable="true"],
+    [data-quanta-cursor="native"]
   ) {
   cursor: revert !important;
 }
@@ -92,9 +93,9 @@ html[data-quanta-cursor="on"] :is(:disabled, [aria-disabled="true"]) {
 }
 
 @keyframes quanta-cursor-idle-wiggle {
-  0%, 100% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)); }
-  35% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg - 5deg)); }
-  65% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg + 5deg)); }
+  0%, 100% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg)) scale(var(--quanta-cursor-scale)); }
+  35% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg - 5deg)) scale(var(--quanta-cursor-scale)); }
+  65% { transform: rotate(calc(var(--quanta-cursor-rotation) * 1deg + 5deg)) scale(var(--quanta-cursor-scale)); }
 }
 
 @theme {
