@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
 import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { variantFromFeedback } from "@/lib/quanta-assets";
 import { cn } from "@/lib/utils";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 
-export function QuantaPopout() {
+export function QuantaPopout({ bottomOffset }: { bottomOffset?: number }) {
   const message = useQuantaPopoutStore((state) => state.message);
   const dismiss = useQuantaPopoutStore((state) => state.dismiss);
   const [displayedText, setDisplayedText] = useState("");
@@ -61,7 +61,12 @@ export function QuantaPopout() {
   return (
     <div
       key={message.id}
-      className="quanta-popout fixed bottom-20 right-4 z-40 flex max-w-[calc(100vw-2rem)] items-end gap-2 max-[639px]:bottom-28 sm:bottom-6 sm:max-w-xs"
+      className="quanta-popout fixed bottom-20 right-4 z-40 flex max-w-[calc(100vw-2rem)] items-end gap-2 max-[639px]:bottom-[var(--quanta-popout-bottom)] sm:bottom-6 sm:max-w-xs"
+      style={
+        {
+          "--quanta-popout-bottom": `${bottomOffset ?? 112}px`,
+        } as CSSProperties
+      }
       role="status"
       aria-live="polite"
     >
