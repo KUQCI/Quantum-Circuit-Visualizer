@@ -60,6 +60,21 @@ describe("editor UI persistence", () => {
     });
   });
 
+  it("persists and migrates the lesson code panel preference", () => {
+    const state = useEditorUiStore.getState();
+    const options = useEditorUiStore.persist.getOptions();
+
+    expect(options.partialize?.({ ...state, lessonCodeOpen: true })).toMatchObject({
+      lessonCodeOpen: true,
+    });
+    expect(options.migrate?.({ lessonCodeOpen: true }, 3)).toMatchObject({
+      lessonCodeOpen: true,
+    });
+    expect(options.migrate?.({}, 3)).toMatchObject({
+      lessonCodeOpen: false,
+    });
+  });
+
   it("restores a walkthrough backup through the shared helper", () => {
     const originalState = useCircuitStore.getState();
     const original = structuredClone(originalState.circuit);

@@ -1264,6 +1264,15 @@ button:disabled,
   overflow: hidden;
 }
 
+.learning-panel-code-mobile-collapsed {
+  height: auto !important;
+  max-height: none !important;
+}
+
+.learning-panel-code-collapsed {
+  min-width: 176px;
+}
+
 .learning-panel-lesson-collapsed {
   display: none !important;
 }
@@ -1382,6 +1391,14 @@ button:disabled,
   .learning-player-grid-lesson-collapsed .learning-panel-code {
     grid-column: 3;
     grid-row: 1;
+  }
+
+  .learning-player-grid-code-collapsed {
+    grid-template-columns:
+      340px
+      260px
+      minmax(0, 1fr)
+      auto;
   }
 }
 

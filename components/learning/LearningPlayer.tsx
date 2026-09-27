@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
@@ -14,7 +21,7 @@ import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
 import { LessonCircuitPreview } from "@/components/learning/LessonCircuitPreview";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
-import { checkCircuit } from "@/lib/learning/checker";
+import { checkCircuit, getLessonGateTypes } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
 import type { CodeLanguageId } from "@/lib/code-adapters";
 import { useCircuitStore } from "@/store/circuit-store";
@@ -41,6 +48,18 @@ type LessonStage = "learn" | "quiz" | "build" | "done";
 
 function isLesson(a: ActivityDefinition): a is LessonDefinition {
   return "module" in a;
+}
+
+function conditionRequiresCode(
+  condition: LessonDefinition["successCondition"]
+): boolean {
+  if (condition.type === "actionExport" || condition.type === "actionImport") {
+    return true;
+  }
+  if (condition.type === "all" || condition.type === "any") {
+    return condition.conditions.some(conditionRequiresCode);
+  }
+  return false;
 }
 
 interface LearningPlayerProps {
@@ -71,6 +90,7 @@ export function LearningPlayer({
     (s) => s.commitActivityToWorkspace
   );
   const circuitHydrated = usePersistHydrated(useCircuitStore.persist);
+  const editorUiHydrated = usePersistHydrated(useEditorUiStore.persist);
   const isWideLayout = useMediaQuery("(min-width: 1280px)");
   const isCompact = useMediaQuery(COMPACT_VIEWPORT_QUERY);
 
@@ -83,6 +103,10 @@ export function LearningPlayer({
   const recordExport = useProgressStore((s) => s.recordExport);
   const recordImport = useProgressStore((s) => s.recordImport);
   const recordActivity = useProgressStore((s) => s.recordActivity);
+  const lessonCodeOpenPreference = useEditorUiStore((s) => s.lessonCodeOpen);
+  const setLessonCodeOpenPreference = useEditorUiStore(
+    (s) => s.setLessonCodeOpen
+  );
   const sayQuanta = useQuantaPopoutStore((s) => s.say);
   const dismissQuanta = useQuantaPopoutStore((s) => s.dismiss);
   const isComplete = useProgressStore((s) =>
@@ -99,10 +123,39 @@ export function LearningPlayer({
       ? !window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
       : true
   );
+  const lessonCodeDefaultOpen =
+    mode === "lesson" &&
+    isLesson(activity) &&
+    (conditionRequiresCode(activity.successCondition) ||
+      activity.skills.includes("qiskit"));
+  const [lessonCodeOpen, setLessonCodeOpen] = useState(
+    () => lessonCodeOpenPreference || lessonCodeDefaultOpen
+  );
 
   useEffect(() => {
     setLessonPanelOpen(!isCompact);
   }, [isCompact]);
+  useEffect(() => {
+    setLessonCodeOpen(
+      mode === "lesson"
+        ? lessonCodeOpenPreference || lessonCodeDefaultOpen
+        : true
+    );
+  }, [
+    activity.id,
+    editorUiHydrated,
+    lessonCodeDefaultOpen,
+    lessonCodeOpenPreference,
+    mode,
+  ]);
+
+  const toggleLessonCode = () => {
+    setLessonCodeOpen((open) => {
+      const next = !open;
+      setLessonCodeOpenPreference(next);
+      return next;
+    });
+  };
   const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "success" | "error">("idle");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [quantaFeedback, setQuantaFeedback] = useState("");
@@ -468,7 +521,10 @@ export function LearningPlayer({
       <div
         className={cn(
           "learning-player-grid min-h-0 flex-1",
-          !lessonPanelOpen && "learning-player-grid-lesson-collapsed"
+          !lessonPanelOpen && "learning-player-grid-lesson-collapsed",
+          mode === "lesson" &&
+            !lessonCodeOpen &&
+            "learning-player-grid-code-collapsed"
         )}
       >
         {/* Lesson / Quanta panel */}
@@ -575,6 +631,14 @@ export function LearningPlayer({
         >
           <GateLibrary
             variant="learning"
+            allowedTypes={
+              mode === "lesson" || mode === "challenge"
+                ? getLessonGateTypes(
+                    activity.successCondition,
+                    activity.starterCircuit
+                  )
+                : undefined
+            }
             selectedGate={selectedGate}
             onGateSelect={setSelectedGate}
             onDragStart={setDraggingGate}
@@ -600,23 +664,63 @@ export function LearningPlayer({
         {/* Code editor — single instance to avoid duplicate Monaco/sync */}
         {isWideLayout ? (
           <aside
-            className="learning-panel learning-panel-code flex min-h-0 flex-col border-l border-[var(--color-border)]"
+            className={cn(
+              "learning-panel learning-panel-code flex min-h-0 flex-col border-l border-[var(--color-border)]",
+              mode === "lesson" &&
+                !lessonCodeOpen &&
+                "learning-panel-code-collapsed"
+            )}
             aria-label="Code editor"
           >
-            <LearningCodePanel
-              onExport={handleExportAction}
-              onImportSync={handleImportSync}
-            />
+            {mode === "lesson" ? (
+              <LessonCodeDisclosure
+                open={lessonCodeOpen}
+                onToggle={toggleLessonCode}
+              >
+                {lessonCodeOpen && (
+                  <LearningCodePanel
+                    onExport={handleExportAction}
+                    onImportSync={handleImportSync}
+                  />
+                )}
+              </LessonCodeDisclosure>
+            ) : (
+              <LearningCodePanel
+                onExport={handleExportAction}
+                onImportSync={handleImportSync}
+              />
+            )}
           </aside>
         ) : null}
       </div>
 
       {!isWideLayout && (
-        <div className="learning-panel-code-mobile max-h-[280px] shrink-0 border-t border-[var(--color-border)]">
-          <LearningCodePanel
-            onExport={handleExportAction}
-            onImportSync={handleImportSync}
-          />
+        <div
+          className={cn(
+            "learning-panel-code-mobile max-h-[280px] shrink-0 border-t border-[var(--color-border)]",
+            mode === "lesson" &&
+              !lessonCodeOpen &&
+              "learning-panel-code-mobile-collapsed"
+          )}
+        >
+          {mode === "lesson" ? (
+            <LessonCodeDisclosure
+              open={lessonCodeOpen}
+              onToggle={toggleLessonCode}
+            >
+              {lessonCodeOpen && (
+                <LearningCodePanel
+                  onExport={handleExportAction}
+                  onImportSync={handleImportSync}
+                />
+              )}
+            </LessonCodeDisclosure>
+          ) : (
+            <LearningCodePanel
+              onExport={handleExportAction}
+              onImportSync={handleImportSync}
+            />
+          )}
         </div>
       )}
       </FeatureErrorBoundary>
@@ -850,6 +954,34 @@ function DoneCard({
           </Button>
         )}
       </div>
+    </div>
+  );
+}
+
+function LessonCodeDisclosure({
+  open,
+  onToggle,
+  children,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-0 h-full flex-col">
+      <button
+        type="button"
+        className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-3 text-left text-sm font-semibold hover:bg-[var(--color-secondary)]"
+        onClick={onToggle}
+        aria-expanded={open}
+      >
+        <span>Code (Qiskit)</span>
+        <ChevronRight
+          className={cn("h-4 w-4 transition-transform", open && "rotate-90")}
+          aria-hidden
+        />
+      </button>
+      {children}
     </div>
   );
 }
