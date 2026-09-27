@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useCircuitStore } from "@/store/circuit-store";
 import { getWalkthrough } from "@/lib/learning/walkthroughs";
+import { restoreWalkthroughBackup } from "@/lib/learning/walkthrough-backup";
 import { getMaxInspectStep } from "@/lib/circuit-layout";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 
@@ -39,10 +39,7 @@ export function WalkthroughPanel() {
           size="sm"
           className="h-7 px-2 text-[10px]"
           onClick={() => {
-            if (backup) {
-              useCircuitStore.getState().setCircuit(backup.circuit);
-              useCircuitStore.setState({ currentProjectId: backup.projectId });
-            }
+            restoreWalkthroughBackup(backup);
             setWalkthroughBackup(null);
             setActiveWalkthroughId(null);
             setInspectMode(false);

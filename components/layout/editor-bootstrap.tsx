@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { getWalkthrough } from "@/lib/learning/walkthroughs";
+import { restoreWalkthroughBackup } from "@/lib/learning/walkthrough-backup";
 import { AlertTriangle } from "lucide-react";
 
 /** Handles ?project=id query param and viewport-aware default panel state. */
@@ -57,8 +58,20 @@ export function EditorBootstrap() {
     const walkthrough = getWalkthrough(walkthroughId);
     if (!walkthrough) {
       lastStartedWalkthrough.current = null;
-      setActiveWalkthroughId(null);
-      return;
+      const exitWalkthrough = () => {
+        const backup = useEditorUiStore.getState().walkthroughBackup;
+        if (backup) {
+          restoreWalkthroughBackup(backup);
+          setWalkthroughBackup(null);
+        }
+        setActiveWalkthroughId(null);
+        setInspectMode(false);
+      };
+      if (useCircuitStore.persist.hasHydrated()) {
+        exitWalkthrough();
+        return;
+      }
+      return useCircuitStore.persist.onFinishHydration(exitWalkthrough);
     }
     if (lastStartedWalkthrough.current === walkthrough.id) return;
 
