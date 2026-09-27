@@ -10,6 +10,7 @@ import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaAchievement } from "@/components/mascot/QuantaAchievement";
 import { QuantaHint } from "@/components/mascot/QuantaHint";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
+import { LessonCircuitPreview } from "@/components/learning/LessonCircuitPreview";
 import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { checkCircuit } from "@/lib/learning/checker";
@@ -654,30 +655,7 @@ function LessonSectionCard({
       <h2 className="text-lg font-semibold">{section.heading}</h2>
       <p className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</p>
       {miniCircuit && (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-2 font-mono text-xs">
-          {miniCircuit.qubits.map((qubit) => (
-            <p key={qubit.id}>
-              {qubit.label}:{" "}
-              {miniCircuit.operations
-                .filter((operation) => operation.targets.includes(qubit.id))
-                .concat(
-                  miniCircuit.operations.filter((operation) =>
-                    operation.controls.includes(qubit.id)
-                  )
-                )
-                .filter((operation, operationIndex, operations) =>
-                  operations.findIndex((candidate) => candidate.id === operation.id) === operationIndex
-                )
-                .sort((a, b) => a.column - b.column)
-                .map((operation) =>
-                  operation.controls.length
-                    ? `${operation.type.toUpperCase()}(${operation.controls.join("→")}→${operation.targets.join(",")})`
-                    : operation.type.toUpperCase()
-                )
-                .join(" → ") || "|0⟩"}
-            </p>
-          ))}
-        </div>
+        <LessonCircuitPreview circuit={miniCircuit} />
       )}
       <QuantaMessage
         title="Quanta hint"
