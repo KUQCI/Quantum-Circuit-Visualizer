@@ -13,6 +13,9 @@ import { getCodeLanguage } from "@/lib/code-adapters";
 import { downloadTextFile } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
+import { encodeCircuitToShare } from "@/lib/share-link";
+import { showAppToast } from "@/lib/app-toast";
+import { withBasePath } from "@/lib/routes";
 import { sampleCircuitsMap } from "@/lib/sample-circuits";
 import {
   Save,
@@ -25,6 +28,7 @@ import {
   Check,
   Menu,
   Download,
+  Share2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -105,10 +109,35 @@ export function ComposerToolbar() {
     downloadTextFile(result.code, `${base}.${ext}`);
   };
 
+  const handleCopyShareLink = async () => {
+    if (!circuitHasContent(circuit)) return;
+    const link = `${window.location.origin}${withBasePath(
+      `/editor?share=${encodeCircuitToShare(circuit)}`
+    )}`;
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = link;
+      input.style.position = "fixed";
+      input.style.opacity = "0";
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+    }
+    showAppToast("Link copied");
+  };
+
   const fileItems = [
     { label: "New circuit", action: handleNewCircuit },
     { label: "Open project", action: () => router.push("/projects") },
     { label: "Save project", action: handleSaveProject },
+    {
+      label: "Copy share link",
+      action: handleCopyShareLink,
+      disabled: !circuitHasContent(circuit),
+    },
     { label: "Import Qiskit", action: () => router.push("/import") },
     { label: "Export code", action: () => router.push("/export") },
     { label: "Download .py", action: handleDownloadFile },
@@ -180,7 +209,12 @@ export function ComposerToolbar() {
                 <DropdownMenuSubTrigger className="text-xs">File</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   {fileItems.map((item) => (
-                    <DropdownMenuItem key={item.label} className="text-xs" onClick={item.action}>
+                    <DropdownMenuItem
+                      key={item.label}
+                      className="text-xs"
+                      disabled={item.disabled}
+                      onClick={item.action}
+                    >
                       {item.label}
                     </DropdownMenuItem>
                   ))}
@@ -449,6 +483,22 @@ export function ComposerToolbar() {
           >
             <Save className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Save project</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs sm:px-3"
+            onClick={handleCopyShareLink}
+            disabled={!circuitHasContent(circuit)}
+            aria-label="Copy share link"
+            title={
+              circuitHasContent(circuit)
+                ? "Copy share link"
+                : "Add a gate before copying a share link"
+            }
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">Share</span>
           </Button>
           <Button
             variant="ghost"

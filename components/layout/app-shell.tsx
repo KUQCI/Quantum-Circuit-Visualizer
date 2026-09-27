@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { XpToast } from "@/components/learning/XpToast";
 import { LevelUpDialog } from "@/components/learning/LevelUpDialog";
 import { ShortcutsDialog } from "@/components/help/ShortcutsDialog";
+import { AppToast } from "@/components/ui/app-toast";
 
 function getContentBreadcrumbs(pathname: string) {
   const path = normalizePath(pathname);
@@ -69,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isComposer = isEditorPath(path);
   const isFullWorkspace = isFullWorkspacePath(path);
   const isPlayer = isWorkspacePlayerPath(path);
+  const isEmbed = path === "/embed";
   const breadcrumbs = getContentBreadcrumbs(path);
 
   useEffect(() => {
@@ -96,6 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <XpToast />
       <LevelUpDialog />
       <ShortcutsDialog />
+      <AppToast />
       <AppBootstrap />
       <a href="#main-content" className="skip-link">
         Skip to content
@@ -107,13 +110,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           !isFullWorkspace && "flex min-h-dvh flex-col"
         )}
       >
-        <AppHeader />
+      {!isEmbed && <AppHeader />}
         <main
           id="main-content"
           className={cn(
             isFullWorkspace ? "workspace-main" : "min-h-0 flex-1",
             isPlayer && "workspace-main--player",
-            isComposer && "workspace-main--composer"
+            isComposer && "workspace-main--composer",
+            isEmbed && "min-h-dvh"
           )}
         >
           {!isPlayer && breadcrumbs.length > 0 && (
@@ -123,7 +127,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
           <PageTransition>{children}</PageTransition>
         </main>
-        {!isFullWorkspace && <SiteFooter />}
+        {!isFullWorkspace && !isEmbed && <SiteFooter />}
       </div>
     </ThemeProvider>
   );
