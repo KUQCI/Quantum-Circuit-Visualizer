@@ -158,6 +158,18 @@ export default function ExportPage() {
                 <ExternalLink className="h-4 w-4" />
               </Link>
             </Button>
+            {adapter.docsUrl && (
+              <Button asChild variant="ghost" size="sm">
+                <a
+                  href={adapter.docsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {adapter.label} docs
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -210,7 +210,7 @@ export default function LearnPage() {
           <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
             Guided walkthroughs
           </h2>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-3">
             <NextStepCard
               badge="Walkthrough 1"
               title="Bell-state entanglement"
@@ -224,6 +224,14 @@ export default function LearnPage() {
               description="Use HZH to see a phase change become visible through interference."
               href="/editor?walkthrough=hzh"
               ctaLabel="Open walkthrough"
+            />
+            <NextStepCard
+              badge="Beyond the Academy"
+              title="Train your circuits with quantum-learn"
+              description="KUQCI's Python library turns exported ansätze into trainable classifiers and regressors (PennyLane backend)."
+              href="https://quantum-learn.readthedocs.io/en/latest/"
+              ctaLabel="Read the docs"
+              external
             />
           </div>
         </Reveal>

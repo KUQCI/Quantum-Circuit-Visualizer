@@ -11,7 +11,36 @@ A full-stack quantum circuit editor and converter that bidirectionally transform
 - **Project Management** — Save, rename, duplicate, and delete circuits via localStorage
 - **Measurement Histograms** — Shot-based local simulator with configurable backends
 - **Statevector Table** — Real, imaginary, phase, and probability amplitudes
-- **Multi-Language Export** — Qiskit, OpenQASM 2.0, Cirq, Runtime JSON
+- **Multi-Language Export** — Qiskit, OpenQASM 2.0, Cirq, quantum-learn (PennyLane ansatz), Runtime JSON
+- **Quantum Academy** — Guided lessons, quizzes, challenges, and a Quantum Machine Learning module
+
+## quantum-learn integration
+
+The quantum-learn export produces a PennyLane ansatz with the signature
+`ansatz(features, params, n_qubits)`, plus an ordered `PARAM_NAMES` list for
+symbolic circuit parameters. Install the optional PennyLane backend:
+
+```bash
+pip install "quantum-learn[pennylane]"
+```
+
+```python
+from math import pi
+import numpy as np
+import pandas as pd
+from qlearn import VariationalQuantumClassifier
+
+X_train = pd.DataFrame(...)
+y_train = pd.Series(...)
+params = np.random.uniform(0, 2 * pi, N_PARAMS)
+clf = VariationalQuantumClassifier(fit_kwargs={"n_qubits": N_QUBITS, "ansatz": ansatz})
+clf.fit(X_train, y_train, params=params)
+```
+
+See the [quantum-learn documentation](https://quantum-learn.readthedocs.io/en/latest/)
+for the classifier and regressor APIs. The Quantum Academy includes a
+**Quantum Machine Learning** module that walks through exporting and training
+parameterised circuits.
 
 ## Tech Stack
 
