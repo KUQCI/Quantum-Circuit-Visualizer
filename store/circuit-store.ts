@@ -672,6 +672,7 @@ export const useCircuitStore = create<CircuitState>()(
 
       importProjects: (incoming, mode) => {
         const safeIncoming = sanitizeProjects(incoming);
+        const currentProjectId = get().currentProjectId;
         const projects =
           mode === "replace"
             ? safeIncoming
@@ -683,7 +684,14 @@ export const useCircuitStore = create<CircuitState>()(
                 return Array.from(byId.values());
               })();
         saveProjectsToStorage(projects);
-        set({ projects });
+        set({
+          projects,
+          ...(mode === "replace" ||
+          (currentProjectId !== null &&
+            safeIncoming.some((project) => project.id === currentProjectId))
+            ? { currentProjectId: null }
+            : {}),
+        });
       },
 
       saveProject: (name) => {

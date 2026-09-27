@@ -158,6 +158,16 @@ export function parseProgressBackup(
   if (record.version !== PROGRESS_BACKUP_VERSION) {
     return { ok: false, error: "Unsupported backup version" };
   }
+  if (
+    !record.progress ||
+    typeof record.progress !== "object" ||
+    Array.isArray(record.progress)
+  ) {
+    return { ok: false, error: "Backup is missing progress data" };
+  }
+  if (!Array.isArray(record.projects)) {
+    return { ok: false, error: "Backup is missing project data" };
+  }
 
   return {
     ok: true,
@@ -178,17 +188,52 @@ function union(current: string[], incoming: string[]): string[] {
   return Array.from(new Set([...current, ...incoming]));
 }
 
-function laterDate(
-  current: string | null,
-  incoming: string | null
-): string | null {
-  if (!current) return incoming;
-  if (!incoming) return current;
-  const currentTime = Date.parse(current);
-  const incomingTime = Date.parse(incoming);
-  if (Number.isNaN(currentTime)) return incoming;
-  if (Number.isNaN(incomingTime)) return current;
-  return incomingTime > currentTime ? incoming : current;
+function mergeStreakPair(
+  current: Pick<PersistedProgress, "currentStreak" | "lastActiveDate">,
+  incoming: Pick<PersistedProgress, "currentStreak" | "lastActiveDate">
+): Pick<PersistedProgress, "currentStreak" | "lastActiveDate"> {
+  if (!current.lastActiveDate && !incoming.lastActiveDate) {
+    return {
+      currentStreak: Math.max(current.currentStreak, incoming.currentStreak),
+      lastActiveDate: null,
+    };
+  }
+  if (!current.lastActiveDate) {
+    return {
+      currentStreak: incoming.currentStreak,
+      lastActiveDate: incoming.lastActiveDate,
+    };
+  }
+  if (!incoming.lastActiveDate) {
+    return {
+      currentStreak: current.currentStreak,
+      lastActiveDate: current.lastActiveDate,
+    };
+  }
+
+  const currentTime = Date.parse(current.lastActiveDate);
+  const incomingTime = Date.parse(incoming.lastActiveDate);
+  if (Number.isNaN(currentTime)) {
+    return Number.isNaN(incomingTime)
+      ? {
+          currentStreak: Math.max(
+            current.currentStreak,
+            incoming.currentStreak
+          ),
+          lastActiveDate: current.lastActiveDate,
+        }
+      : incoming;
+  }
+  if (Number.isNaN(incomingTime) || currentTime > incomingTime) {
+    return current;
+  }
+  if (incomingTime > currentTime) {
+    return incoming;
+  }
+  return {
+    currentStreak: Math.max(current.currentStreak, incoming.currentStreak),
+    lastActiveDate: current.lastActiveDate,
+  };
 }
 
 export function mergeProgress(
@@ -212,6 +257,7 @@ export function mergeProgress(
   for (const [date, amount] of Object.entries(incomingSafe.dailyXp)) {
     dailyXp[date] = Math.max(dailyXp[date] ?? 0, amount);
   }
+  const streakPair = mergeStreakPair(currentSafe, incomingSafe);
 
   return {
     totalXp: Math.max(currentSafe.totalXp, incomingSafe.totalXp),
@@ -224,11 +270,8 @@ export function mergeProgress(
       currentSafe.unlockedAchievements,
       incomingSafe.unlockedAchievements
     ),
-    currentStreak: Math.max(currentSafe.currentStreak, incomingSafe.currentStreak),
-    lastActiveDate: laterDate(
-      currentSafe.lastActiveDate,
-      incomingSafe.lastActiveDate
-    ),
+    currentStreak: streakPair.currentStreak,
+    lastActiveDate: streakPair.lastActiveDate,
     skillXp,
     exportActionCount: Math.max(
       currentSafe.exportActionCount,

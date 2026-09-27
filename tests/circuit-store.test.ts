@@ -227,4 +227,39 @@ describe("circuit store register + measure safety", () => {
     );
     expect(state.circuit.name).toBe("Renamed First");
   });
+
+  it("detaches the current project when an imported project replaces it", () => {
+    const currentCircuit = createEmptyCircuit("Current", 1, 0);
+    const importedCircuit = createEmptyCircuit("Imported", 1, 0);
+    const now = new Date().toISOString();
+    useCircuitStore.setState({
+      projects: [
+        {
+          id: "p1",
+          name: "Current",
+          circuit: currentCircuit,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+      currentProjectId: "p1",
+    });
+
+    useCircuitStore.getState().importProjects(
+      [
+        {
+          id: "p1",
+          name: "Imported",
+          circuit: importedCircuit,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ],
+      "merge"
+    );
+
+    const state = useCircuitStore.getState();
+    expect(state.currentProjectId).toBeNull();
+    expect(state.projects[0]?.circuit.name).toBe("Imported");
+  });
 });

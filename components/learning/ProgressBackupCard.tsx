@@ -76,6 +76,29 @@ export function ProgressBackupCard() {
       .getState()
       .restoreSnapshot(pendingBackup.progress, mode);
     useCircuitStore.getState().importProjects(pendingBackup.projects, mode);
+    try {
+      const persistedProgress = JSON.parse(
+        localStorage.getItem("qiskit-visualizer-progress") ?? ""
+      ) as { state?: { totalXp?: unknown } };
+      const persistedProjects = JSON.parse(
+        localStorage.getItem("qiskit-visualizer-projects") ?? ""
+      );
+      if (
+        persistedProgress.state?.totalXp !==
+          useProgressStore.getState().totalXp ||
+        !Array.isArray(persistedProjects) ||
+        persistedProjects.length !== useCircuitStore.getState().projects.length
+      ) {
+        throw new Error("Persisted backup does not match restored state");
+      }
+    } catch {
+      setPendingBackup(null);
+      setStatus(null);
+      setError(
+        "Progress was restored for this session but could not be saved to browser storage (storage may be full)."
+      );
+      return;
+    }
     setPendingBackup(null);
     setStatus("Progress restored.");
     setError(null);
