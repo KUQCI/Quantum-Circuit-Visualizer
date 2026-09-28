@@ -588,7 +588,8 @@ export const useCircuitStore = create<CircuitState>()(
           0,
           ...get().circuit.operations.map((o) => o.column)
         );
-        const { id: _omit, ...rest } = op;
+        const { id: operationId, ...rest } = op;
+        void operationId;
         get().addOperation({ ...rest, column: maxCol + 1 });
       },
 

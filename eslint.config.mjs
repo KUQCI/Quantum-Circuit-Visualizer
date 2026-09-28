@@ -7,7 +7,7 @@ const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-  { ignores: [".next/**", "out/**", "node_modules/**"] },
+  { ignores: [".next/**", "out/**", "node_modules/**", "next-env.d.ts"] },
 ];
 
 export default config;
