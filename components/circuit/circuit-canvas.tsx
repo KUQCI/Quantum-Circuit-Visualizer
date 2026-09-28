@@ -55,6 +55,7 @@ import {
   ChevronsDown,
 } from "lucide-react";
 import type { Circuit, Operation } from "@/lib/circuit-schema";
+import { ParameterBindingsPanel } from "@/components/circuit/parameter-bindings-panel";
 
 interface DropPosition {
   column: number;
@@ -1413,6 +1414,11 @@ export function CircuitCanvas({
               </div>
             </div>
           )}
+        {variant === "learning" && !readOnly && (
+          <div className="border-t border-[var(--color-border)] px-4 py-3">
+            <ParameterBindingsPanel />
+          </div>
+        )}
       </div>
 
       <ManageRegistersDialog open={registersOpen} onOpenChange={setRegistersOpen} />

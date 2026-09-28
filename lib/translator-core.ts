@@ -288,6 +288,73 @@ export function parseParamExpression(expr: string): number {
   return evalExpr(tokens.slice(0, -1));
 }
 
+export function symbolNamesInExpression(expr: string): string[] {
+  let tokens: Token[];
+  try {
+    tokens = tokenize(expr);
+  } catch {
+    return [];
+  }
+
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const token of tokens) {
+    if (
+      token.kind === "ID" &&
+      token.value !== "pi" &&
+      !(token.value in FUNCS) &&
+      !seen.has(token.value)
+    ) {
+      seen.add(token.value);
+      names.push(token.value);
+    }
+  }
+  return names;
+}
+
+export function evaluateSymbolicExpression(
+  expr: string,
+  bindings: Record<string, number>
+): number {
+  const tokens = tokenize(expr).slice(0, -1);
+  const substituted: Token[] = [];
+
+  for (const token of tokens) {
+    if (
+      token.kind !== "ID" ||
+      token.value === "pi" ||
+      token.value in FUNCS
+    ) {
+      substituted.push(token);
+      continue;
+    }
+
+    const value = bindings[token.value];
+    if (
+      !Object.prototype.hasOwnProperty.call(bindings, token.value) ||
+      !Number.isFinite(value)
+    ) {
+      throw new Error(`Unbound parameter ${token.value}`);
+    }
+    if (value < 0) {
+      substituted.push(
+        { kind: "SYM", value: "-", pos: token.pos },
+        { kind: "SYM", value: "(", pos: token.pos },
+        { kind: "NUM", value: String(Math.abs(value)), pos: token.pos },
+        { kind: "SYM", value: ")", pos: token.pos }
+      );
+    } else {
+      substituted.push({ kind: "NUM", value: String(value), pos: token.pos });
+    }
+  }
+
+  const value = evalExpr(substituted);
+  if (!Number.isFinite(value)) {
+    throw new Error(`Invalid symbolic expression ${expr}`);
+  }
+  return value;
+}
+
 export function isSymbolicExpression(expr: string): boolean {
   let tokens: Token[];
   try {

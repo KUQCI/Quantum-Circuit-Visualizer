@@ -1,6 +1,6 @@
 import type { Circuit, Operation, Parameter } from "./circuit-schema";
 import { qubitIndexFromId } from "./circuit-schema";
-import { formatParam } from "./translator-core";
+import { formatParam, symbolNamesInExpression } from "./translator-core";
 
 export interface GenerateResult {
   success: true;
@@ -68,9 +68,7 @@ function symbolicNames(parameter: Parameter): string[] {
   const expression = parameter.symbol ?? parameter.display;
   if (!expression) return [];
 
-  const names: string[] =
-    expression.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [];
-  return names.filter((name, index) => name !== "pi" && names.indexOf(name) === index);
+  return symbolNamesInExpression(expression);
 }
 
 function buildSymbolMap(circuit: Circuit): {

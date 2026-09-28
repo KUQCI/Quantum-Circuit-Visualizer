@@ -93,6 +93,43 @@ describe("circuit store register + measure safety", () => {
     expect(undone.circuit.operations).toHaveLength(0);
   });
 
+  it("sets and clears parameter bindings through history", () => {
+    const store = useCircuitStore.getState();
+    const initialHistoryIndex = store.historyIndex;
+
+    store.setParameterBinding("theta", Math.PI / 2);
+    let state = useCircuitStore.getState();
+    expect(state.circuit.parameterBindings).toEqual({ theta: Math.PI / 2 });
+    expect(state.historyIndex).toBe(initialHistoryIndex + 1);
+
+    state.clearParameterBinding("theta");
+    state = useCircuitStore.getState();
+    expect(state.circuit.parameterBindings).toEqual({});
+    expect(state.historyIndex).toBe(initialHistoryIndex + 2);
+
+    state.undo();
+    expect(useCircuitStore.getState().circuit.parameterBindings).toEqual({
+      theta: Math.PI / 2,
+    });
+  });
+
+  it("previews parameter bindings without adding history", () => {
+    const store = useCircuitStore.getState();
+    const initialHistoryLength = store.history.length;
+    const initialHistoryIndex = store.historyIndex;
+
+    store.previewParameterBinding("theta", Math.PI / 4);
+    let state = useCircuitStore.getState();
+    expect(state.circuit.parameterBindings).toEqual({ theta: Math.PI / 4 });
+    expect(state.history.length).toBe(initialHistoryLength);
+    expect(state.historyIndex).toBe(initialHistoryIndex);
+
+    state.setParameterBinding("theta", Math.PI / 2);
+    state = useCircuitStore.getState();
+    expect(state.circuit.parameterBindings).toEqual({ theta: Math.PI / 2 });
+    expect(state.history.length).toBe(initialHistoryLength + 1);
+  });
+
   it("drops measure ops when their classical bit is removed", () => {
     const store = useCircuitStore.getState();
     store.addClassicalBit();

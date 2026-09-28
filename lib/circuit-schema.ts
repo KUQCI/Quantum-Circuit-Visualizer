@@ -35,6 +35,7 @@ export const CircuitSchema = z.object({
   qubits: z.array(QubitSchema).min(1).max(64),
   classicalBits: z.array(ClassicalBitSchema),
   operations: z.array(OperationSchema),
+  parameterBindings: z.record(z.number()).optional(),
   metadata: z.record(z.unknown()).optional(),
 });
 

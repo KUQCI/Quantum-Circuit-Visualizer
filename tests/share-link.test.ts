@@ -4,6 +4,7 @@ import { decodeShareParam, encodeCircuitToShare } from "@/lib/share-link";
 
 function sampleCircuit(): Circuit {
   const circuit = createEmptyCircuit("Symbolic Bell", 3, 1);
+  circuit.parameterBindings = { theta: Math.PI / 2 };
   circuit.operations = [
     {
       id: "h0",
@@ -91,6 +92,27 @@ describe("share links", () => {
       "op_2",
       "op_3",
     ]);
+    expect(decoded?.parameterBindings).toEqual({ theta: Math.PI / 2 });
+  });
+
+  it("decodes legacy payloads without parameter bindings", () => {
+    const encoded = encodeCircuitToShare(bellCircuit());
+    const payload = JSON.parse(
+      Buffer.from(encoded.slice(encoded.indexOf(".") + 1), "base64url").toString()
+    );
+    delete payload.b;
+    const legacy = `s1.${Buffer.from(JSON.stringify(payload)).toString("base64url")}`;
+    expect(decodeShareParam(legacy)?.parameterBindings).toBeUndefined();
+  });
+
+  it("drops invalid parameter bindings while keeping finite values", () => {
+    const encoded = encodeCircuitToShare(bellCircuit());
+    const payload = JSON.parse(
+      Buffer.from(encoded.slice(encoded.indexOf(".") + 1), "base64url").toString()
+    );
+    payload.b = { theta: Math.PI, bad: "not-a-number", nan: null };
+    const invalid = `s1.${Buffer.from(JSON.stringify(payload)).toString("base64url")}`;
+    expect(decodeShareParam(invalid)?.parameterBindings).toEqual({ theta: Math.PI });
   });
 
   it("rejects tampered input", () => {
