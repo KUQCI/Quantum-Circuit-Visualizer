@@ -1857,7 +1857,7 @@ const LESSON_CONTENT: Record<
       {
         heading: "Bind before simulating",
         body:
-          "Place RX on q[0] and enter a numeric value for theta in the Inspector or code panel. The simulator should refuse an unbound symbol rather than silently treating it as zero.\n\nRead any warning badge and bind the parameter explicitly.",
+          "Place RX on q[0] and enter a numeric value for theta in the Inspector or code panel. The simulator should refuse an unbound symbol rather than silently treating it as zero.\n\nRead any warning badge and bind the parameter explicitly. You can also keep the symbol and bind it from the Parameters panel.",
         quantaNote: "No silent zeroes—Quanta likes honest experiments.",
       },
       {

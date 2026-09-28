@@ -13,6 +13,7 @@ import {
 } from "./quantum-state";
 import type { BackendId } from "./backends";
 import { clampNoiseModel, IDEAL_NOISE, type NoiseModel } from "./noise-model";
+import { bindCircuitParameters } from "./parameter-bindings";
 
 export interface HistogramEntry {
   label: string;
@@ -155,6 +156,7 @@ export function runCircuitShots(
   backendId: BackendId = "local-sampler",
   noise: NoiseModel = IDEAL_NOISE
 ): ExecutionResult {
+  circuit = bindCircuitParameters(circuit);
   const start = performance.now();
   const effectiveNoise = clampNoiseModel(noise);
   const numQubits = circuit.qubits.length;

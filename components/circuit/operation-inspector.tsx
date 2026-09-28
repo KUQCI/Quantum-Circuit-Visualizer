@@ -17,6 +17,7 @@ import { useEditorUiStore } from "@/store/editor-ui-store";
 import { StepTimeline } from "@/components/circuit/step-timeline";
 import { StepExplanationCard } from "@/components/circuit/step-explanation-card";
 import { WalkthroughPanel } from "@/components/learning/WalkthroughPanel";
+import { ParameterBindingsPanel } from "@/components/circuit/parameter-bindings-panel";
 
 function QubitSelect({
   label,
@@ -183,6 +184,9 @@ export function OperationInspector() {
         className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--color-surface)]"
         data-tour="inspector"
       >
+        <div className="shrink-0 space-y-3 border-b border-[var(--color-border)] p-3">
+          <ParameterBindingsPanel />
+        </div>
         {inspectMode && (
           <div className="shrink-0 space-y-3 overflow-y-auto border-b border-[var(--color-border)] p-3">
             {walkthroughContent}
@@ -279,6 +283,7 @@ export function OperationInspector() {
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3 text-xs">
+        <ParameterBindingsPanel />
         {walkthroughContent}
         {inspectContent}
         <InspectorField label="Type" value={selected.type.toUpperCase()} />

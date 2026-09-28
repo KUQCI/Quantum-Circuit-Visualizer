@@ -19,6 +19,7 @@ interface SharePayload {
   q: number;
   c: number;
   l?: ShareLabels;
+  b?: Record<string, number>;
   o: ShareOperation[];
 }
 
@@ -134,8 +135,28 @@ function createPayload(circuit: Circuit): SharePayload {
     q: circuit.qubits.length,
     c: circuit.classicalBits.length,
     ...(Object.keys(labels).length > 0 ? { l: labels } : {}),
+    ...(circuit.parameterBindings
+      ? { b: circuit.parameterBindings }
+      : {}),
     o: circuit.operations.map((operation) => createOperation(operation, circuit)),
   };
+}
+
+function readParameterBindings(
+  value: unknown
+): Record<string, number> | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const bindings: Record<string, number> = {};
+  for (const [name, binding] of Object.entries(value)) {
+    if (typeof binding === "number" && Number.isFinite(binding)) {
+      bindings[name] = binding;
+    }
+  }
+  return Object.keys(bindings).length > 0 ? bindings : undefined;
 }
 
 function readIndexes(value: unknown, count: number): number[] | null {
@@ -235,6 +256,7 @@ export function decodeShareParam(param: string): Circuit | null {
       id: `c${index}`,
       label: classicalLabels[index] ?? `c[${index}]`,
     }));
+    const parameterBindings = readParameterBindings(payload.b);
 
     const operations: Operation[] = [];
     for (const [index, tuple] of (payload.o as ShareOperation[]).entries()) {
@@ -295,6 +317,7 @@ export function decodeShareParam(param: string): Circuit | null {
       qubits,
       classicalBits,
       operations,
+      ...(parameterBindings ? { parameterBindings } : {}),
     });
     return validated.valid ? validated.circuit : null;
   } catch {

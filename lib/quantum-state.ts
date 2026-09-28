@@ -1,5 +1,6 @@
 import type { Circuit, Operation } from "./circuit-schema";
 import { qubitIndexFromId } from "./circuit-schema";
+import { bindCircuitParameters } from "./parameter-bindings";
 
 export interface Complex {
   re: number;
@@ -710,6 +711,7 @@ export function simulateCircuit(circuit: Circuit): QuantumStateResult {
 }
 
 function simulateCircuitInternal(circuit: Circuit): QuantumStateResult {
+  circuit = bindCircuitParameters(circuit);
   const numQubits = circuit.qubits.length;
 
   if (numQubits === 0) {
