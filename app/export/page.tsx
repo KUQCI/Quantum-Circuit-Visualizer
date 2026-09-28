@@ -115,7 +115,11 @@ export default function ExportPage() {
       <Card>
         <CardHeader>
           <CardTitle as="h2" className="text-base">Export format</CardTitle>
-          <CardDescription>{adapter.description}</CardDescription>
+          <CardDescription>
+            {adapter.description}
+            {language === "quantum-learn" &&
+              " Name rotation parameters x0, x1, and so on to bind them to input features instead of trainable params."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-wrap gap-2">

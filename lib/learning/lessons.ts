@@ -1946,7 +1946,7 @@ const LESSON_CONTENT: Record<
       {
         heading: "Encoding in quantum-learn",
         body:
-          "In KUQCI's quantum-learn, `QuantumFeatureMap.transform(features)` runs an encoding circuit for every row of a dataset and returns the resulting quantum features. The default map is angle encoding, but any circuit you build here can be exported as one.\n\nOpen the Code panel's quantum-learn tab to see your circuit as a PennyLane function.",
+          "In KUQCI's quantum-learn, `QuantumFeatureMap.transform(features)` runs an encoding circuit for every row of a dataset and returns the resulting quantum features. The default map is angle encoding, but any circuit you build here can be exported as one. Name a rotation angle `x0` to bind it to the first feature in the quantum-learn export.\n\nOpen the Code panel's quantum-learn tab to see your circuit as a PennyLane function.",
         quantaNote: "Export → quantum-learn tab whenever you want the Python behind a lesson.",
       },
     ],

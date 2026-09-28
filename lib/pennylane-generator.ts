@@ -74,10 +74,14 @@ function symbolicNames(parameter: Parameter): string[] {
 function buildSymbolMap(circuit: Circuit): {
   names: string[];
   symbols: Map<string, string>;
+  features: Map<string, number>;
+  maxFeatureIndex: number;
 } {
   const names: string[] = [];
   const symbols = new Map<string, string>();
+  const features = new Map<string, number>();
   const used = new Set<string>();
+  let maxFeatureIndex = -1;
 
   const sorted = [...circuit.operations].sort(
     (a, b) => a.column - b.column || a.id.localeCompare(b.id)
@@ -85,6 +89,13 @@ function buildSymbolMap(circuit: Circuit): {
   for (const op of sorted) {
     for (const parameter of op.parameters ?? []) {
       for (const raw of symbolicNames(parameter)) {
+        const featureMatch = raw.match(/^x_?(\d+)$/);
+        if (featureMatch) {
+          const index = Number(featureMatch[1]);
+          features.set(raw, index);
+          maxFeatureIndex = Math.max(maxFeatureIndex, index);
+          continue;
+        }
         if (symbols.has(raw)) continue;
         let identifier = sanitizeIdentifier(raw);
         let suffix = 2;
@@ -99,17 +110,21 @@ function buildSymbolMap(circuit: Circuit): {
     }
   }
 
-  return { names, symbols };
+  return { names, symbols, features, maxFeatureIndex };
 }
 
 function formatParameter(
   parameter: Parameter | undefined,
-  symbols: Map<string, string>
+  symbols: Map<string, string>,
+  features: Map<string, number>
 ): string {
   if (!parameter) return "";
   const expression = parameter.display ?? parameter.symbol ?? formatParam(parameter.value);
   return expression.replace(/[A-Za-z_][A-Za-z0-9_]*/g, (name) => {
-    return symbols.get(name) ?? name;
+    const featureIndex = features.get(name);
+    return featureIndex === undefined
+      ? symbols.get(name) ?? name
+      : `features[${featureIndex}]`;
   });
 }
 
@@ -126,13 +141,14 @@ function pairWires(op: Operation): [number, number] | null {
 
 function emitGate(
   op: Operation,
-  symbols: Map<string, string>
-): { line: string } | { warning: string } {
+  symbols: Map<string, string>,
+  features: Map<string, number>
+): { line: string } | { lines: string[] } | { warning: string } {
   const gate = op.type;
   const target = op.targets[0];
   const targetIndex = target ? qubitIndexFromId(target) : null;
   const parameter = (index = 0) =>
-    formatParameter(op.parameters?.[index], symbols) || "0";
+    formatParameter(op.parameters?.[index], symbols, features) || "0";
 
   if (gate === "barrier") {
     return { line: `qml.Barrier(wires=range(n_qubits))` };
@@ -145,8 +161,11 @@ function emitGate(
     };
   }
 
-  if (["reset", "rccx", "rc3x", "cu", "cu3"].includes(gate)) {
-    return { warning: `Gate ${gate} is not supported by quantum-learn export` };
+  if (gate === "reset") {
+    return {
+      warning:
+        "reset is not representable in a PennyLane ansatz — remove it or use qml.measure(reset=True) manually",
+    };
   }
 
   if (targetIndex === null) {
@@ -223,6 +242,73 @@ function emitGate(
     };
   }
 
+  if (gate === "cu3" || gate === "cu") {
+    const control = op.controls[0];
+    if (!control || !op.targets[0]) {
+      return { warning: `${gate} ${op.id}: needs control and target` };
+    }
+    const controlIndex = qubitIndexFromId(control);
+    const targetIndex = qubitIndexFromId(op.targets[0]);
+    const theta = parameter(0);
+    const phi = parameter(1);
+    const lam = parameter(2);
+    const lines = [
+      ...(gate === "cu"
+        ? [`qml.PhaseShift(${parameter(3)}, wires=${controlIndex})`]
+        : []),
+      `qml.ctrl(qml.U3(${theta}, ${phi}, ${lam}, wires=${targetIndex}), control=${controlIndex})`,
+    ];
+    return { lines };
+  }
+
+  if (gate === "rccx" || gate === "rc3x") {
+    const expectedControls = gate === "rccx" ? 2 : 3;
+    if (op.controls.length < expectedControls || !op.targets[0]) {
+      return {
+        warning: `${gate} ${op.id}: needs ${expectedControls} controls and a target`,
+      };
+    }
+    const controls = op.controls.map(qubitIndexFromId);
+    const target = qubitIndexFromId(op.targets[0]);
+    const quarter = "pi/4";
+    const lines =
+      gate === "rccx"
+        ? [
+            "# rccx (relative-phase Toffoli)",
+            `qml.U2(0, pi, wires=${target})`,
+            `qml.PhaseShift(${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[1]}, ${target}])`,
+            `qml.PhaseShift(-${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[0]}, ${target}])`,
+            `qml.PhaseShift(${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[1]}, ${target}])`,
+            `qml.PhaseShift(-${quarter}, wires=${target})`,
+            `qml.U2(0, pi, wires=${target})`,
+          ]
+        : [
+            "# rc3x",
+            `qml.U2(0, pi, wires=${target})`,
+            `qml.PhaseShift(${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[2]}, ${target}])`,
+            `qml.PhaseShift(-${quarter}, wires=${target})`,
+            `qml.U2(0, pi, wires=${target})`,
+            `qml.CNOT(wires=[${controls[0]}, ${target}])`,
+            `qml.PhaseShift(${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[1]}, ${target}])`,
+            `qml.PhaseShift(-${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[0]}, ${target}])`,
+            `qml.PhaseShift(${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[1]}, ${target}])`,
+            `qml.PhaseShift(-${quarter}, wires=${target})`,
+            `qml.U2(0, pi, wires=${target})`,
+            `qml.PhaseShift(${quarter}, wires=${target})`,
+            `qml.CNOT(wires=[${controls[2]}, ${target}])`,
+            `qml.PhaseShift(-${quarter}, wires=${target})`,
+            `qml.U2(0, pi, wires=${target})`,
+          ];
+    return { lines };
+  }
+
   if (gate === "cswap") {
     const targets = op.targets.map(qubitIndexFromId);
     const control = op.controls[0];
@@ -266,12 +352,14 @@ export function generatePennylaneAnsatz(
   circuit: Circuit
 ): PennylaneGenerateResult {
   try {
-    const { names, symbols } = buildSymbolMap(circuit);
+    const { names, symbols, features, maxFeatureIndex } = buildSymbolMap(circuit);
+    const hasFeatures = features.size > 0;
     const lines = [
       '"""Ansatz exported from QCI Quantum Circuit Visualizer for quantum-learn.',
       "",
       "Symbolic circuit parameters become trainable entries of `params`",
       "(order: PARAM_NAMES). Numeric parameters are kept as constants.",
+      "Symbols named x0, x1, … read the input features (features[i]); other symbols are trainable params.",
       '"""',
       "import pennylane as qml",
       "from numpy import pi",
@@ -282,8 +370,12 @@ export function generatePennylaneAnsatz(
       "",
       "",
       "def ansatz(features, params, n_qubits=N_QUBITS):",
-      "    # Data encoding — remove if your circuit already encodes features",
-      "    qml.AngleEmbedding(features, wires=range(n_qubits))",
+      ...(hasFeatures
+        ? []
+        : [
+            "    # Data encoding — remove if your circuit already encodes features",
+            "    qml.AngleEmbedding(features, wires=range(n_qubits))",
+          ]),
     ];
 
     if (names.length > 0) {
@@ -295,33 +387,60 @@ export function generatePennylaneAnsatz(
     }
 
     const warnings: string[] = [];
+    if (maxFeatureIndex >= circuit.qubits.length) {
+      warnings.push(
+        `Feature index x${maxFeatureIndex} exceeds N_QUBITS (${circuit.qubits.length}) — make sure your data has at least ${maxFeatureIndex + 1} columns`
+      );
+    }
     const sorted = [...circuit.operations].sort(
       (a, b) => a.column - b.column || a.id.localeCompare(b.id)
     );
     for (const op of sorted) {
-      const emitted = emitGate(op, symbols);
+      const emitted = emitGate(op, symbols, features);
       if ("line" in emitted) lines.push(`    ${emitted.line}`);
+      else if ("lines" in emitted) {
+        lines.push(...emitted.lines.map((line) => `    ${line}`));
+      }
       else if (!warnings.includes(emitted.warning)) warnings.push(emitted.warning);
     }
 
-    lines.push(
-      "",
-      "",
-      "# --- Train it with quantum-learn ---",
-      '# pip install "quantum-learn[pennylane]"',
-      "import numpy as np",
-      "import pandas as pd",
-      "from qlearn import VariationalQuantumClassifier",
-      "",
-      "clf = VariationalQuantumClassifier(",
-      '    fit_kwargs={"n_qubits": N_QUBITS, "ansatz": ansatz},',
-      ")",
-      "# X_train: pandas DataFrame with N_QUBITS feature columns, y_train: pandas Series",
-      "# params = np.random.uniform(0, 2 * pi, N_PARAMS)",
-      "# clf.fit(X_train, y_train, params=params)",
-      "# print(clf.predict(X_test))",
-      ""
-    );
+    if (hasFeatures && names.length === 0) {
+      lines.push(
+        "",
+        "",
+        "def feature_map(features, n_qubits=N_QUBITS):",
+        '    """quantum-learn QuantumFeatureMap-compatible (called as feature_map(row, qubits))."""',
+        "    ansatz(features, [], n_qubits)",
+        "",
+        "",
+        "# --- Use it as a feature map with quantum-learn ---",
+        '# pip install "quantum-learn[pennylane]"',
+        "import pandas as pd",
+        "from qlearn import QuantumFeatureMap",
+        "# X: pandas DataFrame with N_QUBITS feature columns",
+        "# X_q = QuantumFeatureMap().transform(X, feature_map=feature_map, qubits=N_QUBITS)",
+        ""
+      );
+    } else {
+      lines.push(
+        "",
+        "",
+        "# --- Train it with quantum-learn ---",
+        '# pip install "quantum-learn[pennylane]"',
+        "import numpy as np",
+        "import pandas as pd",
+        "from qlearn import VariationalQuantumClassifier",
+        "",
+        "clf = VariationalQuantumClassifier(",
+        '    fit_kwargs={"n_qubits": N_QUBITS, "ansatz": ansatz},',
+        ")",
+        "# X_train: pandas DataFrame with N_QUBITS feature columns, y_train: pandas Series",
+        "# params = np.random.uniform(0, 2 * pi, N_PARAMS)",
+        "# clf.fit(X_train, y_train, params=params)",
+        "# print(clf.predict(X_test))",
+        ""
+      );
+    }
 
     return { success: true, code: lines.join("\n"), warnings };
   } catch (err) {
