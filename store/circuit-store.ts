@@ -86,6 +86,7 @@ interface CircuitState {
     classicalBitId?: string
   ) => string;
   updateOperation: (id: string, updates: Partial<Operation>) => void;
+  previewParameterBinding: (name: string, value: number) => void;
   setParameterBinding: (name: string, value: number) => void;
   clearParameterBinding: (name: string) => void;
   removeOperation: (id: string) => void;
@@ -497,6 +498,18 @@ export const useCircuitStore = create<CircuitState>()(
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
+      },
+
+      previewParameterBinding: (name, value) => {
+        set((state) => ({
+          circuit: {
+            ...state.circuit,
+            parameterBindings: {
+              ...state.circuit.parameterBindings,
+              [name]: value,
+            },
+          },
+        }));
       },
 
       setParameterBinding: (name, value) => {

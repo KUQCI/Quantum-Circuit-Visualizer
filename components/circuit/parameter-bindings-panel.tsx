@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { circuitSymbols } from "@/lib/parameter-bindings";
 import { formatParam, parseParamExpression } from "@/lib/translator-core";
@@ -12,12 +12,16 @@ export function ParameterBindingsPanel() {
   const setParameterBinding = useCircuitStore(
     (state) => state.setParameterBinding
   );
+  const previewParameterBinding = useCircuitStore(
+    (state) => state.previewParameterBinding
+  );
   const clearParameterBinding = useCircuitStore(
     (state) => state.clearParameterBinding
   );
   const symbols = useMemo(() => circuitSymbols(circuit), [circuit]);
   const bindings = circuit.parameterBindings;
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const lastSliderCommit = useRef<Record<string, number | undefined>>({});
 
   useEffect(() => {
     setDrafts((current) => {
@@ -81,9 +85,31 @@ export function ParameterBindingsPanel() {
                   step="0.01"
                   value={bound ? value : 0}
                   aria-label={`Value of ${symbol}`}
-                  onChange={(event) =>
-                    setParameterBinding(symbol, Number(event.target.value))
-                  }
+                  onChange={(event) => {
+                    previewParameterBinding(symbol, Number(event.target.value));
+                  }}
+                  onPointerDown={() => {
+                    lastSliderCommit.current[symbol] = undefined;
+                  }}
+                  onPointerUp={(event) => {
+                    const nextValue = Number(event.currentTarget.value);
+                    if (lastSliderCommit.current[symbol] === nextValue) return;
+                    lastSliderCommit.current[symbol] = nextValue;
+                    setParameterBinding(symbol, nextValue);
+                  }}
+                  onKeyUp={(event) => {
+                    if (!event.key.startsWith("Arrow")) return;
+                    const nextValue = Number(event.currentTarget.value);
+                    if (lastSliderCommit.current[symbol] === nextValue) return;
+                    lastSliderCommit.current[symbol] = nextValue;
+                    setParameterBinding(symbol, nextValue);
+                  }}
+                  onBlur={(event) => {
+                    const nextValue = Number(event.currentTarget.value);
+                    if (lastSliderCommit.current[symbol] === nextValue) return;
+                    lastSliderCommit.current[symbol] = nextValue;
+                    setParameterBinding(symbol, nextValue);
+                  }}
                   className={cn(
                     "h-1.5 min-w-0 flex-1 accent-[var(--color-brand)]",
                     !bound && "opacity-50"
@@ -111,7 +137,7 @@ export function ParameterBindingsPanel() {
                 type="text"
                 value={drafts[symbol] ?? ""}
                 placeholder="unbound"
-                aria-label={`Value of ${symbol}`}
+                aria-label={`Expression for ${symbol}`}
                 onChange={(event) =>
                   setDrafts((current) => ({
                     ...current,

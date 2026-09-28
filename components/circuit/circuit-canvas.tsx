@@ -1414,9 +1414,11 @@ export function CircuitCanvas({
               </div>
             </div>
           )}
-        <div className="border-t border-[var(--color-border)] px-4 py-3">
-          <ParameterBindingsPanel />
-        </div>
+        {variant === "learning" && !readOnly && (
+          <div className="border-t border-[var(--color-border)] px-4 py-3">
+            <ParameterBindingsPanel />
+          </div>
+        )}
       </div>
 
       <ManageRegistersDialog open={registersOpen} onOpenChange={setRegistersOpen} />
