@@ -520,7 +520,6 @@ export function CircuitCanvas({
     updateOperation,
     relocateOperation,
     duplicateOperation,
-    copyOperation,
     pasteOperation,
     alignOperationsLeft,
     addQubit,

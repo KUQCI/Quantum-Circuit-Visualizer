@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getQuantaAssetUrl } from "@/lib/quanta-assets";
 
@@ -143,10 +144,12 @@ export function QuantaEntrance() {
         transition: `opacity ${FADE_MS}ms ease-out`,
       }}
     >
-      <img
+      <Image
         src={getQuantaAssetUrl("introPoster")}
         alt=""
         aria-hidden="true"
+        fill
+        unoptimized
         className="absolute inset-0 h-full w-full object-cover mix-blend-screen"
         style={{ opacity: phase === "poster" ? 1 : 0, transition: "opacity 200ms" }}
       />

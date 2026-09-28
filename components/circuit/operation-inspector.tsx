@@ -163,7 +163,7 @@ export function OperationInspector() {
     } else {
       setParamDraft("");
     }
-  }, [selected?.id, selected?.parameters, selected?.type]);
+  }, [selected]);
 
   const inspectContent = inspectMode ? (
     <>
