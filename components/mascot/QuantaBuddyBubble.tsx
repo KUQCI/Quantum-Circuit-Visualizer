@@ -37,6 +37,7 @@ export function QuantaBuddyBubble({
   const dismiss = useQuantaPopoutStore((state) => state.dismiss);
   const [reducedMotion, setReducedMotion] = useState(false);
   const timeoutRef = useRef<number | null>(null);
+  const hoveredRef = useRef(false);
   const startedAtRef = useRef(0);
   const remainingRef = useRef(MIN_READ_MS);
   const displayedText = useTypedText(message?.text ?? null, reducedMotion);
@@ -73,10 +74,11 @@ export function QuantaBuddyBubble({
 
   useEffect(() => {
     remainingRef.current = readingTime(message?.text ?? "");
+    hoveredRef.current = false;
   }, [message?.id, message?.text]);
 
   useEffect(() => {
-    if (typing) {
+    if (typing || hoveredRef.current) {
       clearDismissTimer();
       return;
     }
@@ -87,6 +89,7 @@ export function QuantaBuddyBubble({
   if (!message) return null;
 
   const onMouseEnter = () => {
+    hoveredRef.current = true;
     if (timeoutRef.current === null) return;
     remainingRef.current = Math.max(
       0,
@@ -96,6 +99,7 @@ export function QuantaBuddyBubble({
   };
 
   const onMouseLeave = () => {
+    hoveredRef.current = false;
     if (typing) return;
     scheduleDismiss();
   };
