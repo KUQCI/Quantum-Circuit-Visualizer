@@ -11,6 +11,7 @@ describe("Quanta chat store", () => {
       error: null,
       usage: { promptTokens: 0, outputTokens: 0, requests: 0 },
       lastSentAt: 0,
+      generation: 0,
     });
   });
 
@@ -60,5 +61,28 @@ describe("Quanta chat store", () => {
 
     expect(useQuantaChatStore.getState().messages).toEqual([]);
     expect(useQuantaChatStore.getState().usage.requests).toBe(1);
+  });
+
+  it("returns message ids and removes messages", () => {
+    const firstId = useQuantaChatStore.getState().addMessage({
+      role: "user",
+      text: "Remove me",
+    });
+    const secondId = useQuantaChatStore.getState().addMessage({
+      role: "quanta",
+      text: "Keep me",
+    });
+
+    expect(firstId).toEqual(expect.any(Number));
+    useQuantaChatStore.getState().removeMessage(firstId);
+    expect(useQuantaChatStore.getState().messages.map((message) => message.id)).toEqual([
+      secondId,
+    ]);
+  });
+
+  it("increments generation when clearing messages", () => {
+    const before = useQuantaChatStore.getState().generation;
+    useQuantaChatStore.getState().clearMessages();
+    expect(useQuantaChatStore.getState().generation).toBe(before + 1);
   });
 });

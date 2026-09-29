@@ -12,6 +12,7 @@ import {
   buildRequestBody,
   canSend,
   GeminiError,
+  MAX_QUESTION_CHARS,
 } from "@/lib/quanta-chat/gemini";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
@@ -23,6 +24,15 @@ const STARTERS = [
   "Explain my circuit",
   "What is superposition?",
 ];
+
+function isAbortError(error: unknown): boolean {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
 
 export function QuantaChat() {
   const pathname = usePathname();
@@ -44,6 +54,7 @@ export function QuantaChat() {
   const setError = useQuantaChatStore((state) => state.setError);
   const addUsage = useQuantaChatStore((state) => state.addUsage);
   const clearMessages = useQuantaChatStore((state) => state.clearMessages);
+  const removeMessage = useQuantaChatStore((state) => state.removeMessage);
   const markSent = useQuantaChatStore((state) => state.markSent);
   const [keyDraft, setKeyDraft] = useState("");
   const [editingKey, setEditingKey] = useState(false);
@@ -51,6 +62,7 @@ export function QuantaChat() {
   const [now, setNow] = useState(() => Date.now());
   const keyInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const showKeyForm = !apiKey || editingKey;
 
   const lesson = useMemo(() => {
@@ -98,16 +110,27 @@ export function QuantaChat() {
 
   const send = async (value = text) => {
     const userText = value.trim();
-    if (!userText || pending || !apiKey || rateLimited) return;
+    if (
+      !userText ||
+      userText.length > MAX_QUESTION_CHARS ||
+      pending ||
+      !apiKey ||
+      rateLimited
+    ) {
+      return;
+    }
     const history = messages.map(({ role, text: messageText }) => ({
       role,
       text: messageText,
     }));
     setText("");
     setError(null);
-    addMessage({ role: "user", text: userText });
+    const userMessageId = addMessage({ role: "user", text: userText });
     markSent();
     setPending(true);
+    const gen = useQuantaChatStore.getState().generation;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     try {
       const context = buildPageContext({
         path,
@@ -119,19 +142,36 @@ export function QuantaChat() {
       });
       const response = await askGemini(
         apiKey,
-        buildRequestBody({ context, history, userText })
+        buildRequestBody({ context, history, userText }),
+        fetch,
+        controller.signal
       );
+      if (useQuantaChatStore.getState().generation !== gen) return;
       addMessage({ role: "quanta", text: response.text });
       addUsage(response.promptTokens, response.outputTokens);
     } catch (caught) {
+      if (isAbortError(caught)) return;
+      if (useQuantaChatStore.getState().generation !== gen) return;
+      removeMessage(userMessageId);
+      setText(userText);
       setError(
         caught instanceof GeminiError
           ? caught.userMessage
           : "Couldn't reach Gemini. Check your connection."
       );
     } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
       setPending(false);
     }
+  };
+
+  const clearChat = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    clearMessages();
+    setText("");
   };
 
   return (
@@ -274,6 +314,7 @@ export function QuantaChat() {
               <textarea
                 ref={textareaRef}
                 value={text}
+                maxLength={MAX_QUESTION_CHARS}
                 onChange={(event) => setText(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
@@ -285,6 +326,11 @@ export function QuantaChat() {
                 placeholder="Ask Quanta…"
                 className="min-h-10 flex-1 resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm outline-none focus:border-[var(--color-brand)]"
               />
+              {text.length >= 400 && (
+                <span className="pb-2 text-[11px] text-[var(--color-muted-foreground)]">
+                  {text.length}/{MAX_QUESTION_CHARS}
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => void send()}
@@ -302,7 +348,7 @@ export function QuantaChat() {
               </span>
               <button
                 type="button"
-                onClick={clearMessages}
+                onClick={clearChat}
                 className="inline-flex shrink-0 items-center gap-1 hover:text-[var(--color-foreground)]"
               >
                 <Trash2 className="h-3 w-3" aria-hidden />

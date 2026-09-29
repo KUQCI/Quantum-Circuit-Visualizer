@@ -1,6 +1,7 @@
 import { QUANTA_SYSTEM_PROMPT } from "@/lib/quanta-chat/system-prompt";
 
 export const GEMINI_MODEL = "gemini-2.5-flash-lite";
+export const MAX_QUESTION_CHARS = 500;
 export const GEMINI_ENDPOINT = (model: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
@@ -28,7 +29,7 @@ export function buildRequestBody({
     role: "user",
     parts: [
       {
-        text: `PAGE CONTEXT:\n${context}\n\nQUESTION: ${userText.trim().slice(0, 500)}`,
+        text: `PAGE CONTEXT:\n${context}\n\nQUESTION: ${userText.trim().slice(0, MAX_QUESTION_CHARS)}`,
       },
     ],
   });
@@ -61,11 +62,8 @@ export function parseGeminiResponse(json: unknown): GeminiResponse {
     };
   };
   const candidate = value.candidates?.[0];
-  if (!candidate) {
-    throw new Error("Gemini returned no candidates.");
-  }
   const text =
-    candidate.content?.parts
+    candidate?.content?.parts
       ?.map((part) => part.text ?? "")
       .join("") ?? "";
   if (!text && value.promptFeedback?.blockReason) {
@@ -74,6 +72,9 @@ export function parseGeminiResponse(json: unknown): GeminiResponse {
       promptTokens: value.usageMetadata?.promptTokenCount ?? 0,
       outputTokens: value.usageMetadata?.candidatesTokenCount ?? 0,
     };
+  }
+  if (!candidate) {
+    throw new Error("Gemini returned no candidates.");
   }
   return {
     text,
@@ -92,10 +93,20 @@ export class GeminiError extends Error {
   }
 }
 
+function isAbortError(error: unknown): boolean {
+  return (
+    error !== null &&
+    typeof error === "object" &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
+
 export async function askGemini(
   apiKey: string,
   body: ReturnType<typeof buildRequestBody>,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
+  signal?: AbortSignal
 ): Promise<GeminiResponse> {
   let response: Response;
   try {
@@ -106,8 +117,10 @@ export async function askGemini(
         "x-goog-api-key": apiKey,
       },
       body: JSON.stringify(body),
+      signal,
     });
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     throw new GeminiError("Couldn't reach Gemini. Check your connection.");
   }
 
@@ -126,6 +139,7 @@ export async function askGemini(
   try {
     return parseGeminiResponse(await response.json());
   } catch (error) {
+    if (isAbortError(error)) throw error;
     if (error instanceof GeminiError) throw error;
     throw new GeminiError("Gemini returned an invalid response.");
   }
