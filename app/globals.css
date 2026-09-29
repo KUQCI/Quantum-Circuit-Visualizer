@@ -1741,4 +1741,10 @@ button:disabled,
   .quanta-burst-eye {
     display: none;
   }
+
+  .quanta-burst-poof {
+    animation: none;
+    transform: scale(3);
+    opacity: 0.85;
+  }
 }

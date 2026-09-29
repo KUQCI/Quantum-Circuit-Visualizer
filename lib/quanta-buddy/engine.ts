@@ -147,7 +147,7 @@ export class QuantaBuddyEngine {
 
   private pokeTimes: number[] = [];
   private throwTimes: number[] = [];
-  private respawnDeadline: number | null = null;
+  private respawnDeadline: number | "pending" | null = null;
   private pendingBurst: BuddyBurst | null = null;
 
   constructor(opts: {
@@ -390,7 +390,10 @@ export class QuantaBuddyEngine {
   tick(time: number): BuddyFrame {
     this.currentTime = time;
     if (!this.presentState) {
-      if (this.respawnDeadline !== null && time >= this.respawnDeadline) {
+      if (this.respawnDeadline === "pending") {
+        // Measured on the tick clock so a stale frame timestamp can't cut it short.
+        this.respawnDeadline = time + BURST_RESPAWN_DELAY;
+      } else if (this.respawnDeadline !== null && time >= this.respawnDeadline) {
         this.call();
       }
       return this.frame();
@@ -477,7 +480,7 @@ export class QuantaBuddyEngine {
     this.throwTimes = [];
     this.presentState = false;
     this.stopSpecialActions();
-    this.respawnDeadline = this.currentTime + BURST_RESPAWN_DELAY;
+    this.respawnDeadline = "pending";
   }
 
   private enterByFalling(): void {
