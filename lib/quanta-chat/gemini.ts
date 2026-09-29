@@ -2,6 +2,15 @@ import { QUANTA_SYSTEM_PROMPT } from "@/lib/quanta-chat/system-prompt";
 
 export const GEMINI_MODEL = "gemini-2.5-flash-lite";
 export const MAX_QUESTION_CHARS = 500;
+export const DEFAULT_GEMINI_API_KEY =
+  process.env.NEXT_PUBLIC_QUANTA_GEMINI_API_KEY?.trim() ?? "";
+
+export function resolveApiKey(
+  userKey: string,
+  defaultKey: string = DEFAULT_GEMINI_API_KEY
+): string {
+  return userKey || defaultKey;
+}
 export const GEMINI_ENDPOINT = (model: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 

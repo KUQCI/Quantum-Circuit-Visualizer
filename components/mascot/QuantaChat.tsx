@@ -11,8 +11,10 @@ import {
   askGemini,
   buildRequestBody,
   canSend,
+  DEFAULT_GEMINI_API_KEY,
   GeminiError,
   MAX_QUESTION_CHARS,
+  resolveApiKey,
 } from "@/lib/quanta-chat/gemini";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
@@ -63,7 +65,8 @@ export function QuantaChat() {
   const keyInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const showKeyForm = !apiKey || editingKey;
+  const effectiveKey = resolveApiKey(apiKey);
+  const showKeyForm = !effectiveKey || editingKey;
 
   const lesson = useMemo(() => {
     const match = path.match(/^\/learn\/([^/]+)$/);
@@ -114,7 +117,7 @@ export function QuantaChat() {
       !userText ||
       userText.length > MAX_QUESTION_CHARS ||
       pending ||
-      !apiKey ||
+      !effectiveKey ||
       rateLimited
     ) {
       return;
@@ -141,7 +144,7 @@ export function QuantaChat() {
         levelTitle: getLevelTitle(getLevelFromXp(totalXp)),
       });
       const response = await askGemini(
-        apiKey,
+        effectiveKey,
         buildRequestBody({ context, history, userText }),
         fetch,
         controller.signal
@@ -207,8 +210,9 @@ export function QuantaChat() {
       {showKeyForm ? (
         <div className="space-y-3 overflow-y-auto p-4 text-sm">
           <p>
-            Paste your own Google Gemini API key. It is stored only in this
-            browser and sent only to Google.
+            {DEFAULT_GEMINI_API_KEY
+              ? "Quanta uses a shared Gemini key by default. Paste your own Google Gemini API key to use your own quota. It is stored only in this browser and sent only to Google."
+              : "Paste your own Google Gemini API key. It is stored only in this browser and sent only to Google."}
           </p>
           <a
             href="https://aistudio.google.com/apikey"
