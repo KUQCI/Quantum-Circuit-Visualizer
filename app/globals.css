@@ -1104,6 +1104,159 @@ button:disabled,
   background: var(--color-error-subtle);
 }
 
+/* ── Desktop buddy speech bubble ── */
+.quanta-buddy-bubble {
+  --quanta-accent: var(--color-brand);
+  --quanta-tail-x: 50%;
+  position: fixed;
+  background:
+    radial-gradient(
+      120% 140% at 0% 0%,
+      color-mix(in srgb, var(--quanta-accent) 18%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-card) 92%, var(--color-foreground) 8%),
+      var(--color-card)
+    );
+  border-color: color-mix(in srgb, var(--quanta-accent) 55%, var(--color-border));
+  box-shadow:
+    0 18px 44px rgb(0 0 0 / 0.38),
+    0 0 26px color-mix(in srgb, var(--quanta-accent) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-foreground) 10%, transparent);
+  animation: quanta-buddy-bubble-in 320ms cubic-bezier(0.22, 1.25, 0.36, 1) both;
+}
+
+.quanta-buddy-bubble.quanta-bubble-default {
+  --quanta-accent: var(--color-brand);
+}
+
+.quanta-buddy-bubble.quanta-bubble-hint {
+  --quanta-accent: var(--color-status);
+}
+
+.quanta-buddy-bubble.quanta-bubble-success {
+  --quanta-accent: var(--color-success);
+}
+
+.quanta-buddy-bubble.quanta-bubble-error {
+  --quanta-accent: var(--color-error-foreground);
+}
+
+.quanta-buddy-bubble-tail {
+  position: absolute;
+  left: var(--quanta-tail-x);
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  background: var(--color-card);
+  border-right: 1px solid
+    color-mix(in srgb, var(--quanta-accent) 55%, var(--color-border));
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--quanta-accent) 55%, var(--color-border));
+  border-bottom-right-radius: 3px;
+  transform: rotate(45deg);
+}
+
+.quanta-buddy-bubble[data-tail="top"] .quanta-buddy-bubble-tail {
+  top: -6px;
+  bottom: auto;
+  border-right: none;
+  border-bottom: none;
+  border-top: 1px solid
+    color-mix(in srgb, var(--quanta-accent) 55%, var(--color-border));
+  border-left: 1px solid
+    color-mix(in srgb, var(--quanta-accent) 55%, var(--color-border));
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 3px;
+}
+
+.quanta-buddy-bubble[data-tail="none"] .quanta-buddy-bubble-tail {
+  display: none;
+}
+
+.quanta-buddy-bubble-avatar {
+  background: color-mix(in srgb, var(--quanta-accent) 16%, var(--color-card));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--quanta-accent) 45%, transparent),
+    0 0 14px color-mix(in srgb, var(--quanta-accent) 28%, transparent);
+}
+
+.quanta-buddy-bubble-name {
+  margin-bottom: 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--quanta-accent) 78%, var(--color-foreground));
+}
+
+.quanta-buddy-bubble-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-foreground);
+  overflow-wrap: anywhere;
+}
+
+.quanta-buddy-bubble-caret {
+  display: inline-block;
+  width: 0.45em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--quanta-accent);
+  border-radius: 1px;
+  animation: quanta-buddy-caret 900ms steps(1, end) infinite;
+}
+
+.quanta-buddy-bubble-close {
+  color: var(--color-muted-foreground);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.quanta-buddy-bubble-close:hover {
+  background: color-mix(in srgb, var(--quanta-accent) 18%, transparent);
+  color: var(--color-foreground);
+}
+
+@keyframes quanta-buddy-bubble-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-1px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes quanta-buddy-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quanta-buddy-bubble {
+    animation: none;
+  }
+
+  .quanta-buddy-bubble-caret {
+    animation: none;
+  }
+}
+
 .quanta-popout {
   animation: quanta-popout-in 450ms cubic-bezier(0.22, 1.25, 0.36, 1) both;
 }

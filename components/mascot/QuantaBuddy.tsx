@@ -101,6 +101,13 @@ export function QuantaBuddy({
     );
     bubble.style.left = `${left}px`;
     bubble.style.top = `${top}px`;
+
+    const spriteCenterX = frame.x + 64;
+    const tailX = spriteCenterX - left;
+    const below = top > frame.y;
+    bubble.dataset.tail =
+      tailX < 14 || tailX > width - 14 ? "none" : below ? "top" : "bottom";
+    bubble.style.setProperty("--quanta-tail-x", `${tailX}px`);
   }, []);
 
   const handlePointerMove = useCallback((event: PointerEvent) => {
