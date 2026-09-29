@@ -168,3 +168,52 @@ export function pageHelpFor(pathname: string): string {
   }
   return "Explore this page and use the navigation to choose your next quantum-computing step.";
 }
+
+const pokeReactions = [
+  "Quack?",
+  "Quack! That tickles.",
+  "Hey! Quack. I'm a duck, not a button.",
+  "QUACK. Last warning, friend.",
+  "Q-QUACK!! I'm starting to feel loose...",
+];
+
+export function pokeReactionFor(pokes: number): string {
+  return (
+    pokeReactions[Math.min(pokes, pokeReactions.length) - 1] ?? pokeReactions[0]
+  );
+}
+
+const recoveryLines: Record<"poked" | "thrown", string[]> = {
+  poked: [
+    "Quack... I popped. Found both eyes, most of my feathers. Please poke gently.",
+    "That was one poke too many. Ducks are held together by pride and about forty feathers.",
+    "Reassembled! Is my left eye on the right? Feels like it.",
+  ],
+  thrown: [
+    "Quack! I'm a duck, not a frisbee. Give my feathers a minute to settle.",
+    "Ducks fly. Ducks do not get flung. I have relearned this the hard way.",
+    "Back in one piece. My eyes took the scenic route, but they're home.",
+  ],
+};
+
+export function recoveryLineFor(reason: "poked" | "thrown"): string {
+  const lines = recoveryLines[reason];
+  return lines[Math.floor(Math.random() * lines.length)] ?? lines[0];
+}
+
+const duckQuips = [
+  "Quack. Sorry, that one slipped out.",
+  "Fun fact: I'm a duck. A quantum one, but mostly a duck.",
+  "Superposition is easy. Try floating and paddling at the same time.",
+  "Rubber-duck debugging works better with a real duck. Talk to me.",
+  "If you're wondering, yes, I would like bread. Qubits are fine too.",
+  "I measured myself once. Still a duck. Wave function: fluffy.",
+  "Entanglement? Try untangling a duck from a fishing line.",
+  "Waddling is just walking with more personality.",
+];
+
+export function randomDuckQuip(): string {
+  return (
+    duckQuips[Math.floor(Math.random() * duckQuips.length)] ?? duckQuips[0]
+  );
+}

@@ -8,7 +8,11 @@ import {
   getLevelTitle,
   xpForNextLevel,
 } from "@/lib/learning/progress";
-import { greetingFor, tipsFor } from "@/lib/quanta-buddy/persona";
+import {
+  greetingFor,
+  randomDuckQuip,
+  tipsFor,
+} from "@/lib/quanta-buddy/persona";
 import type { QuantaBuddyEngine } from "@/lib/quanta-buddy/engine";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { useCircuitStore } from "@/store/circuit-store";
@@ -121,6 +125,13 @@ export function QuantaPersona({
           usedTipsByPath.current.set(path, used);
           tipCountByPath.current.set(path, count + 1);
           say({ text: tip, variant: "hint" });
+        } else if (
+          engine?.present &&
+          !engine.isBusy &&
+          !useQuantaPopoutStore.getState().message &&
+          Math.random() < 0.5
+        ) {
+          say({ text: randomDuckQuip(), variant: "default" });
         }
         schedule();
       }, 75000 + Math.floor(Math.random() * 45001));
