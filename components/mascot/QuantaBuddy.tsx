@@ -117,6 +117,11 @@ export function QuantaBuddy({
       event.type !== "pointercancel" && elapsed < 300 && distance < 6;
     if (isClick) {
       engineRef.current?.cancelDrag();
+      window.addEventListener(
+        "click",
+        (clickEvent) => clickEvent.stopPropagation(),
+        { capture: true, once: true }
+      );
       setContextMenu({ x: event.clientX, y: event.clientY });
     } else {
       engineRef.current?.pointerUp();
