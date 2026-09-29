@@ -38,6 +38,7 @@ const DRAG_VELOCITY_DECAY = 0.75;
 const FLOOR_FRICTION = 0.9;
 const MINIMUM_SLIDE_SPEED = 0.4;
 const GRAVITY = 0.3;
+const CEILING_BOUNCE = 0.3;
 
 const animations: Record<
   BuddyAnimation,
@@ -570,6 +571,10 @@ export class QuantaBuddyEngine {
 
       this.fallSpeed += GRAVITY;
       this.y += this.fallSpeed;
+      if (this.fallSpeed < 0 && this.y < 0) {
+        this.y = 0;
+        this.fallSpeed = Math.abs(this.fallSpeed) * CEILING_BOUNCE;
+      }
       this.reflectAtHorizontalEdge(0.5);
 
       if (this.y >= this.floorY) {

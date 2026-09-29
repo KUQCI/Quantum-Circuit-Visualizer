@@ -132,6 +132,32 @@ describe("QuantaBuddyEngine", () => {
     expect(frame.x).toBeLessThanOrEqual(viewport.width - 128 + 35);
   });
 
+  it("bounces off the top edge when thrown upward instead of leaving the screen", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+
+    engine.call();
+    engine.pointerDown(300, 300);
+    engine.tick(now);
+    now = 10;
+    engine.pointerMove(300, 50);
+    engine.pointerUp();
+
+    let frame = engine.tick(now);
+    let minY = frame.y;
+    for (let index = 1; index < 1000; index += 1) {
+      frame = engine.tick(now + index * 16);
+      minY = Math.min(minY, frame.y);
+      if (frame.y === viewport.height - 128) break;
+    }
+    expect(minY).toBe(0);
+    expect(frame.y).toBe(viewport.height - 128);
+  });
+
   it("walks off-screen when asked to leave", () => {
     const engine = new QuantaBuddyEngine({
       viewport,
