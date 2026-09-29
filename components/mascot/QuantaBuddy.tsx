@@ -21,6 +21,7 @@ import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
 import { QuantaPersona } from "@/components/mascot/QuantaPersona";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
+import { useQuantaChatStore } from "@/store/quanta-chat-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { cn } from "@/lib/utils";
@@ -52,10 +53,12 @@ export function QuantaBuddy({
   callRequest,
   reducedMotion,
   autoCall,
+  onChat,
 }: {
   callRequest: number;
   reducedMotion: boolean;
   autoCall: boolean;
+  onChat: () => void;
 }) {
   const pathname = usePathname();
   const spriteRef = useRef<HTMLDivElement>(null);
@@ -282,6 +285,10 @@ export function QuantaBuddy({
           });
           setContextMenu(null);
         }}
+        onChat={() => {
+          onChat();
+          setContextMenu(null);
+        }}
         onTip={() => {
           const tips = tipsFor(pathname);
           say({
@@ -350,6 +357,10 @@ export function QuantaBuddy({
             });
             setContextMenu(null);
           }}
+          onChat={() => {
+            onChat();
+            setContextMenu(null);
+          }}
           onTip={() => {
             const tips = tipsFor(pathname);
             say({
@@ -382,6 +393,7 @@ function BuddyContextMenu({
   onWalk,
   onLeave,
   onHelp,
+  onChat,
   onTip,
   onShortcuts,
   onReplayTour,
@@ -391,6 +403,7 @@ function BuddyContextMenu({
   onWalk: () => void;
   onLeave: () => void;
   onHelp: () => void;
+  onChat: () => void;
   onTip: () => void;
   onShortcuts: () => void;
   onReplayTour?: () => void;
@@ -445,6 +458,9 @@ function BuddyContextMenu({
       <p className="px-3 py-2 text-xs font-semibold text-[var(--color-foreground)]">
         Quanta
       </p>
+      <button type="button" className={itemClass} onClick={onChat} role="menuitem">
+        Ask me a question
+      </button>
       <button type="button" className={itemClass} onClick={onHelp} role="menuitem">
         What can I do here?
       </button>
@@ -515,6 +531,7 @@ export function QuantaBuddyHost() {
   const pathname = usePathname();
   const enabled = useQuantaBuddyStore((state) => state.enabled);
   const callRequest = useQuantaBuddyStore((state) => state.callRequest);
+  const setChatOpen = useQuantaChatStore((state) => state.setOpen);
   const hydrated = usePersistHydrated(useQuantaBuddyStore.persist);
   const desktop = useDesktopMediaQuery("(min-width: 768px)");
   const reducedMotion = useReducedMotion();
@@ -528,6 +545,7 @@ export function QuantaBuddyHost() {
       callRequest={callRequest}
       reducedMotion={reducedMotion}
       autoCall
+      onChat={() => setChatOpen(true)}
     />
   );
 }

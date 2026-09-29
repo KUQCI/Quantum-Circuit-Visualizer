@@ -8,6 +8,7 @@ import { isPathActive } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
+import { useQuantaChatStore } from "@/store/quanta-chat-store";
 import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { Button } from "@/components/ui/button";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
@@ -38,6 +39,7 @@ import {
   Bug,
   RotateCcw,
   Bird,
+  MessageCircle,
 } from "lucide-react";
 
 const primaryNav = [
@@ -69,6 +71,7 @@ export function AppHeader() {
   const enabled = useQuantaBuddyStore((state) => state.enabled);
   const toggle = useQuantaBuddyStore((state) => state.toggle);
   const callQuanta = useQuantaBuddyStore((state) => state.callQuanta);
+  const toggleChat = useQuantaChatStore((state) => state.toggleOpen);
 
   return (
     <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
@@ -184,6 +187,10 @@ export function AppHeader() {
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={toggleChat}>
+                <MessageCircle className="h-4 w-4" aria-hidden />
+                Ask Quanta
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={toggle}>
                 <Bird className="h-4 w-4" aria-hidden />
                 {enabled ? "Hide Quanta" : "Show Quanta"}
@@ -254,6 +261,10 @@ export function AppHeader() {
               <DropdownMenuItem onClick={() => setTourCompleted(false)}>
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={toggleChat}>
+                <MessageCircle className="h-4 w-4" aria-hidden />
+                Ask Quanta
               </DropdownMenuItem>
               <DropdownMenuItem onClick={toggle}>
                 <Bird className="h-4 w-4" aria-hidden />
