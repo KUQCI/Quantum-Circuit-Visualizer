@@ -8,6 +8,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { usePathname } from "next/navigation";
+import { normalizePath } from "@/lib/routes";
 import { buddySpriteUrl } from "@/lib/quanta-assets";
 import {
   QuantaBuddyEngine,
@@ -302,7 +303,7 @@ export function QuantaBuddyHost() {
   const desktop = useDesktopMediaQuery("(min-width: 768px)");
   const reducedMotion = useReducedMotion();
 
-  if (!hydrated || !enabled || pathname === "/embed" || !desktop) {
+  if (!hydrated || !enabled || normalizePath(pathname) === "/embed" || !desktop) {
     return null;
   }
 
