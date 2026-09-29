@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buddySpriteUrl,
   getQuantaAssetPath,
   getQuantaAssetUrl,
   quantaAssets,
@@ -8,6 +9,12 @@ import {
 } from "@/lib/quanta-assets";
 
 describe("quanta-assets", () => {
+  it("resolves buddy sprites through the public asset path", () => {
+    expect(buddySpriteUrl("idle_0")).toMatch(
+      /\/assets\/quanta\/buddy\/idle_0\.png$/
+    );
+  });
+
   it("exposes core semantic keys", () => {
     expect(quantaAssets.welcome).toContain("quanta-simple-duck.webp");
     expect(quantaAssets.learning).toContain("hatching-curious.webp");

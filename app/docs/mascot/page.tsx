@@ -99,6 +99,11 @@ export default function QuantaMascotDocsPage() {
             <code className="font-mono text-xs">/Quantum-Circuit-Visualizer/</code>{" "}
             base path works.
           </li>
+          <li>
+            The 128px buddy sprite set in{" "}
+            <code className="font-mono text-xs">assets/quanta/buddy/</code>{" "}
+            was ported from the Quanta browser extension.
+          </li>
         </ul>
       </section>
     </div>
