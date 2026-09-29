@@ -1,4 +1,5 @@
 import { QUANTA_SYSTEM_PROMPT } from "@/lib/quanta-chat/system-prompt";
+import { toPlainMath } from "@/lib/quanta-chat/plain-math";
 
 export const GEMINI_MODEL = "gemini-3.5-flash-lite";
 /** Used when GEMINI_MODEL returns 404 for the visitor's key. */
@@ -88,7 +89,7 @@ export function parseGeminiResponse(json: unknown): GeminiResponse {
     throw new Error("Gemini returned no candidates.");
   }
   return {
-    text,
+    text: toPlainMath(text),
     promptTokens: value.usageMetadata?.promptTokenCount ?? 0,
     outputTokens: value.usageMetadata?.candidatesTokenCount ?? 0,
   };
