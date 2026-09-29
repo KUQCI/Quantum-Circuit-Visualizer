@@ -1181,13 +1181,6 @@ button:disabled,
   display: none;
 }
 
-.quanta-buddy-bubble-avatar {
-  background: color-mix(in srgb, var(--quanta-accent) 16%, var(--color-card));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--quanta-accent) 45%, transparent),
-    0 0 14px color-mix(in srgb, var(--quanta-accent) 28%, transparent);
-}
-
 .quanta-buddy-bubble-name {
   margin-bottom: 0.125rem;
   font-size: 0.6875rem;
