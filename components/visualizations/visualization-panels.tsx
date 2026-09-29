@@ -7,6 +7,7 @@ import type { QuantumStateResult } from "@/lib/quantum-state";
 import { getOperationsUpToStep } from "@/lib/circuit-layout";
 import {
   canSplitVizPanels,
+  gridClassForCount,
   resolveVizMode,
   type LayoutTier,
 } from "@/lib/composer-layout";
@@ -22,8 +23,16 @@ import {
   PanelGroup,
   PanelResizeHandle,
 } from "react-resizable-panels";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VisualizationPanelsProps {
   circuit: Circuit;
@@ -41,6 +50,13 @@ const PANEL_LABELS: Record<VizPanelId, string> = {
   statevector: "Statevector",
   histogram: "Measurement Results",
 };
+
+const PANEL_IDS: VizPanelId[] = [
+  "probabilities",
+  "qsphere",
+  "statevector",
+  "histogram",
+];
 
 function PanelBody({
   panelId,
@@ -246,6 +262,67 @@ function VizLayoutControl({
   );
 }
 
+function PanelPicker({
+  vizPanels,
+  setVizPanel,
+}: {
+  vizPanels: Record<VizPanelId, boolean>;
+  setVizPanel: (panel: VizPanelId, show: boolean) => void;
+}) {
+  const visibleCount = PANEL_IDS.filter((panelId) => vizPanels[panelId]).length;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex h-6 shrink-0 items-center gap-1 rounded px-2 text-[10px] font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+          aria-label="Choose result panels"
+          title="Choose result panels"
+        >
+          <SlidersHorizontal className="h-3 w-3" />
+          <span>Panels</span>
+          <span className="rounded bg-[var(--color-secondary)] px-1 text-[9px]">
+            {visibleCount}/4
+          </span>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[12rem]">
+        <div className="px-2 py-1 text-[10px] font-semibold text-[var(--color-muted-foreground)]">
+          Show panels
+        </div>
+        {PANEL_IDS.map((panelId) => {
+          const checked = vizPanels[panelId];
+          const keepOneVisible = checked && visibleCount === 1;
+          return (
+            <DropdownMenuCheckboxItem
+              key={panelId}
+              checked={checked}
+              disabled={keepOneVisible}
+              title={keepOneVisible ? "Keep at least one panel" : undefined}
+              onCheckedChange={(nextChecked) => {
+                if (typeof nextChecked === "boolean") {
+                  setVizPanel(panelId, nextChecked);
+                }
+              }}
+            >
+              {PANEL_LABELS[panelId]}
+            </DropdownMenuCheckboxItem>
+          );
+        })}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={() => {
+            PANEL_IDS.forEach((panelId) => setVizPanel(panelId, true));
+          }}
+        >
+          Show all
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function VisualizationPanels({
   circuit,
   useVizTabs = false,
@@ -316,18 +393,18 @@ export function VisualizationPanels({
     return (
       <div ref={rootRef} className="flex h-full flex-col items-center justify-center gap-2 bg-[var(--color-background)] px-4 text-center text-xs text-[var(--color-muted-foreground)]">
         <p>All result panels are collapsed.</p>
-        <button
-          type="button"
-          className="text-[var(--color-brand)] hover:underline"
-          onClick={() => {
-            setVizPanel("probabilities", true);
-            setVizPanel("qsphere", true);
-            setVizPanel("statevector", true);
-            setVizPanel("histogram", true);
-          }}
-        >
-          Restore result panels
-        </button>
+        <div className="flex items-center gap-2">
+          <PanelPicker vizPanels={vizPanels} setVizPanel={setVizPanel} />
+          <button
+            type="button"
+            className="text-[var(--color-brand)] hover:underline"
+            onClick={() => {
+              PANEL_IDS.forEach((panelId) => setVizPanel(panelId, true));
+            }}
+          >
+            Restore result panels
+          </button>
+        </div>
       </div>
     );
   }
@@ -361,6 +438,7 @@ export function VisualizationPanels({
               </button>
             ))}
           </div>
+          <PanelPicker vizPanels={vizPanels} setVizPanel={setVizPanel} />
           {layoutTier !== "mobile" && (
             <VizLayoutControl vizLayout={vizLayout} onChange={setVizLayout} />
           )}
@@ -388,10 +466,13 @@ export function VisualizationPanels({
               Multi view
             </h3>
             <span className="shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
-              {activePanels.length} panels
+              {activePanels.length} of 4 panels
             </span>
           </div>
-          <VizLayoutControl vizLayout={vizLayout} onChange={setVizLayout} />
+          <div className="flex items-center gap-1">
+            <PanelPicker vizPanels={vizPanels} setVizPanel={setVizPanel} />
+            <VizLayoutControl vizLayout={vizLayout} onChange={setVizLayout} />
+          </div>
         </div>
         <div className="min-h-0 flex-1">
           {mode === "row" ? (
@@ -402,9 +483,22 @@ export function VisualizationPanels({
               layoutResetKey={layoutResetKey}
             />
           ) : (
-            <div className="grid h-full auto-rows-[minmax(180px,1fr)] grid-cols-2 divide-x divide-y divide-[var(--color-border)] overflow-y-auto">
-              {activePanels.map((panelId) => (
-                <div key={panelId} className="min-h-[180px]">
+            <div
+              className={cn(
+                "grid h-full divide-x divide-y divide-[var(--color-border)] overflow-y-auto",
+                gridClassForCount(activePanels.length)
+              )}
+            >
+              {activePanels.map((panelId, index) => (
+                <div
+                  key={panelId}
+                  className={cn(
+                    "h-full min-h-[180px]",
+                    activePanels.length === 3 &&
+                      index === activePanels.length - 1 &&
+                      "col-span-2"
+                  )}
+                >
                   <VizPanelShell
                     panelId={panelId}
                     result={result}
@@ -420,23 +514,24 @@ export function VisualizationPanels({
     );
   }
 
+  const singlePanel = activePanels[0];
+
   return (
-    <div
-      ref={rootRef}
-      className={cn(
-        "grid h-full min-h-0 grid-cols-1 divide-x divide-y divide-[var(--color-border)] overflow-y-auto border-[var(--color-border)] bg-[var(--color-background)]"
-      )}
-    >
-      {activePanels.map((panelId) => (
-        <div key={panelId} className="min-h-[180px]">
-          <VizPanelShell
-            panelId={panelId}
-            result={result}
-            lastResult={lastResult}
-            onToggle={() => setVizPanel(panelId, false)}
-          />
+    <div ref={rootRef} className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
+      <div className="flex h-7 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-2">
+        <h3 className="truncate text-xs font-semibold text-[var(--color-foreground)]">
+          {PANEL_LABELS[singlePanel]}
+        </h3>
+        <div className="flex items-center gap-1">
+          <PanelPicker vizPanels={vizPanels} setVizPanel={setVizPanel} />
+          {layoutTier !== "mobile" && (
+            <VizLayoutControl vizLayout={vizLayout} onChange={setVizLayout} />
+          )}
         </div>
-      ))}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-2 sm:p-3">
+        <PanelBody panelId={singlePanel} result={result} lastResult={lastResult} />
+      </div>
     </div>
   );
 }

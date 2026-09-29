@@ -138,6 +138,12 @@ export function resolveVizMode({
   return "grid";
 }
 
+export function gridClassForCount(count: number): string {
+  if (count === 2) return "grid-cols-2 grid-rows-1";
+  if (count === 3 || count === 4) return "grid-cols-2 grid-rows-2";
+  return "grid-cols-1";
+}
+
 /** Whether `panelCount` result panels fit side by side in `width` px. */
 export function canSplitVizPanels(width: number, panelCount: number): boolean {
   if (width <= 0 || panelCount <= 1) return true;
