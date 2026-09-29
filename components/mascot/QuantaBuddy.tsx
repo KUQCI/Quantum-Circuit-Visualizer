@@ -15,6 +15,12 @@ import {
   QuantaBuddyEngine,
   type BuddyFrame,
 } from "@/lib/quanta-buddy/engine";
+import {
+  SPRITE_HIT_SIZE,
+  alphaMaskFromRgba,
+  isSpritePixelOpaque,
+  type SpriteAlphaMask,
+} from "@/lib/quanta-buddy/hit-test";
 import { pageHelpFor, tipsFor } from "@/lib/quanta-buddy/persona";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
@@ -68,6 +74,11 @@ export function QuantaBuddy({
   const pointerDown = useRef({ time: 0, x: 0, y: 0 });
   const lastCallRequest = useRef(callRequest);
   const lastPresent = useRef(false);
+  const spriteMasks = useRef(new Map<string, SpriteAlphaMask>());
+  const lastFrame = useRef<BuddyFrame | null>(null);
+  const lastPointer = useRef<{ x: number; y: number } | null>(null);
+  const dragging = useRef(false);
+  const clickThrough = useRef(false);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -81,11 +92,47 @@ export function QuantaBuddy({
     bubbleSize.current = { width, height };
   }, []);
 
+  // Transparent parts of the sprite box let clicks reach the page underneath.
+  const updateHitTarget = useCallback(() => {
+    const element = spriteRef.current;
+    const frame = lastFrame.current;
+    if (!element || !frame) return;
+    let hittable = true;
+    if (clickThrough.current && !dragging.current) {
+      const pointer = lastPointer.current;
+      const mask = spriteMasks.current.get(frame.sprite);
+      if (!pointer) {
+        hittable = false;
+      } else if (mask) {
+        hittable = isSpritePixelOpaque(
+          mask,
+          frame.x,
+          frame.y,
+          frame.scaleX,
+          pointer.x,
+          pointer.y
+        );
+      } else {
+        hittable =
+          pointer.x >= frame.x &&
+          pointer.x < frame.x + SPRITE_HIT_SIZE &&
+          pointer.y >= frame.y &&
+          pointer.y < frame.y + SPRITE_HIT_SIZE;
+      }
+    }
+    const pointerEvents = hittable ? "auto" : "none";
+    if (element.style.pointerEvents !== pointerEvents) {
+      element.style.pointerEvents = pointerEvents;
+    }
+  }, []);
+
   const applyFrame = useCallback((frame: BuddyFrame) => {
     const element = spriteRef.current;
+    lastFrame.current = frame;
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
+      updateHitTarget();
     }
 
     const bubble = bubbleRef.current;
@@ -111,7 +158,7 @@ export function QuantaBuddy({
     bubble.dataset.tail =
       tailX < 14 || tailX > width - 14 ? "none" : below ? "top" : "bottom";
     bubble.style.setProperty("--quanta-tail-x", `${tailX}px`);
-  }, []);
+  }, [updateHitTarget]);
 
   const handlePointerMove = useCallback((event: PointerEvent) => {
     engineRef.current?.pointerMove(event.clientX, event.clientY);
@@ -125,6 +172,7 @@ export function QuantaBuddy({
     );
     const isClick =
       event.type !== "pointercancel" && elapsed < 300 && distance < 6;
+    dragging.current = false;
     if (isClick) {
       engineRef.current?.cancelDrag();
       window.addEventListener(
@@ -139,7 +187,8 @@ export function QuantaBuddy({
     window.removeEventListener("pointermove", handlePointerMove);
     window.removeEventListener("pointerup", handlePointerUp);
     window.removeEventListener("pointercancel", handlePointerUp);
-  }, [handlePointerMove]);
+    updateHitTarget();
+  }, [handlePointerMove, updateHitTarget]);
 
   useEffect(() => {
     const engine = new QuantaBuddyEngine({
@@ -174,9 +223,54 @@ export function QuantaBuddy({
   useEffect(() => {
     for (const name of SPRITE_NAMES) {
       const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        if (!context || canvas.width === 0 || canvas.height === 0) return;
+        context.drawImage(image, 0, 0);
+        try {
+          const { data, width, height } = context.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          spriteMasks.current.set(name, alphaMaskFromRgba(data, width, height));
+        } catch {
+          // Cross-origin sprites can't be read; fall back to the full box.
+        }
+      };
       image.src = buddySpriteUrl(name);
     }
   }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const syncQuery = () => {
+      clickThrough.current = query.matches;
+      updateHitTarget();
+    };
+    const trackPointer = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      lastPointer.current = { x: event.clientX, y: event.clientY };
+      updateHitTarget();
+    };
+    const forgetPointer = () => {
+      lastPointer.current = null;
+      updateHitTarget();
+    };
+    syncQuery();
+    query.addEventListener("change", syncQuery);
+    window.addEventListener("pointermove", trackPointer, { passive: true });
+    document.documentElement.addEventListener("pointerleave", forgetPointer);
+    return () => {
+      query.removeEventListener("change", syncQuery);
+      window.removeEventListener("pointermove", trackPointer);
+      document.documentElement.removeEventListener("pointerleave", forgetPointer);
+    };
+  }, [updateHitTarget]);
 
   useEffect(() => {
     if (!ready || !autoCall) return;
@@ -244,6 +338,7 @@ export function QuantaBuddy({
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
+    dragging.current = true;
     pointerDown.current = {
       time: performance.now(),
       x: event.clientX,
