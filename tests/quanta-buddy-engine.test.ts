@@ -320,8 +320,33 @@ describe("QuantaBuddyEngine", () => {
     });
     expect(engine.consumeBurst()).toBeNull();
 
+    engine.tick(now);
     expect(engine.tick(now + BURST_RESPAWN_DELAY - 1).present).toBe(false);
     expect(engine.tick(now + BURST_RESPAWN_DELAY).present).toBe(true);
+  });
+
+  it("times the respawn from the first frame after the burst", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+    engine.call();
+    engine.tick(now);
+    for (let index = 0; index < 6; index += 1) {
+      now += 100;
+      engine.poke();
+    }
+    expect(engine.present).toBe(false);
+
+    // Frame clock jumped far ahead (e.g. tab was throttled) before the burst.
+    const frameTime = 60000;
+    expect(engine.tick(frameTime).present).toBe(false);
+    expect(
+      engine.tick(frameTime + BURST_RESPAWN_DELAY - 1).present
+    ).toBe(false);
+    expect(engine.tick(frameTime + BURST_RESPAWN_DELAY).present).toBe(true);
   });
 
   it("ignores slow pokes spread over time", () => {

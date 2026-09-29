@@ -29,6 +29,7 @@ import {
   recoveryLineFor,
   tipsFor,
 } from "@/lib/quanta-buddy/persona";
+import { playQuack, unlockQuacks } from "@/lib/quanta-buddy/quack";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
 import { QuantaBurst } from "@/components/mascot/QuantaBurst";
@@ -102,6 +103,13 @@ export function QuantaBuddy({
   );
   const setTourCompleted = useEditorUiStore((state) => state.setTourCompleted);
   const say = useQuantaPopoutStore((state) => state.say);
+  const sound = useQuantaBuddyStore((state) => state.sound);
+  const toggleSound = useQuantaBuddyStore((state) => state.toggleSound);
+  const soundRef = useRef(sound);
+  soundRef.current = sound;
+  const quack = useCallback((kind: "soft" | "loud" | "pop") => {
+    if (soundRef.current) playQuack(kind);
+  }, []);
   const measureBubble = useCallback((width: number, height: number) => {
     bubbleSize.current = { width, height };
   }, []);
@@ -198,8 +206,10 @@ export function QuantaBuddy({
       const pokes = engine?.poke() ?? 0;
       if (pokes === "burst") {
         setContextMenu(null);
+        quack("pop");
       } else if (pokes > 1) {
         setContextMenu(null);
+        quack(pokes >= 4 ? "loud" : "soft");
         say({ text: pokeReactionFor(pokes), variant: "error" });
       } else {
         setContextMenu({ x: event.clientX, y: event.clientY });
@@ -211,7 +221,7 @@ export function QuantaBuddy({
     window.removeEventListener("pointerup", handlePointerUp);
     window.removeEventListener("pointercancel", handlePointerUp);
     updateHitTarget();
-  }, [handlePointerMove, say, updateHitTarget]);
+  }, [handlePointerMove, quack, say, updateHitTarget]);
 
   useEffect(() => {
     const engine = new QuantaBuddyEngine({
@@ -323,6 +333,7 @@ export function QuantaBuddy({
         const nextBurst = engine.consumeBurst();
         if (nextBurst) {
           setBurst({ ...nextBurst, id: time });
+          if (nextBurst.reason === "thrown") quack("pop");
           const line = recoveryLineFor(nextBurst.reason);
           window.setTimeout(
             () =>
@@ -340,7 +351,34 @@ export function QuantaBuddy({
 
     frameId = window.requestAnimationFrame(animate);
     return () => window.cancelAnimationFrame(frameId);
-  }, [applyFrame, ready, say]);
+  }, [applyFrame, quack, ready, say]);
+
+  useEffect(() => {
+    const unlock = () => unlockQuacks();
+    window.addEventListener("pointerdown", unlock, { passive: true });
+    window.addEventListener("keydown", unlock, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  // Random idle quacks once the visitor has interacted with the page.
+  useEffect(() => {
+    if (!ready) return;
+    let timeout = 0;
+    const schedule = () => {
+      timeout = window.setTimeout(() => {
+        const engine = engineRef.current;
+        if (engine?.present && !engine.isBusy && soundRef.current) {
+          if (playQuack("soft") && !reducedMotion) engine.hop();
+        }
+        schedule();
+      }, 25000 + Math.random() * 50000);
+    };
+    schedule();
+    return () => window.clearTimeout(timeout);
+  }, [ready, reducedMotion]);
 
   useEffect(() => {
     if (!ready) return;
@@ -442,6 +480,11 @@ export function QuantaBuddy({
               requestOpenShortcuts();
               setContextMenu(null);
             }}
+            sound={sound}
+            onToggleSound={() => {
+              toggleSound();
+              setContextMenu(null);
+            }}
             onReplayTour={
               normalizePath(pathname) === "/editor"
                 ? () => {
@@ -517,6 +560,11 @@ export function QuantaBuddy({
             requestOpenShortcuts();
             setContextMenu(null);
           }}
+          sound={sound}
+          onToggleSound={() => {
+            toggleSound();
+            setContextMenu(null);
+          }}
           onReplayTour={
             normalizePath(pathname) === "/editor"
               ? () => {
@@ -540,6 +588,8 @@ function BuddyContextMenu({
   onChat,
   onTip,
   onShortcuts,
+  sound,
+  onToggleSound,
   onReplayTour,
 }: {
   contextMenu: ContextMenuState;
@@ -550,6 +600,8 @@ function BuddyContextMenu({
   onChat: () => void;
   onTip: () => void;
   onShortcuts: () => void;
+  sound: boolean;
+  onToggleSound: () => void;
   onReplayTour?: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -630,6 +682,15 @@ function BuddyContextMenu({
         </button>
       )}
       <div className="my-1 border-t border-[var(--color-border)]" />
+      <button
+        type="button"
+        className={itemClass}
+        onClick={onToggleSound}
+        role="menuitemcheckbox"
+        aria-checked={sound}
+      >
+        {sound ? "Mute quacks" : "Unmute quacks"}
+      </button>
       <button type="button" className={itemClass} onClick={onSit} role="menuitem">
         Sit here
       </button>
