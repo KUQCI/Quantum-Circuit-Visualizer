@@ -1,6 +1,8 @@
 import { QUANTA_SYSTEM_PROMPT } from "@/lib/quanta-chat/system-prompt";
 
 export const GEMINI_MODEL = "gemini-3.5-flash-lite";
+/** Used when GEMINI_MODEL returns 404 for the visitor's key. */
+export const GEMINI_FALLBACK_MODEL = "gemini-2.5-flash-lite";
 export const MAX_QUESTION_CHARS = 500;
 export const DEFAULT_GEMINI_API_KEY =
   process.env.NEXT_PUBLIC_QUANTA_GEMINI_API_KEY?.trim() ?? "";
@@ -111,26 +113,45 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
+type GeminiRequestBody = ReturnType<typeof buildRequestBody>;
+
+function payloadForModel(body: GeminiRequestBody, model: string) {
+  if (model === GEMINI_MODEL) return body;
+  return {
+    ...body,
+    generationConfig: {
+      ...body.generationConfig,
+      thinkingConfig: { thinkingBudget: 0 },
+    },
+  };
+}
+
 export async function askGemini(
   apiKey: string,
-  body: ReturnType<typeof buildRequestBody>,
+  body: GeminiRequestBody,
   fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal
 ): Promise<GeminiResponse> {
-  let response: Response;
-  try {
-    response = await fetchImpl(GEMINI_ENDPOINT(GEMINI_MODEL), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify(body),
-      signal,
-    });
-  } catch (error) {
-    if (isAbortError(error)) throw error;
-    throw new GeminiError("Couldn't reach Gemini. Check your connection.");
+  const post = async (model: string) => {
+    try {
+      return await fetchImpl(GEMINI_ENDPOINT(model), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify(payloadForModel(body, model)),
+        signal,
+      });
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      throw new GeminiError("Couldn't reach Gemini. Check your connection.");
+    }
+  };
+
+  let response = await post(GEMINI_MODEL);
+  if (response.status === 404) {
+    response = await post(GEMINI_FALLBACK_MODEL);
   }
 
   if (!response.ok) {

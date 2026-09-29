@@ -3,6 +3,8 @@ import {
   askGemini,
   buildRequestBody,
   canSend,
+  GEMINI_FALLBACK_MODEL,
+  GEMINI_MODEL,
   GeminiError,
   MAX_QUESTION_CHARS,
   parseGeminiResponse,
@@ -84,6 +86,42 @@ describe("Quanta Gemini helpers", () => {
         throw new Error("offline");
       })
     ).rejects.toBeInstanceOf(GeminiError);
+  });
+
+  it("falls back to the older model when the primary model returns 404", async () => {
+    const body = buildRequestBody({ context: "", history: [], userText: "Hi" });
+    const calls: { url: string; body: unknown }[] = [];
+    const response = await askGemini("test", body, async (input, init) => {
+      calls.push({ url: String(input), body: JSON.parse(String(init?.body)) });
+      if (calls.length === 1) return new Response(null, { status: 404 });
+      return Response.json({
+        candidates: [{ content: { parts: [{ text: "Hello." }] } }],
+      });
+    });
+
+    expect(response.text).toBe("Hello.");
+    expect(calls.map((call) => call.url)).toEqual([
+      expect.stringContaining(`/models/${GEMINI_MODEL}:`),
+      expect.stringContaining(`/models/${GEMINI_FALLBACK_MODEL}:`),
+    ]);
+    expect(calls[0]?.body).toMatchObject({
+      generationConfig: { thinkingConfig: { thinkingLevel: "minimal" } },
+    });
+    expect(calls[1]?.body).toMatchObject({
+      generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
+    });
+  });
+
+  it("reports the model as unavailable when both models return 404", async () => {
+    const body = buildRequestBody({ context: "", history: [], userText: "Hi" });
+    let calls = 0;
+    await expect(
+      askGemini("test", body, async () => {
+        calls += 1;
+        return new Response(null, { status: 404 });
+      })
+    ).rejects.toMatchObject({ userMessage: "Model unavailable." });
+    expect(calls).toBe(2);
   });
 
   it("rethrows aborts without converting them to GeminiError", async () => {
