@@ -189,4 +189,81 @@ describe("QuantaBuddyEngine", () => {
     const idle = engine.tick(36000);
     expect(idle.sprite).toBe("idle_0");
   });
+
+  it("walks to a target and returns to idle with the scheduler alive", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      rng: new SequenceRng([0.9, 0.1, 0, 0, 0, 0]),
+    });
+
+    engine.call();
+    tickUntil(engine, (frame) => frame.sprite === "idle_0");
+    engine.walkTo(500);
+
+    let frame = engine.tick(5000);
+    for (let time = 5016; time < 10000 && frame.sprite !== "idle_0"; time += 16) {
+      frame = engine.tick(time);
+    }
+    expect(frame.sprite).toBe("idle_0");
+    expect(frame.x).toBe(436);
+
+    const later = engine.tick(20000);
+    expect(later.sprite).toMatch(/^(walk_|sit_|crawl_|lay_)/);
+  });
+
+  it("ignores walkTo while dragging", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.pointerDown(300, 300);
+    const grabbed = engine.tick(0);
+    engine.walkTo(700);
+
+    expect(engine.tick(16).x).toBe(grabbed.x);
+    expect(engine.tick(16).sprite).toBe("hang_0");
+  });
+
+  it("hops from the floor and lands through recovery", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: false,
+      rng: new SequenceRng([0.9, 0.1, 0, 0, 0]),
+    });
+
+    engine.call();
+    const landed = tickUntil(engine, (frame) => frame.sprite === "idle_0");
+    expect(landed.y).toBe(viewport.height - 128);
+
+    engine.hop();
+    const airborne = engine.tick(5000);
+    expect(airborne.y).toBeLessThan(viewport.height - 128);
+
+    const recovered = tickUntil(
+      engine,
+      (frame) =>
+        frame.y === viewport.height - 128 &&
+        /^(lay_0|sit_0|idle_0)$/.test(frame.sprite),
+      5000
+    );
+    expect(recovered.y).toBe(viewport.height - 128);
+  });
+
+  it("uses reduced-motion walkTo only to face the target", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    const before = engine.tick(0);
+    engine.walkTo(0);
+    const after = engine.tick(1000);
+
+    expect(after.x).toBe(before.x);
+    expect(after.sprite).toBe("idle_0");
+    expect(after.scaleX).toBe(1);
+  });
 });

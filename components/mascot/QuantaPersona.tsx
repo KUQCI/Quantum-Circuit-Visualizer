@@ -1,0 +1,223 @@
+"use client";
+
+import { useEffect, useRef, type RefObject } from "react";
+import { isFullWorkspacePath, normalizePath } from "@/lib/routes";
+import { unboundSymbols } from "@/lib/parameter-bindings";
+import {
+  getLevelFromXp,
+  getLevelTitle,
+  xpForNextLevel,
+} from "@/lib/learning/progress";
+import { greetingFor, tipsFor } from "@/lib/quanta-buddy/persona";
+import type { QuantaBuddyEngine } from "@/lib/quanta-buddy/engine";
+import { usePersistHydrated } from "@/lib/use-persist-hydrated";
+import { useCircuitStore } from "@/store/circuit-store";
+import { useProgressStore } from "@/store/progress-store";
+import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
+
+export function QuantaPersona({
+  engineRef,
+  pathname,
+}: {
+  engineRef: RefObject<QuantaBuddyEngine | null>;
+  pathname: string;
+}) {
+  const path = normalizePath(pathname);
+  const totalXp = useProgressStore((state) => state.totalXp);
+  const levelTitle = getLevelTitle(getLevelFromXp(totalXp));
+  const streak = useProgressStore((state) => state.currentStreak);
+  const completedLessons = useProgressStore(
+    (state) => state.completedLessons.length
+  );
+  const progressHydrated = usePersistHydrated(useProgressStore.persist);
+  const say = useQuantaPopoutStore((state) => state.say);
+  const validationWarnings = useCircuitStore(
+    (state) => state.validationWarnings
+  );
+  const circuit = useCircuitStore((state) => state.circuit);
+  const greetedPaths = useRef(new Set<string>());
+  const tipCountByPath = useRef(new Map<string, number>());
+  const usedTipsByPath = useRef(new Map<string, Set<string>>());
+  const previousXp = useRef(totalXp);
+  const totalXpRef = useRef(totalXp);
+  totalXpRef.current = totalXp;
+  const previousLevel = useRef(getLevelFromXp(totalXp));
+  const previousWarningCount = useRef(validationWarnings.length);
+  const previousUnbound = useRef<string[]>([]);
+  const lastFollowAt = useRef(0);
+
+  useEffect(() => {
+    if (!progressHydrated) return;
+    previousXp.current = totalXpRef.current;
+    previousLevel.current = getLevelFromXp(totalXpRef.current);
+  }, [progressHydrated]);
+
+  useEffect(() => {
+    const engine = engineRef.current;
+    if (engine?.present && !engine.isBusy) {
+      engine.walkTo(window.innerWidth / 2);
+    }
+  }, [engineRef, path]);
+
+  useEffect(() => {
+    if (!progressHydrated || greetedPaths.current.has(path)) return;
+
+    const timeout = window.setTimeout(() => {
+      const engine = engineRef.current;
+      if (
+        !engine?.present ||
+        useQuantaPopoutStore.getState().message
+      ) {
+        return;
+      }
+
+      const greeting = greetingFor({
+        path,
+        level: getLevelFromXp(totalXp),
+        levelTitle,
+        streak,
+        completedLessons,
+        xpToNext: xpForNextLevel(totalXp).xpNeeded,
+        firstVisit: completedLessons === 0 && totalXp === 0,
+      });
+      if (!greeting) {
+        greetedPaths.current.add(path);
+        return;
+      }
+      say({ ...greeting, variant: "default" });
+      greetedPaths.current.add(path);
+    }, 1500);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    completedLessons,
+    engineRef,
+    levelTitle,
+    path,
+    progressHydrated,
+    say,
+    streak,
+    totalXp,
+  ]);
+
+  useEffect(() => {
+    let timeout: number | null = null;
+
+    const schedule = () => {
+      timeout = window.setTimeout(() => {
+        const engine = engineRef.current;
+        const used = usedTipsByPath.current.get(path) ?? new Set<string>();
+        const count = tipCountByPath.current.get(path) ?? 0;
+        const tips = tipsFor(path).filter((tip) => !used.has(tip));
+        if (
+          engine?.present &&
+          !engine.isBusy &&
+          !useQuantaPopoutStore.getState().message &&
+          count < 3 &&
+          tips.length > 0
+        ) {
+          const tip = tips[Math.floor(Math.random() * tips.length)] ?? tips[0];
+          used.add(tip);
+          usedTipsByPath.current.set(path, used);
+          tipCountByPath.current.set(path, count + 1);
+          say({ text: tip, variant: "hint" });
+        }
+        schedule();
+      }, 75000 + Math.floor(Math.random() * 45001));
+    };
+
+    schedule();
+    return () => {
+      if (timeout !== null) window.clearTimeout(timeout);
+    };
+  }, [engineRef, path, say]);
+
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0 || Date.now() - lastFollowAt.current < 4000) {
+        return;
+      }
+      const target =
+        event.target instanceof HTMLElement ? event.target : null;
+      if (
+        target?.closest(
+          '[aria-label="Quanta buddy"], .quanta-buddy-bubble, [role="menu"]'
+        )
+      ) {
+        return;
+      }
+      if (isFullWorkspacePath(path) && target?.closest("main")) return;
+
+      const engine = engineRef.current;
+      if (!engine?.present || engine.isBusy) return;
+      lastFollowAt.current = Date.now();
+      engine.walkTo(event.clientX);
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [engineRef, path]);
+
+  useEffect(() => {
+    if (!progressHydrated) return;
+
+    const amount = totalXp - previousXp.current;
+    const level = getLevelFromXp(totalXp);
+    const leveledUp = level > previousLevel.current;
+    previousXp.current = totalXp;
+    previousLevel.current = level;
+    if (amount <= 0) return;
+
+    const currentMessage = useQuantaPopoutStore.getState().message;
+    if (
+      currentMessage &&
+      Date.now() - currentMessage.updatedAt < 1500
+    ) {
+      return;
+    }
+
+    const engine = engineRef.current;
+    if (leveledUp) {
+      say({
+        text: `Level ${level} — ${getLevelTitle(level)}! I grew up a little.`,
+        variant: "success",
+        imageVariant: "success",
+      });
+    } else {
+      say({
+        text: `+${amount} XP! Nice work.`,
+        variant: "success",
+        imageVariant: "success",
+      });
+    }
+    engine?.hop();
+  }, [engineRef, progressHydrated, say, totalXp]);
+
+  useEffect(() => {
+    const wasEmpty = previousWarningCount.current === 0;
+    previousWarningCount.current = validationWarnings.length;
+    if (path !== "/editor" || !wasEmpty || validationWarnings.length === 0) {
+      return;
+    }
+    say({
+      text: validationWarnings[0] ?? "That operation needs another look.",
+      title: "Hmm, that doesn't fit",
+      variant: "error",
+      imageVariant: "thinking",
+    });
+  }, [path, say, validationWarnings]);
+
+  useEffect(() => {
+    const symbols = unboundSymbols(circuit);
+    const hadNone = previousUnbound.current.length === 0;
+    previousUnbound.current = symbols;
+    if (path !== "/editor" || !hadNone || symbols.length === 0) return;
+    say({
+      text: `Bind ${symbols[0]} in the Parameters panel and I'll run the simulation.`,
+      variant: "error",
+      imageVariant: "thinking",
+    });
+  }, [circuit, path, say]);
+
+  return null;
+}

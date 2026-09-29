@@ -186,7 +186,7 @@ export function AppHeader() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={toggle}>
                 <Bird className="h-4 w-4" aria-hidden />
-                {enabled ? "Hide Quanta buddy" : "Show Quanta buddy"}
+                {enabled ? "Hide Quanta" : "Show Quanta"}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={callQuanta} disabled={!enabled}>
                 Call Quanta
@@ -257,7 +257,7 @@ export function AppHeader() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={toggle}>
                 <Bird className="h-4 w-4" aria-hidden />
-                {enabled ? "Hide Quanta buddy" : "Show Quanta buddy"}
+                {enabled ? "Hide Quanta" : "Show Quanta"}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={callQuanta} disabled={!enabled}>
                 Call Quanta

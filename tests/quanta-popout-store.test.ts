@@ -4,6 +4,7 @@ import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 describe("quanta popout store", () => {
   beforeEach(() => {
     useQuantaPopoutStore.getState().dismiss();
+    useQuantaPopoutStore.getState().setBuddySpeaking(false);
   });
 
   it("sets messages with incrementing ids", () => {
@@ -18,6 +19,7 @@ describe("quanta popout store", () => {
     const second = useQuantaPopoutStore.getState().message;
 
     expect(first).toMatchObject(message);
+    expect(first?.updatedAt).toEqual(expect.any(Number));
     expect(second).toMatchObject({
       text: "Second lesson note",
       variant: "success",
@@ -46,5 +48,12 @@ describe("quanta popout store", () => {
     });
 
     expect(useQuantaPopoutStore.getState().message?.text).toBe("New message");
+  });
+
+  it("tracks whether the buddy is speaking", () => {
+    useQuantaPopoutStore.getState().setBuddySpeaking(true);
+    expect(useQuantaPopoutStore.getState().buddySpeaking).toBe(true);
+    useQuantaPopoutStore.getState().setBuddySpeaking(false);
+    expect(useQuantaPopoutStore.getState().buddySpeaking).toBe(false);
   });
 });

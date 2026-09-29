@@ -1,0 +1,69 @@
+import { describe, expect, it } from "vitest";
+import {
+  greetingFor,
+  pageHelpFor,
+  tipsFor,
+  type PersonaContext,
+} from "@/lib/quanta-buddy/persona";
+
+const context: PersonaContext = {
+  path: "/",
+  level: 2,
+  levelTitle: "Hatchling",
+  streak: 3,
+  completedLessons: 2,
+  xpToNext: 50,
+  firstVisit: false,
+};
+
+describe("Quanta persona", () => {
+  it("greets a first-time visitor on Home", () => {
+    expect(
+      greetingFor({ ...context, firstVisit: true, streak: 0, completedLessons: 0 })
+    ).toMatchObject({
+      text: expect.stringContaining("Hi, I'm Quanta!"),
+    });
+  });
+
+  it("greets returning visitors with progress context", () => {
+    expect(greetingFor(context)?.text).toContain("Hatchling");
+    expect(greetingFor({ ...context, streak: 0 })?.text).toContain("2 lessons");
+  });
+
+  it("does not duplicate lesson-player greetings", () => {
+    expect(greetingFor({ ...context, path: "/learn/what-is-a-qubit" })).toBeNull();
+    expect(greetingFor({ ...context, path: "/challenges/superposition-sprint" })).toBeNull();
+  });
+
+  it("provides tips for the main pages", () => {
+    expect(tipsFor("/editor")).not.toHaveLength(0);
+    expect(tipsFor("/learn")).not.toHaveLength(0);
+    expect(tipsFor("/")).not.toHaveLength(0);
+  });
+
+  it("provides help copy for every supported page", () => {
+    for (const path of [
+      "/",
+      "/editor",
+      "/learn",
+      "/challenges",
+      "/progress",
+      "/achievements",
+      "/projects",
+      "/import",
+      "/export",
+      "/review",
+      "/docs/mascot",
+      "/roadmap",
+    ]) {
+      expect(pageHelpFor(path)).not.toHaveLength(0);
+    }
+  });
+
+  it("normalizes trailing slashes", () => {
+    expect(greetingFor({ ...context, path: "/editor/" })).toEqual(
+      greetingFor({ ...context, path: "/editor" })
+    );
+    expect(tipsFor("/learn/")).toEqual(tipsFor("/learn"));
+  });
+});

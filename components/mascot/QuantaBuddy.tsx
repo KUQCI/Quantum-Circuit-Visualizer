@@ -15,7 +15,13 @@ import {
   QuantaBuddyEngine,
   type BuddyFrame,
 } from "@/lib/quanta-buddy/engine";
+import { pageHelpFor, tipsFor } from "@/lib/quanta-buddy/persona";
+import { requestOpenShortcuts } from "@/lib/shortcuts";
+import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
+import { QuantaPersona } from "@/components/mascot/QuantaPersona";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
+import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
+import { useEditorUiStore } from "@/store/editor-ui-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { cn } from "@/lib/utils";
 
@@ -51,27 +57,70 @@ export function QuantaBuddy({
   reducedMotion: boolean;
   autoCall: boolean;
 }) {
+  const pathname = usePathname();
   const spriteRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const bubbleSize = useRef({ width: 0, height: 0 });
   const engineRef = useRef<QuantaBuddyEngine | null>(null);
+  const pointerDown = useRef({ time: 0, x: 0, y: 0 });
   const lastCallRequest = useRef(callRequest);
   const lastPresent = useRef(false);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const message = useQuantaPopoutStore((state) => state.message);
+  const setBuddySpeaking = useQuantaPopoutStore(
+    (state) => state.setBuddySpeaking
+  );
+  const setTourCompleted = useEditorUiStore((state) => state.setTourCompleted);
+  const say = useQuantaPopoutStore((state) => state.say);
+  const measureBubble = useCallback((width: number, height: number) => {
+    bubbleSize.current = { width, height };
+  }, []);
 
   const applyFrame = useCallback((frame: BuddyFrame) => {
     const element = spriteRef.current;
-    if (!element) return;
-    element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
-    element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
+    if (element) {
+      element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
+      element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
+    }
+
+    const bubble = bubbleRef.current;
+    const { width, height } = bubbleSize.current;
+    if (!bubble || width <= 0 || height <= 0) return;
+    const maxX = Math.max(8, window.innerWidth - width - 8);
+    const left = Math.min(
+      Math.max(8, frame.x + 64 - width / 2),
+      maxX
+    );
+    const maxY = Math.max(8, window.innerHeight - height - 8);
+    const preferredTop = frame.y - height - 8;
+    const top = Math.min(
+      Math.max(8, preferredTop < 8 ? frame.y + 136 : preferredTop),
+      maxY
+    );
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${top}px`;
   }, []);
 
   const handlePointerMove = useCallback((event: PointerEvent) => {
     engineRef.current?.pointerMove(event.clientX, event.clientY);
   }, []);
 
-  const handlePointerUp = useCallback(() => {
-    engineRef.current?.pointerUp();
+  const handlePointerUp = useCallback((event: PointerEvent) => {
+    const elapsed = performance.now() - pointerDown.current.time;
+    const distance = Math.hypot(
+      event.clientX - pointerDown.current.x,
+      event.clientY - pointerDown.current.y
+    );
+    const isClick =
+      event.type !== "pointercancel" && elapsed < 300 && distance < 6;
+    if (isClick) {
+      engineRef.current?.cancelDrag();
+      setContextMenu({ x: event.clientX, y: event.clientY });
+    } else {
+      engineRef.current?.pointerUp();
+    }
     window.removeEventListener("pointermove", handlePointerMove);
     window.removeEventListener("pointerup", handlePointerUp);
     window.removeEventListener("pointercancel", handlePointerUp);
@@ -89,6 +138,23 @@ export function QuantaBuddy({
       engineRef.current = null;
     };
   }, [reducedMotion]);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const bubble = bubbleRef.current;
+      if (!bubble) return;
+      const rect = bubble.getBoundingClientRect();
+      bubbleSize.current = { width: rect.width, height: rect.height };
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [message?.id, visible]);
+
+  useEffect(() => {
+    setBuddySpeaking(visible);
+    return () => setBuddySpeaking(false);
+  }, [setBuddySpeaking, visible]);
 
   useEffect(() => {
     for (const name of SPRITE_NAMES) {
@@ -163,6 +229,11 @@ export function QuantaBuddy({
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
+    pointerDown.current = {
+      time: performance.now(),
+      x: event.clientX,
+      y: event.clientY,
+    };
     event.currentTarget.setPointerCapture(event.pointerId);
     engineRef.current?.pointerDown(event.clientX, event.clientY);
     window.addEventListener("pointermove", handlePointerMove);
@@ -191,6 +262,34 @@ export function QuantaBuddy({
           engineRef.current?.leave();
           setContextMenu(null);
         }}
+        onHelp={() => {
+          say({
+            title: "This page",
+            text: pageHelpFor(pathname),
+            variant: "default",
+          });
+          setContextMenu(null);
+        }}
+        onTip={() => {
+          const tips = tipsFor(pathname);
+          say({
+            text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
+            variant: "hint",
+          });
+          setContextMenu(null);
+        }}
+        onShortcuts={() => {
+          requestOpenShortcuts();
+          setContextMenu(null);
+        }}
+        onReplayTour={
+          normalizePath(pathname) === "/editor"
+            ? () => {
+                setTourCompleted(false);
+                setContextMenu(null);
+              }
+            : undefined
+        }
       />
     ) : null;
   }
@@ -211,6 +310,11 @@ export function QuantaBuddy({
           WebkitUserSelect: "none",
         }}
       />
+      <QuantaBuddyBubble
+        bubbleRef={bubbleRef}
+        onMeasure={measureBubble}
+      />
+      <QuantaPersona engineRef={engineRef} pathname={pathname} />
       {contextMenu && (
         <BuddyContextMenu
           contextMenu={contextMenu}
@@ -226,6 +330,34 @@ export function QuantaBuddy({
             engineRef.current?.leave();
             setContextMenu(null);
           }}
+          onHelp={() => {
+            say({
+              title: "This page",
+              text: pageHelpFor(pathname),
+              variant: "default",
+            });
+            setContextMenu(null);
+          }}
+          onTip={() => {
+            const tips = tipsFor(pathname);
+            say({
+              text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
+              variant: "hint",
+            });
+            setContextMenu(null);
+          }}
+          onShortcuts={() => {
+            requestOpenShortcuts();
+            setContextMenu(null);
+          }}
+          onReplayTour={
+            normalizePath(pathname) === "/editor"
+              ? () => {
+                  setTourCompleted(false);
+                  setContextMenu(null);
+                }
+              : undefined
+          }
         />
       )}
     </>
@@ -237,11 +369,19 @@ function BuddyContextMenu({
   onSit,
   onWalk,
   onLeave,
+  onHelp,
+  onTip,
+  onShortcuts,
+  onReplayTour,
 }: {
   contextMenu: ContextMenuState;
   onSit: () => void;
   onWalk: () => void;
   onLeave: () => void;
+  onHelp: () => void;
+  onTip: () => void;
+  onShortcuts: () => void;
+  onReplayTour?: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
@@ -290,13 +430,41 @@ function BuddyContextMenu({
       role="menu"
       onClick={(event) => event.stopPropagation()}
     >
-      <button type="button" className={itemClass} onClick={onSit}>
+      <p className="px-3 py-2 text-xs font-semibold text-[var(--color-foreground)]">
+        Quanta
+      </p>
+      <button type="button" className={itemClass} onClick={onHelp} role="menuitem">
+        What can I do here?
+      </button>
+      <button type="button" className={itemClass} onClick={onTip} role="menuitem">
+        Give me a tip
+      </button>
+      <button
+        type="button"
+        className={itemClass}
+        onClick={onShortcuts}
+        role="menuitem"
+      >
+        Keyboard shortcuts
+      </button>
+      {onReplayTour && (
+        <button
+          type="button"
+          className={itemClass}
+          onClick={onReplayTour}
+          role="menuitem"
+        >
+          Replay Build tour
+        </button>
+      )}
+      <div className="my-1 border-t border-[var(--color-border)]" />
+      <button type="button" className={itemClass} onClick={onSit} role="menuitem">
         Sit here
       </button>
-      <button type="button" className={itemClass} onClick={onWalk}>
+      <button type="button" className={itemClass} onClick={onWalk} role="menuitem">
         Walk around
       </button>
-      <button type="button" className={itemClass} onClick={onLeave}>
+      <button type="button" className={itemClass} onClick={onLeave} role="menuitem">
         Leave
       </button>
     </div>

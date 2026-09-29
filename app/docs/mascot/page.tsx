@@ -103,6 +103,8 @@ export default function QuantaMascotDocsPage() {
             The 128px buddy sprite set in{" "}
             <code className="font-mono text-xs">assets/quanta/buddy/</code>{" "}
             was ported from the Quanta browser extension.
+            Quanta now greets you, offers tips, follows page clicks, and opens a
+            help menu when you ask.
           </li>
         </ul>
       </section>
