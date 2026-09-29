@@ -12,7 +12,9 @@ import { usePathname } from "next/navigation";
 import { normalizePath } from "@/lib/routes";
 import { buddySpriteUrl } from "@/lib/quanta-assets";
 import {
+  BURST_RESPAWN_DELAY,
   QuantaBuddyEngine,
+  type BuddyBurst,
   type BuddyFrame,
 } from "@/lib/quanta-buddy/engine";
 import {
@@ -21,9 +23,15 @@ import {
   isSpritePixelOpaque,
   type SpriteAlphaMask,
 } from "@/lib/quanta-buddy/hit-test";
-import { pageHelpFor, tipsFor } from "@/lib/quanta-buddy/persona";
+import {
+  pageHelpFor,
+  pokeReactionFor,
+  recoveryLineFor,
+  tipsFor,
+} from "@/lib/quanta-buddy/persona";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
+import { QuantaBurst } from "@/components/mascot/QuantaBurst";
 import { QuantaPersona } from "@/components/mascot/QuantaPersona";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
@@ -55,6 +63,10 @@ interface ContextMenuState {
   y: number;
 }
 
+interface BurstState extends BuddyBurst {
+  id: number;
+}
+
 export function QuantaBuddy({
   callRequest,
   reducedMotion,
@@ -82,6 +94,8 @@ export function QuantaBuddy({
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [burst, setBurst] = useState<BurstState | null>(null);
+  const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
   const setBuddySpeaking = useQuantaPopoutStore(
     (state) => state.setBuddySpeaking
@@ -174,13 +188,22 @@ export function QuantaBuddy({
       event.type !== "pointercancel" && elapsed < 300 && distance < 6;
     dragging.current = false;
     if (isClick) {
-      engineRef.current?.cancelDrag();
+      const engine = engineRef.current;
+      engine?.cancelDrag();
       window.addEventListener(
         "click",
         (clickEvent) => clickEvent.stopPropagation(),
         { capture: true, once: true }
       );
-      setContextMenu({ x: event.clientX, y: event.clientY });
+      const pokes = engine?.poke() ?? 0;
+      if (pokes === "burst") {
+        setContextMenu(null);
+      } else if (pokes > 1) {
+        setContextMenu(null);
+        say({ text: pokeReactionFor(pokes), variant: "error" });
+      } else {
+        setContextMenu({ x: event.clientX, y: event.clientY });
+      }
     } else {
       engineRef.current?.pointerUp();
     }
@@ -188,7 +211,7 @@ export function QuantaBuddy({
     window.removeEventListener("pointerup", handlePointerUp);
     window.removeEventListener("pointercancel", handlePointerUp);
     updateHitTarget();
-  }, [handlePointerMove, updateHitTarget]);
+  }, [handlePointerMove, say, updateHitTarget]);
 
   useEffect(() => {
     const engine = new QuantaBuddyEngine({
@@ -297,6 +320,16 @@ export function QuantaBuddy({
       if (engine) {
         const frame = engine.tick(time);
         applyFrame(frame);
+        const nextBurst = engine.consumeBurst();
+        if (nextBurst) {
+          setBurst({ ...nextBurst, id: time });
+          const line = recoveryLineFor(nextBurst.reason);
+          window.setTimeout(
+            () =>
+              say({ text: line, variant: "error", imageVariant: "thinking" }),
+            BURST_RESPAWN_DELAY + 900
+          );
+        }
         if (frame.present !== lastPresent.current) {
           lastPresent.current = frame.present;
           setVisible(frame.present);
@@ -307,7 +340,7 @@ export function QuantaBuddy({
 
     frameId = window.requestAnimationFrame(animate);
     return () => window.cancelAnimationFrame(frameId);
-  }, [applyFrame, ready]);
+  }, [applyFrame, ready, say]);
 
   useEffect(() => {
     if (!ready) return;
@@ -356,60 +389,76 @@ export function QuantaBuddy({
     setContextMenu({ x: event.clientX, y: event.clientY });
   };
 
+  const burstElement = burst ? (
+    <QuantaBurst
+      key={burst.id}
+      x={burst.x}
+      y={burst.y}
+      reducedMotion={reducedMotion}
+      onDone={clearBurst}
+    />
+  ) : null;
+
   if (!ready || !visible) {
-    return contextMenu ? (
-      <BuddyContextMenu
-        contextMenu={contextMenu}
-        onSit={() => {
-          engineRef.current?.sit();
-          setContextMenu(null);
-        }}
-        onWalk={() => {
-          engineRef.current?.walkAround();
-          setContextMenu(null);
-        }}
-        onLeave={() => {
-          engineRef.current?.leave();
-          setContextMenu(null);
-        }}
-        onHelp={() => {
-          say({
-            title: "This page",
-            text: pageHelpFor(pathname),
-            variant: "default",
-          });
-          setContextMenu(null);
-        }}
-        onChat={() => {
-          onChat();
-          setContextMenu(null);
-        }}
-        onTip={() => {
-          const tips = tipsFor(pathname);
-          say({
-            text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
-            variant: "hint",
-          });
-          setContextMenu(null);
-        }}
-        onShortcuts={() => {
-          requestOpenShortcuts();
-          setContextMenu(null);
-        }}
-        onReplayTour={
-          normalizePath(pathname) === "/editor"
-            ? () => {
-                setTourCompleted(false);
-                setContextMenu(null);
-              }
-            : undefined
-        }
-      />
-    ) : null;
+    return (
+      <>
+        {burstElement}
+        {contextMenu && (
+          <BuddyContextMenu
+            contextMenu={contextMenu}
+            onSit={() => {
+              engineRef.current?.sit();
+              setContextMenu(null);
+            }}
+            onWalk={() => {
+              engineRef.current?.walkAround();
+              setContextMenu(null);
+            }}
+            onLeave={() => {
+              engineRef.current?.leave();
+              setContextMenu(null);
+            }}
+            onHelp={() => {
+              say({
+                title: "This page",
+                text: pageHelpFor(pathname),
+                variant: "default",
+              });
+              setContextMenu(null);
+            }}
+            onChat={() => {
+              onChat();
+              setContextMenu(null);
+            }}
+            onTip={() => {
+              const tips = tipsFor(pathname);
+              say({
+                text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
+                variant: "hint",
+              });
+              setContextMenu(null);
+            }}
+            onShortcuts={() => {
+              requestOpenShortcuts();
+              setContextMenu(null);
+            }}
+            onReplayTour={
+              normalizePath(pathname) === "/editor"
+                ? () => {
+                    setTourCompleted(false);
+                    setContextMenu(null);
+                  }
+                : undefined
+            }
+          />
+        )}
+      </>
+    );
   }
 
   return (
     <>
+      {burstElement}
       <div
         ref={spriteRef}
         role="img"

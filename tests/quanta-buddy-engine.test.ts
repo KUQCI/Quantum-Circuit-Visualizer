@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BURST_RESPAWN_DELAY,
   QuantaBuddyEngine,
   type BuddyRng,
   type BuddyViewport,
@@ -291,5 +292,79 @@ describe("QuantaBuddyEngine", () => {
     expect(after.x).toBe(before.x);
     expect(after.sprite).toBe("idle_0");
     expect(after.scaleX).toBe(1);
+  });
+
+  it("bursts after too many quick pokes and respawns later", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+    engine.call();
+    engine.tick(now);
+
+    for (let index = 0; index < 5; index += 1) {
+      now += 200;
+      engine.tick(now);
+      expect(engine.poke()).toBe(index + 1);
+    }
+    now += 200;
+    engine.tick(now);
+    expect(engine.poke()).toBe("burst");
+    expect(engine.present).toBe(false);
+    expect(engine.consumeBurst()).toEqual({
+      x: 164,
+      y: viewport.height - 64,
+      reason: "poked",
+    });
+    expect(engine.consumeBurst()).toBeNull();
+
+    expect(engine.tick(now + BURST_RESPAWN_DELAY - 1).present).toBe(false);
+    expect(engine.tick(now + BURST_RESPAWN_DELAY).present).toBe(true);
+  });
+
+  it("ignores slow pokes spread over time", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+    engine.call();
+    for (let index = 0; index < 20; index += 1) {
+      now += 1500;
+      expect(engine.poke()).toBeLessThanOrEqual(3);
+    }
+    expect(engine.present).toBe(true);
+  });
+
+  it("bursts when thrown too many times in a row", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+    engine.call();
+    engine.tick(now);
+
+    const throwOnce = () => {
+      engine.pointerDown(300, 300);
+      engine.tick(now);
+      now += 10;
+      engine.pointerMove(300, 200);
+      engine.pointerUp();
+      now += 500;
+      engine.tick(now);
+    };
+
+    for (let index = 0; index < 3; index += 1) {
+      throwOnce();
+      expect(engine.present).toBe(true);
+    }
+    throwOnce();
+    expect(engine.present).toBe(false);
+    expect(engine.consumeBurst()?.reason).toBe("thrown");
   });
 });

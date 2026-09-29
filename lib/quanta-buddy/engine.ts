@@ -39,6 +39,20 @@ const FLOOR_FRICTION = 0.9;
 const MINIMUM_SLIDE_SPEED = 0.4;
 const GRAVITY = 0.3;
 const CEILING_BOUNCE = 0.3;
+const POKE_LIMIT = 6;
+const POKE_WINDOW = 4000;
+const THROW_LIMIT = 4;
+const THROW_WINDOW = 12000;
+const THROW_SPEED_THRESHOLD = 3;
+export const BURST_RESPAWN_DELAY = 2800;
+
+export type BuddyBurstReason = "poked" | "thrown";
+
+export interface BuddyBurst {
+  x: number;
+  y: number;
+  reason: BuddyBurstReason;
+}
 
 const animations: Record<
   BuddyAnimation,
@@ -131,6 +145,11 @@ export class QuantaBuddyEngine {
   private recoveryDeadline: number | null = null;
   private recoveryPhase: "stayLying" | "sitUp" | "sitThenStand" | null = null;
 
+  private pokeTimes: number[] = [];
+  private throwTimes: number[] = [];
+  private respawnDeadline: number | null = null;
+  private pendingBurst: BuddyBurst | null = null;
+
   constructor(opts: {
     viewport: BuddyViewport;
     rng?: BuddyRng;
@@ -167,6 +186,7 @@ export class QuantaBuddyEngine {
 
   call(): void {
     this.presentState = true;
+    this.respawnDeadline = null;
     this.stopSpecialActions();
 
     if (this.reducedMotion) {
@@ -283,7 +303,27 @@ export class QuantaBuddyEngine {
 
   remove(): void {
     this.presentState = false;
+    this.respawnDeadline = null;
     this.stopSpecialActions();
+  }
+
+  /**
+   * A quick click on the sprite. Reports how many recent pokes this makes,
+   * or `"burst"` when it was one poke too many.
+   */
+  poke(): number | "burst" {
+    if (!this.presentState) return 0;
+    if (!this.registerAbuse(this.pokeTimes, POKE_LIMIT, POKE_WINDOW)) {
+      return this.pokeTimes.length;
+    }
+    this.burst("poked");
+    return "burst";
+  }
+
+  consumeBurst(): BuddyBurst | null {
+    const burst = this.pendingBurst;
+    this.pendingBurst = null;
+    return burst;
   }
 
   pointerDown(clientX: number, clientY: number): void {
@@ -332,6 +372,14 @@ export class QuantaBuddyEngine {
   pointerUp(): void {
     if (!this.dragging) return;
     this.dragging = false;
+    const speed = Math.hypot(this.throwVelocityX, this.throwVelocityY);
+    if (
+      speed >= THROW_SPEED_THRESHOLD &&
+      this.registerAbuse(this.throwTimes, THROW_LIMIT, THROW_WINDOW)
+    ) {
+      this.burst("thrown");
+      return;
+    }
     this.fallStarting = true;
     this.falling = true;
     this.fallSpeed = this.throwVelocityY;
@@ -341,7 +389,12 @@ export class QuantaBuddyEngine {
 
   tick(time: number): BuddyFrame {
     this.currentTime = time;
-    if (!this.presentState) return this.frame();
+    if (!this.presentState) {
+      if (this.respawnDeadline !== null && time >= this.respawnDeadline) {
+        this.call();
+      }
+      return this.frame();
+    }
 
     this.processDeadlines();
     this.moveBuddy();
@@ -399,6 +452,32 @@ export class QuantaBuddyEngine {
     this.recoveryDeadline = null;
     this.recoveryPhase = null;
     this.walkTarget = null;
+  }
+
+  private registerAbuse(
+    times: number[],
+    limit: number,
+    windowMs: number
+  ): boolean {
+    const now = this.eventTime();
+    times.push(now);
+    while (times.length > 0 && now - times[0] > windowMs) times.shift();
+    if (times.length < limit) return false;
+    times.length = 0;
+    return true;
+  }
+
+  private burst(reason: BuddyBurstReason): void {
+    this.pendingBurst = {
+      x: this.x + SPRITE_SIZE / 2,
+      y: this.y + SPRITE_SIZE / 2,
+      reason,
+    };
+    this.pokeTimes = [];
+    this.throwTimes = [];
+    this.presentState = false;
+    this.stopSpecialActions();
+    this.respawnDeadline = this.currentTime + BURST_RESPAWN_DELAY;
   }
 
   private enterByFalling(): void {

@@ -1622,3 +1622,123 @@ button:disabled,
 .monaco-editor .overflowingContentWidgets {
   z-index: 10000 !important;
 }
+
+/* Quanta buddy: feather burst when poked or thrown too much */
+.quanta-burst {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 46;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.quanta-burst > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation-fill-mode: forwards;
+}
+
+.quanta-burst-poof {
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 9999px;
+  border: 4px solid color-mix(in srgb, #ffd83a 70%, white);
+  box-shadow: 0 0 24px color-mix(in srgb, #ffd83a 60%, transparent);
+  animation: quanta-burst-poof 0.55s ease-out;
+}
+
+.quanta-burst-feather {
+  width: 14px;
+  height: 26px;
+  margin: -13px 0 0 -7px;
+  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  background: linear-gradient(165deg, #fff6b0 0%, #ffd83a 50%, #e8a800 100%);
+  box-shadow: inset 0 0 0 1px rgba(120, 80, 0, 0.18);
+  animation: quanta-burst-feather 1.6s cubic-bezier(0.18, 0.7, 0.35, 1);
+}
+
+.quanta-burst-feather::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 15%;
+  width: 1px;
+  height: 70%;
+  background: rgba(120, 80, 0, 0.28);
+}
+
+.quanta-burst-eye {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 50% 50%, #111 0 34%, #fff 36%);
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.25);
+  animation: quanta-burst-eye 1.5s cubic-bezier(0.3, 0.6, 0.4, 1);
+}
+
+@keyframes quanta-burst-poof {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(5);
+    opacity: 0;
+  }
+}
+
+@keyframes quanta-burst-feather {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.3);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(calc(var(--dx) * 0.7), calc(var(--dy) * 0.8))
+      rotate(calc(var(--rot) * 0.4)) scale(var(--scale));
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), calc(var(--dy) + 180px))
+      rotate(var(--rot)) scale(var(--scale));
+    opacity: 0;
+  }
+}
+
+@keyframes quanta-burst-eye {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(calc(var(--dx) * 0.7), -90px) scale(1.15);
+  }
+  65% {
+    transform: translate(var(--dx), 70px) scale(1);
+  }
+  80% {
+    transform: translate(calc(var(--dx) * 1.1), 40px) scale(1);
+  }
+  92% {
+    transform: translate(calc(var(--dx) * 1.15), 70px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--dx) * 1.15), 70px) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quanta-burst-feather,
+  .quanta-burst-eye {
+    display: none;
+  }
+}
