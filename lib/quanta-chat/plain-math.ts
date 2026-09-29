@@ -23,7 +23,7 @@ const SYMBOLS: Record<string, string> = {
   pm: "±",
   cdot: "·",
   times: "×",
-  infinity: "∞",
+  infty: "∞",
   hbar: "ℏ",
   ldots: "…",
   dots: "…",
