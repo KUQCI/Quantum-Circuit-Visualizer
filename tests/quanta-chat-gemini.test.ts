@@ -4,6 +4,7 @@ import {
   buildRequestBody,
   canSend,
   GeminiError,
+  MAX_QUESTION_CHARS,
   parseGeminiResponse,
 } from "@/lib/quanta-chat/gemini";
 
@@ -50,6 +51,16 @@ describe("Quanta Gemini helpers", () => {
   it("uses a safe response for blocked content", () => {
     expect(
       parseGeminiResponse({
+        promptFeedback: { blockReason: "SAFETY" },
+        usageMetadata: { promptTokenCount: 4, candidatesTokenCount: 0 },
+      })
+    ).toEqual({
+      text: "I can't answer that one.",
+      promptTokens: 4,
+      outputTokens: 0,
+    });
+    expect(
+      parseGeminiResponse({
         candidates: [{ content: { parts: [] } }],
         promptFeedback: { blockReason: "SAFETY" },
       }).text
@@ -72,6 +83,29 @@ describe("Quanta Gemini helpers", () => {
         throw new Error("offline");
       })
     ).rejects.toBeInstanceOf(GeminiError);
+  });
+
+  it("rethrows aborts without converting them to GeminiError", async () => {
+    const body = buildRequestBody({ context: "", history: [], userText: "Hi" });
+    const controller = new AbortController();
+    const abort = new DOMException("Aborted", "AbortError");
+
+    await expect(
+      askGemini(
+        "test",
+        body,
+        async (_input, init) => {
+          expect(init?.signal).toBe(controller.signal);
+          throw abort;
+        },
+        controller.signal
+      )
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(abort).not.toBeInstanceOf(GeminiError);
+  });
+
+  it("exports the defensive question limit", () => {
+    expect(MAX_QUESTION_CHARS).toBe(500);
   });
 
   it("enforces a three-second client rate limit", () => {

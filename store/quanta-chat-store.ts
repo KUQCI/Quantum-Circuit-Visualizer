@@ -24,11 +24,13 @@ interface QuantaChatState {
   error: string | null;
   usage: ChatUsage;
   lastSentAt: number;
+  generation: number;
   setApiKey: (apiKey: string) => void;
   clearApiKey: () => void;
   setOpen: (open: boolean) => void;
   toggleOpen: () => void;
-  addMessage: (message: Omit<ChatMessage, "id">) => void;
+  addMessage: (message: Omit<ChatMessage, "id">) => number;
+  removeMessage: (id: number) => void;
   setPending: (pending: boolean) => void;
   setError: (error: string | null) => void;
   addUsage: (promptTokens: number, outputTokens: number) => void;
@@ -48,16 +50,21 @@ export const useQuantaChatStore = create<QuantaChatState>()(
       error: null,
       usage: { promptTokens: 0, outputTokens: 0, requests: 0 },
       lastSentAt: 0,
+      generation: 0,
       setApiKey: (apiKey) => set({ apiKey: apiKey.trim(), error: null }),
       clearApiKey: () => set({ apiKey: "", error: null }),
       setOpen: (open) => set({ open }),
       toggleOpen: () => set((state) => ({ open: !state.open })),
-      addMessage: (message) =>
+      addMessage: (message) => {
+        const id = nextMessageId++;
         set((state) => ({
-          messages: [
-            ...state.messages,
-            { ...message, id: nextMessageId++ },
-          ].slice(-40),
+          messages: [...state.messages, { ...message, id }].slice(-40),
+        }));
+        return id;
+      },
+      removeMessage: (id) =>
+        set((state) => ({
+          messages: state.messages.filter((message) => message.id !== id),
         })),
       setPending: (pending) => set({ pending }),
       setError: (error) => set({ error }),
@@ -70,10 +77,11 @@ export const useQuantaChatStore = create<QuantaChatState>()(
           },
         })),
       clearMessages: () =>
-        set({
+        set((state) => ({
           messages: [],
           error: null,
-        }),
+          generation: state.generation + 1,
+        })),
       markSent: (timestamp = Date.now()) => set({ lastSentAt: timestamp }),
     }),
     {
