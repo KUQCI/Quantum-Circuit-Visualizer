@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -242,15 +243,50 @@ function BuddyContextMenu({
   onWalk: () => void;
   onLeave: () => void;
 }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{
+    sourceX: number;
+    sourceY: number;
+    x: number;
+    y: number;
+  } | null>(null);
   const itemClass = cn(
     "block w-full rounded-md px-3 py-2 text-left transition-colors",
     "hover:bg-[var(--color-muted)]"
   );
 
+  useLayoutEffect(() => {
+    const menu = menuRef.current;
+    if (!menu) return;
+
+    const { width, height } = menu.getBoundingClientRect();
+    const maxX = Math.max(8, window.innerWidth - width - 8);
+    const x = Math.min(Math.max(8, contextMenu.x + 8), maxX);
+    const aboveY = contextMenu.y - height - 8;
+    const preferredY = aboveY < 0 ? contextMenu.y + 8 : aboveY;
+    const maxY = Math.max(8, window.innerHeight - height - 8);
+    const y = Math.min(Math.max(8, preferredY), maxY);
+
+    setPosition({
+      sourceX: contextMenu.x,
+      sourceY: contextMenu.y,
+      x,
+      y,
+    });
+  }, [contextMenu]);
+
+  const isMeasured =
+    position?.sourceX === contextMenu.x && position.sourceY === contextMenu.y;
+
   return (
     <div
+      ref={menuRef}
       className="fixed z-[46] min-w-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 text-sm text-[var(--color-foreground)] shadow-lg"
-      style={{ left: contextMenu.x, top: contextMenu.y }}
+      style={{
+        left: isMeasured ? position.x : 0,
+        top: isMeasured ? position.y : 0,
+        visibility: isMeasured ? "visible" : "hidden",
+      }}
       role="menu"
       onClick={(event) => event.stopPropagation()}
     >

@@ -391,9 +391,11 @@ export class QuantaBuddyEngine {
       if (this.recoveryPhase === "stayLying") {
         this.recoveringAfterFall = false;
         this.setAnimation("lay");
+        this.scheduleNextBehavior();
       } else if (this.recoveryPhase === "sitUp") {
         this.recoveringAfterFall = false;
         this.setAnimation("sit");
+        this.scheduleNextBehavior();
       } else if (this.recoveryPhase === "sitThenStand") {
         this.setAnimation("sit");
         this.recoveryDeadline =
@@ -402,6 +404,7 @@ export class QuantaBuddyEngine {
       } else {
         this.recoveringAfterFall = false;
         this.setAnimation("idle");
+        this.scheduleNextBehavior();
       }
     }
 

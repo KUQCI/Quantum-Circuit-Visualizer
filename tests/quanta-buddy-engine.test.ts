@@ -48,6 +48,42 @@ describe("QuantaBuddyEngine", () => {
     expect(frame.sprite).toMatch(/^(lay_0|sit_0|idle_0)$/);
   });
 
+  it("resumes autonomous scheduling after landing recovery", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      rng: new SequenceRng([0.1, 0.9, 0, 0, 0, 0, 0, 0, 0, 0]),
+    });
+
+    engine.call();
+    let time = 0;
+    let frame = engine.tick(time);
+    while (frame.y < viewport.height - 128 && time < 60000) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+
+    const changesAfterLanding: string[] = [];
+    let previousSprite = frame.sprite;
+    for (; time < 40000; time += 16) {
+      frame = engine.tick(time);
+      if (frame.sprite !== previousSprite) {
+        changesAfterLanding.push(frame.sprite);
+        previousSprite = frame.sprite;
+      }
+    }
+    expect(changesAfterLanding.length).toBeGreaterThanOrEqual(1);
+
+    const changesThroughTwoMinutes = [...changesAfterLanding];
+    for (; time < 120000; time += 16) {
+      frame = engine.tick(time);
+      if (frame.sprite !== previousSprite) {
+        changesThroughTwoMinutes.push(frame.sprite);
+        previousSprite = frame.sprite;
+      }
+    }
+    expect(changesThroughTwoMinutes.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("walks in from the left and settles at x=100", () => {
     const engine = new QuantaBuddyEngine({
       viewport,
