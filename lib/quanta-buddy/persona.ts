@@ -201,6 +201,57 @@ export function recoveryLineFor(reason: "poked" | "thrown"): string {
   return lines[Math.floor(Math.random() * lines.length)] ?? lines[0];
 }
 
+const wakeLines = [
+  "Quack?! I wasn't sleeping. I was… collapsing my wave function.",
+  "Mmf. Five more nanoseconds.",
+  "Zzz— quack! Oh, hi. Did you build something while I napped?",
+  "I dreamt I was a photon. Very fast, very tired now.",
+];
+
+export function wakeLine(): string {
+  return wakeLines[Math.floor(Math.random() * wakeLines.length)] ?? wakeLines[0];
+}
+
+export function runReactionFor(result: {
+  shots: number;
+  histogram: Array<{ probability?: number; count?: number }>;
+}): string {
+  const topCount = Math.max(
+    0,
+    ...result.histogram.map((entry) => entry.count ?? 0)
+  );
+  const topShare = result.shots > 0 ? topCount / result.shots : 0;
+
+  if (result.histogram.length === 1) {
+    const lines = [
+      "One outcome, every shot. Deterministic as a duck to bread.",
+      `All ${result.shots} shots agree. Not a single surprise. Suspiciously classical.`,
+    ];
+    return lines[result.shots % lines.length] ?? lines[0];
+  }
+
+  if (topShare <= 0.6 && result.histogram.length >= 2) {
+    const lines = [
+      `Ooh, a proper spread over ${result.histogram.length} outcomes. That's superposition talking.`,
+      `${result.histogram.length} outcomes and none of them boring. Quack of approval.`,
+    ];
+    return lines[result.shots % lines.length] ?? lines[0];
+  }
+
+  const top = Math.round(topShare * 100);
+  const lines = [
+    `Mostly ${top}% one way, with a few rebels. I like the rebels.`,
+    `${result.shots} shots in. Nice run — want me to explain the histogram?`,
+  ];
+  return lines[result.shots % lines.length] ?? lines[0];
+}
+
+export function runErrorReaction(error: string): string {
+  return error.length < 80
+    ? `${error} Quack. Fix that and I'll flap my wings for you.`
+    : "That circuit didn't run. Check the panel message, then try again — quack.";
+}
+
 const duckQuips = [
   "Quack. Sorry, that one slipped out.",
   "Fun fact: I'm a duck. A quantum one, but mostly a duck.",

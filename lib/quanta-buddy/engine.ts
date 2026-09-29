@@ -23,6 +23,7 @@ export interface BuddyFrame {
   scaleX: 1 | -1;
   sprite: string;
   present: boolean;
+  sleeping: boolean;
 }
 
 const SPRITE_SIZE = 128;
@@ -119,6 +120,7 @@ export class QuantaBuddyEngine {
   private y: number;
   private direction = 1;
   private presentState = false;
+  private sleeping = false;
 
   private dragging = false;
   private lastPointerX = 0;
@@ -167,6 +169,10 @@ export class QuantaBuddyEngine {
     return this.presentState;
   }
 
+  get asleep(): boolean {
+    return this.sleeping;
+  }
+
   get isBusy(): boolean {
     return (
       this.dragging ||
@@ -186,6 +192,7 @@ export class QuantaBuddyEngine {
 
   call(): void {
     this.presentState = true;
+    this.wake();
     this.respawnDeadline = null;
     this.stopSpecialActions();
 
@@ -207,6 +214,7 @@ export class QuantaBuddyEngine {
 
   leave(): void {
     if (!this.presentState) return;
+    this.wake();
 
     const visualLeft =
       this.normalScale === 1 ? this.x : this.x - SPRITE_SIZE;
@@ -222,6 +230,7 @@ export class QuantaBuddyEngine {
 
   sit(): void {
     if (!this.presentState) return;
+    this.wake();
     this.stopSpecialActions();
     this.y = this.floorY;
     this.setAnimation("sit");
@@ -230,6 +239,7 @@ export class QuantaBuddyEngine {
 
   walkAround(): void {
     if (!this.presentState) return;
+    this.wake();
     this.stopSpecialActions();
     this.walkingAround = true;
     this.y = this.floorY;
@@ -239,7 +249,9 @@ export class QuantaBuddyEngine {
   }
 
   walkTo(targetX: number): void {
-    if (!this.presentState || this.isBusy) return;
+    if (!this.presentState) return;
+    this.wake();
+    if (this.isBusy) return;
 
     if (this.reducedMotion) {
       if (targetX !== this.x) {
@@ -255,9 +267,10 @@ export class QuantaBuddyEngine {
   }
 
   hop(): void {
+    if (!this.presentState) return;
+    this.wake();
     if (
       this.reducedMotion ||
-      !this.presentState ||
       this.dragging ||
       this.falling ||
       this.slidingAfterFall ||
@@ -313,6 +326,7 @@ export class QuantaBuddyEngine {
    */
   poke(): number | "burst" {
     if (!this.presentState) return 0;
+    this.wake();
     if (!this.registerAbuse(this.pokeTimes, POKE_LIMIT, POKE_WINDOW)) {
       return this.pokeTimes.length;
     }
@@ -328,6 +342,7 @@ export class QuantaBuddyEngine {
 
   pointerDown(clientX: number, clientY: number): void {
     if (!this.presentState) return;
+    this.wake();
 
     this.stopSpecialActions();
     this.dragging = true;
@@ -427,7 +442,25 @@ export class QuantaBuddyEngine {
       scaleX: this.dragging ? 1 : this.normalScale,
       sprite,
       present: this.presentState,
+      sleeping: this.sleeping,
     };
+  }
+
+  sleep(): void {
+    if (!this.presentState || this.isBusy || this.sleeping) return;
+    this.stopSpecialActions();
+    this.walkTarget = null;
+    this.behaviorDeadline = null;
+    this.y = this.floorY;
+    this.sleeping = true;
+    this.setAnimation("lay");
+  }
+
+  wake(): void {
+    if (!this.sleeping) return;
+    this.sleeping = false;
+    this.setAnimation("sit");
+    this.behaviorDeadline = this.currentTime + this.randomBetween(1500, 3000);
   }
 
   private setAnimation(animation: BuddyAnimation): void {
@@ -479,6 +512,7 @@ export class QuantaBuddyEngine {
     this.pokeTimes = [];
     this.throwTimes = [];
     this.presentState = false;
+    this.sleeping = false;
     this.stopSpecialActions();
     this.respawnDeadline = "pending";
   }
@@ -575,7 +609,8 @@ export class QuantaBuddyEngine {
       !this.entering &&
       !this.leaving &&
       !this.slidingAfterFall &&
-      !this.recoveringAfterFall
+      !this.recoveringAfterFall &&
+      !this.sleeping
     ) {
       this.behaviorDeadline = null;
       this.chooseNextBehavior();
@@ -607,6 +642,8 @@ export class QuantaBuddyEngine {
   }
 
   private moveBuddy(): void {
+    if (this.sleeping) return;
+
     if (this.entering) {
       this.x += this.direction * WALK_SPEED;
       if (
