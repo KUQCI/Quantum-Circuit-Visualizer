@@ -18,12 +18,18 @@ describe("quanta buddy store", () => {
     expect(useQuantaBuddyStore.getState().enabled).toBe(true);
   });
 
-  it("persists only enabled", () => {
+  it("toggles quack sounds", () => {
+    useQuantaBuddyStore.setState({ sound: true });
+    useQuantaBuddyStore.getState().toggleSound();
+    expect(useQuantaBuddyStore.getState().sound).toBe(false);
+  });
+
+  it("persists only enabled and sound", () => {
     const state = useQuantaBuddyStore.getState();
     const partialize = useQuantaBuddyStore.persist.getOptions().partialize;
 
-    expect(partialize?.({ ...state, enabled: false, callRequest: 42 })).toEqual({
-      enabled: false,
-    });
+    expect(
+      partialize?.({ ...state, enabled: false, sound: true, callRequest: 42 })
+    ).toEqual({ enabled: false, sound: true });
   });
 });
