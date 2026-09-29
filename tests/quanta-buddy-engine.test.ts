@@ -294,6 +294,69 @@ describe("QuantaBuddyEngine", () => {
     expect(after.scaleX).toBe(1);
   });
 
+  it("sleeps in place and stays asleep while ticking", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.sleep();
+    expect(engine.tick(0)).toMatchObject({
+      sprite: "lay_0",
+      sleeping: true,
+    });
+    expect(engine.tick(30000)).toMatchObject({
+      sprite: "lay_0",
+      sleeping: true,
+    });
+  });
+
+  it("wakes into sitting and resumes its behavior cycle", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      rng: new SequenceRng([0.9, 0.1, 0, 0, 0, 0]),
+    });
+
+    engine.call();
+    tickUntil(engine, (frame) => frame.sprite === "idle_0");
+    engine.sleep();
+    engine.wake();
+    expect(engine.tick(0)).toMatchObject({
+      sprite: "sit_0",
+      sleeping: false,
+    });
+    const later = engine.tick(4000);
+    expect(later.sleeping).toBe(false);
+    expect(later.sprite).not.toBe("lay_0");
+  });
+
+  it("wakes when grabbed while asleep", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.sleep();
+    engine.pointerDown(300, 300);
+    expect(engine.tick(0).sleeping).toBe(false);
+  });
+
+  it("does not sleep while busy falling", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.pointerDown(300, 300);
+    engine.pointerMove(400, 300);
+    engine.pointerUp();
+    engine.sleep();
+    expect(engine.tick(0).sleeping).toBe(false);
+  });
+
   it("bursts after too many quick pokes and respawns later", () => {
     let now = 0;
     const engine = new QuantaBuddyEngine({

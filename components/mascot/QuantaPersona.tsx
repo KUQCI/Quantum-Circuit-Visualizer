@@ -11,6 +11,8 @@ import {
 import {
   greetingFor,
   randomDuckQuip,
+  runErrorReaction,
+  runReactionFor,
   tipsFor,
 } from "@/lib/quanta-buddy/persona";
 import type { QuantaBuddyEngine } from "@/lib/quanta-buddy/engine";
@@ -18,6 +20,7 @@ import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
+import { useExecutionStore } from "@/store/execution-store";
 
 export function QuantaPersona({
   engineRef,
@@ -39,6 +42,8 @@ export function QuantaPersona({
     (state) => state.validationWarnings
   );
   const circuit = useCircuitStore((state) => state.circuit);
+  const lastResult = useExecutionStore((state) => state.lastResult);
+  const runError = useExecutionStore((state) => state.runError);
   const greetedPaths = useRef(new Set<string>());
   const tipCountByPath = useRef(new Map<string, number>());
   const usedTipsByPath = useRef(new Map<string, Set<string>>());
@@ -48,6 +53,8 @@ export function QuantaPersona({
   const previousLevel = useRef(getLevelFromXp(totalXp));
   const previousWarningCount = useRef(validationWarnings.length);
   const previousUnbound = useRef<string[]>([]);
+  const previousResult = useRef(lastResult);
+  const previousRunError = useRef(runError);
   const lastFollowAt = useRef(0);
 
   useEffect(() => {
@@ -203,6 +210,40 @@ export function QuantaPersona({
     }
     engine?.hop();
   }, [engineRef, progressHydrated, say, totalXp]);
+
+  useEffect(() => {
+    const wasResult = previousResult.current;
+    previousResult.current = lastResult;
+    if (!lastResult || wasResult === lastResult) return;
+
+    const currentMessage = useQuantaPopoutStore.getState().message;
+    if (
+      currentMessage &&
+      Date.now() - currentMessage.updatedAt < 1500
+    ) {
+      return;
+    }
+
+    say({
+      text: runReactionFor(lastResult),
+      variant: "success",
+      imageVariant: "success",
+    });
+    engineRef.current?.hop();
+  }, [engineRef, lastResult, say]);
+
+  useEffect(() => {
+    const wasError = previousRunError.current;
+    previousRunError.current = runError;
+    if (wasError !== null || runError === null) return;
+
+    say({
+      text: runErrorReaction(runError),
+      title: "Quack. That didn't run",
+      variant: "error",
+      imageVariant: "thinking",
+    });
+  }, [runError, say]);
 
   useEffect(() => {
     const wasEmpty = previousWarningCount.current === 0;

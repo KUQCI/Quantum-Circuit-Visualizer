@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   greetingFor,
   pageHelpFor,
+  runErrorReaction,
+  runReactionFor,
   tipsFor,
   type PersonaContext,
+  wakeLine,
 } from "@/lib/quanta-buddy/persona";
 
 const context: PersonaContext = {
@@ -65,5 +68,36 @@ describe("Quanta persona", () => {
       greetingFor({ ...context, path: "/editor" })
     );
     expect(tipsFor("/learn/")).toEqual(tipsFor("/learn"));
+  });
+
+  it("describes deterministic, spread, and dominant runs", () => {
+    expect(
+      runReactionFor({ shots: 1025, histogram: [{ count: 1025 }] })
+    ).toContain("1025 shots");
+    expect(
+      runReactionFor({
+        shots: 100,
+        histogram: [{ count: 50 }, { count: 50 }],
+      })
+    ).toContain("2 outcomes");
+    expect(
+      runReactionFor({
+        shots: 100,
+        histogram: [{ count: 80 }, { count: 20 }],
+      })
+    ).toContain("80%");
+  });
+
+  it("reacts to short and long run errors", () => {
+    expect(runErrorReaction("Missing parameter")).toContain(
+      "Missing parameter Quack."
+    );
+    expect(runErrorReaction("x".repeat(80))).toBe(
+      "That circuit didn't run. Check the panel message, then try again — quack."
+    );
+  });
+
+  it("returns a wake line", () => {
+    expect(wakeLine()).not.toHaveLength(0);
   });
 });

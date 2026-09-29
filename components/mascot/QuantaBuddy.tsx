@@ -28,6 +28,7 @@ import {
   pokeReactionFor,
   recoveryLineFor,
   tipsFor,
+  wakeLine,
 } from "@/lib/quanta-buddy/persona";
 import { playQuack, unlockQuacks } from "@/lib/quanta-buddy/quack";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
@@ -81,6 +82,7 @@ export function QuantaBuddy({
 }) {
   const pathname = usePathname();
   const spriteRef = useRef<HTMLDivElement>(null);
+  const zzzRef = useRef<HTMLSpanElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const bubbleSize = useRef({ width: 0, height: 0 });
   const engineRef = useRef<QuantaBuddyEngine | null>(null);
@@ -155,6 +157,11 @@ export function QuantaBuddy({
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
       updateHitTarget();
+    }
+    const zzz = zzzRef.current;
+    if (zzz) {
+      zzz.style.transform = `translate(${frame.x + (frame.scaleX === 1 ? 84 : 20)}px, ${frame.y + 30}px)`;
+      zzz.style.display = frame.sleeping ? "" : "none";
     }
 
     const bubble = bubbleRef.current;
@@ -370,7 +377,7 @@ export function QuantaBuddy({
     const schedule = () => {
       timeout = window.setTimeout(() => {
         const engine = engineRef.current;
-        if (engine?.present && !engine.isBusy && soundRef.current) {
+        if (engine?.present && !engine.isBusy && !engine.asleep && soundRef.current) {
           if (playQuack("soft") && !reducedMotion) engine.hop();
         }
         schedule();
@@ -379,6 +386,44 @@ export function QuantaBuddy({
     schedule();
     return () => window.clearTimeout(timeout);
   }, [ready, reducedMotion]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const lastActivity = { current: performance.now() };
+    const recordActivity = (event: Event) => {
+      lastActivity.current = performance.now();
+      const engine = engineRef.current;
+      const target = event.target;
+      const onSprite =
+        target instanceof Element &&
+        target.closest('[aria-label="Quanta buddy"]');
+      if (engine?.asleep && !onSprite) engine.wake();
+    };
+    const activityOptions = { passive: true };
+    window.addEventListener("pointerdown", recordActivity, activityOptions);
+    window.addEventListener("keydown", recordActivity, activityOptions);
+    window.addEventListener("wheel", recordActivity, activityOptions);
+    window.addEventListener("pointermove", recordActivity, activityOptions);
+    const interval = window.setInterval(() => {
+      const engine = engineRef.current;
+      if (
+        performance.now() - lastActivity.current > 90_000 &&
+        engine?.present &&
+        !engine.isBusy &&
+        !engine.asleep &&
+        useQuantaPopoutStore.getState().message === null
+      ) {
+        engine.sleep();
+      }
+    }, 5000);
+    return () => {
+      window.removeEventListener("pointerdown", recordActivity);
+      window.removeEventListener("keydown", recordActivity);
+      window.removeEventListener("wheel", recordActivity);
+      window.removeEventListener("pointermove", recordActivity);
+      window.clearInterval(interval);
+    };
+  }, [engineRef, ready]);
 
   useEffect(() => {
     if (!ready) return;
@@ -409,6 +454,12 @@ export function QuantaBuddy({
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
+    const engine = engineRef.current;
+    const wasAsleep = engine?.asleep ?? false;
+    if (wasAsleep) {
+      say({ text: wakeLine(), variant: "default" });
+      quack("soft");
+    }
     dragging.current = true;
     pointerDown.current = {
       time: performance.now(),
@@ -416,11 +467,11 @@ export function QuantaBuddy({
       y: event.clientY,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
-    engineRef.current?.pointerDown(event.clientX, event.clientY);
+    engine?.pointerDown(event.clientX, event.clientY);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
     window.addEventListener("pointercancel", handlePointerUp);
-  }, [handlePointerMove, handlePointerUp]);
+  }, [handlePointerMove, handlePointerUp, quack, say]);
 
   const handleContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -516,6 +567,11 @@ export function QuantaBuddy({
           WebkitUserSelect: "none",
         }}
       />
+      <span ref={zzzRef} className="quanta-zzz" aria-hidden="true">
+        <span>z</span>
+        <span>z</span>
+        <span>z</span>
+      </span>
       <QuantaBuddyBubble
         bubbleRef={bubbleRef}
         onMeasure={measureBubble}
