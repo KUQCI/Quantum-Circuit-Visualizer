@@ -6,12 +6,14 @@ import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { variantFromFeedback } from "@/lib/quanta-assets";
 import { cn } from "@/lib/utils";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
+import { useTypedText } from "@/lib/use-typed-text";
 
 export function QuantaPopout({ bottomOffset }: { bottomOffset?: number }) {
   const message = useQuantaPopoutStore((state) => state.message);
+  const buddySpeaking = useQuantaPopoutStore((state) => state.buddySpeaking);
   const dismiss = useQuantaPopoutStore((state) => state.dismiss);
-  const [displayedText, setDisplayedText] = useState("");
   const [reducedMotion, setReducedMotion] = useState(false);
+  const displayedText = useTypedText(message?.text ?? null, reducedMotion);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -22,38 +24,12 @@ export function QuantaPopout({ bottomOffset }: { bottomOffset?: number }) {
   }, []);
 
   useEffect(() => {
-    if (!message) {
-      setDisplayedText("");
-      return;
-    }
-
-    if (reducedMotion) {
-      setDisplayedText(message.text);
-      return;
-    }
-
-    setDisplayedText("");
-    const intervalMs = Math.max(
-      6,
-      Math.min(18, 2500 / Math.max(message.text.length, 1))
-    );
-    let index = 0;
-    const interval = window.setInterval(() => {
-      index += 1;
-      setDisplayedText(message.text.slice(0, index));
-      if (index >= message.text.length) window.clearInterval(interval);
-    }, intervalMs);
-
-    return () => window.clearInterval(interval);
-  }, [message, reducedMotion]);
-
-  useEffect(() => {
     if (!message) return;
     const timeout = window.setTimeout(dismiss, 9000);
     return () => window.clearTimeout(timeout);
   }, [dismiss, message]);
 
-  if (!message) return null;
+  if (!message || buddySpeaking) return null;
 
   const imageVariant =
     message.imageVariant ?? variantFromFeedback(message.variant);

@@ -122,6 +122,7 @@ export class QuantaBuddyEngine {
   private walkingAround = false;
   private slidingAfterFall = false;
   private recoveringAfterFall = false;
+  private walkTarget: number | null = null;
 
   private fallStartDeadline: number | null = null;
   private behaviorDeadline: number | null = null;
@@ -144,6 +145,17 @@ export class QuantaBuddyEngine {
 
   get present(): boolean {
     return this.presentState;
+  }
+
+  get isBusy(): boolean {
+    return (
+      this.dragging ||
+      this.falling ||
+      this.slidingAfterFall ||
+      this.recoveringAfterFall ||
+      this.entering ||
+      this.leaving
+    );
   }
 
   setViewport(viewport: BuddyViewport): void {
@@ -203,6 +215,69 @@ export class QuantaBuddyEngine {
     this.setAnimation("walk");
     this.walkAroundDeadline =
       this.currentTime + this.randomBetween(8000, 30000);
+  }
+
+  walkTo(targetX: number): void {
+    if (!this.presentState || this.isBusy) return;
+
+    if (this.reducedMotion) {
+      if (targetX !== this.x) {
+        this.direction = targetX > this.x ? 1 : -1;
+      }
+      return;
+    }
+
+    this.walkTarget = this.clampHorizontal(targetX - SPRITE_SIZE / 2);
+    this.direction = this.walkTarget >= this.x ? 1 : -1;
+    this.behaviorDeadline = null;
+    this.setAnimation("walk");
+  }
+
+  hop(): void {
+    if (
+      this.reducedMotion ||
+      !this.presentState ||
+      this.dragging ||
+      this.falling ||
+      this.slidingAfterFall ||
+      this.recoveringAfterFall ||
+      this.y !== this.floorY ||
+      !["idle", "sit", "walk"].includes(this.currentAnimation)
+    ) {
+      return;
+    }
+
+    this.walkTarget = null;
+    this.behaviorDeadline = null;
+    this.falling = true;
+    this.fallStarting = false;
+    this.fallSpeed = -6;
+    this.throwVelocityX = 0;
+    this.throwVelocityY = 0;
+    this.setAnimation("fall");
+  }
+
+  cancelDrag(): void {
+    if (!this.presentState) return;
+
+    this.dragging = false;
+    this.falling = false;
+    this.fallStarting = false;
+    this.slidingAfterFall = false;
+    this.recoveringAfterFall = false;
+    this.entering = false;
+    this.leaving = false;
+    this.walkingAround = false;
+    this.walkTarget = null;
+    this.fallSpeed = 0;
+    this.throwVelocityX = 0;
+    this.throwVelocityY = 0;
+    this.fallStartDeadline = null;
+    this.recoveryDeadline = null;
+    this.recoveryPhase = null;
+    this.y = this.floorY;
+    this.setAnimation("idle");
+    this.scheduleNextBehavior();
   }
 
   remove(): void {
@@ -322,6 +397,7 @@ export class QuantaBuddyEngine {
     this.walkAroundDeadline = null;
     this.recoveryDeadline = null;
     this.recoveryPhase = null;
+    this.walkTarget = null;
   }
 
   private enterByFalling(): void {
@@ -458,6 +534,22 @@ export class QuantaBuddyEngine {
         this.entering = false;
         this.setAnimation("idle");
         this.scheduleNextBehavior();
+      }
+    } else if (
+      this.walkTarget !== null &&
+      !this.dragging &&
+      !this.falling &&
+      !this.leaving
+    ) {
+      const distance = this.walkTarget - this.x;
+      if (Math.abs(distance) <= WALK_SPEED) {
+        this.x = this.walkTarget;
+        this.walkTarget = null;
+        this.setAnimation("idle");
+        this.scheduleNextBehavior();
+      } else {
+        this.direction = distance > 0 ? 1 : -1;
+        this.x += this.direction * WALK_SPEED;
       }
     } else if (!this.dragging && !this.falling && !this.leaving) {
       if (this.currentAnimation === "walk" || this.walkingAround) {
