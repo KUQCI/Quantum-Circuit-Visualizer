@@ -76,7 +76,11 @@ export default function QuantaMascotDocsPage() {
           Chat with Quanta (Gemini)
         </h2>
         <p className="text-sm leading-relaxed text-[var(--color-muted-foreground)]">
-          Chat uses your own Gemini API key (BYOK), stored only in this
+          Chat uses a shared Gemini key when the site is built with{" "}
+          <code className="font-mono text-xs">
+            NEXT_PUBLIC_QUANTA_GEMINI_API_KEY
+          </code>
+          ; visitors can paste their own key instead, stored only in this
           browser and sent directly to Google. It runs on{" "}
           <code className="font-mono text-xs">gemini-2.5-flash-lite</code> and
           keeps replies, history, and page context short to save tokens.

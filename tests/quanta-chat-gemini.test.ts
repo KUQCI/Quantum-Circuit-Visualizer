@@ -6,6 +6,7 @@ import {
   GeminiError,
   MAX_QUESTION_CHARS,
   parseGeminiResponse,
+  resolveApiKey,
 } from "@/lib/quanta-chat/gemini";
 
 describe("Quanta Gemini helpers", () => {
@@ -111,5 +112,11 @@ describe("Quanta Gemini helpers", () => {
   it("enforces a three-second client rate limit", () => {
     expect(canSend(10_000, 12_999)).toBe(false);
     expect(canSend(10_000, 13_000)).toBe(true);
+  });
+
+  it("prefers the visitor's key over the shared default", () => {
+    expect(resolveApiKey("user-key", "shared-key")).toBe("user-key");
+    expect(resolveApiKey("", "shared-key")).toBe("shared-key");
+    expect(resolveApiKey("", "")).toBe("");
   });
 });
