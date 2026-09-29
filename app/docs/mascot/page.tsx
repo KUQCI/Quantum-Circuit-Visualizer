@@ -82,7 +82,7 @@ export default function QuantaMascotDocsPage() {
           </code>
           ; visitors can paste their own key instead, stored only in this
           browser and sent directly to Google. It runs on{" "}
-          <code className="font-mono text-xs">gemini-2.5-flash-lite</code> and
+          <code className="font-mono text-xs">gemini-3.5-flash-lite</code> and
           keeps replies, history, and page context short to save tokens.
         </p>
       </section>

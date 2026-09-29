@@ -30,7 +30,7 @@ describe("Quanta Gemini helpers", () => {
     expect(body.generationConfig).toMatchObject({
       maxOutputTokens: 220,
       temperature: 0.6,
-      thinkingConfig: { thinkingBudget: 0 },
+      thinkingConfig: { thinkingLevel: "minimal" },
     });
   });
 
