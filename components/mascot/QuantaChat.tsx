@@ -94,7 +94,10 @@ export function QuantaChat() {
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setEditingKey(false);
+        setOpen(false);
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -199,7 +202,10 @@ export function QuantaChat() {
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            setEditingKey(false);
+            setOpen(false);
+          }}
           className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
           aria-label="Close chat"
         >
@@ -245,6 +251,18 @@ export function QuantaChat() {
             <KeyRound className="h-4 w-4" aria-hidden />
             Save key
           </button>
+          {effectiveKey && (
+            <button
+              type="button"
+              onClick={() => {
+                setKeyDraft("");
+                setEditingKey(false);
+              }}
+              className="ml-2 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-muted)]"
+            >
+              Back to chat
+            </button>
+          )}
           <p className="text-xs text-[var(--color-muted-foreground)]">
             Free keys are rate-limited; Quanta keeps replies short to save
             quota.
