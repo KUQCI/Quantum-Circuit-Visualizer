@@ -109,6 +109,10 @@ export function getQuantaAssetUrl(key: QuantaAssetKey | QuantaVariant): string {
   return withBasePath(getQuantaAssetPath(key));
 }
 
+export function buddySpriteUrl(name: string): string {
+  return withBasePath(`/assets/quanta/buddy/${name}.png`);
+}
+
 export function variantFromFeedback(
   kind: "default" | "success" | "hint" | "error" | "waiting"
 ): QuantaVariant {

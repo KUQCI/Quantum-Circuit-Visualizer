@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { isPathActive } from "@/lib/routes";
 import { useThemeStore } from "@/store/theme-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { ExternalAnchor, QCI_HOME_URL } from "@/components/navigation/ExternalAnchor";
 import { Button } from "@/components/ui/button";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
@@ -36,6 +37,7 @@ import {
   ExternalLink,
   Bug,
   RotateCcw,
+  Bird,
 } from "lucide-react";
 
 const primaryNav = [
@@ -64,6 +66,9 @@ export function AppHeader() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useThemeStore();
   const setTourCompleted = useEditorUiStore((state) => state.setTourCompleted);
+  const enabled = useQuantaBuddyStore((state) => state.enabled);
+  const toggle = useQuantaBuddyStore((state) => state.toggle);
+  const callQuanta = useQuantaBuddyStore((state) => state.callQuanta);
 
   return (
     <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
@@ -179,6 +184,13 @@ export function AppHeader() {
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={toggle}>
+                <Bird className="h-4 w-4" aria-hidden />
+                {enabled ? "Hide Quanta buddy" : "Show Quanta buddy"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={callQuanta} disabled={!enabled}>
+                Call Quanta
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={requestOpenShortcuts}>
                 Keyboard shortcuts
               </DropdownMenuItem>
@@ -242,6 +254,13 @@ export function AppHeader() {
               <DropdownMenuItem onClick={() => setTourCompleted(false)}>
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={toggle}>
+                <Bird className="h-4 w-4" aria-hidden />
+                {enabled ? "Hide Quanta buddy" : "Show Quanta buddy"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={callQuanta} disabled={!enabled}>
+                Call Quanta
               </DropdownMenuItem>
               <DropdownMenuItem onClick={requestOpenShortcuts}>
                 Keyboard shortcuts

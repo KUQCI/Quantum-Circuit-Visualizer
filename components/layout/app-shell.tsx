@@ -19,6 +19,7 @@ import { XpToast } from "@/components/learning/XpToast";
 import { LevelUpDialog } from "@/components/learning/LevelUpDialog";
 import { ShortcutsDialog } from "@/components/help/ShortcutsDialog";
 import { AppToast } from "@/components/ui/app-toast";
+import { QuantaBuddyHost } from "@/components/mascot/QuantaBuddy";
 
 function getContentBreadcrumbs(pathname: string) {
   const path = normalizePath(pathname);
@@ -96,6 +97,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <XpToast />
+      <QuantaBuddyHost />
       <LevelUpDialog />
       <ShortcutsDialog />
       <AppToast />
