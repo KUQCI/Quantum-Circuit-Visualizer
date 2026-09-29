@@ -198,7 +198,7 @@ export function ComposerToolbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="composer-toolbar-btn touch-target flex h-10 w-10 items-center justify-center rounded sm:hidden sm:h-7 sm:w-7"
+                className="composer-toolbar-btn touch-target flex h-10 w-10 items-center justify-center rounded lg:hidden sm:h-7 sm:w-7"
                 aria-label="Open editor menu"
               >
                 <Menu className="h-4 w-4" />
@@ -331,7 +331,7 @@ export function ComposerToolbar() {
           </DropdownMenu>
 
           {/* Desktop menus */}
-          <nav className="hidden items-center gap-0.5 sm:flex">
+          <nav className="hidden items-center gap-0.5 lg:flex">
             <ToolbarMenu label="File" icon={FileText} items={fileItems} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
