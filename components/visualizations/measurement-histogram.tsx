@@ -70,7 +70,6 @@ export function MeasurementHistogram({
           width="100%"
           height="100%"
           preserveAspectRatio="xMidYMid meet"
-          className="min-h-[100px]"
           aria-label="Measurement histogram"
         >
         <line

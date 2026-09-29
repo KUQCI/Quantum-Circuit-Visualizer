@@ -16,6 +16,7 @@ import { useCircuitStore } from "@/store/circuit-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import {
   getLayoutTier,
+  getVizBandMinPercent,
   shouldAutoOpenNarrowInspector,
 } from "@/lib/composer-layout";
 import { useElementSize } from "@/lib/use-element-size";
@@ -96,7 +97,7 @@ function NarrowWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 basis-[55%] shrink-0 overflow-hidden bg-[var(--color-canvas)]">
+      <div className="min-h-0 basis-[55%] shrink-0 overflow-hidden bg-[var(--color-canvas)] [@media(max-height:760px)]:basis-[42%]">
         <CircuitCanvas
           draggingGate={draggingGate}
           onDragEnd={onDragEnd}
@@ -192,6 +193,8 @@ export function ComposerResizableWorkspace({
   const { ref: workspaceRef, size } = useElementSize<HTMLDivElement>();
   const tier = getLayoutTier(size.width, size.height);
   const useVizTabs = tier !== "desktop";
+  const vizMinSize = getVizBandMinPercent(size.height);
+  const vizDefaultSize = Math.max(30, vizMinSize);
 
   const opsPanelRef = useRef<ImperativePanelHandle>(null);
   const codePanelRef = useRef<ImperativePanelHandle>(null);
@@ -233,7 +236,11 @@ export function ComposerResizableWorkspace({
   }, [selectedOperationId, showInspector]);
 
   return (
-    <div ref={workspaceRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div
+      ref={workspaceRef}
+      data-layout-tier={tier}
+      className="composer-workspace-root flex min-h-0 flex-1 flex-col overflow-hidden"
+    >
       {tier !== "desktop" ? (
         <NarrowWorkspace
           draggingGate={draggingGate}
@@ -292,7 +299,7 @@ export function ComposerResizableWorkspace({
               id="composer-canvas-stack"
               order={0}
               minSize={28}
-              defaultSize={showVizPanels ? 70 : 100}
+              defaultSize={showVizPanels ? 100 - vizDefaultSize : 100}
             >
               <PanelGroup direction="horizontal" className="h-full min-h-0">
                 <Panel
@@ -346,8 +353,8 @@ export function ComposerResizableWorkspace({
               ref={vizPanelRef}
               id="composer-viz"
               order={1}
-              defaultSize={30}
-              minSize={16}
+              defaultSize={vizDefaultSize}
+              minSize={vizMinSize}
               collapsible
               collapsedSize={0}
               onCollapse={() => {
