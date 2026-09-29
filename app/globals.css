@@ -550,6 +550,10 @@ html[data-theme="light"] .composer-footer-project-label {
   pointer-events: none;
 }
 
+.composer-workspace-root:not([data-layout-tier="desktop"]) ~ .composer-collapse-rails {
+  display: none;
+}
+
 .composer-panel-rail--collapsed {
   color: var(--color-brand);
 }

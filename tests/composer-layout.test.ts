@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  canSplitVizPanels,
   computeComposerLayout,
   getLayoutTier,
+  getVizBandMinPercent,
   shouldAutoOpenNarrowInspector,
 } from "@/lib/composer-layout";
 
@@ -65,5 +67,19 @@ describe("composer-layout", () => {
     expect(shouldAutoOpenNarrowInspector("op-1", "op-1", "gates")).toBe(false);
     expect(shouldAutoOpenNarrowInspector("op-1", null, "gates")).toBe(false);
     expect(shouldAutoOpenNarrowInspector(null, "op-1", "inspector")).toBe(false);
+  });
+  it("keeps the viz band at a readable pixel height on short workspaces", () => {
+    expect(getVizBandMinPercent(0)).toBe(16);
+    expect(getVizBandMinPercent(1600)).toBe(16);
+    expect(getVizBandMinPercent(550)).toBe(40);
+    expect(getVizBandMinPercent(300)).toBe(60);
+  });
+
+  it("only splits result panels when each column has enough width", () => {
+    expect(canSplitVizPanels(0, 4)).toBe(true);
+    expect(canSplitVizPanels(900, 4)).toBe(true);
+    expect(canSplitVizPanels(770, 4)).toBe(false);
+    expect(canSplitVizPanels(500, 2)).toBe(true);
+    expect(canSplitVizPanels(300, 1)).toBe(true);
   });
 });

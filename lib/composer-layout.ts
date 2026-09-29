@@ -99,3 +99,22 @@ export function computeComposerLayout(input: ComposerLayoutInput): ComposerLayou
     useOverlayPanels,
   };
 }
+
+export const VIZ_BAND_MIN_PX = 220;
+export const VIZ_SPLIT_MIN_PANEL_PX = 220;
+
+/**
+ * Minimum viz band size as a percentage of the vertical workspace so the
+ * results band never shrinks below VIZ_BAND_MIN_PX on short viewports.
+ */
+export function getVizBandMinPercent(workspaceHeight: number): number {
+  if (workspaceHeight <= 0) return 16;
+  const pct = Math.ceil((VIZ_BAND_MIN_PX / workspaceHeight) * 100);
+  return clamp(pct, 16, 60);
+}
+
+/** Whether `panelCount` result panels fit side by side in `width` px. */
+export function canSplitVizPanels(width: number, panelCount: number): boolean {
+  if (width <= 0 || panelCount <= 1) return true;
+  return width / panelCount >= VIZ_SPLIT_MIN_PANEL_PX;
+}

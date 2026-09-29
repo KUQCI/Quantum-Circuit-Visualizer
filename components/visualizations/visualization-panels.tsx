@@ -5,7 +5,8 @@ import type { Circuit } from "@/lib/circuit-schema";
 import { simulateCircuit } from "@/lib/quantum-state";
 import type { QuantumStateResult } from "@/lib/quantum-state";
 import { getOperationsUpToStep } from "@/lib/circuit-layout";
-import type { LayoutTier } from "@/lib/composer-layout";
+import { canSplitVizPanels, type LayoutTier } from "@/lib/composer-layout";
+import { useElementSize } from "@/lib/use-element-size";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { useExecutionStore } from "@/store/execution-store";
 import { ProbabilityChart } from "./probability-chart";
@@ -53,7 +54,7 @@ function PanelBody({
           <p className="mb-1 shrink-0 text-[10px] leading-tight text-[var(--color-muted-foreground)]">
             Ideal |ψ|² (live, ignores measurements)
           </p>
-          <div className="min-h-0 flex-1">
+          <div className="min-h-[132px] flex-1">
             <ProbabilityChart
               probabilities={result.probabilities}
               numQubits={result.numQubits}
@@ -64,7 +65,7 @@ function PanelBody({
       );
     case "qsphere":
       return (
-        <div className="min-h-0 flex-1">
+        <div className="min-h-[132px] flex-1">
           <QSphere
             points={result.qSpherePoints}
             numQubits={result.numQubits}
@@ -75,7 +76,7 @@ function PanelBody({
       );
     case "statevector":
       return (
-        <div className="min-h-0 flex-1">
+        <div className="min-h-[132px] flex-1">
           <StatevectorChart
             amplitudes={result.amplitudes}
             numQubits={result.numQubits}
@@ -89,7 +90,7 @@ function PanelBody({
           <p className="mb-1 shrink-0 text-[10px] leading-tight text-[var(--color-muted-foreground)]">
             Shot counts from Run circuit
           </p>
-          <div className="min-h-0 flex-1">
+          <div className="min-h-[132px] flex-1">
             <MeasurementHistogram
               histogram={lastResult?.histogram ?? []}
               shots={lastResult?.shots ?? 0}
@@ -141,7 +142,7 @@ function VizPanelShell({
         </h3>
       </div>
       {!collapsed && (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-2 sm:p-3">
           <PanelBody panelId={panelId} result={result} lastResult={lastResult} />
         </div>
       )}
@@ -216,6 +217,7 @@ export function VisualizationPanels({
     setVizLayout,
   } = useEditorUiStore();
   const lastResult = useExecutionStore((s) => s.lastResult);
+  const { ref: rootRef, size: rootSize } = useElementSize<HTMLDivElement>();
 
   const effectiveCircuit = useMemo(() => {
     if (!inspectMode) return circuit;
@@ -255,9 +257,12 @@ export function VisualizationPanels({
     }
   }, [activePanels, activeTab]);
 
+  const splitFits = canSplitVizPanels(rootSize.width, activePanels.length);
+  const showTabs = useVizTabs || (resizable && !splitFits);
+
   if (activePanels.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 bg-[var(--color-background)] px-4 text-center text-xs text-[var(--color-muted-foreground)]">
+      <div ref={rootRef} className="flex h-full flex-col items-center justify-center gap-2 bg-[var(--color-background)] px-4 text-center text-xs text-[var(--color-muted-foreground)]">
         <p>All result panels are collapsed.</p>
         <button
           type="button"
@@ -275,9 +280,9 @@ export function VisualizationPanels({
     );
   }
 
-  if (useVizTabs && activePanels.length > 1) {
+  if (showTabs && activePanels.length > 1) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
+      <div ref={rootRef} className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
         <div
           className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--color-border)] p-1.5"
         >
@@ -304,7 +309,7 @@ export function VisualizationPanels({
               </button>
             ))}
           </div>
-          {layoutTier === "desktop" && (
+          {layoutTier === "desktop" && splitFits && (
             <button
               type="button"
               className="shrink-0 rounded px-2 py-1 text-[10px] font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
@@ -316,11 +321,11 @@ export function VisualizationPanels({
           )}
         </div>
         <div
-          className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-3"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden p-2 sm:p-3"
           role="tabpanel"
           aria-label={PANEL_LABELS[activeTab]}
         >
-          <p className="mb-1 shrink-0 text-xs font-semibold text-[var(--color-foreground)]">
+          <p className="sr-only">
             {PANEL_LABELS[activeTab]}
           </p>
           <PanelBody panelId={activeTab} result={result} lastResult={lastResult} />
@@ -331,7 +336,7 @@ export function VisualizationPanels({
 
   if (resizable && activePanels.length > 1) {
     return (
-      <div className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
+      <div ref={rootRef} className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
         <div className="flex h-7 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2">
           <button
             type="button"
@@ -367,6 +372,7 @@ export function VisualizationPanels({
 
   return (
     <div
+      ref={rootRef}
       className={cn(
         "grid h-full divide-x divide-[var(--color-border)] border-[var(--color-border)] bg-[var(--color-background)]",
         gridCols

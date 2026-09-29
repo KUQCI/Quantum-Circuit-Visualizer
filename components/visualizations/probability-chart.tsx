@@ -52,7 +52,6 @@ export function ProbabilityChart({
           width="100%"
           height="100%"
           preserveAspectRatio="xMidYMid meet"
-          className="min-h-[100px]"
           aria-label="Probability distribution chart"
         >
         {/* Y-axis */}
