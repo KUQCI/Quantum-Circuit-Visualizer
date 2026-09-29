@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canSplitVizPanels,
+  gridClassForCount,
   resolveVizMode,
 } from "@/lib/composer-layout";
 
@@ -87,5 +88,12 @@ describe("visualization layout", () => {
         panelCount: 1,
       })
     ).toBe("single");
+  });
+
+  it("uses count-aware grid classes", () => {
+    expect(gridClassForCount(1)).toBe("grid-cols-1");
+    expect(gridClassForCount(2)).toBe("grid-cols-2 grid-rows-1");
+    expect(gridClassForCount(3)).toBe("grid-cols-2 grid-rows-2");
+    expect(gridClassForCount(4)).toBe("grid-cols-2 grid-rows-2");
   });
 });
