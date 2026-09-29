@@ -125,7 +125,7 @@ export function QuantaBuddyBubble({
           variant={message.imageVariant ?? variantFromFeedback(message.variant)}
           size={34}
           bare
-          className="quanta-buddy-bubble-avatar mt-0.5 rounded-full"
+          className="mt-0.5"
           alt=""
         />
         <div className="min-w-0 flex-1">
