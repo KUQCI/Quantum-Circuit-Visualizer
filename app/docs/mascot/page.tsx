@@ -71,6 +71,18 @@ export default function QuantaMascotDocsPage() {
         </div>
       </section>
 
+      <section className="technical-panel mb-10 p-5">
+        <h2 className="mb-2 text-sm font-semibold text-[var(--color-foreground)]">
+          Chat with Quanta (Gemini)
+        </h2>
+        <p className="text-sm leading-relaxed text-[var(--color-muted-foreground)]">
+          Chat uses your own Gemini API key (BYOK), stored only in this
+          browser and sent directly to Google. It runs on{" "}
+          <code className="font-mono text-xs">gemini-2.5-flash-lite</code> and
+          keeps replies, history, and page context short to save tokens.
+        </p>
+      </section>
+
       <section className="technical-panel p-5">
         <h2 className="mb-2 text-sm font-semibold text-[var(--color-foreground)]">
           Design notes
