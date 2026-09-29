@@ -51,6 +51,14 @@ describe("Quanta Gemini helpers", () => {
     ).toEqual({ text: "Hello there.", promptTokens: 12, outputTokens: 7 });
   });
 
+  it("converts LaTeX math in responses to plain Unicode text", () => {
+    expect(
+      parseGeminiResponse({
+        candidates: [{ content: { parts: [{ text: "$|1\\rangle$" }] } }],
+      }).text
+    ).toBe("|1⟩");
+  });
+
   it("uses a safe response for blocked content", () => {
     expect(
       parseGeminiResponse({
