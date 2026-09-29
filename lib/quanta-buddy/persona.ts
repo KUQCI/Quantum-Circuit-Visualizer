@@ -20,7 +20,7 @@ const tips: Record<string, string[]> = {
     "Ctrl+Z undoes the last circuit change.",
     "Press ? to open the keyboard shortcuts.",
     "Use the Parameters panel when a rotation angle is symbolic.",
-    "Split view keeps your circuit and results visible together.",
+    "Multi view keeps your circuit and results visible together.",
     "Share links let you send a circuit without exporting a file.",
   ],
   "/learn": [

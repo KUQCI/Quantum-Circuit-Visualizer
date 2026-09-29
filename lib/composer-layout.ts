@@ -113,6 +113,31 @@ export function getVizBandMinPercent(workspaceHeight: number): number {
   return clamp(pct, 16, 60);
 }
 
+export type VizMode = "tabs" | "row" | "grid" | "single";
+
+export interface ResolveVizModeInput {
+  forceTabs: boolean;
+  vizLayout: "tabs" | "split";
+  tier: LayoutTier;
+  fits: boolean;
+  resizable: boolean;
+  panelCount: number;
+}
+
+export function resolveVizMode({
+  forceTabs,
+  vizLayout,
+  tier,
+  fits,
+  resizable,
+  panelCount,
+}: ResolveVizModeInput): VizMode {
+  if (panelCount <= 1) return "single";
+  if (forceTabs || tier === "mobile" || vizLayout === "tabs") return "tabs";
+  if (tier === "desktop" && fits && resizable) return "row";
+  return "grid";
+}
+
 /** Whether `panelCount` result panels fit side by side in `width` px. */
 export function canSplitVizPanels(width: number, panelCount: number): boolean {
   if (width <= 0 || panelCount <= 1) return true;

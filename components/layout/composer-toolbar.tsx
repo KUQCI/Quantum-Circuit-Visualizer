@@ -72,6 +72,7 @@ export function ComposerToolbar() {
     showVizPanels,
     showPhaseDisks,
     showInspector,
+    vizLayout,
     operationsPanelCollapsed,
     vizPanels,
     alignmentMode,
@@ -81,6 +82,7 @@ export function ComposerToolbar() {
     setShowPhaseDisks,
     setShowInspector,
     setVizPanel,
+    setVizLayout,
     setAlignmentMode,
     setOperationsPanelCollapsed,
     resetLayout,
@@ -271,6 +273,20 @@ export function ComposerToolbar() {
               >
                 Results panel
               </DropdownMenuCheckboxItem>
+              <DropdownMenuItem
+                className="text-xs"
+                onClick={() => setVizLayout("tabs")}
+              >
+                {vizLayout === "tabs" && <Check className="mr-2 h-3 w-3" />}
+                Results: Tabs
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-xs"
+                onClick={() => setVizLayout("split")}
+              >
+                {vizLayout === "split" && <Check className="mr-2 h-3 w-3" />}
+                Results: Multi view
+              </DropdownMenuItem>
               <DropdownMenuCheckboxItem
                 checked={showInspector}
                 onCheckedChange={setShowInspector}
@@ -387,6 +403,20 @@ export function ComposerToolbar() {
                     >
                       Results
                     </DropdownMenuCheckboxItem>
+                    <DropdownMenuItem
+                      className="text-xs"
+                      onClick={() => setVizLayout("tabs")}
+                    >
+                      {vizLayout === "tabs" && <Check className="mr-2 h-3 w-3" />}
+                      Results: Tabs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs"
+                      onClick={() => setVizLayout("split")}
+                    >
+                      {vizLayout === "split" && <Check className="mr-2 h-3 w-3" />}
+                      Results: Multi view
+                    </DropdownMenuItem>
                     <DropdownMenuCheckboxItem
                       checked={showInspector}
                       onCheckedChange={setShowInspector}

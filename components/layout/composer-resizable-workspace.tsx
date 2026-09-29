@@ -63,7 +63,7 @@ function NarrowWorkspace({
   tier: ReturnType<typeof getLayoutTier>;
   layoutResetKey: number;
 }) {
-  const { narrowActiveTab, setNarrowActiveTab } = useEditorUiStore();
+  const { narrowActiveTab, setNarrowActiveTab, vizLayout } = useEditorUiStore();
   const selectedOperationId = useCircuitStore((s) => s.selectedOperationId);
   const previousSelectedOperationId = useRef(selectedOperationId);
   const activeIndex = NARROW_TABS.findIndex((tab) => tab.id === narrowActiveTab);
@@ -150,7 +150,7 @@ function NarrowWorkspace({
           {narrowActiveTab === "results" && (
             <VisualizationPanels
               circuit={circuit}
-              useVizTabs
+              useVizTabs={tier === "mobile" || vizLayout === "tabs"}
               layoutTier={tier}
               resizable={false}
               layoutResetKey={layoutResetKey}
@@ -192,7 +192,6 @@ export function ComposerResizableWorkspace({
 
   const { ref: workspaceRef, size } = useElementSize<HTMLDivElement>();
   const tier = getLayoutTier(size.width, size.height);
-  const useVizTabs = tier !== "desktop";
   const vizMinSize = getVizBandMinPercent(size.height);
   const vizDefaultSize = Math.max(30, vizMinSize);
 
@@ -367,7 +366,7 @@ export function ComposerResizableWorkspace({
             >
               <VisualizationPanels
                 circuit={circuit}
-                useVizTabs={useVizTabs || vizLayout === "tabs"}
+                useVizTabs={vizLayout === "tabs"}
                 layoutTier={tier}
                 resizable={tier === "desktop"}
                 layoutResetKey={layoutResetKey}

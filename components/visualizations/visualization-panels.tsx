@@ -5,7 +5,11 @@ import type { Circuit } from "@/lib/circuit-schema";
 import { simulateCircuit } from "@/lib/quantum-state";
 import type { QuantumStateResult } from "@/lib/quantum-state";
 import { getOperationsUpToStep } from "@/lib/circuit-layout";
-import { canSplitVizPanels, type LayoutTier } from "@/lib/composer-layout";
+import {
+  canSplitVizPanels,
+  resolveVizMode,
+  type LayoutTier,
+} from "@/lib/composer-layout";
 import { useElementSize } from "@/lib/use-element-size";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { useExecutionStore } from "@/store/execution-store";
@@ -202,6 +206,46 @@ function ResizableVizRow({
   );
 }
 
+function VizLayoutControl({
+  vizLayout,
+  onChange,
+}: {
+  vizLayout: "tabs" | "split";
+  onChange: (layout: "tabs" | "split") => void;
+}) {
+  return (
+    <div
+      className="inline-flex shrink-0 rounded-md border border-[var(--color-border)] p-0.5"
+      role="radiogroup"
+      aria-label="Results layout"
+    >
+      {(
+        [
+          ["tabs", "Tabs", "Show one panel at a time"],
+          ["split", "Multi", "Show all panels side by side"],
+        ] as const
+      ).map(([layout, label, title]) => (
+        <button
+          key={layout}
+          type="button"
+          role="radio"
+          aria-checked={vizLayout === layout}
+          className={cn(
+            "rounded px-2 py-0.5 text-[10px] font-medium",
+            vizLayout === layout
+              ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
+              : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+          )}
+          title={title}
+          onClick={() => onChange(layout)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function VisualizationPanels({
   circuit,
   useVizTabs = false,
@@ -215,6 +259,7 @@ export function VisualizationPanels({
     inspectStep,
     setVizPanel,
     setVizLayout,
+    vizLayout,
   } = useEditorUiStore();
   const lastResult = useExecutionStore((s) => s.lastResult);
   const { ref: rootRef, size: rootSize } = useElementSize<HTMLDivElement>();
@@ -258,7 +303,14 @@ export function VisualizationPanels({
   }, [activePanels, activeTab]);
 
   const splitFits = canSplitVizPanels(rootSize.width, activePanels.length);
-  const showTabs = useVizTabs || (resizable && !splitFits);
+  const mode = resolveVizMode({
+    forceTabs: useVizTabs,
+    vizLayout,
+    tier: layoutTier,
+    fits: splitFits,
+    resizable,
+    panelCount: activePanels.length,
+  });
 
   if (activePanels.length === 0) {
     return (
@@ -280,7 +332,7 @@ export function VisualizationPanels({
     );
   }
 
-  if (showTabs && activePanels.length > 1) {
+  if (mode === "tabs") {
     return (
       <div ref={rootRef} className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
         <div
@@ -309,15 +361,8 @@ export function VisualizationPanels({
               </button>
             ))}
           </div>
-          {layoutTier === "desktop" && splitFits && (
-            <button
-              type="button"
-              className="shrink-0 rounded px-2 py-1 text-[10px] font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
-              onClick={() => setVizLayout("split")}
-              aria-label="Switch to split results"
-            >
-              Split
-            </button>
+          {layoutTier !== "mobile" && (
+            <VizLayoutControl vizLayout={vizLayout} onChange={setVizLayout} />
           )}
         </div>
         <div
@@ -334,58 +379,63 @@ export function VisualizationPanels({
     );
   }
 
-  if (resizable && activePanels.length > 1) {
+  if (mode === "row" || mode === "grid") {
     return (
       <div ref={rootRef} className="flex h-full min-h-0 flex-col bg-[var(--color-background)]">
-        <div className="flex h-7 shrink-0 items-center justify-end border-b border-[var(--color-border)] px-2">
-          <button
-            type="button"
-            className="rounded px-2 py-1 text-[10px] font-medium text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
-            onClick={() => setVizLayout("tabs")}
-            aria-label="Switch to tabbed results"
-          >
-            Tabs
-          </button>
+        <div className="flex h-7 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-2">
+          <div className="flex min-w-0 items-baseline gap-1.5">
+            <h3 className="truncate text-xs font-semibold text-[var(--color-foreground)]">
+              Multi view
+            </h3>
+            <span className="shrink-0 text-[10px] text-[var(--color-muted-foreground)]">
+              {activePanels.length} panels
+            </span>
+          </div>
+          <VizLayoutControl vizLayout={vizLayout} onChange={setVizLayout} />
         </div>
         <div className="min-h-0 flex-1">
-          <ResizableVizRow
-            activePanels={activePanels}
-            result={result}
-            lastResult={lastResult}
-            layoutResetKey={layoutResetKey}
-          />
+          {mode === "row" ? (
+            <ResizableVizRow
+              activePanels={activePanels}
+              result={result}
+              lastResult={lastResult}
+              layoutResetKey={layoutResetKey}
+            />
+          ) : (
+            <div className="grid h-full auto-rows-[minmax(180px,1fr)] grid-cols-2 divide-x divide-y divide-[var(--color-border)] overflow-y-auto">
+              {activePanels.map((panelId) => (
+                <div key={panelId} className="min-h-[180px]">
+                  <VizPanelShell
+                    panelId={panelId}
+                    result={result}
+                    lastResult={lastResult}
+                    onToggle={() => setVizPanel(panelId, false)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  const gridCols =
-    activePanels.length === 1
-      ? "grid-cols-1"
-      : activePanels.length === 2
-        ? "grid-cols-2"
-        : activePanels.length === 3
-          ? "grid-cols-3"
-          : layoutTier === "desktop"
-            ? "grid-cols-4"
-            : "grid-cols-2";
-
   return (
     <div
       ref={rootRef}
       className={cn(
-        "grid h-full divide-x divide-[var(--color-border)] border-[var(--color-border)] bg-[var(--color-background)]",
-        gridCols
+        "grid h-full min-h-0 grid-cols-1 divide-x divide-y divide-[var(--color-border)] overflow-y-auto border-[var(--color-border)] bg-[var(--color-background)]"
       )}
     >
       {activePanels.map((panelId) => (
-        <VizPanelShell
-          key={panelId}
-          panelId={panelId}
-          result={result}
-          lastResult={lastResult}
-          onToggle={() => setVizPanel(panelId, false)}
-        />
+        <div key={panelId} className="min-h-[180px]">
+          <VizPanelShell
+            panelId={panelId}
+            result={result}
+            lastResult={lastResult}
+            onToggle={() => setVizPanel(panelId, false)}
+          />
+        </div>
       ))}
     </div>
   );
