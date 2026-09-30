@@ -5,6 +5,9 @@ import {
   primaryWireIndex,
   countOpsUsingQubit,
   countOpsUsingClassical,
+  findPlacementConflict,
+  occupiedWires,
+  placementConflictMessage,
 } from "@/lib/circuit-edit";
 import type { Operation, Circuit } from "@/lib/circuit-schema";
 
@@ -130,5 +133,132 @@ describe("circuit-edit", () => {
     };
     expect(countOpsUsingQubit(circuit, "q0")).toBe(2);
     expect(countOpsUsingClassical(circuit, "c0")).toBe(0);
+  });
+
+  it("returns every wire occupied by a multi-qubit connector", () => {
+    const cx = baseOp({
+      type: "cx",
+      label: "CX",
+      targets: ["q2"],
+      controls: ["q0"],
+    });
+
+    expect(occupiedWires(cx)).toEqual([0, 1, 2]);
+  });
+
+  it("finds a conflict only on a shared wire in the same column", () => {
+    const h = baseOp({ targets: ["q0"], column: 1 });
+
+    expect(
+      findPlacementConflict([h], {
+        targets: ["q0"],
+        controls: [],
+        column: 1,
+      })
+    ).toBe(h);
+    expect(
+      findPlacementConflict([h], {
+        targets: ["q1"],
+        controls: [],
+        column: 1,
+      })
+    ).toBeNull();
+    expect(
+      findPlacementConflict([h], {
+        targets: ["q0"],
+        controls: [],
+        column: 2,
+      })
+    ).toBeNull();
+  });
+
+  it("detects a conflict on an intermediate wire spanned by CX", () => {
+    const cx = baseOp({
+      id: "cx",
+      type: "cx",
+      label: "CX",
+      targets: ["q2"],
+      controls: ["q0"],
+    });
+    const h = baseOp({ id: "h1", targets: ["q1"] });
+
+    expect(
+      findPlacementConflict([cx], {
+        targets: h.targets,
+        controls: h.controls,
+        column: h.column,
+      })
+    ).toBe(cx);
+  });
+
+  it("can exclude the operation being moved", () => {
+    const h = baseOp({ id: "h1", targets: ["q1"] });
+
+    expect(
+      findPlacementConflict(
+        [h],
+        { targets: h.targets, controls: h.controls, column: h.column },
+        h.id
+      )
+    ).toBeNull();
+  });
+
+  it("does not conflict when either operation has no qubit wires", () => {
+    const wireless = baseOp({ id: "empty", targets: [], controls: [] });
+
+    expect(
+      findPlacementConflict([wireless], {
+        targets: ["q0"],
+        controls: [],
+        column: 0,
+      })
+    ).toBeNull();
+    expect(
+      findPlacementConflict([baseOp({ targets: ["q0"] })], {
+        targets: [],
+        controls: [],
+        column: 0,
+      })
+    ).toBeNull();
+  });
+
+  it("treats barriers as occupying all of their target wires", () => {
+    const h = baseOp({ id: "h2", targets: ["q2"] });
+    const barrier = baseOp({
+      id: "barrier",
+      type: "barrier",
+      label: "Barrier",
+      targets: ["q0", "q1", "q2"],
+    });
+
+    expect(
+      findPlacementConflict(
+        [h],
+        {
+          targets: barrier.targets,
+          controls: barrier.controls,
+          column: barrier.column,
+        }
+      )
+    ).toBe(h);
+  });
+
+  it("describes the shared wire and existing operation", () => {
+    const cx = baseOp({
+      type: "cx",
+      label: "CX",
+      targets: ["q2"],
+      controls: ["q0"],
+    });
+
+    expect(
+      placementConflictMessage(cx, {
+        targets: ["q1"],
+        controls: [],
+        column: 2,
+      })
+    ).toBe(
+      "q1 already has a gate (CX) in column 3 — drop it on an empty spot."
+    );
   });
 });

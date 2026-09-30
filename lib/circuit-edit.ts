@@ -1,7 +1,57 @@
-import type { Circuit, Operation } from "@/lib/circuit-schema";
+import {
+  getGateLabel,
+  type Circuit,
+  type Operation,
+} from "@/lib/circuit-schema";
 
 function qIndex(id: string): number {
   return parseInt(id.replace("q", ""), 10);
+}
+
+/** Qubit indices an op visually occupies: the contiguous range from its targets and controls. */
+export function occupiedWires(
+  op: Pick<Operation, "targets" | "controls">
+): number[] {
+  const indices = [...op.targets, ...op.controls]
+    .map(qIndex)
+    .filter(Number.isInteger);
+  if (indices.length === 0) return [];
+
+  const min = Math.min(...indices);
+  const max = Math.max(...indices);
+  return Array.from({ length: max - min + 1 }, (_, index) => min + index);
+}
+
+/** First other op in the same column whose occupied wires intersect the candidate's. */
+export function findPlacementConflict(
+  operations: Operation[],
+  candidate: Pick<Operation, "targets" | "controls" | "column">,
+  ignoreId?: string
+): Operation | null {
+  const candidateWires = new Set(occupiedWires(candidate));
+  if (candidateWires.size === 0) return null;
+
+  return (
+    operations.find(
+      (operation) =>
+        operation.id !== ignoreId &&
+        operation.column === candidate.column &&
+        occupiedWires(operation).some((wire) => candidateWires.has(wire))
+    ) ?? null
+  );
+}
+
+/** Describe the first shared wire and the operation already occupying it. */
+export function placementConflictMessage(
+  conflict: Operation,
+  candidate: Pick<Operation, "targets" | "controls" | "column">
+): string {
+  const candidateWires = new Set(occupiedWires(candidate));
+  const sharedWire = occupiedWires(conflict).find((wire) =>
+    candidateWires.has(wire)
+  );
+  const label = conflict.label || getGateLabel(conflict.type);
+  return `q${sharedWire} already has a gate (${label}) in column ${candidate.column + 1} — drop it on an empty spot.`;
 }
 
 /** Gates that can be moved to another qubit wire by drag. */

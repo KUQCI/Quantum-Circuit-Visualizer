@@ -4,6 +4,7 @@ import {
   sliceHistoryForPersist,
   useCircuitStore,
 } from "@/store/circuit-store";
+import { validateCircuitPlacement } from "@/lib/validation";
 
 const memoryStore = new Map<string, string>();
 
@@ -22,6 +23,7 @@ beforeEach(() => {
     length: 0,
   });
   vi.stubGlobal("window", globalThis);
+  vi.stubGlobal("dispatchEvent", vi.fn());
 });
 
 afterEach(() => {
@@ -40,6 +42,23 @@ function resetCircuitStore() {
     historyIndex: 0,
     buildWorkspace: null,
     projects: [],
+  });
+}
+
+function addGate(
+  type: string,
+  label: string,
+  targets: string[],
+  controls: string[] = [],
+  column = 0
+) {
+  return useCircuitStore.getState().addOperation({
+    type,
+    label,
+    targets,
+    controls,
+    classicalTargets: [],
+    column,
   });
 }
 
@@ -298,5 +317,206 @@ describe("circuit store register + measure safety", () => {
     const state = useCircuitStore.getState();
     expect(state.currentProjectId).toBeNull();
     expect(state.projects[0]?.circuit.name).toBe("Imported");
+  });
+});
+
+describe("circuit store placement conflicts", () => {
+  beforeEach(() => {
+    resetCircuitStore();
+  });
+
+  it("rejects an occupied add without changing history and accepts other slots", () => {
+    addGate("h", "H", ["q0"]);
+    const state = useCircuitStore.getState();
+    const historyLength = state.history.length;
+    const historyIndex = state.historyIndex;
+
+    expect(addGate("x", "X", ["q0"])).toBeNull();
+    expect(useCircuitStore.getState().circuit.operations).toHaveLength(1);
+    expect(useCircuitStore.getState().history).toHaveLength(historyLength);
+    expect(useCircuitStore.getState().historyIndex).toBe(historyIndex);
+
+    expect(addGate("x", "X", ["q1"])).not.toBeNull();
+    expect(addGate("x", "X", ["q0"], [], 1)).not.toBeNull();
+    expect(useCircuitStore.getState().circuit.operations).toHaveLength(3);
+  });
+
+  it("rejects a two-qubit gate when its target wire is occupied", () => {
+    addGate("x", "X", ["q1"]);
+
+    expect(addGate("cx", "CX", ["q1"], ["q0"])).toBeNull();
+    expect(useCircuitStore.getState().circuit.operations).toHaveLength(1);
+  });
+
+  it("rejects an occupied measurement before creating a classical bit", () => {
+    addGate("h", "H", ["q0"]);
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const historyIndex = before.historyIndex;
+
+    expect(useCircuitStore.getState().addMeasureOperation("q0", 0)).toBeNull();
+
+    const after = useCircuitStore.getState();
+    expect(after.circuit.operations).toHaveLength(1);
+    expect(after.circuit.classicalBits).toHaveLength(0);
+    expect(after.history).toHaveLength(historyLength);
+    expect(after.historyIndex).toBe(historyIndex);
+  });
+
+  it("rejects relocation conflicts and allows free and unchanged placements", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"], [], 1);
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const hId = before.circuit.operations[0].id;
+
+    before.relocateOperation(hId, 1, 1);
+    let after = useCircuitStore.getState();
+    expect(after.circuit.operations[0]).toMatchObject({
+      id: hId,
+      targets: ["q0"],
+      column: 0,
+    });
+    expect(after.history).toHaveLength(historyLength);
+
+    after.relocateOperation(hId, 2, 1);
+    after = useCircuitStore.getState();
+    expect(after.circuit.operations[0]).toMatchObject({
+      id: hId,
+      targets: ["q1"],
+      column: 2,
+    });
+
+    const movedHistoryLength = after.history.length;
+    after.relocateOperation(hId, 2, 1);
+    expect(useCircuitStore.getState().history.length).toBe(
+      movedHistoryLength + 1
+    );
+  });
+
+  it("rejects a move into an occupied slot without changing history", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q0"], [], 1);
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const hId = before.circuit.operations[0].id;
+
+    before.moveOperation(hId, 1);
+
+    const after = useCircuitStore.getState();
+    expect(after.circuit.operations[0]).toMatchObject({
+      id: hId,
+      column: 0,
+    });
+    expect(after.history).toHaveLength(historyLength);
+
+    after.moveOperation(hId, 0);
+    expect(useCircuitStore.getState().history).toHaveLength(historyLength + 1);
+  });
+
+  it("allows relocating a swap to its existing occupied slot", () => {
+    const malformed = createEmptyCircuit("Overlapping swap", 2, 0);
+    malformed.operations = [
+      {
+        id: "swap",
+        type: "swap",
+        label: "SWAP",
+        targets: ["q1", "q0"],
+        controls: [],
+        classicalTargets: [],
+        column: 0,
+      },
+      {
+        id: "h",
+        type: "h",
+        label: "H",
+        targets: ["q1"],
+        controls: [],
+        classicalTargets: [],
+        column: 0,
+      },
+    ];
+    useCircuitStore.getState().setCircuit(malformed);
+    const before = useCircuitStore.getState();
+
+    before.relocateOperation("swap", 0, 0);
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(before.history.length + 1);
+    expect(
+      after.circuit.operations.find((operation) => operation.id === "swap")
+        ?.targets
+    ).toEqual(["q0", "q1"]);
+  });
+
+  it("does not paste into an occupied slot or alter clipboard and history", () => {
+    addGate("h", "H", ["q0"]);
+    const state = useCircuitStore.getState();
+    const operationId = state.circuit.operations[0].id;
+    state.copyOperation(operationId);
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const clipboard = before.clipboard;
+
+    before.pasteOperation(0, 0);
+
+    const after = useCircuitStore.getState();
+    expect(after.circuit.operations).toHaveLength(1);
+    expect(after.history).toHaveLength(historyLength);
+    expect(after.clipboard).toEqual(clipboard);
+  });
+
+  it("rejects geometry updates but permits parameter updates on loaded overlaps", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const hId = before.circuit.operations[0].id;
+
+    before.updateOperation(hId, { targets: ["q1"] });
+
+    let after = useCircuitStore.getState();
+    expect(after.circuit.operations[0].targets).toEqual(["q0"]);
+    expect(after.history).toHaveLength(historyLength);
+
+    const malformed = createEmptyCircuit("Overlapping", 2, 0);
+    malformed.operations = [
+      {
+        id: "rx",
+        type: "rx",
+        label: "RX",
+        targets: ["q0"],
+        controls: [],
+        classicalTargets: [],
+        column: 0,
+        parameters: [{ value: 0.5 }],
+      },
+      {
+        id: "h",
+        type: "h",
+        label: "H",
+        targets: ["q0"],
+        controls: [],
+        classicalTargets: [],
+        column: 0,
+      },
+    ];
+    useCircuitStore.getState().setCircuit(malformed);
+
+    after = useCircuitStore.getState();
+    expect(validateCircuitPlacement(after.circuit)).toContain(
+      "Qubit q0 has overlapping gates at column 1"
+    );
+    expect(after.validationWarnings).toContain(
+      "Qubit q0 has overlapping gates at column 1"
+    );
+
+    after.updateOperation("rx", { parameters: [{ value: 1.25 }] });
+    expect(
+      useCircuitStore
+        .getState()
+        .circuit.operations.find((operation) => operation.id === "rx")
+        ?.parameters
+    ).toEqual([{ value: 1.25 }]);
   });
 });
