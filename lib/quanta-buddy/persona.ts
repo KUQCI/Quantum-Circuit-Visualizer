@@ -22,6 +22,7 @@ const tips: Record<string, string[]> = {
     "Use the Parameters panel when a rotation angle is symbolic.",
     "Multi view keeps your circuit and results visible together.",
     "Share links let you send a circuit without exporting a file.",
+    "Psst: drag a gate from the palette onto me. I'm a little peckish.",
   ],
   "/learn": [
     "Quiz review brings back questions you are ready to practise again.",
