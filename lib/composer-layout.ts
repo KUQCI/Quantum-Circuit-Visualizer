@@ -139,8 +139,7 @@ export function resolveVizMode({
 }
 
 export function gridClassForCount(count: number): string {
-  if (count === 2) return "grid-cols-2 grid-rows-1";
-  if (count === 3 || count === 4) return "grid-cols-2 grid-rows-2";
+  if (count === 2 || count === 3 || count === 4) return "grid-cols-2";
   return "grid-cols-1";
 }
 
