@@ -1638,6 +1638,13 @@ button:disabled,
   filter: var(--quanta-skin-filter, none);
 }
 
+.quanta-buddy-sprite[data-feed-hover="true"] {
+  filter: var(--quanta-skin-filter, )
+    drop-shadow(
+      0 0 12px color-mix(in srgb, var(--color-brand) 70%, transparent)
+    );
+}
+
 .quanta-burst > span {
   position: absolute;
   left: 0;

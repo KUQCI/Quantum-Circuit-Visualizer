@@ -37,6 +37,11 @@ import {
   type SpriteAlphaMask,
 } from "@/lib/quanta-buddy/hit-test";
 import {
+  Appetite,
+  feedReactionFor,
+  stuffedLine,
+} from "@/lib/quanta-buddy/feeding";
+import {
   pageHelpFor,
   pokeReactionFor,
   recoveryLineFor,
@@ -68,6 +73,12 @@ interface BurstState extends BuddyBurst {
   id: number;
 }
 
+function isGateDrag(event: DragEvent): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).some(
+    (type) => type.toLowerCase() === "gatetype"
+  );
+}
+
 export function QuantaBuddy({
   callRequest,
   reducedMotion,
@@ -93,6 +104,8 @@ export function QuantaBuddy({
   const lastFrame = useRef<BuddyFrame | null>(null);
   const lastPointer = useRef<{ x: number; y: number } | null>(null);
   const dragging = useRef(false);
+  const feedHover = useRef(false);
+  const appetite = useRef(new Appetite());
   const clickThrough = useRef(false);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -137,39 +150,48 @@ export function QuantaBuddy({
     bubbleSize.current = { width, height };
   }, []);
 
+  const pointOnSprite = useCallback((x: number, y: number) => {
+    const frame = lastFrame.current;
+    if (!frame) return false;
+    const mask = spriteMasks.current.get(frame.sprite);
+    if (mask) {
+      return isSpritePixelOpaque(
+        mask,
+        frame.x,
+        frame.y,
+        frame.scaleX,
+        x,
+        y
+      );
+    }
+    return (
+      x >= frame.x &&
+      x < frame.x + SPRITE_HIT_SIZE &&
+      y >= frame.y &&
+      y < frame.y + SPRITE_HIT_SIZE
+    );
+  }, []);
+
   // Transparent parts of the sprite box let clicks reach the page underneath.
   const updateHitTarget = useCallback(() => {
     const element = spriteRef.current;
-    const frame = lastFrame.current;
-    if (!element || !frame) return;
-    let hittable = true;
-    if (clickThrough.current && !dragging.current) {
+    if (!element || !lastFrame.current) return;
+    let hittable =
+      feedHover.current || !clickThrough.current || dragging.current;
+    if (!hittable) {
       const pointer = lastPointer.current;
-      const mask = spriteMasks.current.get(frame.sprite);
-      if (!pointer) {
-        hittable = false;
-      } else if (mask) {
-        hittable = isSpritePixelOpaque(
-          mask,
-          frame.x,
-          frame.y,
-          frame.scaleX,
-          pointer.x,
-          pointer.y
-        );
-      } else {
-        hittable =
-          pointer.x >= frame.x &&
-          pointer.x < frame.x + SPRITE_HIT_SIZE &&
-          pointer.y >= frame.y &&
-          pointer.y < frame.y + SPRITE_HIT_SIZE;
-      }
+      hittable = !!pointer && pointOnSprite(pointer.x, pointer.y);
     }
     const pointerEvents = hittable ? "auto" : "none";
     if (element.style.pointerEvents !== pointerEvents) {
       element.style.pointerEvents = pointerEvents;
     }
-  }, []);
+    if (feedHover.current) {
+      element.dataset.feedHover = "true";
+    } else {
+      delete element.dataset.feedHover;
+    }
+  }, [pointOnSprite]);
 
   const applyFrame = useCallback((frame: BuddyFrame) => {
     const element = spriteRef.current;
@@ -177,10 +199,15 @@ export function QuantaBuddy({
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
-      element.style.setProperty(
-        "--quanta-skin-filter",
-        SKIN_FILTERS[effectiveSkinRef.current] || "none"
-      );
+      const skin = effectiveSkinRef.current;
+      if (skin === "classic") {
+        element.style.removeProperty("--quanta-skin-filter");
+      } else {
+        element.style.setProperty(
+          "--quanta-skin-filter",
+          SKIN_FILTERS[skin]
+        );
+      }
       updateHitTarget();
     }
     const hat = hatRef.current;
@@ -350,6 +377,31 @@ export function QuantaBuddy({
   }, [updateHitTarget]);
 
   useEffect(() => {
+    if (!ready) return;
+    const handleDragOver = (event: DragEvent) => {
+      const engine = engineRef.current;
+      feedHover.current =
+        isGateDrag(event) &&
+        !!engine?.present &&
+        !engine.isBusy &&
+        pointOnSprite(event.clientX, event.clientY);
+      updateHitTarget();
+    };
+    const resetFeedHover = () => {
+      feedHover.current = false;
+      updateHitTarget();
+    };
+    window.addEventListener("dragover", handleDragOver, true);
+    window.addEventListener("drop", resetFeedHover, true);
+    window.addEventListener("dragend", resetFeedHover, true);
+    return () => {
+      window.removeEventListener("dragover", handleDragOver, true);
+      window.removeEventListener("drop", resetFeedHover, true);
+      window.removeEventListener("dragend", resetFeedHover, true);
+    };
+  }, [pointOnSprite, ready, updateHitTarget]);
+
+  useEffect(() => {
     if (!ready || !autoCall) return;
     const timeout = window.setTimeout(() => {
       engineRef.current?.call();
@@ -423,6 +475,29 @@ export function QuantaBuddy({
     schedule();
     return () => window.clearTimeout(timeout);
   }, [ready, reducedMotion]);
+
+  const feed = useCallback(
+    (gateType: string) => {
+      setContextMenu(null);
+      const engine = engineRef.current;
+      if (engine?.asleep) engine.wake();
+      const reaction = feedReactionFor(gateType);
+      if (reaction.refuse) {
+        say({ text: reaction.text, variant: "hint" });
+        quack("soft");
+        return;
+      }
+      if (!appetite.current.eat(performance.now())) {
+        say({ text: stuffedLine(), variant: "hint" });
+        quack("soft");
+        return;
+      }
+      say({ text: reaction.text, title: "Nom!", variant: "success" });
+      quack("soft");
+      if (!reducedMotion) engine?.hop();
+    },
+    [quack, reducedMotion, say]
+  );
 
   useEffect(() => {
     if (!ready) return;
@@ -610,6 +685,17 @@ export function QuantaBuddy({
         draggable={false}
         onPointerDown={handlePointerDown}
         onContextMenu={handleContextMenu}
+        onDragOver={(event) => {
+          if (!feedHover.current) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const gateType = event.dataTransfer.getData("gateType");
+          if (gateType) feed(gateType);
+        }}
         className="quanta-buddy-sprite fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
         style={{
           touchAction: "none",
@@ -698,7 +784,7 @@ export function QuantaBuddy({
                 }
               : undefined
           }
-          />
+        />
       )}
       {wardrobeElement}
     </>
