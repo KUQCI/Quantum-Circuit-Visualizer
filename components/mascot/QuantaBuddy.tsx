@@ -24,23 +24,20 @@ import {
   type SpriteAlphaMask,
 } from "@/lib/quanta-buddy/hit-test";
 import {
-  pageHelpFor,
   pokeReactionFor,
   recoveryLineFor,
-  tipsFor,
   wakeLine,
 } from "@/lib/quanta-buddy/persona";
 import { playQuack, unlockQuacks } from "@/lib/quanta-buddy/quack";
-import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
 import { QuantaBurst } from "@/components/mascot/QuantaBurst";
 import { QuantaPersona } from "@/components/mascot/QuantaPersona";
+import { QuantaQuickActions } from "@/components/mascot/QuantaQuickActions";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 import { useQuantaChatStore } from "@/store/quanta-chat-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
-import { cn } from "@/lib/utils";
 
 const SPRITE_NAMES = [
   "idle_0",
@@ -60,9 +57,15 @@ const SPRITE_NAMES = [
   "lay_0",
 ];
 
-interface ContextMenuState {
+interface PointerPress {
+  pointerId: number;
+  time: number;
   x: number;
   y: number;
+  currentX: number;
+  currentY: number;
+  started: boolean;
+  timer: number;
 }
 
 interface BurstState extends BuddyBurst {
@@ -86,7 +89,9 @@ export function QuantaBuddy({
   const bubbleRef = useRef<HTMLDivElement>(null);
   const bubbleSize = useRef({ width: 0, height: 0 });
   const engineRef = useRef<QuantaBuddyEngine | null>(null);
-  const pointerDown = useRef({ time: 0, x: 0, y: 0 });
+  const pointerPress = useRef<PointerPress | null>(null);
+  const actionPositioner = useRef<((frame: BuddyFrame) => void) | null>(null);
+  const quickActionsOpenRef = useRef(false);
   const lastCallRequest = useRef(callRequest);
   const lastPresent = useRef(false);
   const spriteMasks = useRef(new Map<string, SpriteAlphaMask>());
@@ -96,7 +101,7 @@ export function QuantaBuddy({
   const clickThrough = useRef(false);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [burst, setBurst] = useState<BurstState | null>(null);
   const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
@@ -115,6 +120,36 @@ export function QuantaBuddy({
   const measureBubble = useCallback((width: number, height: number) => {
     bubbleSize.current = { width, height };
   }, []);
+  const closeQuickActions = useCallback(() => {
+    if (!quickActionsOpenRef.current) return;
+    quickActionsOpenRef.current = false;
+    engineRef.current?.setFrozen(false);
+    setQuickActionsOpen(false);
+  }, []);
+  const openQuickActions = useCallback(() => {
+    if (quickActionsOpenRef.current) return;
+    quickActionsOpenRef.current = true;
+    engineRef.current?.setFrozen(true);
+    setQuickActionsOpen(true);
+  }, []);
+  const handleBuddyClick = useCallback(() => {
+    const engine = engineRef.current;
+    if (engine?.asleep) {
+      say({ text: wakeLine(), variant: "default" });
+      quack("soft");
+    }
+    const pokes = engine?.poke() ?? 0;
+    if (pokes === "burst") {
+      closeQuickActions();
+      quack("pop");
+    } else if (pokes > 1) {
+      closeQuickActions();
+      quack(pokes >= 4 ? "loud" : "soft");
+      say({ text: pokeReactionFor(pokes), variant: "error" });
+    } else if (!quickActionsOpenRef.current) {
+      openQuickActions();
+    }
+  }, [closeQuickActions, openQuickActions, quack, say]);
 
   // Transparent parts of the sprite box let clicks reach the page underneath.
   const updateHitTarget = useCallback(() => {
@@ -153,6 +188,8 @@ export function QuantaBuddy({
   const applyFrame = useCallback((frame: BuddyFrame) => {
     const element = spriteRef.current;
     lastFrame.current = frame;
+    actionPositioner.current?.(frame);
+    if (!frame.present) closeQuickActions();
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
@@ -187,48 +224,94 @@ export function QuantaBuddy({
     bubble.dataset.tail =
       tailX < 14 || tailX > width - 14 ? "none" : below ? "top" : "bottom";
     bubble.style.setProperty("--quanta-tail-x", `${tailX}px`);
-  }, [updateHitTarget]);
+  }, [closeQuickActions, updateHitTarget]);
 
-  const handlePointerMove = useCallback((event: PointerEvent) => {
-    engineRef.current?.pointerMove(event.clientX, event.clientY);
-  }, []);
-
-  const handlePointerUp = useCallback((event: PointerEvent) => {
-    const elapsed = performance.now() - pointerDown.current.time;
-    const distance = Math.hypot(
-      event.clientX - pointerDown.current.x,
-      event.clientY - pointerDown.current.y
-    );
-    const isClick =
-      event.type !== "pointercancel" && elapsed < 300 && distance < 6;
-    dragging.current = false;
-    if (isClick) {
+  const beginDrag = useCallback(
+    (press: PointerPress, clientX: number, clientY: number) => {
+      if (press.started || pointerPress.current !== press) return;
+      press.started = true;
+      window.clearTimeout(press.timer);
+      closeQuickActions();
+      dragging.current = true;
       const engine = engineRef.current;
-      engine?.cancelDrag();
-      window.addEventListener(
-        "click",
-        (clickEvent) => clickEvent.stopPropagation(),
-        { capture: true, once: true }
-      );
-      const pokes = engine?.poke() ?? 0;
-      if (pokes === "burst") {
-        setContextMenu(null);
-        quack("pop");
-      } else if (pokes > 1) {
-        setContextMenu(null);
-        quack(pokes >= 4 ? "loud" : "soft");
-        say({ text: pokeReactionFor(pokes), variant: "error" });
-      } else {
-        setContextMenu({ x: event.clientX, y: event.clientY });
+      engine?.pointerDown(press.x, press.y);
+      engine?.pointerMove(clientX, clientY);
+      updateHitTarget();
+    },
+    [closeQuickActions, updateHitTarget]
+  );
+
+  const handlePointerMove = useCallback(
+    (event: PointerEvent) => {
+      const press = pointerPress.current;
+      if (!press || press.pointerId !== event.pointerId) return;
+      press.currentX = event.clientX;
+      press.currentY = event.clientY;
+      if (!press.started) {
+        if (Math.hypot(event.clientX - press.x, event.clientY - press.y) >= 5) {
+          beginDrag(press, event.clientX, event.clientY);
+        }
+        return;
       }
-    } else {
-      engineRef.current?.pointerUp();
-    }
-    window.removeEventListener("pointermove", handlePointerMove);
-    window.removeEventListener("pointerup", handlePointerUp);
-    window.removeEventListener("pointercancel", handlePointerUp);
-    updateHitTarget();
-  }, [handlePointerMove, quack, say, updateHitTarget]);
+      engineRef.current?.pointerMove(event.clientX, event.clientY);
+    },
+    [beginDrag]
+  );
+
+  const finishPointerSession = useCallback(
+    (event: PointerEvent | null, allowClick: boolean) => {
+      const press = pointerPress.current;
+      if (!press || (event && press.pointerId !== event.pointerId)) return;
+      const elapsed = performance.now() - press.time;
+      if (event) {
+        press.currentX = event.clientX;
+        press.currentY = event.clientY;
+        if (
+          !press.started &&
+          (Math.hypot(event.clientX - press.x, event.clientY - press.y) >= 5 ||
+            elapsed >= 200)
+        ) {
+          beginDrag(press, event.clientX, event.clientY);
+        }
+      }
+
+      pointerPress.current = null;
+      window.clearTimeout(press.timer);
+      dragging.current = false;
+      if (press.started) {
+        if (event?.type === "pointerup") {
+          engineRef.current?.pointerUp(event.clientX, event.clientY);
+        } else {
+          engineRef.current?.pointerUp();
+        }
+      } else if (
+        allowClick &&
+        event?.type === "pointerup" &&
+        Math.hypot(event.clientX - press.x, event.clientY - press.y) < 5
+      ) {
+        handleBuddyClick();
+      }
+      updateHitTarget();
+    },
+    [beginDrag, handleBuddyClick, updateHitTarget]
+  );
+
+  const handlePointerUp = useCallback(
+    (event: PointerEvent) => {
+      finishPointerSession(event, event.type === "pointerup");
+    },
+    [finishPointerSession]
+  );
+
+  const handleLostPointerCapture = useCallback(
+    (event: PointerEvent) => finishPointerSession(event, false),
+    [finishPointerSession]
+  );
+
+  const handleWindowBlur = useCallback(
+    () => finishPointerSession(null, false),
+    [finishPointerSession]
+  );
 
   useEffect(() => {
     const engine = new QuantaBuddyEngine({
@@ -438,45 +521,62 @@ export function QuantaBuddy({
   }, [ready]);
 
   useEffect(() => {
-    if (!contextMenu) return;
-    const close = () => setContextMenu(null);
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    window.addEventListener("click", close);
-    window.addEventListener("keydown", onKeyDown);
+    const onPointerMove = (event: PointerEvent) => handlePointerMove(event);
+    const onPointerUp = (event: PointerEvent) => handlePointerUp(event);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("blur", handleWindowBlur);
     return () => {
-      window.removeEventListener("click", close);
-      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("blur", handleWindowBlur);
+      finishPointerSession(null, false);
     };
-  }, [contextMenu]);
+  }, [
+    finishPointerSession,
+    handlePointerMove,
+    handlePointerUp,
+    handleWindowBlur,
+  ]);
 
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    const engine = engineRef.current;
-    const wasAsleep = engine?.asleep ?? false;
-    if (wasAsleep) {
-      say({ text: wakeLine(), variant: "default" });
-      quack("soft");
-    }
-    dragging.current = true;
-    pointerDown.current = {
-      time: performance.now(),
-      x: event.clientX,
-      y: event.clientY,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    engine?.pointerDown(event.clientX, event.clientY);
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-  }, [handlePointerMove, handlePointerUp, quack, say]);
+  useEffect(() => {
+    closeQuickActions();
+  }, [closeQuickActions, pathname]);
 
-  const handleContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setContextMenu({ x: event.clientX, y: event.clientY });
-  };
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0 || pointerPress.current) return;
+      event.preventDefault();
+      const press: PointerPress = {
+        pointerId: event.pointerId,
+        time: performance.now(),
+        x: event.clientX,
+        y: event.clientY,
+        currentX: event.clientX,
+        currentY: event.clientY,
+        started: false,
+        timer: 0,
+      };
+      pointerPress.current = press;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      press.timer = window.setTimeout(() => {
+        if (pointerPress.current === press) {
+          beginDrag(press, press.currentX, press.currentY);
+        }
+      }, 200);
+    },
+    [beginDrag]
+  );
+
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      openQuickActions();
+    },
+    [openQuickActions]
+  );
 
   const burstElement = burst ? (
     <QuantaBurst
@@ -492,60 +592,6 @@ export function QuantaBuddy({
     return (
       <>
         {burstElement}
-        {contextMenu && (
-          <BuddyContextMenu
-            contextMenu={contextMenu}
-            onSit={() => {
-              engineRef.current?.sit();
-              setContextMenu(null);
-            }}
-            onWalk={() => {
-              engineRef.current?.walkAround();
-              setContextMenu(null);
-            }}
-            onLeave={() => {
-              engineRef.current?.leave();
-              setContextMenu(null);
-            }}
-            onHelp={() => {
-              say({
-                title: "This page",
-                text: pageHelpFor(pathname),
-                variant: "default",
-              });
-              setContextMenu(null);
-            }}
-            onChat={() => {
-              onChat();
-              setContextMenu(null);
-            }}
-            onTip={() => {
-              const tips = tipsFor(pathname);
-              say({
-                text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
-                variant: "hint",
-              });
-              setContextMenu(null);
-            }}
-            onShortcuts={() => {
-              requestOpenShortcuts();
-              setContextMenu(null);
-            }}
-            sound={sound}
-            onToggleSound={() => {
-              toggleSound();
-              setContextMenu(null);
-            }}
-            onReplayTour={
-              normalizePath(pathname) === "/editor"
-                ? () => {
-                    setTourCompleted(false);
-                    setContextMenu(null);
-                  }
-                : undefined
-            }
-          />
-        )}
       </>
     );
   }
@@ -559,6 +605,9 @@ export function QuantaBuddy({
         aria-label="Quanta buddy"
         draggable={false}
         onPointerDown={handlePointerDown}
+        onLostPointerCapture={(event) =>
+          handleLostPointerCapture(event.nativeEvent)
+        }
         onContextMenu={handleContextMenu}
         className="fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
         style={{
@@ -572,191 +621,30 @@ export function QuantaBuddy({
         <span>z</span>
         <span>z</span>
       </span>
-      <QuantaBuddyBubble
-        bubbleRef={bubbleRef}
-        onMeasure={measureBubble}
-      />
+      {!quickActionsOpen && (
+        <QuantaBuddyBubble
+          bubbleRef={bubbleRef}
+          onMeasure={measureBubble}
+        />
+      )}
       <QuantaPersona engineRef={engineRef} pathname={pathname} />
-      {contextMenu && (
-        <BuddyContextMenu
-          contextMenu={contextMenu}
-          onSit={() => {
-            engineRef.current?.sit();
-            setContextMenu(null);
-          }}
-          onWalk={() => {
-            engineRef.current?.walkAround();
-            setContextMenu(null);
-          }}
-          onLeave={() => {
-            engineRef.current?.leave();
-            setContextMenu(null);
-          }}
-          onHelp={() => {
-            say({
-              title: "This page",
-              text: pageHelpFor(pathname),
-              variant: "default",
-            });
-            setContextMenu(null);
-          }}
-          onChat={() => {
-            onChat();
-            setContextMenu(null);
-          }}
-          onTip={() => {
-            const tips = tipsFor(pathname);
-            say({
-              text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
-              variant: "hint",
-            });
-            setContextMenu(null);
-          }}
-          onShortcuts={() => {
-            requestOpenShortcuts();
-            setContextMenu(null);
-          }}
+      {quickActionsOpen && (
+        <QuantaQuickActions
+          engineRef={engineRef}
+          positionerRef={actionPositioner}
+          initialFrame={lastFrame.current}
+          pathname={pathname}
+          reducedMotion={reducedMotion}
           sound={sound}
-          onToggleSound={() => {
-            toggleSound();
-            setContextMenu(null);
-          }}
-          onReplayTour={
-            normalizePath(pathname) === "/editor"
-              ? () => {
-                  setTourCompleted(false);
-                  setContextMenu(null);
-                }
-              : undefined
-          }
+          isSitting={engineRef.current?.isSitting ?? false}
+          onClose={closeQuickActions}
+          onChat={onChat}
+          onSay={say}
+          onToggleSound={toggleSound}
+          onSetTourCompleted={setTourCompleted}
         />
       )}
     </>
-  );
-}
-
-function BuddyContextMenu({
-  contextMenu,
-  onSit,
-  onWalk,
-  onLeave,
-  onHelp,
-  onChat,
-  onTip,
-  onShortcuts,
-  sound,
-  onToggleSound,
-  onReplayTour,
-}: {
-  contextMenu: ContextMenuState;
-  onSit: () => void;
-  onWalk: () => void;
-  onLeave: () => void;
-  onHelp: () => void;
-  onChat: () => void;
-  onTip: () => void;
-  onShortcuts: () => void;
-  sound: boolean;
-  onToggleSound: () => void;
-  onReplayTour?: () => void;
-}) {
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{
-    sourceX: number;
-    sourceY: number;
-    x: number;
-    y: number;
-  } | null>(null);
-  const itemClass = cn(
-    "block w-full rounded-md px-3 py-2 text-left transition-colors",
-    "hover:bg-[var(--color-muted)]"
-  );
-
-  useLayoutEffect(() => {
-    const menu = menuRef.current;
-    if (!menu) return;
-
-    const { width, height } = menu.getBoundingClientRect();
-    const maxX = Math.max(8, window.innerWidth - width - 8);
-    const x = Math.min(Math.max(8, contextMenu.x + 8), maxX);
-    const aboveY = contextMenu.y - height - 8;
-    const preferredY = aboveY < 0 ? contextMenu.y + 8 : aboveY;
-    const maxY = Math.max(8, window.innerHeight - height - 8);
-    const y = Math.min(Math.max(8, preferredY), maxY);
-
-    setPosition({
-      sourceX: contextMenu.x,
-      sourceY: contextMenu.y,
-      x,
-      y,
-    });
-  }, [contextMenu]);
-
-  const isMeasured =
-    position?.sourceX === contextMenu.x && position.sourceY === contextMenu.y;
-
-  return (
-    <div
-      ref={menuRef}
-      className="fixed z-[46] min-w-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 text-sm text-[var(--color-foreground)] shadow-lg"
-      style={{
-        left: isMeasured ? position.x : 0,
-        top: isMeasured ? position.y : 0,
-        visibility: isMeasured ? "visible" : "hidden",
-      }}
-      role="menu"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <p className="px-3 py-2 text-xs font-semibold text-[var(--color-foreground)]">
-        Quanta
-      </p>
-      <button type="button" className={itemClass} onClick={onChat} role="menuitem">
-        Ask me a question
-      </button>
-      <button type="button" className={itemClass} onClick={onHelp} role="menuitem">
-        What can I do here?
-      </button>
-      <button type="button" className={itemClass} onClick={onTip} role="menuitem">
-        Give me a tip
-      </button>
-      <button
-        type="button"
-        className={itemClass}
-        onClick={onShortcuts}
-        role="menuitem"
-      >
-        Keyboard shortcuts
-      </button>
-      {onReplayTour && (
-        <button
-          type="button"
-          className={itemClass}
-          onClick={onReplayTour}
-          role="menuitem"
-        >
-          Replay Build tour
-        </button>
-      )}
-      <div className="my-1 border-t border-[var(--color-border)]" />
-      <button
-        type="button"
-        className={itemClass}
-        onClick={onToggleSound}
-        role="menuitemcheckbox"
-        aria-checked={sound}
-      >
-        {sound ? "Mute quacks" : "Unmute quacks"}
-      </button>
-      <button type="button" className={itemClass} onClick={onSit} role="menuitem">
-        Sit here
-      </button>
-      <button type="button" className={itemClass} onClick={onWalk} role="menuitem">
-        Walk around
-      </button>
-      <button type="button" className={itemClass} onClick={onLeave} role="menuitem">
-        Leave
-      </button>
-    </div>
   );
 }
 
