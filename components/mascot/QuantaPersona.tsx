@@ -10,6 +10,7 @@ import {
 } from "@/lib/learning/progress";
 import {
   greetingFor,
+  levelUpLine,
   randomDuckQuip,
   runErrorReaction,
   runReactionFor,
@@ -61,6 +62,7 @@ export function QuantaPersona({
   const previousUnbound = useRef<string[]>([]);
   const previousResult = useRef(lastResult);
   const previousRunError = useRef(runError);
+  const deferredLevelUpTimeout = useRef<number | null>(null);
   const lastFollowAt = useRef(0);
 
   useEffect(() => {
@@ -205,24 +207,35 @@ export function QuantaPersona({
     }
     if (amount <= 0) return;
 
+    const unlockedNames = [...unlockedHats, ...unlockedSkins].map(
+      (item) => item.name
+    );
+    if (leveledUp && deferredLevelUpTimeout.current !== null) {
+      window.clearTimeout(deferredLevelUpTimeout.current);
+      deferredLevelUpTimeout.current = null;
+    }
     const currentMessage = useQuantaPopoutStore.getState().message;
-    if (
+    const messageIsFresh =
       currentMessage &&
-      Date.now() - currentMessage.updatedAt < 1500
-    ) {
+      Date.now() - currentMessage.updatedAt < 1500;
+    if (messageIsFresh) {
+      if (leveledUp) {
+        deferredLevelUpTimeout.current = window.setTimeout(() => {
+          deferredLevelUpTimeout.current = null;
+          say({
+            text: levelUpLine(level, unlockedNames),
+            variant: "success",
+            imageVariant: "success",
+          });
+          engineRef.current?.hop();
+        }, 4000);
+      }
       return;
     }
 
-    const engine = engineRef.current;
     if (leveledUp) {
-      const unlockedNames = [...unlockedHats, ...unlockedSkins]
-        .map((item) => item.name)
-        .join(", ");
-      const wardrobeMessage = unlockedNames
-        ? ` New in my wardrobe: ${unlockedNames}. Right-click me → Wardrobe.`
-        : "";
       say({
-        text: `Level ${level} — ${getLevelTitle(level)}! I grew up a little.${wardrobeMessage}`,
+        text: levelUpLine(level, unlockedNames),
         variant: "success",
         imageVariant: "success",
       });
@@ -233,8 +246,17 @@ export function QuantaPersona({
         imageVariant: "success",
       });
     }
-    engine?.hop();
+    engineRef.current?.hop();
   }, [engineRef, progressHydrated, say, totalXp]);
+
+  useEffect(
+    () => () => {
+      if (deferredLevelUpTimeout.current !== null) {
+        window.clearTimeout(deferredLevelUpTimeout.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     const wasResult = previousResult.current;
