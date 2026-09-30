@@ -1634,6 +1634,10 @@ button:disabled,
   pointer-events: none;
 }
 
+.quanta-buddy-sprite {
+  filter: var(--quanta-skin-filter, none);
+}
+
 .quanta-burst > span {
   position: absolute;
   left: 0;

@@ -11,12 +11,25 @@ import {
 import { usePathname } from "next/navigation";
 import { normalizePath } from "@/lib/routes";
 import { buddySpriteUrl } from "@/lib/quanta-assets";
+import { getLevelFromXp } from "@/lib/learning/progress";
 import {
   BURST_RESPAWN_DELAY,
   QuantaBuddyEngine,
+  SPRITE_NAMES,
   type BuddyBurst,
   type BuddyFrame,
 } from "@/lib/quanta-buddy/engine";
+import {
+  HATS,
+  SKINS,
+  SKIN_FILTERS,
+  hatTransform,
+  isUnlocked,
+  HAT_HEIGHT,
+  HAT_WIDTH,
+  type HatId,
+  type SkinId,
+} from "@/lib/quanta-buddy/wardrobe";
 import {
   SPRITE_HIT_SIZE,
   alphaMaskFromRgba,
@@ -34,31 +47,17 @@ import { playQuack, unlockQuacks } from "@/lib/quanta-buddy/quack";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
 import { QuantaBurst } from "@/components/mascot/QuantaBurst";
+import { QuantaHatArt } from "@/components/mascot/QuantaHat";
 import { QuantaPersona } from "@/components/mascot/QuantaPersona";
+import { QuantaWardrobe } from "@/components/mascot/QuantaWardrobe";
+import { useClampedPopupPosition } from "@/components/mascot/useClampedPopupPosition";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 import { useQuantaChatStore } from "@/store/quanta-chat-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { useProgressStore } from "@/store/progress-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { cn } from "@/lib/utils";
-
-const SPRITE_NAMES = [
-  "idle_0",
-  "hang_0",
-  "hang_1",
-  "hang_2",
-  "hang_3",
-  "hang_4",
-  "walk_0",
-  "walk_1",
-  "walk_2",
-  "fall_0",
-  "fall_1",
-  "crawl_0",
-  "crawl_1",
-  "sit_0",
-  "lay_0",
-];
 
 interface ContextMenuState {
   x: number;
@@ -82,6 +81,7 @@ export function QuantaBuddy({
 }) {
   const pathname = usePathname();
   const spriteRef = useRef<HTMLDivElement>(null);
+  const hatRef = useRef<HTMLDivElement>(null);
   const zzzRef = useRef<HTMLSpanElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const bubbleSize = useRef({ width: 0, height: 0 });
@@ -97,6 +97,8 @@ export function QuantaBuddy({
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [wardrobeContext, setWardrobeContext] =
+    useState<ContextMenuState | null>(null);
   const [burst, setBurst] = useState<BurstState | null>(null);
   const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
@@ -106,7 +108,26 @@ export function QuantaBuddy({
   const setTourCompleted = useEditorUiStore((state) => state.setTourCompleted);
   const say = useQuantaPopoutStore((state) => state.say);
   const sound = useQuantaBuddyStore((state) => state.sound);
+  const storedHat = useQuantaBuddyStore((state) => state.hat);
+  const storedSkin = useQuantaBuddyStore((state) => state.skin);
   const toggleSound = useQuantaBuddyStore((state) => state.toggleSound);
+  const totalXp = useProgressStore((state) => state.totalXp);
+  const level = getLevelFromXp(totalXp);
+  const effectiveHat =
+    storedHat &&
+    HATS.some((item) => item.id === storedHat && isUnlocked(item, level))
+      ? storedHat
+      : null;
+  const effectiveSkin = SKINS.some(
+    (item) => item.id === storedSkin && isUnlocked(item, level)
+  )
+    ? storedSkin
+    : "classic";
+  const effectiveHatRef = useRef<HatId | null>(effectiveHat);
+  const effectiveSkinRef = useRef<SkinId>(effectiveSkin);
+  effectiveHatRef.current = effectiveHat;
+  effectiveSkinRef.current = effectiveSkin;
+  const skinFilter = SKIN_FILTERS[effectiveSkin] || "none";
   const soundRef = useRef(sound);
   soundRef.current = sound;
   const quack = useCallback((kind: "soft" | "loud" | "pop") => {
@@ -156,7 +177,23 @@ export function QuantaBuddy({
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
+      element.style.setProperty(
+        "--quanta-skin-filter",
+        SKIN_FILTERS[effectiveSkinRef.current] || "none"
+      );
       updateHitTarget();
+    }
+    const hat = hatRef.current;
+    if (hat) {
+      const transform = effectiveHatRef.current
+        ? hatTransform(frame.sprite, frame.x, frame.y, frame.scaleX)
+        : null;
+      if (transform) {
+        hat.style.transform = transform;
+        hat.style.display = "";
+      } else {
+        hat.style.display = "none";
+      }
     }
     const zzz = zzzRef.current;
     if (zzz) {
@@ -485,6 +522,14 @@ export function QuantaBuddy({
       y={burst.y}
       reducedMotion={reducedMotion}
       onDone={clearBurst}
+      filter={skinFilter}
+    />
+  ) : null;
+  const wardrobeElement = wardrobeContext ? (
+    <QuantaWardrobe
+      anchor={wardrobeContext}
+      level={level}
+      onClose={() => setWardrobeContext(null)}
     />
   ) : null;
 
@@ -495,6 +540,10 @@ export function QuantaBuddy({
         {contextMenu && (
           <BuddyContextMenu
             contextMenu={contextMenu}
+            onWardrobe={() => {
+              setWardrobeContext(contextMenu);
+              setContextMenu(null);
+            }}
             onSit={() => {
               engineRef.current?.sit();
               setContextMenu(null);
@@ -546,6 +595,7 @@ export function QuantaBuddy({
             }
           />
         )}
+        {wardrobeElement}
       </>
     );
   }
@@ -560,13 +610,28 @@ export function QuantaBuddy({
         draggable={false}
         onPointerDown={handlePointerDown}
         onContextMenu={handleContextMenu}
-        className="fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
+        className="quanta-buddy-sprite fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
         style={{
           touchAction: "none",
           userSelect: "none",
           WebkitUserSelect: "none",
         }}
       />
+      {effectiveHat && (
+        <div
+          ref={hatRef}
+          aria-hidden="true"
+          data-quanta-hat={effectiveHat}
+          className="pointer-events-none fixed left-0 top-0 z-[45]"
+          style={{
+            width: HAT_WIDTH,
+            height: HAT_HEIGHT,
+            transformOrigin: "50% 100%",
+          }}
+        >
+          <QuantaHatArt hat={effectiveHat} />
+        </div>
+      )}
       <span ref={zzzRef} className="quanta-zzz" aria-hidden="true">
         <span>z</span>
         <span>z</span>
@@ -580,6 +645,10 @@ export function QuantaBuddy({
       {contextMenu && (
         <BuddyContextMenu
           contextMenu={contextMenu}
+          onWardrobe={() => {
+            setWardrobeContext(contextMenu);
+            setContextMenu(null);
+          }}
           onSit={() => {
             engineRef.current?.sit();
             setContextMenu(null);
@@ -629,14 +698,16 @@ export function QuantaBuddy({
                 }
               : undefined
           }
-        />
+          />
       )}
+      {wardrobeElement}
     </>
   );
 }
 
 function BuddyContextMenu({
   contextMenu,
+  onWardrobe,
   onSit,
   onWalk,
   onLeave,
@@ -649,6 +720,7 @@ function BuddyContextMenu({
   onReplayTour,
 }: {
   contextMenu: ContextMenuState;
+  onWardrobe: () => void;
   onSit: () => void;
   onWalk: () => void;
   onLeave: () => void;
@@ -661,47 +733,22 @@ function BuddyContextMenu({
   onReplayTour?: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{
-    sourceX: number;
-    sourceY: number;
-    x: number;
-    y: number;
-  } | null>(null);
+  const { position, isMeasured } = useClampedPopupPosition(
+    menuRef,
+    contextMenu
+  );
   const itemClass = cn(
     "block w-full rounded-md px-3 py-2 text-left transition-colors",
     "hover:bg-[var(--color-muted)]"
   );
-
-  useLayoutEffect(() => {
-    const menu = menuRef.current;
-    if (!menu) return;
-
-    const { width, height } = menu.getBoundingClientRect();
-    const maxX = Math.max(8, window.innerWidth - width - 8);
-    const x = Math.min(Math.max(8, contextMenu.x + 8), maxX);
-    const aboveY = contextMenu.y - height - 8;
-    const preferredY = aboveY < 0 ? contextMenu.y + 8 : aboveY;
-    const maxY = Math.max(8, window.innerHeight - height - 8);
-    const y = Math.min(Math.max(8, preferredY), maxY);
-
-    setPosition({
-      sourceX: contextMenu.x,
-      sourceY: contextMenu.y,
-      x,
-      y,
-    });
-  }, [contextMenu]);
-
-  const isMeasured =
-    position?.sourceX === contextMenu.x && position.sourceY === contextMenu.y;
 
   return (
     <div
       ref={menuRef}
       className="fixed z-[46] min-w-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 text-sm text-[var(--color-foreground)] shadow-lg"
       style={{
-        left: isMeasured ? position.x : 0,
-        top: isMeasured ? position.y : 0,
+        left: isMeasured ? position?.x : 0,
+        top: isMeasured ? position?.y : 0,
         visibility: isMeasured ? "visible" : "hidden",
       }}
       role="menu"
@@ -738,6 +785,14 @@ function BuddyContextMenu({
         </button>
       )}
       <div className="my-1 border-t border-[var(--color-border)]" />
+      <button
+        type="button"
+        className={itemClass}
+        onClick={onWardrobe}
+        role="menuitem"
+      >
+        Wardrobe
+      </button>
       <button
         type="button"
         className={itemClass}
