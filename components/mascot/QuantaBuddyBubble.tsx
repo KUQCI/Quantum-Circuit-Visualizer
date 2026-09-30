@@ -108,7 +108,7 @@ export function QuantaBuddyBubble({
     <div
       ref={bubbleRef}
       className={cn(
-        "quanta-buddy-bubble fixed z-[44] min-w-0 max-w-[min(380px,calc(100vw-1rem))] rounded-2xl border p-3 pl-3.5 text-sm",
+        "quanta-buddy-bubble fixed z-[44] w-max min-w-0 max-w-[min(380px,calc(100vw-1rem))] rounded-2xl border p-3 pl-3.5 text-sm",
         message.variant === "success" && "quanta-bubble-success",
         message.variant === "hint" && "quanta-bubble-hint",
         message.variant === "error" && "quanta-bubble-error",

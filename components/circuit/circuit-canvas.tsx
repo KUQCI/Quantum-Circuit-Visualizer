@@ -945,7 +945,7 @@ export function CircuitCanvas({
       >
         <div
           className={cn(
-            "composer-canvas-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3",
+            "composer-canvas-toolbar @container flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3",
             readOnly && "hidden"
           )}
         >
@@ -978,7 +978,7 @@ export function CircuitCanvas({
               onClick={() => alignOperationsLeft()}
             >
               <AlignLeft className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline capitalize">{alignmentMode}</span>
+              <span className="hidden @md:inline capitalize">{alignmentMode}</span>
             </button>
             <button
               type="button"
@@ -997,7 +997,7 @@ export function CircuitCanvas({
               title="Inspect circuit step-by-step"
             >
               <Info className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Inspect</span>
+              <span className="hidden @md:inline">Inspect</span>
             </button>
             {inspectMode && (
               <>
@@ -1035,7 +1035,7 @@ export function CircuitCanvas({
               onClick={addQubit}
             >
               <Plus className="h-3 w-3" />
-              <span className="hidden min-[400px]:inline">Qubit</span>
+              <span className="hidden @xs:inline">Qubit</span>
             </Button>
             <Button
               variant="ghost"
