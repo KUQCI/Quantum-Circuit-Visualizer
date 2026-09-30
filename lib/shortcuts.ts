@@ -21,6 +21,8 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
         description: "Redo",
       },
       { keys: [["Mod", "D"]], description: "Duplicate selected gate" },
+      { keys: [["Mod", "C"]], description: "Copy selected gate" },
+      { keys: [["Mod", "V"]], description: "Paste copied gate" },
       {
         keys: [["Delete"], ["Backspace"]],
         description: "Delete selected gate",

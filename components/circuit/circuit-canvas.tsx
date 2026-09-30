@@ -18,12 +18,16 @@ import {
 import { GateSymbol, GateTooltipContent } from "@/components/gates/gate-symbol";
 import { PhaseDisk, getMarginalDiskForQubit, QubitStateTooltipContent } from "@/components/visualizations/phase-disk";
 import { simulateCircuit } from "@/lib/quantum-state";
-import { findPlacementConflict } from "@/lib/circuit-edit";
+import {
+  findPlacementConflict,
+  primaryWireIndex,
+} from "@/lib/circuit-edit";
 import {
   getExecutionLayers,
   getMaxInspectStep,
   getOperationsUpToStep,
 } from "@/lib/circuit-layout";
+import { showAppToast } from "@/lib/app-toast";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -437,19 +441,32 @@ function DropPreview({
 
   if (gateDef.type === "barrier") {
     return (
-      <div
-        className={cn(
-          "pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed",
-          isInvalid
-            ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20"
-            : "border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20"
+      <>
+        <div
+          className={cn(
+            "pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed",
+            isInvalid
+              ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20"
+              : "border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20"
+          )}
+          style={{
+            left: columnToX(position.column) + BARRIER_COLUMN_INSET,
+            top: 8,
+            height: numQubits * WIRE_HEIGHT - 16,
+          }}
+        />
+        {isConflict && (
+          <div
+            className="pointer-events-none absolute z-40 rounded bg-[var(--color-destructive)] px-1.5 py-0.5 text-[9px] font-medium text-white"
+            style={{
+              left: columnToX(position.column) + GATE_COLUMN_INSET - 4,
+              top: 4,
+            }}
+          >
+            Occupied
+          </div>
         )}
-        style={{
-          left: columnToX(position.column) + BARRIER_COLUMN_INSET,
-          top: 8,
-          height: numQubits * WIRE_HEIGHT - 16,
-        }}
-      />
+      </>
     );
   }
 
@@ -472,7 +489,7 @@ function DropPreview({
             top: qubitToY(position.qubitIndex) + 4,
           }}
         >
-          Need {needed} qubits
+          {isConflict ? "Occupied" : `Need ${needed} qubits`}
         </div>
       )}
       {!isInvalid && isTwoQubit && targetIdx >= 0 && targetIdx !== controlIdx && (
@@ -554,7 +571,7 @@ function SelectedGateActionBar({
       <button
         type="button"
         className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded"
-        title="Copy gate"
+        title="Duplicate gate"
         onClick={onCopy}
       >
         <Copy className="h-3.5 w-3.5" />
@@ -602,6 +619,7 @@ export function CircuitCanvas({
     updateOperation,
     relocateOperation,
     duplicateOperation,
+    copyOperation,
     pasteOperation,
     alignOperationsLeft,
     addQubit,
@@ -716,13 +734,13 @@ export function CircuitCanvas({
             column
           )
         );
-        if (alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
       if (gateType === "measure") {
         newOpId = addMeasureOperation(placementWires.targets[0], column);
-        if (alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
@@ -735,7 +753,7 @@ export function CircuitCanvas({
             column
           )
         );
-        if (alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
@@ -748,7 +766,7 @@ export function CircuitCanvas({
             column
           )
         );
-        if (alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
@@ -785,8 +803,8 @@ export function CircuitCanvas({
             )
           );
         }
-        if (alignmentMode !== "freeform") alignOperationsLeft();
-        setShowInspector(true);
+        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId) setShowInspector(true);
         return newOpId;
       }
 
@@ -806,8 +824,8 @@ export function CircuitCanvas({
           params
         )
       );
-      if (alignmentMode !== "freeform") alignOperationsLeft();
-      if (["rx", "ry", "rz"].includes(gateType)) {
+      if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+      if (newOpId && ["rx", "ry", "rz"].includes(gateType)) {
         setShowInspector(true);
       }
       return newOpId;
@@ -828,7 +846,10 @@ export function CircuitCanvas({
     (e: React.DragEvent) => {
       if (readOnly) return;
       e.preventDefault();
-      e.dataTransfer.dropEffect = "copy";
+      const isMoveDrag =
+        movingOperationId !== null ||
+        e.dataTransfer.types.includes("moveoperationid");
+      e.dataTransfer.dropEffect = isMoveDrag ? "move" : "copy";
 
       const gateType =
         e.dataTransfer.getData("gateType") || draggingGate || null;
@@ -842,7 +863,7 @@ export function CircuitCanvas({
       );
       setDropPreview(pos);
     },
-    [draggingGate, circuit.qubits.length, readOnly]
+    [draggingGate, movingOperationId, circuit.qubits.length, readOnly]
   );
 
   const handleDrop = useCallback(
@@ -935,6 +956,10 @@ export function CircuitCanvas({
         ]
       )
     : 0;
+  const nextPasteColumn = circuit.operations.reduce(
+    (nextColumn, operation) => Math.max(nextColumn, operation.column + 1),
+    0
+  );
 
   useEffect(() => {
     if (readOnly) return;
@@ -973,6 +998,27 @@ export function CircuitCanvas({
         target === document.body ||
         Boolean(scrollRef.current?.contains(target));
       if (!focusInCanvas) return;
+
+      if (e.ctrlKey || e.metaKey) {
+        const key = e.key.toLowerCase();
+        if (key === "c" && selectedOp) {
+          e.preventDefault();
+          copyOperation(selectedOp.id);
+          showAppToast(
+            "Gate copied — right-click a spot or press Ctrl+V to paste"
+          );
+          return;
+        }
+        if (key === "v" && clipboard) {
+          e.preventDefault();
+          const pastedId = pasteOperation(
+            nextPasteColumn,
+            primaryWireIndex(clipboard)
+          );
+          if (pastedId) setSelectedOperation(pastedId);
+          return;
+        }
+      }
 
       if ((e.key === "Delete" || e.key === "Backspace") && selectedOperationId) {
         e.preventDefault();
@@ -1019,6 +1065,11 @@ export function CircuitCanvas({
     circuit.qubits.length,
     removeOperation,
     duplicateOperation,
+    copyOperation,
+    pasteOperation,
+    clipboard,
+    nextPasteColumn,
+    setSelectedOperation,
     relocateOperation,
     undo,
     redo,
