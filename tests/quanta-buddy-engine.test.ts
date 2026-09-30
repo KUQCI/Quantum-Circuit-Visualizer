@@ -49,6 +49,20 @@ describe("QuantaBuddyEngine", () => {
     expect(frame.sprite).toMatch(/^(lay_0|sit_0|idle_0)$/);
   });
 
+  it("reports busy after a drag release starts a fall", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.pointerDown(150, 400);
+    engine.pointerMove(190, 360);
+    engine.pointerUp();
+
+    expect(engine.isBusy).toBe(true);
+  });
+
   it("resumes autonomous scheduling after landing recovery", () => {
     const engine = new QuantaBuddyEngine({
       viewport,

@@ -175,6 +175,8 @@ export function QuantaBuddy({
     }
   }, []);
   const openQuickActions = useCallback((source: "hover" | "click") => {
+    const engine = engineRef.current;
+    if (!engine?.present || engine.isBusy) return;
     if (source === "click") {
       setFocusRequest((request) => (request ?? 0) + 1);
     } else {
@@ -182,17 +184,17 @@ export function QuantaBuddy({
     }
     if (!quickActionsOpenRef.current) {
       quickActionsOpenRef.current = true;
-      engineRef.current?.setFrozen(true);
+      engine.setFrozen(true);
       setQuickActionsOpen(true);
     }
   }, []);
   const handleBuddyClick = useCallback(() => {
+    const engine = engineRef.current;
     if (!quickActionsOpenRef.current) {
-      openQuickActions("click");
+      if (engine?.present && !engine.isBusy) openQuickActions("click");
       return;
     }
 
-    const engine = engineRef.current;
     if (engine?.asleep) {
       say({ text: wakeLine(), variant: "default" });
       quack("soft");
@@ -525,30 +527,69 @@ export function QuantaBuddy({
     };
   }, [updateHitTarget]);
 
+  const feed = useCallback(
+    (gateType: string) => {
+      closeQuickActions();
+      const engine = engineRef.current;
+      if (engine?.asleep) engine.wake();
+      const reaction = feedReactionFor(gateType);
+      if (reaction.refuse) {
+        say({ text: reaction.text, variant: "hint" });
+        quack("soft");
+        return;
+      }
+      if (!appetite.current.eat(performance.now())) {
+        say({ text: stuffedLine(), variant: "hint" });
+        quack("soft");
+        return;
+      }
+      say({ text: reaction.text, title: "Nom!", variant: "success" });
+      quack("soft");
+      if (!reducedMotion) engine?.hop();
+    },
+    [closeQuickActions, quack, reducedMotion, say]
+  );
+
   useEffect(() => {
     if (!ready) return;
     const handleDragOver = (event: DragEvent) => {
       const engine = engineRef.current;
+      const dataTransfer = event.dataTransfer;
       feedHover.current =
+        !!dataTransfer &&
         isGateDrag(event) &&
         !!engine?.present &&
         !engine.isBusy &&
         pointOnSprite(event.clientX, event.clientY);
+      if (feedHover.current && dataTransfer) {
+        event.preventDefault();
+        dataTransfer.dropEffect = "copy";
+      }
       updateHitTarget();
     };
     const resetFeedHover = () => {
       feedHover.current = false;
       updateHitTarget();
     };
+    const handleDrop = (event: DragEvent) => {
+      const dataTransfer = event.dataTransfer;
+      if (feedHover.current && dataTransfer && isGateDrag(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        const gateType = dataTransfer.getData("gateType");
+        if (gateType) feed(gateType);
+      }
+      resetFeedHover();
+    };
     window.addEventListener("dragover", handleDragOver, true);
-    window.addEventListener("drop", resetFeedHover, true);
+    window.addEventListener("drop", handleDrop, true);
     window.addEventListener("dragend", resetFeedHover, true);
     return () => {
       window.removeEventListener("dragover", handleDragOver, true);
-      window.removeEventListener("drop", resetFeedHover, true);
+      window.removeEventListener("drop", handleDrop, true);
       window.removeEventListener("dragend", resetFeedHover, true);
     };
-  }, [pointOnSprite, ready, updateHitTarget]);
+  }, [feed, pointOnSprite, ready, updateHitTarget]);
 
   useEffect(() => {
     if (!ready || !autoCall) return;
@@ -624,29 +665,6 @@ export function QuantaBuddy({
     schedule();
     return () => window.clearTimeout(timeout);
   }, [ready, reducedMotion]);
-
-  const feed = useCallback(
-    (gateType: string) => {
-      closeQuickActions();
-      const engine = engineRef.current;
-      if (engine?.asleep) engine.wake();
-      const reaction = feedReactionFor(gateType);
-      if (reaction.refuse) {
-        say({ text: reaction.text, variant: "hint" });
-        quack("soft");
-        return;
-      }
-      if (!appetite.current.eat(performance.now())) {
-        say({ text: stuffedLine(), variant: "hint" });
-        quack("soft");
-        return;
-      }
-      say({ text: reaction.text, title: "Nom!", variant: "success" });
-      quack("soft");
-      if (!reducedMotion) engine?.hop();
-    },
-    [closeQuickActions, quack, reducedMotion, say]
-  );
 
   useEffect(() => {
     if (!ready) return;
@@ -751,7 +769,8 @@ export function QuantaBuddy({
   const handleContextMenu = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
-      openQuickActions("click");
+      const engine = engineRef.current;
+      if (engine?.present && !engine.isBusy) openQuickActions("click");
     },
     [openQuickActions]
   );
@@ -796,17 +815,6 @@ export function QuantaBuddy({
           handleLostPointerCapture(event.nativeEvent)
         }
         onContextMenu={handleContextMenu}
-        onDragOver={(event) => {
-          if (!feedHover.current) return;
-          event.preventDefault();
-          event.dataTransfer.dropEffect = "copy";
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const gateType = event.dataTransfer.getData("gateType");
-          if (gateType) feed(gateType);
-        }}
         className="quanta-buddy-sprite fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
         style={{
           touchAction: "none",
