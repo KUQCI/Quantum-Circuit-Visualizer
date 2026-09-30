@@ -31,11 +31,11 @@ export function NextStepCard({
   return (
     <div
       className={cn(
-        "rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4 sm:p-5 motion-lift",
+        "@container rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4 sm:p-5 motion-lift",
         className
       )}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex h-full flex-col gap-3 @lg:flex-row @lg:items-center @lg:justify-between">
         <div className="min-w-0 flex-1">
           {badge && (
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-[var(--color-brand)]">
