@@ -1591,6 +1591,13 @@ button:disabled,
       minmax(0, 1fr)
       auto;
   }
+
+  .learning-player-grid-lesson-collapsed.learning-player-grid-code-collapsed {
+    grid-template-columns:
+      220px
+      minmax(0, 1fr)
+      auto;
+  }
 }
 
 @media (min-width: 1536px) {
@@ -1612,6 +1619,13 @@ button:disabled,
   .learning-player-grid-code-collapsed {
     grid-template-columns:
       340px
+      260px
+      minmax(0, 1fr)
+      auto;
+  }
+
+  .learning-player-grid-lesson-collapsed.learning-player-grid-code-collapsed {
+    grid-template-columns:
       260px
       minmax(0, 1fr)
       auto;

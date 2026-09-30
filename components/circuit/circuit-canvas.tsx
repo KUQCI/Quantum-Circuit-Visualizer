@@ -53,6 +53,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsDown,
+  Rows3,
 } from "lucide-react";
 import type { Circuit, Operation } from "@/lib/circuit-schema";
 import { ParameterBindingsPanel } from "@/components/circuit/parameter-bindings-panel";
@@ -1033,9 +1034,12 @@ export function CircuitCanvas({
               size="sm"
               className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
               onClick={addQubit}
+              aria-label="Add qubit"
             >
               <Plus className="h-3 w-3" />
-              <span className="hidden @xs:inline">Qubit</span>
+              <span className={cn("hidden", inspectMode ? "@md:inline" : "@xs:inline")}>
+                Qubit
+              </span>
             </Button>
             <Button
               variant="ghost"
@@ -1043,8 +1047,12 @@ export function CircuitCanvas({
               className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
               onClick={() => setRegistersOpen(true)}
               title="Manage registers"
+              aria-label="Manage registers"
             >
-              Registers…
+              <Rows3 className={cn("h-3 w-3", inspectMode ? "@md:hidden" : "@xs:hidden")} />
+              <span className={cn("hidden", inspectMode ? "@md:inline" : "@xs:inline")}>
+                Registers…
+              </span>
             </Button>
           </div>
         </div>
