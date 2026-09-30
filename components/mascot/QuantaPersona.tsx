@@ -163,11 +163,10 @@ export function QuantaPersona({
       if (event.button !== 0 || Date.now() - lastFollowAt.current < 4000) {
         return;
       }
-      const target =
-        event.target instanceof HTMLElement ? event.target : null;
+      const target = event.target instanceof Element ? event.target : null;
       if (
         target?.closest(
-          '[aria-label="Quanta buddy"], .quanta-buddy-bubble, [role="menu"]'
+          '[aria-label="Quanta buddy"], .quanta-buddy-bubble, [role="menu"], [aria-label="Quanta actions"]'
         )
       ) {
         return;

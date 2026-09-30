@@ -36,35 +36,43 @@ import {
   isSpritePixelOpaque,
   type SpriteAlphaMask,
 } from "@/lib/quanta-buddy/hit-test";
+import { HoverIntent } from "@/lib/quanta-buddy/quick-actions";
 import {
   Appetite,
   feedReactionFor,
   stuffedLine,
 } from "@/lib/quanta-buddy/feeding";
 import {
-  pageHelpFor,
   pokeReactionFor,
   recoveryLineFor,
-  tipsFor,
   wakeLine,
 } from "@/lib/quanta-buddy/persona";
 import { playQuack, unlockQuacks } from "@/lib/quanta-buddy/quack";
-import { requestOpenShortcuts } from "@/lib/shortcuts";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
 import { QuantaBurst } from "@/components/mascot/QuantaBurst";
 import { QuantaHatArt } from "@/components/mascot/QuantaHat";
 import { QuantaPersona } from "@/components/mascot/QuantaPersona";
+import { QuantaQuickActions } from "@/components/mascot/QuantaQuickActions";
 import { QuantaWardrobe } from "@/components/mascot/QuantaWardrobe";
-import { useClampedPopupPosition } from "@/components/mascot/useClampedPopupPosition";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 import { useQuantaChatStore } from "@/store/quanta-chat-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
 import { useProgressStore } from "@/store/progress-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
-import { cn } from "@/lib/utils";
 
-interface ContextMenuState {
+interface PointerPress {
+  pointerId: number;
+  time: number;
+  x: number;
+  y: number;
+  currentX: number;
+  currentY: number;
+  started: boolean;
+  timer: number;
+}
+
+interface WardrobeAnchor {
   x: number;
   y: number;
 }
@@ -97,7 +105,12 @@ export function QuantaBuddy({
   const bubbleRef = useRef<HTMLDivElement>(null);
   const bubbleSize = useRef({ width: 0, height: 0 });
   const engineRef = useRef<QuantaBuddyEngine | null>(null);
-  const pointerDown = useRef({ time: 0, x: 0, y: 0 });
+  const pointerPress = useRef<PointerPress | null>(null);
+  const actionPositioner = useRef<((frame: BuddyFrame) => void) | null>(null);
+  const quickActionsOpenRef = useRef(false);
+  const hoverIntentRef = useRef(new HoverIntent());
+  const pointerOverRing = useRef(false);
+  const hoverRequiresLeave = useRef(false);
   const lastCallRequest = useRef(callRequest);
   const lastPresent = useRef(false);
   const spriteMasks = useRef(new Map<string, SpriteAlphaMask>());
@@ -109,9 +122,10 @@ export function QuantaBuddy({
   const clickThrough = useRef(false);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState<number | null>(null);
   const [wardrobeContext, setWardrobeContext] =
-    useState<ContextMenuState | null>(null);
+    useState<WardrobeAnchor | null>(null);
   const [burst, setBurst] = useState<BurstState | null>(null);
   const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
@@ -149,6 +163,52 @@ export function QuantaBuddy({
   const measureBubble = useCallback((width: number, height: number) => {
     bubbleSize.current = { width, height };
   }, []);
+  const closeQuickActions = useCallback(() => {
+    const wasOpen = quickActionsOpenRef.current;
+    hoverIntentRef.current.reset();
+    if (wasOpen) {
+      quickActionsOpenRef.current = false;
+      hoverRequiresLeave.current = true;
+      engineRef.current?.setFrozen(false);
+      setQuickActionsOpen(false);
+      setFocusRequest(null);
+    }
+  }, []);
+  const openQuickActions = useCallback((source: "hover" | "click") => {
+    const engine = engineRef.current;
+    if (!engine?.present || engine.isBusy) return;
+    if (source === "click") {
+      setFocusRequest((request) => (request ?? 0) + 1);
+    } else {
+      setFocusRequest(null);
+    }
+    if (!quickActionsOpenRef.current) {
+      quickActionsOpenRef.current = true;
+      engine.setFrozen(true);
+      setQuickActionsOpen(true);
+    }
+  }, []);
+  const handleBuddyClick = useCallback(() => {
+    const engine = engineRef.current;
+    if (!quickActionsOpenRef.current) {
+      if (engine?.present && !engine.isBusy) openQuickActions("click");
+      return;
+    }
+
+    if (engine?.asleep) {
+      say({ text: wakeLine(), variant: "default" });
+      quack("soft");
+    }
+    const pokes = engine?.poke() ?? 0;
+    if (pokes === "burst") {
+      closeQuickActions();
+      quack("pop");
+    } else if (pokes > 1) {
+      closeQuickActions();
+      quack(pokes >= 4 ? "loud" : "soft");
+      say({ text: pokeReactionFor(pokes), variant: "error" });
+    }
+  }, [closeQuickActions, openQuickActions, quack, say]);
 
   const pointOnSprite = useCallback((x: number, y: number) => {
     const frame = lastFrame.current;
@@ -171,6 +231,43 @@ export function QuantaBuddy({
       y < frame.y + SPRITE_HIT_SIZE
     );
   }, []);
+
+  const updateHoverIntent = useCallback(
+    (frame: BuddyFrame) => {
+      const pointer = lastPointer.current;
+      const overBuddy =
+        frame.present &&
+        pointer !== null &&
+        pointOnSprite(pointer.x, pointer.y);
+      if (!overBuddy) hoverRequiresLeave.current = false;
+      const engine = engineRef.current;
+      const action = hoverIntentRef.current.update(performance.now(), {
+        overBuddy,
+        overRing: pointerOverRing.current,
+        canOpen:
+          clickThrough.current &&
+          frame.present &&
+          !dragging.current &&
+          pointerPress.current === null &&
+          !hoverRequiresLeave.current &&
+          !!engine &&
+          !engine.isBusy,
+        open: quickActionsOpenRef.current,
+      });
+      if (action === "open") {
+        openQuickActions("hover");
+      } else if (action === "close") {
+        const activeElement = document.activeElement;
+        const keyboardFocusedButton =
+          activeElement instanceof Element &&
+          activeElement.matches(":focus-visible") &&
+          activeElement.closest('[aria-label="Quanta actions"] button') !==
+            null;
+        if (!keyboardFocusedButton) closeQuickActions();
+      }
+    },
+    [closeQuickActions, openQuickActions, pointOnSprite]
+  );
 
   // Transparent parts of the sprite box let clicks reach the page underneath.
   const updateHitTarget = useCallback(() => {
@@ -196,6 +293,9 @@ export function QuantaBuddy({
   const applyFrame = useCallback((frame: BuddyFrame) => {
     const element = spriteRef.current;
     lastFrame.current = frame;
+    actionPositioner.current?.(frame);
+    if (!frame.present) closeQuickActions();
+    updateHoverIntent(frame);
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
@@ -251,48 +351,94 @@ export function QuantaBuddy({
     bubble.dataset.tail =
       tailX < 14 || tailX > width - 14 ? "none" : below ? "top" : "bottom";
     bubble.style.setProperty("--quanta-tail-x", `${tailX}px`);
-  }, [updateHitTarget]);
+  }, [closeQuickActions, updateHitTarget, updateHoverIntent]);
 
-  const handlePointerMove = useCallback((event: PointerEvent) => {
-    engineRef.current?.pointerMove(event.clientX, event.clientY);
-  }, []);
-
-  const handlePointerUp = useCallback((event: PointerEvent) => {
-    const elapsed = performance.now() - pointerDown.current.time;
-    const distance = Math.hypot(
-      event.clientX - pointerDown.current.x,
-      event.clientY - pointerDown.current.y
-    );
-    const isClick =
-      event.type !== "pointercancel" && elapsed < 300 && distance < 6;
-    dragging.current = false;
-    if (isClick) {
+  const beginDrag = useCallback(
+    (press: PointerPress, clientX: number, clientY: number) => {
+      if (press.started || pointerPress.current !== press) return;
+      press.started = true;
+      window.clearTimeout(press.timer);
+      closeQuickActions();
+      dragging.current = true;
       const engine = engineRef.current;
-      engine?.cancelDrag();
-      window.addEventListener(
-        "click",
-        (clickEvent) => clickEvent.stopPropagation(),
-        { capture: true, once: true }
-      );
-      const pokes = engine?.poke() ?? 0;
-      if (pokes === "burst") {
-        setContextMenu(null);
-        quack("pop");
-      } else if (pokes > 1) {
-        setContextMenu(null);
-        quack(pokes >= 4 ? "loud" : "soft");
-        say({ text: pokeReactionFor(pokes), variant: "error" });
-      } else {
-        setContextMenu({ x: event.clientX, y: event.clientY });
+      engine?.pointerDown(press.x, press.y);
+      engine?.pointerMove(clientX, clientY);
+      updateHitTarget();
+    },
+    [closeQuickActions, updateHitTarget]
+  );
+
+  const handlePointerMove = useCallback(
+    (event: PointerEvent) => {
+      const press = pointerPress.current;
+      if (!press || press.pointerId !== event.pointerId) return;
+      press.currentX = event.clientX;
+      press.currentY = event.clientY;
+      if (!press.started) {
+        if (Math.hypot(event.clientX - press.x, event.clientY - press.y) >= 5) {
+          beginDrag(press, event.clientX, event.clientY);
+        }
+        return;
       }
-    } else {
-      engineRef.current?.pointerUp();
-    }
-    window.removeEventListener("pointermove", handlePointerMove);
-    window.removeEventListener("pointerup", handlePointerUp);
-    window.removeEventListener("pointercancel", handlePointerUp);
-    updateHitTarget();
-  }, [handlePointerMove, quack, say, updateHitTarget]);
+      engineRef.current?.pointerMove(event.clientX, event.clientY);
+    },
+    [beginDrag]
+  );
+
+  const finishPointerSession = useCallback(
+    (event: PointerEvent | null, allowClick: boolean) => {
+      const press = pointerPress.current;
+      if (!press || (event && press.pointerId !== event.pointerId)) return;
+      const elapsed = performance.now() - press.time;
+      if (event) {
+        press.currentX = event.clientX;
+        press.currentY = event.clientY;
+        if (
+          !press.started &&
+          (Math.hypot(event.clientX - press.x, event.clientY - press.y) >= 5 ||
+            elapsed >= 200)
+        ) {
+          beginDrag(press, event.clientX, event.clientY);
+        }
+      }
+
+      pointerPress.current = null;
+      window.clearTimeout(press.timer);
+      dragging.current = false;
+      if (press.started) {
+        if (event?.type === "pointerup") {
+          engineRef.current?.pointerUp(event.clientX, event.clientY);
+        } else {
+          engineRef.current?.pointerUp();
+        }
+      } else if (
+        allowClick &&
+        event?.type === "pointerup" &&
+        Math.hypot(event.clientX - press.x, event.clientY - press.y) < 5
+      ) {
+        handleBuddyClick();
+      }
+      updateHitTarget();
+    },
+    [beginDrag, handleBuddyClick, updateHitTarget]
+  );
+
+  const handlePointerUp = useCallback(
+    (event: PointerEvent) => {
+      finishPointerSession(event, event.type === "pointerup");
+    },
+    [finishPointerSession]
+  );
+
+  const handleLostPointerCapture = useCallback(
+    (event: PointerEvent) => finishPointerSession(event, false),
+    [finishPointerSession]
+  );
+
+  const handleWindowBlur = useCallback(
+    () => finishPointerSession(null, false),
+    [finishPointerSession]
+  );
 
   useEffect(() => {
     const engine = new QuantaBuddyEngine({
@@ -359,10 +505,15 @@ export function QuantaBuddy({
     const trackPointer = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       lastPointer.current = { x: event.clientX, y: event.clientY };
+      const target = event.target instanceof Element ? event.target : null;
+      pointerOverRing.current = !!target?.closest(
+        '[aria-label="Quanta actions"] button'
+      );
       updateHitTarget();
     };
     const forgetPointer = () => {
       lastPointer.current = null;
+      pointerOverRing.current = false;
       updateHitTarget();
     };
     syncQuery();
@@ -376,30 +527,69 @@ export function QuantaBuddy({
     };
   }, [updateHitTarget]);
 
+  const feed = useCallback(
+    (gateType: string) => {
+      closeQuickActions();
+      const engine = engineRef.current;
+      if (engine?.asleep) engine.wake();
+      const reaction = feedReactionFor(gateType);
+      if (reaction.refuse) {
+        say({ text: reaction.text, variant: "hint" });
+        quack("soft");
+        return;
+      }
+      if (!appetite.current.eat(performance.now())) {
+        say({ text: stuffedLine(), variant: "hint" });
+        quack("soft");
+        return;
+      }
+      say({ text: reaction.text, title: "Nom!", variant: "success" });
+      quack("soft");
+      if (!reducedMotion) engine?.hop();
+    },
+    [closeQuickActions, quack, reducedMotion, say]
+  );
+
   useEffect(() => {
     if (!ready) return;
     const handleDragOver = (event: DragEvent) => {
       const engine = engineRef.current;
+      const dataTransfer = event.dataTransfer;
       feedHover.current =
+        !!dataTransfer &&
         isGateDrag(event) &&
         !!engine?.present &&
         !engine.isBusy &&
         pointOnSprite(event.clientX, event.clientY);
+      if (feedHover.current && dataTransfer) {
+        event.preventDefault();
+        dataTransfer.dropEffect = "copy";
+      }
       updateHitTarget();
     };
     const resetFeedHover = () => {
       feedHover.current = false;
       updateHitTarget();
     };
+    const handleDrop = (event: DragEvent) => {
+      const dataTransfer = event.dataTransfer;
+      if (feedHover.current && dataTransfer && isGateDrag(event)) {
+        event.preventDefault();
+        event.stopPropagation();
+        const gateType = dataTransfer.getData("gateType");
+        if (gateType) feed(gateType);
+      }
+      resetFeedHover();
+    };
     window.addEventListener("dragover", handleDragOver, true);
-    window.addEventListener("drop", resetFeedHover, true);
+    window.addEventListener("drop", handleDrop, true);
     window.addEventListener("dragend", resetFeedHover, true);
     return () => {
       window.removeEventListener("dragover", handleDragOver, true);
-      window.removeEventListener("drop", resetFeedHover, true);
+      window.removeEventListener("drop", handleDrop, true);
       window.removeEventListener("dragend", resetFeedHover, true);
     };
-  }, [pointOnSprite, ready, updateHitTarget]);
+  }, [feed, pointOnSprite, ready, updateHitTarget]);
 
   useEffect(() => {
     if (!ready || !autoCall) return;
@@ -476,29 +666,6 @@ export function QuantaBuddy({
     return () => window.clearTimeout(timeout);
   }, [ready, reducedMotion]);
 
-  const feed = useCallback(
-    (gateType: string) => {
-      setContextMenu(null);
-      const engine = engineRef.current;
-      if (engine?.asleep) engine.wake();
-      const reaction = feedReactionFor(gateType);
-      if (reaction.refuse) {
-        say({ text: reaction.text, variant: "hint" });
-        quack("soft");
-        return;
-      }
-      if (!appetite.current.eat(performance.now())) {
-        say({ text: stuffedLine(), variant: "hint" });
-        quack("soft");
-        return;
-      }
-      say({ text: reaction.text, title: "Nom!", variant: "success" });
-      quack("soft");
-      if (!reducedMotion) engine?.hop();
-    },
-    [quack, reducedMotion, say]
-  );
-
   useEffect(() => {
     if (!ready) return;
     const lastActivity = { current: performance.now() };
@@ -550,45 +717,63 @@ export function QuantaBuddy({
   }, [ready]);
 
   useEffect(() => {
-    if (!contextMenu) return;
-    const close = () => setContextMenu(null);
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
-    };
-    window.addEventListener("click", close);
-    window.addEventListener("keydown", onKeyDown);
+    const onPointerMove = (event: PointerEvent) => handlePointerMove(event);
+    const onPointerUp = (event: PointerEvent) => handlePointerUp(event);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("blur", handleWindowBlur);
     return () => {
-      window.removeEventListener("click", close);
-      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("blur", handleWindowBlur);
+      finishPointerSession(null, false);
     };
-  }, [contextMenu]);
+  }, [
+    finishPointerSession,
+    handlePointerMove,
+    handlePointerUp,
+    handleWindowBlur,
+  ]);
 
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    const engine = engineRef.current;
-    const wasAsleep = engine?.asleep ?? false;
-    if (wasAsleep) {
-      say({ text: wakeLine(), variant: "default" });
-      quack("soft");
-    }
-    dragging.current = true;
-    pointerDown.current = {
-      time: performance.now(),
-      x: event.clientX,
-      y: event.clientY,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-    engine?.pointerDown(event.clientX, event.clientY);
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-  }, [handlePointerMove, handlePointerUp, quack, say]);
+  useEffect(() => {
+    closeQuickActions();
+  }, [closeQuickActions, pathname]);
 
-  const handleContextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setContextMenu({ x: event.clientX, y: event.clientY });
-  };
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0 || pointerPress.current) return;
+      event.preventDefault();
+      const press: PointerPress = {
+        pointerId: event.pointerId,
+        time: performance.now(),
+        x: event.clientX,
+        y: event.clientY,
+        currentX: event.clientX,
+        currentY: event.clientY,
+        started: false,
+        timer: 0,
+      };
+      pointerPress.current = press;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      press.timer = window.setTimeout(() => {
+        if (pointerPress.current === press) {
+          beginDrag(press, press.currentX, press.currentY);
+        }
+      }, 200);
+    },
+    [beginDrag]
+  );
+
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const engine = engineRef.current;
+      if (engine?.present && !engine.isBusy) openQuickActions("click");
+    },
+    [openQuickActions]
+  );
 
   const burstElement = burst ? (
     <QuantaBurst
@@ -612,64 +797,6 @@ export function QuantaBuddy({
     return (
       <>
         {burstElement}
-        {contextMenu && (
-          <BuddyContextMenu
-            contextMenu={contextMenu}
-            onWardrobe={() => {
-              setWardrobeContext(contextMenu);
-              setContextMenu(null);
-            }}
-            onSit={() => {
-              engineRef.current?.sit();
-              setContextMenu(null);
-            }}
-            onWalk={() => {
-              engineRef.current?.walkAround();
-              setContextMenu(null);
-            }}
-            onLeave={() => {
-              engineRef.current?.leave();
-              setContextMenu(null);
-            }}
-            onHelp={() => {
-              say({
-                title: "This page",
-                text: pageHelpFor(pathname),
-                variant: "default",
-              });
-              setContextMenu(null);
-            }}
-            onChat={() => {
-              onChat();
-              setContextMenu(null);
-            }}
-            onTip={() => {
-              const tips = tipsFor(pathname);
-              say({
-                text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
-                variant: "hint",
-              });
-              setContextMenu(null);
-            }}
-            onShortcuts={() => {
-              requestOpenShortcuts();
-              setContextMenu(null);
-            }}
-            sound={sound}
-            onToggleSound={() => {
-              toggleSound();
-              setContextMenu(null);
-            }}
-            onReplayTour={
-              normalizePath(pathname) === "/editor"
-                ? () => {
-                    setTourCompleted(false);
-                    setContextMenu(null);
-                  }
-                : undefined
-            }
-          />
-        )}
         {wardrobeElement}
       </>
     );
@@ -684,18 +811,10 @@ export function QuantaBuddy({
         aria-label="Quanta buddy"
         draggable={false}
         onPointerDown={handlePointerDown}
+        onLostPointerCapture={(event) =>
+          handleLostPointerCapture(event.nativeEvent)
+        }
         onContextMenu={handleContextMenu}
-        onDragOver={(event) => {
-          if (!feedHover.current) return;
-          event.preventDefault();
-          event.dataTransfer.dropEffect = "copy";
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const gateType = event.dataTransfer.getData("gateType");
-          if (gateType) feed(gateType);
-        }}
         className="quanta-buddy-sprite fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
         style={{
           touchAction: "none",
@@ -723,181 +842,38 @@ export function QuantaBuddy({
         <span>z</span>
         <span>z</span>
       </span>
-      <QuantaBuddyBubble
-        bubbleRef={bubbleRef}
-        onMeasure={measureBubble}
-      />
+      {!quickActionsOpen && (
+        <QuantaBuddyBubble
+          bubbleRef={bubbleRef}
+          onMeasure={measureBubble}
+        />
+      )}
       <QuantaPersona engineRef={engineRef} pathname={pathname} />
-      {contextMenu && (
-        <BuddyContextMenu
-          contextMenu={contextMenu}
-          onWardrobe={() => {
-            setWardrobeContext(contextMenu);
-            setContextMenu(null);
-          }}
-          onSit={() => {
-            engineRef.current?.sit();
-            setContextMenu(null);
-          }}
-          onWalk={() => {
-            engineRef.current?.walkAround();
-            setContextMenu(null);
-          }}
-          onLeave={() => {
-            engineRef.current?.leave();
-            setContextMenu(null);
-          }}
-          onHelp={() => {
-            say({
-              title: "This page",
-              text: pageHelpFor(pathname),
-              variant: "default",
-            });
-            setContextMenu(null);
-          }}
-          onChat={() => {
-            onChat();
-            setContextMenu(null);
-          }}
-          onTip={() => {
-            const tips = tipsFor(pathname);
-            say({
-              text: tips[Math.floor(Math.random() * tips.length)] ?? tips[0],
-              variant: "hint",
-            });
-            setContextMenu(null);
-          }}
-          onShortcuts={() => {
-            requestOpenShortcuts();
-            setContextMenu(null);
-          }}
+      {quickActionsOpen && (
+        <QuantaQuickActions
+          engineRef={engineRef}
+          positionerRef={actionPositioner}
+          initialFrame={lastFrame.current}
+          pathname={pathname}
+          reducedMotion={reducedMotion}
+          focusRequest={focusRequest}
           sound={sound}
-          onToggleSound={() => {
-            toggleSound();
-            setContextMenu(null);
+          isSitting={engineRef.current?.isSitting ?? false}
+          onClose={closeQuickActions}
+          onChat={onChat}
+          onSay={say}
+          onToggleSound={toggleSound}
+          onSetTourCompleted={setTourCompleted}
+          onWardrobe={() => {
+            const frame = lastFrame.current;
+            if (frame) {
+              setWardrobeContext({ x: frame.x + 64, y: frame.y });
+            }
           }}
-          onReplayTour={
-            normalizePath(pathname) === "/editor"
-              ? () => {
-                  setTourCompleted(false);
-                  setContextMenu(null);
-                }
-              : undefined
-          }
         />
       )}
       {wardrobeElement}
     </>
-  );
-}
-
-function BuddyContextMenu({
-  contextMenu,
-  onWardrobe,
-  onSit,
-  onWalk,
-  onLeave,
-  onHelp,
-  onChat,
-  onTip,
-  onShortcuts,
-  sound,
-  onToggleSound,
-  onReplayTour,
-}: {
-  contextMenu: ContextMenuState;
-  onWardrobe: () => void;
-  onSit: () => void;
-  onWalk: () => void;
-  onLeave: () => void;
-  onHelp: () => void;
-  onChat: () => void;
-  onTip: () => void;
-  onShortcuts: () => void;
-  sound: boolean;
-  onToggleSound: () => void;
-  onReplayTour?: () => void;
-}) {
-  const menuRef = useRef<HTMLDivElement>(null);
-  const { position, isMeasured } = useClampedPopupPosition(
-    menuRef,
-    contextMenu
-  );
-  const itemClass = cn(
-    "block w-full rounded-md px-3 py-2 text-left transition-colors",
-    "hover:bg-[var(--color-muted)]"
-  );
-
-  return (
-    <div
-      ref={menuRef}
-      className="fixed z-[46] min-w-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-1 text-sm text-[var(--color-foreground)] shadow-lg"
-      style={{
-        left: isMeasured ? position?.x : 0,
-        top: isMeasured ? position?.y : 0,
-        visibility: isMeasured ? "visible" : "hidden",
-      }}
-      role="menu"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <p className="px-3 py-2 text-xs font-semibold text-[var(--color-foreground)]">
-        Quanta
-      </p>
-      <button type="button" className={itemClass} onClick={onChat} role="menuitem">
-        Ask me a question
-      </button>
-      <button type="button" className={itemClass} onClick={onHelp} role="menuitem">
-        What can I do here?
-      </button>
-      <button type="button" className={itemClass} onClick={onTip} role="menuitem">
-        Give me a tip
-      </button>
-      <button
-        type="button"
-        className={itemClass}
-        onClick={onShortcuts}
-        role="menuitem"
-      >
-        Keyboard shortcuts
-      </button>
-      {onReplayTour && (
-        <button
-          type="button"
-          className={itemClass}
-          onClick={onReplayTour}
-          role="menuitem"
-        >
-          Replay Build tour
-        </button>
-      )}
-      <div className="my-1 border-t border-[var(--color-border)]" />
-      <button
-        type="button"
-        className={itemClass}
-        onClick={onWardrobe}
-        role="menuitem"
-      >
-        Wardrobe
-      </button>
-      <button
-        type="button"
-        className={itemClass}
-        onClick={onToggleSound}
-        role="menuitemcheckbox"
-        aria-checked={sound}
-      >
-        {sound ? "Mute quacks" : "Unmute quacks"}
-      </button>
-      <button type="button" className={itemClass} onClick={onSit} role="menuitem">
-        Sit here
-      </button>
-      <button type="button" className={itemClass} onClick={onWalk} role="menuitem">
-        Walk around
-      </button>
-      <button type="button" className={itemClass} onClick={onLeave} role="menuitem">
-        Leave
-      </button>
-    </div>
   );
 }
 

@@ -115,8 +115,13 @@ const behaviorChoices: BuddyAnimation[] = [
   "lay",
 ];
 
-const leftFacingDragPin = { x: 70, y: 12 };
-const rightFacingDragPin = { x: 58, y: 12 };
+const dragPin = { x: 58, y: 12 };
+
+interface PointerSample {
+  time: number;
+  x: number;
+  y: number;
+}
 
 const defaultRng: BuddyRng = {
   next: () => Math.random(),
@@ -144,10 +149,18 @@ export class QuantaBuddyEngine {
   private lastPointerX = 0;
   private lastPointerY = 0;
   private lastPointerTime = 0;
+  private grabOffsetX = 0;
+  private grabOffsetY = 0;
+  private grabStartOffsetX = 0;
+  private grabStartOffsetY = 0;
+  private grabEaseElapsed = 0;
+  private pointerSamples: PointerSample[] = [];
   private throwVelocityX = 0;
   private throwVelocityY = 0;
   private smoothedDragVelocityX = 0;
   private lastDragMotionTime = 0;
+  private frozen = false;
+  private frozenAt: number | null = null;
 
   private fallSpeed = 0;
   private fallStarting = false;
@@ -189,6 +202,10 @@ export class QuantaBuddyEngine {
 
   get asleep(): boolean {
     return this.sleeping;
+  }
+
+  get isSitting(): boolean {
+    return this.currentAnimation === "sit";
   }
 
   get isBusy(): boolean {
@@ -266,6 +283,29 @@ export class QuantaBuddyEngine {
       this.currentTime + this.randomBetween(8000, 30000);
   }
 
+  setFrozen(frozen: boolean): void {
+    if (this.frozen === frozen) return;
+    this.frozen = frozen;
+    if (frozen) {
+      this.frozenAt = this.currentTime;
+      return;
+    }
+
+    if (this.frozenAt !== null) {
+      const frozenDuration = Math.max(0, this.currentTime - this.frozenAt);
+      if (this.behaviorDeadline !== null) {
+        this.behaviorDeadline += frozenDuration;
+      }
+      if (this.walkAroundDeadline !== null) {
+        this.walkAroundDeadline += frozenDuration;
+      }
+      if (this.recoveryDeadline !== null) {
+        this.recoveryDeadline += frozenDuration;
+      }
+    }
+    this.frozenAt = null;
+  }
+
   walkTo(targetX: number): void {
     if (!this.presentState) return;
     this.wake();
@@ -309,29 +349,6 @@ export class QuantaBuddyEngine {
     this.setAnimation("fall");
   }
 
-  cancelDrag(): void {
-    if (!this.presentState) return;
-
-    this.dragging = false;
-    this.falling = false;
-    this.fallStarting = false;
-    this.slidingAfterFall = false;
-    this.recoveringAfterFall = false;
-    this.entering = false;
-    this.leaving = false;
-    this.walkingAround = false;
-    this.walkTarget = null;
-    this.fallSpeed = 0;
-    this.throwVelocityX = 0;
-    this.throwVelocityY = 0;
-    this.fallStartDeadline = null;
-    this.recoveryDeadline = null;
-    this.recoveryPhase = null;
-    this.y = this.floorY;
-    this.setAnimation("idle");
-    this.scheduleNextBehavior();
-  }
-
   remove(): void {
     this.presentState = false;
     this.respawnDeadline = null;
@@ -371,39 +388,44 @@ export class QuantaBuddyEngine {
     this.lastPointerX = clientX;
     this.lastPointerY = clientY;
     this.lastPointerTime = eventTime;
+    this.grabOffsetX = Math.max(0, Math.min(SPRITE_SIZE, clientX - this.x));
+    this.grabOffsetY = Math.max(0, Math.min(SPRITE_SIZE, clientY - this.y));
+    this.grabStartOffsetX = this.grabOffsetX;
+    this.grabStartOffsetY = this.grabOffsetY;
+    this.grabEaseElapsed = 0;
+    this.pointerSamples = [{ time: eventTime, x: clientX, y: clientY }];
     this.throwVelocityX = 0;
     this.throwVelocityY = 0;
     this.smoothedDragVelocityX = 0;
     this.lastDragMotionTime = eventTime;
-
-    const pin = this.normalScale === -1 ? leftFacingDragPin : rightFacingDragPin;
-    this.x = clientX - pin.x;
-    this.y = clientY - pin.y;
   }
 
   pointerMove(clientX: number, clientY: number): void {
     if (!this.dragging) return;
 
-    const now = this.eventTime();
-    const elapsed = Math.max(now - this.lastPointerTime, 1);
-    const mouseDeltaX = clientX - this.lastPointerX;
-    const mouseDeltaY = clientY - this.lastPointerY;
-
-    this.throwVelocityX = (mouseDeltaX / elapsed) * 16 * THROW_POWER;
-    this.throwVelocityY = (mouseDeltaY / elapsed) * 16 * THROW_POWER;
+    const now = Math.max(this.eventTime(), this.lastPointerTime);
+    const lastSample = this.pointerSamples.at(-1);
+    if (lastSample && now - lastSample.time >= 16) {
+      this.pointerSamples.push({ time: now, x: clientX, y: clientY });
+    }
+    this.updateThrowVelocity(now);
     this.lastDragMotionTime = now;
     this.updateDraggedHangFrame(now);
 
     this.lastPointerX = clientX;
     this.lastPointerY = clientY;
     this.lastPointerTime = now;
-    const pin = this.normalScale === -1 ? leftFacingDragPin : rightFacingDragPin;
-    this.x = clientX - pin.x;
-    this.y = clientY - pin.y;
+    this.x = this.clampHorizontal(clientX - this.grabOffsetX);
+    this.y = this.clampVertical(clientY - this.grabOffsetY);
   }
 
-  pointerUp(): void {
+  pointerUp(clientX?: number, clientY?: number): void {
     if (!this.dragging) return;
+    if (clientX !== undefined && clientY !== undefined) {
+      this.pointerMove(clientX, clientY);
+    } else {
+      this.updateThrowVelocity(Math.max(this.eventTime(), this.lastPointerTime));
+    }
     this.dragging = false;
     const speed = Math.hypot(this.throwVelocityX, this.throwVelocityY);
     if (
@@ -421,6 +443,7 @@ export class QuantaBuddyEngine {
   }
 
   tick(time: number): BuddyFrame {
+    const deltaTime = Math.max(0, time - this.currentTime);
     this.currentTime = time;
     if (!this.presentState) {
       if (this.respawnDeadline === "pending") {
@@ -433,6 +456,7 @@ export class QuantaBuddyEngine {
     }
 
     this.processDeadlines();
+    this.easeGrabOffset(deltaTime);
     this.moveBuddy();
     this.showAnimationFrame(time);
     return this.frame();
@@ -444,6 +468,51 @@ export class QuantaBuddyEngine {
 
   private get normalScale(): 1 | -1 {
     return this.direction === 1 ? -1 : 1;
+  }
+
+  private easeGrabOffset(deltaTime: number): void {
+    if (!this.dragging) return;
+    this.grabEaseElapsed = Math.min(150, this.grabEaseElapsed + deltaTime);
+    const amount = this.grabEaseElapsed / 150;
+    this.grabOffsetX =
+      this.grabStartOffsetX + (dragPin.x - this.grabStartOffsetX) * amount;
+    this.grabOffsetY =
+      this.grabStartOffsetY + (dragPin.y - this.grabStartOffsetY) * amount;
+    if (Math.abs(dragPin.x - this.grabOffsetX) < 0.5) {
+      this.grabOffsetX = dragPin.x;
+    }
+    if (Math.abs(dragPin.y - this.grabOffsetY) < 0.5) {
+      this.grabOffsetY = dragPin.y;
+    }
+    this.x = this.clampHorizontal(this.lastPointerX - this.grabOffsetX);
+    this.y = this.clampVertical(this.lastPointerY - this.grabOffsetY);
+  }
+
+  private updateThrowVelocity(now: number): void {
+    while (
+      this.pointerSamples.length > 1 &&
+      now - (this.pointerSamples[0]?.time ?? now) > 100
+    ) {
+      this.pointerSamples.shift();
+    }
+    const oldest = this.pointerSamples[0];
+    const newest = this.pointerSamples.at(-1);
+    const span = oldest && newest ? newest.time - oldest.time : 0;
+    if (!oldest || !newest || now - newest.time > 100 || span < 16) {
+      this.throwVelocityX = 0;
+      this.throwVelocityY = 0;
+      return;
+    }
+
+    let velocityX = ((newest.x - oldest.x) / span) * 16 * THROW_POWER;
+    let velocityY = ((newest.y - oldest.y) / span) * 16 * THROW_POWER;
+    const speed = Math.hypot(velocityX, velocityY);
+    if (speed > 30) {
+      velocityX = (velocityX / speed) * 30;
+      velocityY = (velocityY / speed) * 30;
+    }
+    this.throwVelocityX = velocityX;
+    this.throwVelocityY = velocityY;
   }
 
   private eventTime(): number {
@@ -500,6 +569,7 @@ export class QuantaBuddyEngine {
     this.fallSpeed = 0;
     this.throwVelocityX = 0;
     this.throwVelocityY = 0;
+    this.pointerSamples = [];
     this.fallStartDeadline = null;
     this.behaviorDeadline = null;
     this.walkAroundDeadline = null;
@@ -584,7 +654,11 @@ export class QuantaBuddyEngine {
       if (this.falling) this.setAnimation("fall");
     }
 
-    if (this.walkAroundDeadline !== null && this.currentTime >= this.walkAroundDeadline) {
+    if (
+      this.walkAroundDeadline !== null &&
+      this.currentTime >= this.walkAroundDeadline &&
+      !this.frozen
+    ) {
       this.walkAroundDeadline = null;
       if (this.walkingAround) {
         this.walkingAround = false;
@@ -596,6 +670,7 @@ export class QuantaBuddyEngine {
     if (
       this.recoveryDeadline !== null &&
       this.currentTime >= this.recoveryDeadline &&
+      !this.frozen &&
       this.recoveringAfterFall
     ) {
       this.recoveryDeadline = null;
@@ -622,6 +697,7 @@ export class QuantaBuddyEngine {
     if (
       this.behaviorDeadline !== null &&
       this.currentTime >= this.behaviorDeadline &&
+      !this.frozen &&
       !this.dragging &&
       !this.falling &&
       !this.entering &&
@@ -662,41 +738,43 @@ export class QuantaBuddyEngine {
   private moveBuddy(): void {
     if (this.sleeping) return;
 
-    if (this.entering) {
-      this.x += this.direction * WALK_SPEED;
-      if (
-        (this.direction === 1 && this.x >= 100) ||
-        (this.direction === -1 &&
-          this.x <= this.viewport.width - SPRITE_SIZE - 100)
+    if (!this.frozen) {
+      if (this.entering) {
+        this.x += this.direction * WALK_SPEED;
+        if (
+          (this.direction === 1 && this.x >= 100) ||
+          (this.direction === -1 &&
+            this.x <= this.viewport.width - SPRITE_SIZE - 100)
+        ) {
+          this.entering = false;
+          this.setAnimation("idle");
+          this.scheduleNextBehavior();
+        }
+      } else if (
+        this.walkTarget !== null &&
+        !this.dragging &&
+        !this.falling &&
+        !this.leaving
       ) {
-        this.entering = false;
-        this.setAnimation("idle");
-        this.scheduleNextBehavior();
+        const distance = this.walkTarget - this.x;
+        if (Math.abs(distance) <= WALK_SPEED) {
+          this.x = this.walkTarget;
+          this.walkTarget = null;
+          this.setAnimation("idle");
+          this.scheduleNextBehavior();
+        } else {
+          this.direction = distance > 0 ? 1 : -1;
+          this.x += this.direction * WALK_SPEED;
+        }
+      } else if (!this.dragging && !this.falling && !this.leaving) {
+        if (this.currentAnimation === "walk" || this.walkingAround) {
+          this.x += this.direction * WALK_SPEED;
+        }
+        if (this.currentAnimation === "crawl" && this.visibleFrame === 1) {
+          this.x += this.direction * CRAWL_SPEED;
+        }
+        this.x = this.clampHorizontal(this.x);
       }
-    } else if (
-      this.walkTarget !== null &&
-      !this.dragging &&
-      !this.falling &&
-      !this.leaving
-    ) {
-      const distance = this.walkTarget - this.x;
-      if (Math.abs(distance) <= WALK_SPEED) {
-        this.x = this.walkTarget;
-        this.walkTarget = null;
-        this.setAnimation("idle");
-        this.scheduleNextBehavior();
-      } else {
-        this.direction = distance > 0 ? 1 : -1;
-        this.x += this.direction * WALK_SPEED;
-      }
-    } else if (!this.dragging && !this.falling && !this.leaving) {
-      if (this.currentAnimation === "walk" || this.walkingAround) {
-        this.x += this.direction * WALK_SPEED;
-      }
-      if (this.currentAnimation === "crawl" && this.visibleFrame === 1) {
-        this.x += this.direction * CRAWL_SPEED;
-      }
-      this.x = this.clampHorizontal(this.x);
     }
 
     if (this.falling) {
@@ -753,6 +831,12 @@ export class QuantaBuddyEngine {
 
   private showAnimationFrame(time: number): void {
     const animation = animations[this.currentAnimation];
+    if (
+      this.frozen &&
+      (this.currentAnimation === "walk" || this.currentAnimation === "crawl")
+    ) {
+      return;
+    }
     if (this.dragging && this.currentAnimation === "hang") {
       this.updateDraggedHangFrame(time);
       return;
@@ -790,6 +874,10 @@ export class QuantaBuddyEngine {
       this.viewport.width - SPRITE_SIZE + EDGE_BUFFER,
       Math.max(-EDGE_BUFFER, value)
     );
+  }
+
+  private clampVertical(value: number): number {
+    return Math.min(this.floorY, Math.max(0, value));
   }
 
   private reflectAtHorizontalEdge(reflection: number): void {

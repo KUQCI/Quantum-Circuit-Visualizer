@@ -27,7 +27,7 @@ describe("Quanta persona", () => {
     );
     expect(
       levelUpLine(5, ["Graduation cap"]).endsWith(
-        " New in my wardrobe: Graduation cap. Right-click me → Wardrobe."
+        " New in my wardrobe: Graduation cap. Hover over me → Wardrobe."
       )
     ).toBe(true);
     expect(levelUpLine(12, ["Crown", "Golden"])).toContain("Crown, Golden");

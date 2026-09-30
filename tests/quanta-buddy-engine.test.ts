@@ -49,6 +49,20 @@ describe("QuantaBuddyEngine", () => {
     expect(frame.sprite).toMatch(/^(lay_0|sit_0|idle_0)$/);
   });
 
+  it("reports busy after a drag release starts a fall", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.pointerDown(150, 400);
+    engine.pointerMove(190, 360);
+    engine.pointerUp();
+
+    expect(engine.isBusy).toBe(true);
+  });
+
   it("resumes autonomous scheduling after landing recovery", () => {
     const engine = new QuantaBuddyEngine({
       viewport,
@@ -99,7 +113,7 @@ describe("QuantaBuddyEngine", () => {
     expect(frame.sprite).toBe("idle_0");
   });
 
-  it("pins the grabbed sprite and throws it with positive velocity", () => {
+  it("keeps its position on grab, eases to the drag pin, and throws right", () => {
     let now = 0;
     const engine = new QuantaBuddyEngine({
       viewport,
@@ -108,16 +122,32 @@ describe("QuantaBuddyEngine", () => {
     });
 
     engine.call();
-    engine.pointerDown(300, 300);
-    expect(engine.tick(now).sprite).toBe("hang_0");
-    expect(engine.tick(now).x).toBe(230);
+    const beforeGrab = engine.tick(now);
+    engine.pointerDown(150, 484);
+    expect(engine.tick(now)).toMatchObject({
+      x: beforeGrab.x,
+      y: beforeGrab.y,
+      sprite: "hang_0",
+    });
 
-    now = 10;
-    engine.pointerMove(400, 300);
+    let previous = engine.tick(now);
+    for (now = 16; now <= 144; now += 16) {
+      if (now % 32 === 0) engine.pointerMove(150, 484);
+      const frame = engine.tick(now);
+      expect(Math.hypot(frame.x - previous.x, frame.y - previous.y)).toBeLessThan(16);
+      previous = frame;
+    }
+    now = 150;
+    const pinned = engine.tick(now);
+    expect(pinned.x).toBe(92);
+    expect(pinned.y).toBe(472);
+
+    now = 182;
+    engine.pointerMove(250, 484);
     engine.pointerUp();
     const afterThrow = engine.tick(now + 101);
-    expect(afterThrow.x).toBeGreaterThan(230);
-    expect(afterThrow.sprite).toBe("fall_0");
+    expect(afterThrow.x).toBeGreaterThan(pinned.x);
+    expect(afterThrow.sprite).toBe("lay_0");
 
     let sawSlide = false;
     let frame = afterThrow;
@@ -142,9 +172,9 @@ describe("QuantaBuddyEngine", () => {
     });
 
     engine.call();
-    engine.pointerDown(300, 300);
+    engine.pointerDown(150, 484);
     engine.tick(now);
-    now = 10;
+    now = 32;
     engine.pointerMove(300, 50);
     engine.pointerUp();
 
@@ -185,6 +215,93 @@ describe("QuantaBuddyEngine", () => {
     engine.setViewport({ width: 800, height: 300 });
 
     expect(engine.tick(0).y).toBe(172);
+  });
+
+  it("clamps dragged coordinates to the viewport bounds", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+
+    engine.call();
+    engine.tick(now);
+    engine.pointerDown(150, 500);
+    now = 32;
+    engine.pointerMove(5000, -100);
+    expect(engine.tick(now)).toMatchObject({ x: 707, y: 0 });
+    now = 64;
+    engine.pointerMove(-5000, 1000);
+    expect(engine.tick(now).x).toBe(-35);
+    expect(engine.tick(now).y).toBe(472);
+  });
+
+  it("ignores a one-millisecond pointer spike when estimating throw speed", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+
+    engine.call();
+    engine.tick(now);
+    engine.pointerDown(150, 500);
+    now = 32;
+    engine.pointerMove(155, 500);
+    now = 64;
+    engine.pointerMove(160, 500);
+    now = 96;
+    engine.pointerMove(165, 500);
+    now = 97;
+    engine.pointerMove(205, 500);
+    engine.pointerUp(205, 500);
+
+    expect(engine.present).toBe(true);
+    expect(engine.consumeBurst()).toBeNull();
+  });
+
+  it("caps throw velocity at 30 pixels per frame", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+
+    engine.call();
+    engine.tick(now);
+    engine.pointerDown(150, 400);
+    now = 16;
+    engine.pointerMove(270, 400);
+    const released = engine.tick(now);
+    engine.pointerUp();
+    const thrown = engine.tick(now + 16);
+
+    expect(thrown.x - released.x).toBeCloseTo(30, 0);
+  });
+
+  it("does not use throw velocity samples older than 100 milliseconds", () => {
+    let now = 0;
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+      now: () => now,
+    });
+
+    engine.call();
+    engine.tick(now);
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      engine.pointerDown(150, 400);
+      now += 16;
+      engine.pointerMove(270, 400);
+      now += 101;
+      engine.pointerUp();
+      expect(engine.present).toBe(true);
+      expect(engine.consumeBurst()).toBeNull();
+      engine.tick(now);
+    }
   });
 
   it("does not autonomously leave idle in reduced-motion mode", () => {
@@ -245,12 +362,48 @@ describe("QuantaBuddyEngine", () => {
     });
 
     engine.call();
-    engine.pointerDown(300, 300);
+    engine.pointerDown(150, 500);
     const grabbed = engine.tick(0);
     engine.walkTo(700);
 
-    expect(engine.tick(16).x).toBe(grabbed.x);
-    expect(engine.tick(16).sprite).toBe("hang_0");
+    const moving = engine.tick(16);
+    expect(moving.x).toBeLessThan(grabbed.x + 2);
+    expect(moving.sprite).toBe("hang_0");
+  });
+
+  it("pauses walk movement while frozen", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.tick(0);
+    engine.walkAround();
+    const start = engine.tick(1);
+    engine.setFrozen(true);
+    for (let time = 17; time <= 34993; time += 16) {
+      expect(engine.tick(time).x).toBe(start.x);
+    }
+    expect(engine.tick(35001).sprite).toBe("walk_0");
+    engine.setFrozen(false);
+    expect(engine.tick(35017).x).not.toBe(start.x);
+  });
+
+  it("pauses behavior deadlines while frozen", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: true,
+    });
+
+    engine.call();
+    engine.tick(0);
+    engine.sit();
+    expect(engine.isSitting).toBe(true);
+    engine.setFrozen(true);
+    expect(engine.tick(16000).sprite).toBe("sit_0");
+    engine.setFrozen(false);
+    expect(engine.tick(16016).sprite).toBe("sit_0");
   });
 
   it("hops from the floor and lands through recovery", () => {
@@ -310,6 +463,41 @@ describe("QuantaBuddyEngine", () => {
       sprite: "lay_0",
       sleeping: true,
     });
+  });
+
+  it("pauses landing recovery while frozen to preserve the lay pose", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: false,
+      rng: new SequenceRng([0.9, 0.1, 0, 0, 0]),
+    });
+
+    engine.call();
+    let time = 0;
+    let frame = engine.tick(time);
+    while (frame.sprite !== "idle_0" && time < 60000) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+    expect(frame.sprite).toBe("idle_0");
+
+    engine.hop();
+    while (frame.sprite !== "lay_0" && time < 120000) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+    expect(frame.sprite).toBe("lay_0");
+
+    engine.setFrozen(true);
+    const frozenUntil = time + 5000;
+    while (time < frozenUntil) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+
+    expect(frame.sprite).toBe("lay_0");
+    engine.setFrozen(false);
+    expect(engine.tick(time + 16).sprite).toBe("lay_0");
   });
 
   it("wakes into sitting and resumes its behavior cycle", () => {
@@ -438,10 +626,10 @@ describe("QuantaBuddyEngine", () => {
     engine.tick(now);
 
     const throwOnce = () => {
-      engine.pointerDown(300, 300);
+      engine.pointerDown(150, 500);
       engine.tick(now);
-      now += 10;
-      engine.pointerMove(300, 200);
+      now += 32;
+      engine.pointerMove(150, 400);
       engine.pointerUp();
       now += 500;
       engine.tick(now);
