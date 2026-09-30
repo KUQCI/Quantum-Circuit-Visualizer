@@ -1,4 +1,12 @@
 import { normalizePath } from "@/lib/routes";
+import { getLevelTitle } from "@/lib/learning/progress";
+
+export function levelUpLine(level: number, unlockedNames: string[]): string {
+  const base = `Level ${level} — ${getLevelTitle(level)}! I grew up a little.`;
+  return unlockedNames.length > 0
+    ? `${base} New in my wardrobe: ${unlockedNames.join(", ")}. Hover over me → Wardrobe.`
+    : base;
+}
 
 export interface PersonaContext {
   path: string;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   greetingFor,
+  levelUpLine,
   pageHelpFor,
   runErrorReaction,
   runReactionFor,
@@ -20,6 +21,18 @@ const context: PersonaContext = {
 };
 
 describe("Quanta persona", () => {
+  it("builds a level-up line with optional wardrobe unlocks", () => {
+    expect(levelUpLine(5, [])).toBe(
+      "Level 5 — Superposition Scholar! I grew up a little."
+    );
+    expect(
+      levelUpLine(5, ["Graduation cap"]).endsWith(
+        " New in my wardrobe: Graduation cap. Hover over me → Wardrobe."
+      )
+    ).toBe(true);
+    expect(levelUpLine(12, ["Crown", "Golden"])).toContain("Crown, Golden");
+  });
+
   it("greets a first-time visitor on Home", () => {
     expect(
       greetingFor({ ...context, firstVisit: true, streak: 0, completedLessons: 0 })
