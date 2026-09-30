@@ -53,6 +53,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsDown,
+  Rows3,
 } from "lucide-react";
 import type { Circuit, Operation } from "@/lib/circuit-schema";
 import { ParameterBindingsPanel } from "@/components/circuit/parameter-bindings-panel";
@@ -945,7 +946,7 @@ export function CircuitCanvas({
       >
         <div
           className={cn(
-            "composer-canvas-toolbar flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3",
+            "composer-canvas-toolbar @container flex h-8 shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-toolbar)] px-2 sm:px-3",
             readOnly && "hidden"
           )}
         >
@@ -978,7 +979,7 @@ export function CircuitCanvas({
               onClick={() => alignOperationsLeft()}
             >
               <AlignLeft className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline capitalize">{alignmentMode}</span>
+              <span className="hidden @md:inline capitalize">{alignmentMode}</span>
             </button>
             <button
               type="button"
@@ -997,7 +998,7 @@ export function CircuitCanvas({
               title="Inspect circuit step-by-step"
             >
               <Info className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Inspect</span>
+              <span className="hidden @md:inline">Inspect</span>
             </button>
             {inspectMode && (
               <>
@@ -1033,9 +1034,12 @@ export function CircuitCanvas({
               size="sm"
               className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
               onClick={addQubit}
+              aria-label="Add qubit"
             >
               <Plus className="h-3 w-3" />
-              <span className="hidden min-[400px]:inline">Qubit</span>
+              <span className={cn("hidden", inspectMode ? "@md:inline" : "@xs:inline")}>
+                Qubit
+              </span>
             </Button>
             <Button
               variant="ghost"
@@ -1043,8 +1047,12 @@ export function CircuitCanvas({
               className="h-8 shrink-0 gap-1 px-2 text-xs sm:h-7"
               onClick={() => setRegistersOpen(true)}
               title="Manage registers"
+              aria-label="Manage registers"
             >
-              Registers…
+              <Rows3 className={cn("h-3 w-3", inspectMode ? "@md:hidden" : "@xs:hidden")} />
+              <span className={cn("hidden", inspectMode ? "@md:inline" : "@xs:inline")}>
+                Registers…
+              </span>
             </Button>
           </div>
         </div>

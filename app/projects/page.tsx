@@ -84,7 +84,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="page-container max-w-6xl">
-      <div className="page-header mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header mb-6 flex flex-col gap-4">
         <div>
           <h1 className="page-title">Projects</h1>
           <p className="page-description">

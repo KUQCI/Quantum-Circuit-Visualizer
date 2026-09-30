@@ -578,7 +578,6 @@ export function LearningPlayer({
                     ? "success"
                     : "default"
               }
-              size="lg"
               imageVariant={
                 feedbackStatus === "error"
                   ? "thinking"

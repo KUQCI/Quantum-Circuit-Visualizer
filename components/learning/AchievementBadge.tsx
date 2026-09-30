@@ -100,7 +100,7 @@ export function AchievementBadge({ achievementId }: { achievementId: string }) {
 
 export function AchievementGrid() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {ACHIEVEMENTS.map((a) => (
         <AchievementBadge key={a.id} achievementId={a.id} />
       ))}
