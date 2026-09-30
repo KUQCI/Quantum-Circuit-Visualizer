@@ -1,4 +1,5 @@
 import type { Circuit, Operation } from "./circuit-schema";
+import { occupiedWires } from "./circuit-edit";
 
 export function compactColumnsLeft(operations: Operation[]): Operation[] {
   if (operations.length === 0) return operations;
@@ -6,7 +7,12 @@ export function compactColumnsLeft(operations: Operation[]): Operation[] {
   const sorted = [...operations].sort((a, b) => a.column - b.column || a.id.localeCompare(b.id));
   const nextFree = new Map<string, number>();
   return sorted.map((op) => {
-    const wires = [...new Set([...op.targets, ...op.controls, ...op.classicalTargets])];
+    const wires = [
+      ...new Set([
+        ...occupiedWires(op).map((wire) => `q${wire}`),
+        ...op.classicalTargets,
+      ]),
+    ];
     const column = wires.reduce((next, wire) => Math.max(next, nextFree.get(wire) ?? 0), 0);
     for (const wire of wires) nextFree.set(wire, column + 1);
     return { ...op, column };

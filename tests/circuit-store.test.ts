@@ -149,6 +149,18 @@ describe("circuit store register + measure safety", () => {
     expect(state.history.length).toBe(initialHistoryLength + 1);
   });
 
+  it("does not add history when left alignment changes no columns", () => {
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const historyIndex = before.historyIndex;
+
+    before.alignOperationsLeft();
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(historyLength);
+    expect(after.historyIndex).toBe(historyIndex);
+  });
+
   it("drops measure ops when their classical bit is removed", () => {
     const store = useCircuitStore.getState();
     store.addClassicalBit();
@@ -341,6 +353,23 @@ describe("circuit store placement conflicts", () => {
     expect(useCircuitStore.getState().circuit.operations).toHaveLength(3);
   });
 
+  it("does not add alignment history after a rejected add in an aligned circuit", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const before = useCircuitStore.getState();
+
+    expect(addGate("y", "Y", ["q0"])).toBeNull();
+    useCircuitStore.getState().alignOperationsLeft();
+
+    const after = useCircuitStore.getState();
+    expect(after.circuit.operations.map((operation) => operation.column)).toEqual([
+      0,
+      0,
+    ]);
+    expect(after.history).toHaveLength(before.history.length);
+    expect(after.historyIndex).toBe(before.historyIndex);
+  });
+
   it("rejects a two-qubit gate when its target wire is occupied", () => {
     addGate("x", "X", ["q1"]);
 
@@ -449,7 +478,7 @@ describe("circuit store placement conflicts", () => {
     ).toEqual(["q0", "q1"]);
   });
 
-  it("does not paste into an occupied slot or alter clipboard and history", () => {
+  it("rejects paste into an occupied slot and accepts it in a free slot", () => {
     addGate("h", "H", ["q0"]);
     const state = useCircuitStore.getState();
     const operationId = state.circuit.operations[0].id;
@@ -458,12 +487,18 @@ describe("circuit store placement conflicts", () => {
     const historyLength = before.history.length;
     const clipboard = before.clipboard;
 
-    before.pasteOperation(0, 0);
+    expect(before.pasteOperation(0, 0)).toBeNull();
 
-    const after = useCircuitStore.getState();
-    expect(after.circuit.operations).toHaveLength(1);
-    expect(after.history).toHaveLength(historyLength);
-    expect(after.clipboard).toEqual(clipboard);
+    const afterRejectedPaste = useCircuitStore.getState();
+    expect(afterRejectedPaste.circuit.operations).toHaveLength(1);
+    expect(afterRejectedPaste.history).toHaveLength(historyLength);
+    expect(afterRejectedPaste.clipboard).toEqual(clipboard);
+
+    expect(afterRejectedPaste.pasteOperation(1, 0)).not.toBeNull();
+    const afterFreePaste = useCircuitStore.getState();
+    expect(afterFreePaste.circuit.operations).toHaveLength(2);
+    expect(afterFreePaste.history).toHaveLength(historyLength + 1);
+    expect(afterFreePaste.clipboard).toEqual(clipboard);
   });
 
   it("rejects geometry updates but permits parameter updates on loaded overlaps", () => {

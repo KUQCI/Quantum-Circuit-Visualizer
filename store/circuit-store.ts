@@ -106,7 +106,7 @@ interface CircuitState {
   loadSampleCircuit: (sample: Circuit) => void;
   refreshValidation: () => void;
   copyOperation: (id: string) => void;
-  pasteOperation: (column: number, qubitIndex: number) => void;
+  pasteOperation: (column: number, qubitIndex: number) => string | null;
   alignOperationsLeft: () => void;
 
   undo: () => void;
@@ -733,17 +733,17 @@ export const useCircuitStore = create<CircuitState>()(
 
       pasteOperation: (column, qubitIndex) => {
         const { clipboard, circuit } = get();
-        if (!clipboard) return;
+        if (!clipboard) return null;
 
         const wireIds = [...clipboard.targets, ...clipboard.controls];
-        if (wireIds.length === 0) return;
+        if (wireIds.length === 0) return null;
 
         const indices = wireIds.map((id) => parseInt(id.replace("q", ""), 10));
-        if (indices.some((index) => !Number.isInteger(index))) return;
+        if (indices.some((index) => !Number.isInteger(index))) return null;
         const minIdx = Math.min(...indices);
         const maxIdx = Math.max(...indices);
         const span = maxIdx - minIdx;
-        if (span >= circuit.qubits.length) return;
+        if (span >= circuit.qubits.length) return null;
         const baseIndex = Math.min(
           Math.max(0, qubitIndex),
           circuit.qubits.length - 1 - span
@@ -760,12 +760,26 @@ export const useCircuitStore = create<CircuitState>()(
           targets: clipboard.targets.map(offsetQubit),
           controls: clipboard.controls.map(offsetQubit),
         };
-        get().addOperation(pasted);
+        return get().addOperation(pasted);
       },
 
       alignOperationsLeft: () => {
         set((state) => {
           const circuit = applyLeftAlignment(state.circuit);
+          const previousColumns = new Map(
+            state.circuit.operations.map((operation) => [
+              operation.id,
+              operation.column,
+            ])
+          );
+          if (
+            circuit.operations.every(
+              (operation) =>
+                previousColumns.get(operation.id) === operation.column
+            )
+          ) {
+            return state;
+          }
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
       },
