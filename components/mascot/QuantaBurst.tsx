@@ -18,11 +18,13 @@ export function QuantaBurst({
   y,
   reducedMotion,
   onDone,
+  filter,
 }: {
   x: number;
   y: number;
   reducedMotion: boolean;
   onDone: () => void;
+  filter?: string;
 }) {
   const feathers = useMemo<Particle[]>(
     () =>
@@ -52,7 +54,7 @@ export function QuantaBurst({
   return (
     <div
       className="quanta-burst"
-      style={{ transform: `translate(${x}px, ${y}px)` }}
+      style={{ transform: `translate(${x}px, ${y}px)`, filter }}
       aria-hidden="true"
     >
       <span className="quanta-burst-poof" />

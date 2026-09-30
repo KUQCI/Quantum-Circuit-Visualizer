@@ -72,6 +72,24 @@ const animations: Record<
   lay: { frames: ["lay_0"], frameSpeed: 500 },
 };
 
+export const SPRITE_NAMES = [
+  "idle_0",
+  "hang_0",
+  "hang_1",
+  "hang_2",
+  "hang_3",
+  "hang_4",
+  "walk_0",
+  "walk_1",
+  "walk_2",
+  "fall_0",
+  "fall_1",
+  "crawl_0",
+  "crawl_1",
+  "sit_0",
+  "lay_0",
+] as const;
+
 const behaviorDurations: Record<
   "idle" | "walk" | "crawl" | "sit" | "lay",
   { min: number; max: number }

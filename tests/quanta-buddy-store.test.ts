@@ -24,12 +24,34 @@ describe("quanta buddy store", () => {
     expect(useQuantaBuddyStore.getState().sound).toBe(false);
   });
 
-  it("persists only enabled and sound", () => {
+  it("sets the selected hat", () => {
+    useQuantaBuddyStore.getState().setHat("crown");
+    expect(useQuantaBuddyStore.getState().hat).toBe("crown");
+  });
+
+  it("sets the selected skin", () => {
+    useQuantaBuddyStore.getState().setSkin("golden");
+    expect(useQuantaBuddyStore.getState().skin).toBe("golden");
+  });
+
+  it("persists enabled, sound, hat, and skin", () => {
     const state = useQuantaBuddyStore.getState();
     const partialize = useQuantaBuddyStore.persist.getOptions().partialize;
 
     expect(
-      partialize?.({ ...state, enabled: false, sound: true, callRequest: 42 })
-    ).toEqual({ enabled: false, sound: true });
+      partialize?.({
+        ...state,
+        enabled: false,
+        sound: true,
+        hat: "crown",
+        skin: "golden",
+        callRequest: 42,
+      })
+    ).toEqual({
+      enabled: false,
+      sound: true,
+      hat: "crown",
+      skin: "golden",
+    });
   });
 });
