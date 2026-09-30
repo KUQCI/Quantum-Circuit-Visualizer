@@ -11,12 +11,25 @@ import {
 import { usePathname } from "next/navigation";
 import { normalizePath } from "@/lib/routes";
 import { buddySpriteUrl } from "@/lib/quanta-assets";
+import { getLevelFromXp } from "@/lib/learning/progress";
 import {
   BURST_RESPAWN_DELAY,
   QuantaBuddyEngine,
+  SPRITE_NAMES,
   type BuddyBurst,
   type BuddyFrame,
 } from "@/lib/quanta-buddy/engine";
+import {
+  HATS,
+  SKINS,
+  SKIN_FILTERS,
+  hatTransform,
+  isUnlocked,
+  HAT_HEIGHT,
+  HAT_WIDTH,
+  type HatId,
+  type SkinId,
+} from "@/lib/quanta-buddy/wardrobe";
 import {
   SPRITE_HIT_SIZE,
   alphaMaskFromRgba,
@@ -37,31 +50,16 @@ import {
 import { playQuack, unlockQuacks } from "@/lib/quanta-buddy/quack";
 import { QuantaBuddyBubble } from "@/components/mascot/QuantaBuddyBubble";
 import { QuantaBurst } from "@/components/mascot/QuantaBurst";
+import { QuantaHatArt } from "@/components/mascot/QuantaHat";
 import { QuantaPersona } from "@/components/mascot/QuantaPersona";
 import { QuantaQuickActions } from "@/components/mascot/QuantaQuickActions";
+import { QuantaWardrobe } from "@/components/mascot/QuantaWardrobe";
 import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 import { useQuantaChatStore } from "@/store/quanta-chat-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
+import { useProgressStore } from "@/store/progress-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
-
-const SPRITE_NAMES = [
-  "idle_0",
-  "hang_0",
-  "hang_1",
-  "hang_2",
-  "hang_3",
-  "hang_4",
-  "walk_0",
-  "walk_1",
-  "walk_2",
-  "fall_0",
-  "fall_1",
-  "crawl_0",
-  "crawl_1",
-  "sit_0",
-  "lay_0",
-];
 
 interface PointerPress {
   pointerId: number;
@@ -72,6 +70,11 @@ interface PointerPress {
   currentY: number;
   started: boolean;
   timer: number;
+}
+
+interface WardrobeAnchor {
+  x: number;
+  y: number;
 }
 
 interface BurstState extends BuddyBurst {
@@ -97,6 +100,7 @@ export function QuantaBuddy({
 }) {
   const pathname = usePathname();
   const spriteRef = useRef<HTMLDivElement>(null);
+  const hatRef = useRef<HTMLDivElement>(null);
   const zzzRef = useRef<HTMLSpanElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const bubbleSize = useRef({ width: 0, height: 0 });
@@ -120,6 +124,8 @@ export function QuantaBuddy({
   const [visible, setVisible] = useState(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [focusRequest, setFocusRequest] = useState<number | null>(null);
+  const [wardrobeContext, setWardrobeContext] =
+    useState<WardrobeAnchor | null>(null);
   const [burst, setBurst] = useState<BurstState | null>(null);
   const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
@@ -129,7 +135,26 @@ export function QuantaBuddy({
   const setTourCompleted = useEditorUiStore((state) => state.setTourCompleted);
   const say = useQuantaPopoutStore((state) => state.say);
   const sound = useQuantaBuddyStore((state) => state.sound);
+  const storedHat = useQuantaBuddyStore((state) => state.hat);
+  const storedSkin = useQuantaBuddyStore((state) => state.skin);
   const toggleSound = useQuantaBuddyStore((state) => state.toggleSound);
+  const totalXp = useProgressStore((state) => state.totalXp);
+  const level = getLevelFromXp(totalXp);
+  const effectiveHat =
+    storedHat &&
+    HATS.some((item) => item.id === storedHat && isUnlocked(item, level))
+      ? storedHat
+      : null;
+  const effectiveSkin = SKINS.some(
+    (item) => item.id === storedSkin && isUnlocked(item, level)
+  )
+    ? storedSkin
+    : "classic";
+  const effectiveHatRef = useRef<HatId | null>(effectiveHat);
+  const effectiveSkinRef = useRef<SkinId>(effectiveSkin);
+  effectiveHatRef.current = effectiveHat;
+  effectiveSkinRef.current = effectiveSkin;
+  const skinFilter = SKIN_FILTERS[effectiveSkin] || "none";
   const soundRef = useRef(sound);
   soundRef.current = sound;
   const quack = useCallback((kind: "soft" | "loud" | "pop") => {
@@ -162,6 +187,11 @@ export function QuantaBuddy({
     }
   }, []);
   const handleBuddyClick = useCallback(() => {
+    if (!quickActionsOpenRef.current) {
+      openQuickActions("click");
+      return;
+    }
+
     const engine = engineRef.current;
     if (engine?.asleep) {
       say({ text: wakeLine(), variant: "default" });
@@ -175,8 +205,6 @@ export function QuantaBuddy({
       closeQuickActions();
       quack(pokes >= 4 ? "loud" : "soft");
       say({ text: pokeReactionFor(pokes), variant: "error" });
-    } else if (!quickActionsOpenRef.current) {
-      openQuickActions("click");
     }
   }, [closeQuickActions, openQuickActions, quack, say]);
 
@@ -269,7 +297,28 @@ export function QuantaBuddy({
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
+      const skin = effectiveSkinRef.current;
+      if (skin === "classic") {
+        element.style.removeProperty("--quanta-skin-filter");
+      } else {
+        element.style.setProperty(
+          "--quanta-skin-filter",
+          SKIN_FILTERS[skin]
+        );
+      }
       updateHitTarget();
+    }
+    const hat = hatRef.current;
+    if (hat) {
+      const transform = effectiveHatRef.current
+        ? hatTransform(frame.sprite, frame.x, frame.y, frame.scaleX)
+        : null;
+      if (transform) {
+        hat.style.transform = transform;
+        hat.style.display = "";
+      } else {
+        hat.style.display = "none";
+      }
     }
     const zzz = zzzRef.current;
     if (zzz) {
@@ -714,6 +763,14 @@ export function QuantaBuddy({
       y={burst.y}
       reducedMotion={reducedMotion}
       onDone={clearBurst}
+      filter={skinFilter}
+    />
+  ) : null;
+  const wardrobeElement = wardrobeContext ? (
+    <QuantaWardrobe
+      anchor={wardrobeContext}
+      level={level}
+      onClose={() => setWardrobeContext(null)}
     />
   ) : null;
 
@@ -721,6 +778,7 @@ export function QuantaBuddy({
     return (
       <>
         {burstElement}
+        {wardrobeElement}
       </>
     );
   }
@@ -749,13 +807,28 @@ export function QuantaBuddy({
           const gateType = event.dataTransfer.getData("gateType");
           if (gateType) feed(gateType);
         }}
-        className="fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
+        className="quanta-buddy-sprite fixed left-0 top-0 z-[45] h-[128px] w-[128px] cursor-grab select-none bg-center bg-no-repeat active:cursor-grabbing"
         style={{
           touchAction: "none",
           userSelect: "none",
           WebkitUserSelect: "none",
         }}
       />
+      {effectiveHat && (
+        <div
+          ref={hatRef}
+          aria-hidden="true"
+          data-quanta-hat={effectiveHat}
+          className="pointer-events-none fixed left-0 top-0 z-[45]"
+          style={{
+            width: HAT_WIDTH,
+            height: HAT_HEIGHT,
+            transformOrigin: "50% 100%",
+          }}
+        >
+          <QuantaHatArt hat={effectiveHat} />
+        </div>
+      )}
       <span ref={zzzRef} className="quanta-zzz" aria-hidden="true">
         <span>z</span>
         <span>z</span>
@@ -783,8 +856,15 @@ export function QuantaBuddy({
           onSay={say}
           onToggleSound={toggleSound}
           onSetTourCompleted={setTourCompleted}
+          onWardrobe={() => {
+            const frame = lastFrame.current;
+            if (frame) {
+              setWardrobeContext({ x: frame.x + 64, y: frame.y });
+            }
+          }}
         />
       )}
+      {wardrobeElement}
     </>
   );
 }

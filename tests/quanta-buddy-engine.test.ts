@@ -451,6 +451,41 @@ describe("QuantaBuddyEngine", () => {
     });
   });
 
+  it("pauses landing recovery while frozen to preserve the lay pose", () => {
+    const engine = new QuantaBuddyEngine({
+      viewport,
+      reducedMotion: false,
+      rng: new SequenceRng([0.9, 0.1, 0, 0, 0]),
+    });
+
+    engine.call();
+    let time = 0;
+    let frame = engine.tick(time);
+    while (frame.sprite !== "idle_0" && time < 60000) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+    expect(frame.sprite).toBe("idle_0");
+
+    engine.hop();
+    while (frame.sprite !== "lay_0" && time < 120000) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+    expect(frame.sprite).toBe("lay_0");
+
+    engine.setFrozen(true);
+    const frozenUntil = time + 5000;
+    while (time < frozenUntil) {
+      time += 16;
+      frame = engine.tick(time);
+    }
+
+    expect(frame.sprite).toBe("lay_0");
+    engine.setFrozen(false);
+    expect(engine.tick(time + 16).sprite).toBe("lay_0");
+  });
+
   it("wakes into sitting and resumes its behavior cycle", () => {
     const engine = new QuantaBuddyEngine({
       viewport,

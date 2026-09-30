@@ -15,12 +15,18 @@ import {
   runReactionFor,
   tipsFor,
 } from "@/lib/quanta-buddy/persona";
+import {
+  HATS,
+  SKINS,
+  newlyUnlocked,
+} from "@/lib/quanta-buddy/wardrobe";
 import type { QuantaBuddyEngine } from "@/lib/quanta-buddy/engine";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { useQuantaPopoutStore } from "@/store/quanta-popout-store";
 import { useExecutionStore } from "@/store/execution-store";
+import { useQuantaBuddyStore } from "@/store/quanta-buddy-store";
 
 export function QuantaPersona({
   engineRef,
@@ -180,9 +186,22 @@ export function QuantaPersona({
 
     const amount = totalXp - previousXp.current;
     const level = getLevelFromXp(totalXp);
-    const leveledUp = level > previousLevel.current;
+    const previous = previousLevel.current;
+    const leveledUp = level > previous;
+    const unlockedHats = leveledUp
+      ? newlyUnlocked(HATS, previous, level)
+      : [];
+    const unlockedSkins = leveledUp
+      ? newlyUnlocked(SKINS, previous, level)
+      : [];
     previousXp.current = totalXp;
     previousLevel.current = level;
+    const highestNewHat = [...unlockedHats].sort(
+      (left, right) => right.level - left.level
+    )[0];
+    if (highestNewHat) {
+      useQuantaBuddyStore.getState().setHat(highestNewHat.id);
+    }
     if (amount <= 0) return;
 
     const currentMessage = useQuantaPopoutStore.getState().message;
@@ -195,8 +214,14 @@ export function QuantaPersona({
 
     const engine = engineRef.current;
     if (leveledUp) {
+      const unlockedNames = [...unlockedHats, ...unlockedSkins]
+        .map((item) => item.name)
+        .join(", ");
+      const wardrobeMessage = unlockedNames
+        ? ` New in my wardrobe: ${unlockedNames}. Hover over me → Wardrobe.`
+        : "";
       say({
-        text: `Level ${level} — ${getLevelTitle(level)}! I grew up a little.`,
+        text: `Level ${level} — ${getLevelTitle(level)}! I grew up a little.${wardrobeMessage}`,
         variant: "success",
         imageVariant: "success",
       });

@@ -12,11 +12,11 @@ describe("quick action positions", () => {
     const positions = quickActionPositions({
       centerX: 640,
       centerY: 500,
-      count: 8,
+      count: 9,
       viewport,
     });
 
-    expect(positions).toHaveLength(8);
+    expect(positions).toHaveLength(9);
     for (const { x, y } of positions) {
       expect(x).toBeGreaterThanOrEqual(8);
       expect(x).toBeLessThanOrEqual(viewport.width - size - 8);

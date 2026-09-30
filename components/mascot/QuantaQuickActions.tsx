@@ -18,6 +18,7 @@ import {
   type LucideIcon,
   Map,
   MessageCircle,
+  Shirt,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -51,6 +52,7 @@ export function QuantaQuickActions({
   onSay,
   onToggleSound,
   onSetTourCompleted,
+  onWardrobe,
 }: {
   engineRef: RefObject<QuantaBuddyEngine | null>;
   positionerRef: MutableRefObject<ActionPositioner | null>;
@@ -67,6 +69,7 @@ export function QuantaQuickActions({
   ) => void;
   onToggleSound: () => void;
   onSetTourCompleted: (completed: boolean) => void;
+  onWardrobe: () => void;
 }) {
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const route = normalizePath(pathname);
@@ -117,6 +120,12 @@ export function QuantaQuickActions({
           },
         ]
       : []),
+    {
+      id: "wardrobe",
+      label: "Wardrobe",
+      Icon: Shirt,
+      onSelect: onWardrobe,
+    },
     {
       id: "sound",
       label: sound ? "Mute quacks" : "Unmute quacks",

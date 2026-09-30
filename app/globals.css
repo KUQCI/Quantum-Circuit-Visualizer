@@ -1148,12 +1148,6 @@ button:disabled,
   --quanta-accent: var(--color-error-foreground);
 }
 
-[data-feed-hover="true"] {
-  filter: drop-shadow(
-    0 0 12px color-mix(in srgb, var(--color-brand) 70%, transparent)
-  );
-}
-
 .quanta-buddy-bubble-tail {
   position: absolute;
   left: var(--quanta-tail-x);
@@ -1638,6 +1632,17 @@ button:disabled,
   width: 0;
   height: 0;
   pointer-events: none;
+}
+
+.quanta-buddy-sprite {
+  filter: var(--quanta-skin-filter, none);
+}
+
+.quanta-buddy-sprite[data-feed-hover="true"] {
+  filter: var(--quanta-skin-filter, )
+    drop-shadow(
+      0 0 12px color-mix(in srgb, var(--color-brand) 70%, transparent)
+    );
 }
 
 .quanta-burst > span {
