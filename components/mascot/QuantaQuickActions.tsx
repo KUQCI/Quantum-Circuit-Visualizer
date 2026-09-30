@@ -43,6 +43,7 @@ export function QuantaQuickActions({
   initialFrame,
   pathname,
   reducedMotion,
+  focusRequest,
   sound,
   isSitting,
   onClose,
@@ -56,6 +57,7 @@ export function QuantaQuickActions({
   initialFrame: BuddyFrame | null;
   pathname: string;
   reducedMotion: boolean;
+  focusRequest: number | null;
   sound: boolean;
   isSitting: boolean;
   onClose: () => void;
@@ -168,8 +170,8 @@ export function QuantaQuickActions({
   }, [actions.length, initialFrame, positionerRef]);
 
   useLayoutEffect(() => {
-    buttonRefs.current[0]?.focus();
-  }, []);
+    if (focusRequest !== null) buttonRefs.current[0]?.focus();
+  }, [focusRequest]);
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {

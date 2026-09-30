@@ -23,6 +23,7 @@ import {
   isSpritePixelOpaque,
   type SpriteAlphaMask,
 } from "@/lib/quanta-buddy/hit-test";
+import { HoverIntent } from "@/lib/quanta-buddy/quick-actions";
 import {
   Appetite,
   feedReactionFor,
@@ -103,6 +104,9 @@ export function QuantaBuddy({
   const pointerPress = useRef<PointerPress | null>(null);
   const actionPositioner = useRef<((frame: BuddyFrame) => void) | null>(null);
   const quickActionsOpenRef = useRef(false);
+  const hoverIntentRef = useRef(new HoverIntent());
+  const pointerOverRing = useRef(false);
+  const hoverRequiresLeave = useRef(false);
   const lastCallRequest = useRef(callRequest);
   const lastPresent = useRef(false);
   const spriteMasks = useRef(new Map<string, SpriteAlphaMask>());
@@ -115,6 +119,7 @@ export function QuantaBuddy({
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+  const [focusRequest, setFocusRequest] = useState<number | null>(null);
   const [burst, setBurst] = useState<BurstState | null>(null);
   const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
@@ -134,16 +139,27 @@ export function QuantaBuddy({
     bubbleSize.current = { width, height };
   }, []);
   const closeQuickActions = useCallback(() => {
-    if (!quickActionsOpenRef.current) return;
-    quickActionsOpenRef.current = false;
-    engineRef.current?.setFrozen(false);
-    setQuickActionsOpen(false);
+    const wasOpen = quickActionsOpenRef.current;
+    hoverIntentRef.current.reset();
+    if (wasOpen) {
+      quickActionsOpenRef.current = false;
+      hoverRequiresLeave.current = true;
+      engineRef.current?.setFrozen(false);
+      setQuickActionsOpen(false);
+      setFocusRequest(null);
+    }
   }, []);
-  const openQuickActions = useCallback(() => {
-    if (quickActionsOpenRef.current) return;
-    quickActionsOpenRef.current = true;
-    engineRef.current?.setFrozen(true);
-    setQuickActionsOpen(true);
+  const openQuickActions = useCallback((source: "hover" | "click") => {
+    if (source === "click") {
+      setFocusRequest((request) => (request ?? 0) + 1);
+    } else {
+      setFocusRequest(null);
+    }
+    if (!quickActionsOpenRef.current) {
+      quickActionsOpenRef.current = true;
+      engineRef.current?.setFrozen(true);
+      setQuickActionsOpen(true);
+    }
   }, []);
   const handleBuddyClick = useCallback(() => {
     const engine = engineRef.current;
@@ -160,7 +176,7 @@ export function QuantaBuddy({
       quack(pokes >= 4 ? "loud" : "soft");
       say({ text: pokeReactionFor(pokes), variant: "error" });
     } else if (!quickActionsOpenRef.current) {
-      openQuickActions();
+      openQuickActions("click");
     }
   }, [closeQuickActions, openQuickActions, quack, say]);
 
@@ -185,6 +201,43 @@ export function QuantaBuddy({
       y < frame.y + SPRITE_HIT_SIZE
     );
   }, []);
+
+  const updateHoverIntent = useCallback(
+    (frame: BuddyFrame) => {
+      const pointer = lastPointer.current;
+      const overBuddy =
+        frame.present &&
+        pointer !== null &&
+        pointOnSprite(pointer.x, pointer.y);
+      if (!overBuddy) hoverRequiresLeave.current = false;
+      const engine = engineRef.current;
+      const action = hoverIntentRef.current.update(performance.now(), {
+        overBuddy,
+        overRing: pointerOverRing.current,
+        canOpen:
+          clickThrough.current &&
+          frame.present &&
+          !dragging.current &&
+          pointerPress.current === null &&
+          !hoverRequiresLeave.current &&
+          !!engine &&
+          !engine.isBusy,
+        open: quickActionsOpenRef.current,
+      });
+      if (action === "open") {
+        openQuickActions("hover");
+      } else if (action === "close") {
+        const activeElement = document.activeElement;
+        const keyboardFocusedButton =
+          activeElement instanceof Element &&
+          activeElement.matches(":focus-visible") &&
+          activeElement.closest('[aria-label="Quanta actions"] button') !==
+            null;
+        if (!keyboardFocusedButton) closeQuickActions();
+      }
+    },
+    [closeQuickActions, openQuickActions, pointOnSprite]
+  );
 
   // Transparent parts of the sprite box let clicks reach the page underneath.
   const updateHitTarget = useCallback(() => {
@@ -212,6 +265,7 @@ export function QuantaBuddy({
     lastFrame.current = frame;
     actionPositioner.current?.(frame);
     if (!frame.present) closeQuickActions();
+    updateHoverIntent(frame);
     if (element) {
       element.style.transform = `translate(${frame.x}px, ${frame.y}px) scaleX(${frame.scaleX})`;
       element.style.backgroundImage = `url("${buddySpriteUrl(frame.sprite)}")`;
@@ -246,7 +300,7 @@ export function QuantaBuddy({
     bubble.dataset.tail =
       tailX < 14 || tailX > width - 14 ? "none" : below ? "top" : "bottom";
     bubble.style.setProperty("--quanta-tail-x", `${tailX}px`);
-  }, [closeQuickActions, updateHitTarget]);
+  }, [closeQuickActions, updateHitTarget, updateHoverIntent]);
 
   const beginDrag = useCallback(
     (press: PointerPress, clientX: number, clientY: number) => {
@@ -400,10 +454,15 @@ export function QuantaBuddy({
     const trackPointer = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       lastPointer.current = { x: event.clientX, y: event.clientY };
+      const target = event.target instanceof Element ? event.target : null;
+      pointerOverRing.current = !!target?.closest(
+        '[aria-label="Quanta actions"] button'
+      );
       updateHitTarget();
     };
     const forgetPointer = () => {
       lastPointer.current = null;
+      pointerOverRing.current = false;
       updateHitTarget();
     };
     syncQuery();
@@ -643,7 +702,7 @@ export function QuantaBuddy({
   const handleContextMenu = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       event.preventDefault();
-      openQuickActions();
+      openQuickActions("click");
     },
     [openQuickActions]
   );
@@ -716,6 +775,7 @@ export function QuantaBuddy({
           initialFrame={lastFrame.current}
           pathname={pathname}
           reducedMotion={reducedMotion}
+          focusRequest={focusRequest}
           sound={sound}
           isSitting={engineRef.current?.isSitting ?? false}
           onClose={closeQuickActions}

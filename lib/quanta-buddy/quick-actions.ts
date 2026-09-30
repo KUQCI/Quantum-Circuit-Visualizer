@@ -17,6 +17,69 @@ export interface QuickActionPosition {
   y: number;
 }
 
+export interface HoverIntentState {
+  overBuddy: boolean;
+  overRing: boolean;
+  canOpen: boolean;
+  open: boolean;
+}
+
+export class HoverIntent {
+  private openStartedAt: number | null = null;
+  private closeStartedAt: number | null = null;
+  private readonly openDelay: number;
+  private readonly closeDelay: number;
+
+  constructor({
+    openDelay = 250,
+    closeDelay = 1200,
+  }: {
+    openDelay?: number;
+    closeDelay?: number;
+  } = {}) {
+    this.openDelay = openDelay;
+    this.closeDelay = closeDelay;
+  }
+
+  update(
+    now: number,
+    state: HoverIntentState
+  ): "open" | "close" | null {
+    if (!state.open) {
+      this.closeStartedAt = null;
+      if (!state.overBuddy || !state.canOpen) {
+        this.openStartedAt = null;
+        return null;
+      }
+      if (this.openStartedAt === null) {
+        this.openStartedAt = now;
+        return null;
+      }
+      if (now - this.openStartedAt >= this.openDelay) {
+        this.openStartedAt = null;
+        return "open";
+      }
+      return null;
+    }
+
+    this.openStartedAt = null;
+    if (state.overBuddy || state.overRing) {
+      this.closeStartedAt = null;
+      return null;
+    }
+    if (this.closeStartedAt === null) {
+      this.closeStartedAt = now;
+      return null;
+    }
+    return now - this.closeStartedAt >= this.closeDelay ? "close" : null;
+  }
+
+  reset(): void {
+    this.openStartedAt = null;
+    this.closeStartedAt = null;
+  }
+}
+
 export function quickActionPositions({
   centerX,
   centerY,
