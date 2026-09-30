@@ -14,7 +14,12 @@ import { prepareCircuit, prepareHistory } from "@/lib/circuit-guard";
 import { runAppStorageMigrations } from "@/lib/app-storage";
 import { validateCircuitPlacement } from "@/lib/validation";
 import { applyLeftAlignment } from "@/lib/circuit-layout";
-import { retargetOperation } from "@/lib/circuit-edit";
+import {
+  findPlacementConflict,
+  placementConflictMessage,
+  retargetOperation,
+} from "@/lib/circuit-edit";
+import { showAppToast } from "@/lib/app-toast";
 import { useProgressStore } from "@/store/progress-store";
 import { sanitizeProjects as sanitizeProjectList } from "@/lib/learning/progress-backup";
 import {
@@ -78,13 +83,13 @@ interface CircuitState {
   removeClassicalBit: (bitId: string) => void;
   setRegisterCounts: (qubits: number, classicalBits: number) => void;
 
-  addOperation: (operation: Omit<Operation, "id">) => string;
+  addOperation: (operation: Omit<Operation, "id">) => string | null;
   /** Add measure and auto-create c[0] in a single undo step when needed. */
   addMeasureOperation: (
     qubitId: string,
     column: number,
     classicalBitId?: string
-  ) => string;
+  ) => string | null;
   updateOperation: (id: string, updates: Partial<Operation>) => void;
   previewParameterBinding: (name: string, value: number) => void;
   setParameterBinding: (name: string, value: number) => void;
@@ -434,19 +439,48 @@ export const useCircuitStore = create<CircuitState>()(
 
       addOperation: (operation) => {
         const op: Operation = { ...operation, id: generateOperationId() };
+        let conflictMessage: string | null = null;
         set((state) => {
+          const conflict = findPlacementConflict(
+            state.circuit.operations,
+            op
+          );
+          if (conflict) {
+            conflictMessage = placementConflictMessage(conflict, op);
+            return state;
+          }
+
           const circuit: Circuit = {
             ...state.circuit,
             operations: [...state.circuit.operations, op],
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
+        if (conflictMessage) {
+          showAppToast(conflictMessage);
+          return null;
+        }
         return op.id;
       },
 
       addMeasureOperation: (qubitId, column, classicalBitId) => {
         const opId = generateOperationId();
+        let conflictMessage: string | null = null;
         set((state) => {
+          const candidate = {
+            targets: [qubitId],
+            controls: [],
+            column,
+          };
+          const conflict = findPlacementConflict(
+            state.circuit.operations,
+            candidate
+          );
+          if (conflict) {
+            conflictMessage = placementConflictMessage(conflict, candidate);
+            return state;
+          }
+
           let classicalBits = state.circuit.classicalBits;
           let resolvedClassical = classicalBitId;
 
@@ -485,11 +519,32 @@ export const useCircuitStore = create<CircuitState>()(
             ...pushHistory({ ...state, circuit }),
           };
         });
+        if (conflictMessage) {
+          showAppToast(conflictMessage);
+          return null;
+        }
         return opId;
       },
 
       updateOperation: (id, updates) => {
+        const updatesPlacement =
+          "targets" in updates || "controls" in updates || "column" in updates;
+        let conflictMessage: string | null = null;
         set((state) => {
+          const operation = state.circuit.operations.find((op) => op.id === id);
+          if (operation && updatesPlacement) {
+            const candidate = { ...operation, ...updates };
+            const conflict = findPlacementConflict(
+              state.circuit.operations,
+              candidate,
+              id
+            );
+            if (conflict) {
+              conflictMessage = placementConflictMessage(conflict, candidate);
+              return state;
+            }
+          }
+
           const circuit: Circuit = {
             ...state.circuit,
             operations: state.circuit.operations.map((op) =>
@@ -498,6 +553,7 @@ export const useCircuitStore = create<CircuitState>()(
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
+        if (conflictMessage) showAppToast(conflictMessage);
       },
 
       previewParameterBinding: (name, value) => {
@@ -550,18 +606,36 @@ export const useCircuitStore = create<CircuitState>()(
       },
 
       moveOperation: (id, column) => {
+        let conflictMessage: string | null = null;
         set((state) => {
+          const operation = state.circuit.operations.find((op) => op.id === id);
+          const nextColumn = Math.max(0, column);
+          if (operation && operation.column !== nextColumn) {
+            const candidate = { ...operation, column: nextColumn };
+            const conflict = findPlacementConflict(
+              state.circuit.operations,
+              candidate,
+              id
+            );
+            if (conflict) {
+              conflictMessage = placementConflictMessage(conflict, candidate);
+              return state;
+            }
+          }
+
           const circuit: Circuit = {
             ...state.circuit,
             operations: state.circuit.operations.map((op) =>
-              op.id === id ? { ...op, column: Math.max(0, column) } : op
+              op.id === id ? { ...op, column: nextColumn } : op
             ),
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
+        if (conflictMessage) showAppToast(conflictMessage);
       },
 
       relocateOperation: (id, column, qubitIndex) => {
+        let conflictMessage: string | null = null;
         set((state) => {
           const op = state.circuit.operations.find((o) => o.id === id);
           if (!op) return state;
@@ -571,6 +645,32 @@ export const useCircuitStore = create<CircuitState>()(
             qubitIndex,
             state.circuit.qubits.length
           );
+          const originalTargets =
+            op.type === "swap" ? [...op.targets].sort() : op.targets;
+          const updatedTargets =
+            op.type === "swap" ? [...updated.targets].sort() : updated.targets;
+          const samePlacement =
+            op.column === updated.column &&
+            originalTargets.length === updatedTargets.length &&
+            originalTargets.every(
+              (target, index) => target === updatedTargets[index]
+            ) &&
+            op.controls.length === updated.controls.length &&
+            op.controls.every(
+              (control, index) => control === updated.controls[index]
+            );
+          if (!samePlacement) {
+            const conflict = findPlacementConflict(
+              state.circuit.operations,
+              updated,
+              id
+            );
+            if (conflict) {
+              conflictMessage = placementConflictMessage(conflict, updated);
+              return state;
+            }
+          }
+
           const circuit: Circuit = {
             ...state.circuit,
             operations: state.circuit.operations.map((o) =>
@@ -579,6 +679,7 @@ export const useCircuitStore = create<CircuitState>()(
           };
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
+        if (conflictMessage) showAppToast(conflictMessage);
       },
 
       duplicateOperation: (id) => {

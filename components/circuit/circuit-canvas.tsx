@@ -18,6 +18,7 @@ import {
 import { GateSymbol, GateTooltipContent } from "@/components/gates/gate-symbol";
 import { PhaseDisk, getMarginalDiskForQubit, QubitStateTooltipContent } from "@/components/visualizations/phase-disk";
 import { simulateCircuit } from "@/lib/quantum-state";
+import { findPlacementConflict } from "@/lib/circuit-edit";
 import {
   getExecutionLayers,
   getMaxInspectStep,
@@ -99,6 +100,60 @@ function resolveDropPosition(
   );
 
   return { column, qubitIndex };
+}
+
+function gatePlacementWires(
+  gateType: string,
+  qubitIndex: number,
+  numQubits: number
+): Pick<Operation, "targets" | "controls"> {
+  const gateDef = getGateByType(gateType);
+  if (!gateDef || gateType === "control") {
+    return { targets: [], controls: [] };
+  }
+
+  if (gateType === "barrier") {
+    return {
+      targets: Array.from({ length: numQubits }, (_, index) => `q${index}`),
+      controls: [],
+    };
+  }
+
+  if (gateType === "measure" || gateType === "reset") {
+    return { targets: [`q${qubitIndex}`], controls: [] };
+  }
+
+  if (gateDef.category === "three") {
+    const needed = getQubitsNeeded(gateDef);
+    if (numQubits < needed) return { targets: [], controls: [] };
+    const baseIndex = Math.min(qubitIndex, numQubits - needed);
+    const controls =
+      gateType === "rc3x"
+        ? [`q${baseIndex}`, `q${baseIndex + 1}`, `q${baseIndex + 2}`]
+        : [`q${baseIndex}`, `q${baseIndex + 1}`];
+    return { targets: [`q${baseIndex + needed - 1}`], controls };
+  }
+
+  if (gateDef.category === "two") {
+    const controlIndex = qubitIndex;
+    const targetIndex =
+      qubitIndex + 1 < numQubits ? qubitIndex + 1 : qubitIndex - 1;
+    if (targetIndex < 0 || targetIndex === controlIndex) {
+      return { targets: [], controls: [] };
+    }
+    if (gateType === "swap") {
+      return {
+        targets: [`q${controlIndex}`, `q${targetIndex}`],
+        controls: [],
+      };
+    }
+    return {
+      targets: [`q${targetIndex}`],
+      controls: [`q${controlIndex}`],
+    };
+  }
+
+  return { targets: [`q${qubitIndex}`], controls: [] };
 }
 
 function GateBlock({
@@ -332,25 +387,46 @@ function DropPreview({
   gateType,
   position,
   numQubits,
+  operations,
 }: {
   gateType: string;
   position: DropPosition;
   numQubits: number;
+  operations: Operation[];
 }) {
   const gateDef = getGateByType(gateType);
   if (!gateDef) return null;
 
   const needed = getQubitsNeeded(gateDef);
-  const isInvalid =
+  const hasInsufficientQubits =
     (gateDef.category === "two" || gateDef.category === "three") &&
     numQubits < needed;
+  const placementWires = gatePlacementWires(
+    gateType,
+    position.qubitIndex,
+    numQubits
+  );
+  const isConflict =
+    !hasInsufficientQubits &&
+    Boolean(
+      findPlacementConflict(operations, {
+        ...placementWires,
+        column: position.column,
+      })
+    );
+  const isInvalid = hasInsufficientQubits || isConflict;
 
   const isTwoQubit = gateDef.category === "two";
-  const controlIdx = position.qubitIndex;
+  const wireIndex = (id: string | undefined) =>
+    id ? parseInt(id.replace("q", ""), 10) : -1;
+  const controlIdx =
+    placementWires.controls.length > 0
+      ? wireIndex(placementWires.controls[0])
+      : wireIndex(placementWires.targets[0]);
   const targetIdx =
-    position.qubitIndex + 1 < numQubits
-      ? position.qubitIndex + 1
-      : position.qubitIndex - 1;
+    placementWires.controls.length > 0
+      ? wireIndex(placementWires.targets[0])
+      : wireIndex(placementWires.targets[1]);
 
   const previewStyle = cn(
     "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-lg border-2 border-dashed text-[11px] font-bold",
@@ -362,7 +438,12 @@ function DropPreview({
   if (gateDef.type === "barrier") {
     return (
       <div
-        className="pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20"
+        className={cn(
+          "pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed",
+          isInvalid
+            ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20"
+            : "border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20"
+        )}
         style={{
           left: columnToX(position.column) + BARRIER_COLUMN_INSET,
           top: 8,
@@ -612,13 +693,25 @@ export function CircuitCanvas({
 
       if (gateType === "control") return null;
 
+      const placementWires = gatePlacementWires(
+        gateType,
+        qubitIndex,
+        circuit.qubits.length
+      );
+      if (
+        (gateDef.category === "two" || gateDef.category === "three") &&
+        placementWires.targets.length === 0
+      ) {
+        return null;
+      }
+
       let newOpId: string | null = null;
 
       if (gateType === "barrier") {
         newOpId = addOperation(
           createOperationFromGateType(
             "barrier",
-            circuit.qubits.map((q) => q.id),
+            placementWires.targets,
             [],
             column
           )
@@ -628,48 +721,43 @@ export function CircuitCanvas({
       }
 
       if (gateType === "measure") {
-        newOpId = addMeasureOperation(`q${qubitIndex}`, column);
+        newOpId = addMeasureOperation(placementWires.targets[0], column);
         if (alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
       if (gateType === "reset") {
         newOpId = addOperation(
-          createOperationFromGateType("reset", [`q${qubitIndex}`], [], column)
+          createOperationFromGateType(
+            "reset",
+            placementWires.targets,
+            [],
+            column
+          )
         );
         if (alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
       if (gateDef.category === "three") {
-        const needed = getQubitsNeeded(gateDef);
-        if (circuit.qubits.length < needed) return null;
-        const baseIndex = Math.min(qubitIndex, circuit.qubits.length - needed);
-        const controls =
-          gateType === "rc3x"
-            ? [`q${baseIndex}`, `q${baseIndex + 1}`, `q${baseIndex + 2}`]
-            : [`q${baseIndex}`, `q${baseIndex + 1}`];
-        const target = [`q${baseIndex + needed - 1}`];
         newOpId = addOperation(
-          createOperationFromGateType(gateType, target, controls, column)
+          createOperationFromGateType(
+            gateType,
+            placementWires.targets,
+            placementWires.controls,
+            column
+          )
         );
         if (alignmentMode !== "freeform") alignOperationsLeft();
         return newOpId;
       }
 
       if (gateDef.category === "two") {
-        const controlIdx = qubitIndex;
-        const targetIdx =
-          qubitIndex + 1 < circuit.qubits.length
-            ? qubitIndex + 1
-            : qubitIndex - 1;
-        if (targetIdx < 0 || targetIdx === controlIdx) return null;
-
         if (gateType === "swap") {
           newOpId = addOperation(
             createOperationFromGateType(
               gateType,
-              [`q${controlIdx}`, `q${targetIdx}`],
+              placementWires.targets,
               [],
               column
             )
@@ -678,8 +766,8 @@ export function CircuitCanvas({
           newOpId = addOperation(
             createOperationFromGateType(
               gateType,
-              [`q${targetIdx}`],
-              [`q${controlIdx}`],
+              placementWires.targets,
+              placementWires.controls,
               column,
               [],
               gateDef.defaultParams ? [gateDef.defaultParams] : undefined
@@ -689,8 +777,8 @@ export function CircuitCanvas({
           newOpId = addOperation(
             createOperationFromGateType(
               gateType,
-              [`q${targetIdx}`],
-              [`q${controlIdx}`],
+              placementWires.targets,
+              placementWires.controls,
               column,
               [],
               gateDef.defaultParams ? [gateDef.defaultParams] : undefined
@@ -711,8 +799,8 @@ export function CircuitCanvas({
       newOpId = addOperation(
         createOperationFromGateType(
           gateType,
-          [`q${qubitIndex}`],
-          [],
+          placementWires.targets,
+          placementWires.controls,
           column,
           [],
           params
@@ -1272,6 +1360,7 @@ export function CircuitCanvas({
                 gateType={draggingGate}
                 position={dropPreview}
                 numQubits={circuit.qubits.length}
+                operations={circuit.operations}
               />
             )}
 
