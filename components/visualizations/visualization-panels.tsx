@@ -485,7 +485,7 @@ export function VisualizationPanels({
           ) : (
             <div
               className={cn(
-                "grid h-full divide-x divide-y divide-[var(--color-border)] overflow-y-auto",
+                "grid h-full auto-rows-[minmax(200px,1fr)] gap-px overflow-y-auto bg-[var(--color-border)]",
                 gridClassForCount(activePanels.length)
               )}
             >
@@ -493,7 +493,7 @@ export function VisualizationPanels({
                 <div
                   key={panelId}
                   className={cn(
-                    "h-full min-h-[180px]",
+                    "min-h-0",
                     activePanels.length === 3 &&
                       index === activePanels.length - 1 &&
                       "col-span-2"
