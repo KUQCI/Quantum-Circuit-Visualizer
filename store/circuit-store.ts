@@ -100,14 +100,14 @@ interface CircuitState {
     id: string,
     column: number,
     qubitIndex?: number
-  ) => void;
+  ) => boolean;
   duplicateOperation: (id: string) => void;
   clearCircuit: () => void;
   loadSampleCircuit: (sample: Circuit) => void;
   refreshValidation: () => void;
   copyOperation: (id: string) => void;
   pasteOperation: (column: number, qubitIndex: number) => string | null;
-  alignOperationsLeft: () => void;
+  alignOperationsLeft: (options?: { mergeWithLastEntry?: boolean }) => void;
 
   undo: () => void;
   redo: () => void;
@@ -637,6 +637,7 @@ export const useCircuitStore = create<CircuitState>()(
 
       relocateOperation: (id, column, qubitIndex) => {
         let conflictMessage: string | null = null;
+        let moved = false;
         set((state) => {
           const op = state.circuit.operations.find((o) => o.id === id);
           if (!op) return state;
@@ -672,6 +673,7 @@ export const useCircuitStore = create<CircuitState>()(
             return state;
           }
 
+          moved = true;
           const circuit: Circuit = {
             ...state.circuit,
             operations: state.circuit.operations.map((o) =>
@@ -681,6 +683,7 @@ export const useCircuitStore = create<CircuitState>()(
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
         if (conflictMessage) showAppToast(conflictMessage);
+        return moved;
       },
 
       duplicateOperation: (id) => {
@@ -764,7 +767,7 @@ export const useCircuitStore = create<CircuitState>()(
         return get().addOperation(pasted);
       },
 
-      alignOperationsLeft: () => {
+      alignOperationsLeft: (options) => {
         set((state) => {
           const circuit = applyLeftAlignment(state.circuit);
           const previousColumns = new Map(
@@ -780,6 +783,13 @@ export const useCircuitStore = create<CircuitState>()(
             )
           ) {
             return state;
+          }
+          if (options?.mergeWithLastEntry) {
+            const history = [...state.history];
+            history[state.historyIndex] = {
+              circuit: structuredClone(circuit),
+            };
+            return { circuit, history };
           }
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });

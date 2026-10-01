@@ -161,6 +161,50 @@ describe("circuit store register + measure safety", () => {
     expect(after.historyIndex).toBe(historyIndex);
   });
 
+  it("merges placement alignment into the add history entry", () => {
+    addGate("h", "H", ["q0"]);
+    const beforeAdd = useCircuitStore.getState();
+    const operationId = addGate("x", "X", ["q0"], [], 2);
+    const afterAdd = useCircuitStore.getState();
+    const historyLength = afterAdd.history.length;
+    const historyIndex = afterAdd.historyIndex;
+
+    afterAdd.alignOperationsLeft({ mergeWithLastEntry: true });
+
+    let afterAlign = useCircuitStore.getState();
+    expect(afterAlign.history).toHaveLength(historyLength);
+    expect(afterAlign.historyIndex).toBe(historyIndex);
+    expect(
+      afterAlign.circuit.operations.find(
+        (operation) => operation.id === operationId
+      )?.column
+    ).toBe(1);
+
+    afterAlign.undo();
+    afterAlign = useCircuitStore.getState();
+    expect(afterAlign.circuit.operations).toEqual(
+      beforeAdd.circuit.operations
+    );
+    expect(afterAlign.historyIndex).toBe(beforeAdd.historyIndex);
+  });
+
+  it("records manual alignment as one history entry", () => {
+    addGate("h", "H", ["q0"]);
+    const operationId = addGate("x", "X", ["q0"], [], 2);
+    const before = useCircuitStore.getState();
+
+    before.alignOperationsLeft();
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(before.history.length + 1);
+    expect(after.historyIndex).toBe(before.historyIndex + 1);
+    expect(
+      after.circuit.operations.find(
+        (operation) => operation.id === operationId
+      )?.column
+    ).toBe(1);
+  });
+
   it("drops measure ops when their classical bit is removed", () => {
     const store = useCircuitStore.getState();
     store.addClassicalBit();
@@ -392,14 +436,15 @@ describe("circuit store placement conflicts", () => {
     expect(after.historyIndex).toBe(historyIndex);
   });
 
-  it("rejects relocation conflicts and allows free and unchanged placements", () => {
+  it("returns relocation status and preserves history for rejected placements", () => {
     addGate("h", "H", ["q0"]);
     addGate("x", "X", ["q1"], [], 1);
     const before = useCircuitStore.getState();
     const historyLength = before.history.length;
+    const historyIndex = before.historyIndex;
     const hId = before.circuit.operations[0].id;
 
-    before.relocateOperation(hId, 1, 1);
+    expect(before.relocateOperation(hId, 1, 1)).toBe(false);
     let after = useCircuitStore.getState();
     expect(after.circuit.operations[0]).toMatchObject({
       id: hId,
@@ -407,8 +452,9 @@ describe("circuit store placement conflicts", () => {
       column: 0,
     });
     expect(after.history).toHaveLength(historyLength);
+    expect(after.historyIndex).toBe(historyIndex);
 
-    after.relocateOperation(hId, 2, 1);
+    expect(after.relocateOperation(hId, 2, 1)).toBe(true);
     after = useCircuitStore.getState();
     expect(after.circuit.operations[0]).toMatchObject({
       id: hId,
@@ -418,7 +464,8 @@ describe("circuit store placement conflicts", () => {
 
     const movedHistoryLength = after.history.length;
     const movedHistoryIndex = after.historyIndex;
-    after.relocateOperation(hId, 2, 1);
+    expect(after.relocateOperation(hId, 2, 1)).toBe(false);
+    expect(after.relocateOperation("missing", 2, 1)).toBe(false);
     after = useCircuitStore.getState();
     expect(after.history).toHaveLength(movedHistoryLength);
     expect(after.historyIndex).toBe(movedHistoryIndex);
