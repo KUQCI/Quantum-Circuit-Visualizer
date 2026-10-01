@@ -789,7 +789,11 @@ export const useCircuitStore = create<CircuitState>()(
             history[state.historyIndex] = {
               circuit: structuredClone(circuit),
             };
-            return { circuit, history };
+            return {
+              circuit,
+              history,
+              validationWarnings: validateCircuitPlacement(circuit),
+            };
           }
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
