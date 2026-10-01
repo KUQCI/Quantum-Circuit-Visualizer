@@ -734,13 +734,17 @@ export function CircuitCanvas({
             column
           )
         );
-        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") {
+          alignOperationsLeft({ mergeWithLastEntry: true });
+        }
         return newOpId;
       }
 
       if (gateType === "measure") {
         newOpId = addMeasureOperation(placementWires.targets[0], column);
-        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") {
+          alignOperationsLeft({ mergeWithLastEntry: true });
+        }
         return newOpId;
       }
 
@@ -753,7 +757,9 @@ export function CircuitCanvas({
             column
           )
         );
-        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") {
+          alignOperationsLeft({ mergeWithLastEntry: true });
+        }
         return newOpId;
       }
 
@@ -766,7 +772,9 @@ export function CircuitCanvas({
             column
           )
         );
-        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") {
+          alignOperationsLeft({ mergeWithLastEntry: true });
+        }
         return newOpId;
       }
 
@@ -803,7 +811,9 @@ export function CircuitCanvas({
             )
           );
         }
-        if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+        if (newOpId && alignmentMode !== "freeform") {
+          alignOperationsLeft({ mergeWithLastEntry: true });
+        }
         if (newOpId) setShowInspector(true);
         return newOpId;
       }
@@ -824,7 +834,9 @@ export function CircuitCanvas({
           params
         )
       );
-      if (newOpId && alignmentMode !== "freeform") alignOperationsLeft();
+      if (newOpId && alignmentMode !== "freeform") {
+        alignOperationsLeft({ mergeWithLastEntry: true });
+      }
       if (newOpId && ["rx", "ry", "rz"].includes(gateType)) {
         setShowInspector(true);
       }
@@ -892,8 +904,10 @@ export function CircuitCanvas({
       );
 
       if (moveId && pos && !inspectMode) {
-        relocateOperation(moveId, pos.column, pos.qubitIndex);
-        if (alignmentMode !== "freeform") alignOperationsLeft();
+        const moved = relocateOperation(moveId, pos.column, pos.qubitIndex);
+        if (moved && alignmentMode !== "freeform") {
+          alignOperationsLeft({ mergeWithLastEntry: true });
+        }
       } else if (gateType && pos && !inspectMode) {
         const newId = placeGate(gateType, pos.qubitIndex, pos.column);
         if (newId) setSelectedOperation(newId);

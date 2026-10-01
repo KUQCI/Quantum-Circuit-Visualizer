@@ -161,6 +161,50 @@ describe("circuit store register + measure safety", () => {
     expect(after.historyIndex).toBe(historyIndex);
   });
 
+  it("merges placement alignment into the add history entry", () => {
+    addGate("h", "H", ["q0"]);
+    const beforeAdd = useCircuitStore.getState();
+    const operationId = addGate("x", "X", ["q0"], [], 2);
+    const afterAdd = useCircuitStore.getState();
+    const historyLength = afterAdd.history.length;
+    const historyIndex = afterAdd.historyIndex;
+
+    afterAdd.alignOperationsLeft({ mergeWithLastEntry: true });
+
+    let afterAlign = useCircuitStore.getState();
+    expect(afterAlign.history).toHaveLength(historyLength);
+    expect(afterAlign.historyIndex).toBe(historyIndex);
+    expect(
+      afterAlign.circuit.operations.find(
+        (operation) => operation.id === operationId
+      )?.column
+    ).toBe(1);
+
+    afterAlign.undo();
+    afterAlign = useCircuitStore.getState();
+    expect(afterAlign.circuit.operations).toEqual(
+      beforeAdd.circuit.operations
+    );
+    expect(afterAlign.historyIndex).toBe(beforeAdd.historyIndex);
+  });
+
+  it("records manual alignment as one history entry", () => {
+    addGate("h", "H", ["q0"]);
+    const operationId = addGate("x", "X", ["q0"], [], 2);
+    const before = useCircuitStore.getState();
+
+    before.alignOperationsLeft();
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(before.history.length + 1);
+    expect(after.historyIndex).toBe(before.historyIndex + 1);
+    expect(
+      after.circuit.operations.find(
+        (operation) => operation.id === operationId
+      )?.column
+    ).toBe(1);
+  });
+
   it("drops measure ops when their classical bit is removed", () => {
     const store = useCircuitStore.getState();
     store.addClassicalBit();
@@ -392,14 +436,15 @@ describe("circuit store placement conflicts", () => {
     expect(after.historyIndex).toBe(historyIndex);
   });
 
-  it("rejects relocation conflicts and allows free and unchanged placements", () => {
+  it("returns relocation status and preserves history for rejected placements", () => {
     addGate("h", "H", ["q0"]);
     addGate("x", "X", ["q1"], [], 1);
     const before = useCircuitStore.getState();
     const historyLength = before.history.length;
+    const historyIndex = before.historyIndex;
     const hId = before.circuit.operations[0].id;
 
-    before.relocateOperation(hId, 1, 1);
+    expect(before.relocateOperation(hId, 1, 1)).toBe(false);
     let after = useCircuitStore.getState();
     expect(after.circuit.operations[0]).toMatchObject({
       id: hId,
@@ -407,8 +452,9 @@ describe("circuit store placement conflicts", () => {
       column: 0,
     });
     expect(after.history).toHaveLength(historyLength);
+    expect(after.historyIndex).toBe(historyIndex);
 
-    after.relocateOperation(hId, 2, 1);
+    expect(after.relocateOperation(hId, 2, 1)).toBe(true);
     after = useCircuitStore.getState();
     expect(after.circuit.operations[0]).toMatchObject({
       id: hId,
@@ -417,10 +463,32 @@ describe("circuit store placement conflicts", () => {
     });
 
     const movedHistoryLength = after.history.length;
-    after.relocateOperation(hId, 2, 1);
-    expect(useCircuitStore.getState().history.length).toBe(
-      movedHistoryLength + 1
-    );
+    const movedHistoryIndex = after.historyIndex;
+    expect(after.relocateOperation(hId, 2, 1)).toBe(false);
+    expect(after.relocateOperation("missing", 2, 1)).toBe(false);
+    after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(movedHistoryLength);
+    expect(after.historyIndex).toBe(movedHistoryIndex);
+  });
+
+  it("does not record a same-slot relocation, so undo removes the last real edit", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const before = useCircuitStore.getState();
+    const firstOperationId = before.circuit.operations[0].id;
+
+    before.relocateOperation(firstOperationId, 0, 0);
+
+    let after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(before.history.length);
+    expect(after.historyIndex).toBe(before.historyIndex);
+
+    after.undo();
+    after = useCircuitStore.getState();
+    expect(after.circuit.operations.map((operation) => operation.id)).toEqual([
+      firstOperationId,
+    ]);
+    expect(after.historyIndex).toBe(before.historyIndex - 1);
   });
 
   it("rejects a move into an occupied slot without changing history", () => {
@@ -440,10 +508,12 @@ describe("circuit store placement conflicts", () => {
     expect(after.history).toHaveLength(historyLength);
 
     after.moveOperation(hId, 0);
-    expect(useCircuitStore.getState().history).toHaveLength(historyLength + 1);
+    const afterNoOpMove = useCircuitStore.getState();
+    expect(afterNoOpMove.history).toHaveLength(historyLength);
+    expect(afterNoOpMove.historyIndex).toBe(after.historyIndex);
   });
 
-  it("allows relocating a swap to its existing occupied slot", () => {
+  it("does not record relocating a swap to the same wires in reversed order", () => {
     const malformed = createEmptyCircuit("Overlapping swap", 2, 0);
     malformed.operations = [
       {
@@ -455,15 +525,6 @@ describe("circuit store placement conflicts", () => {
         classicalTargets: [],
         column: 0,
       },
-      {
-        id: "h",
-        type: "h",
-        label: "H",
-        targets: ["q1"],
-        controls: [],
-        classicalTargets: [],
-        column: 0,
-      },
     ];
     useCircuitStore.getState().setCircuit(malformed);
     const before = useCircuitStore.getState();
@@ -471,11 +532,12 @@ describe("circuit store placement conflicts", () => {
     before.relocateOperation("swap", 0, 0);
 
     const after = useCircuitStore.getState();
-    expect(after.history).toHaveLength(before.history.length + 1);
+    expect(after.history).toHaveLength(before.history.length);
+    expect(after.historyIndex).toBe(before.historyIndex);
     expect(
       after.circuit.operations.find((operation) => operation.id === "swap")
         ?.targets
-    ).toEqual(["q0", "q1"]);
+    ).toEqual(["q1", "q0"]);
   });
 
   it("rejects paste into an occupied slot and accepts it in a free slot", () => {
