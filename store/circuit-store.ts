@@ -610,7 +610,8 @@ export const useCircuitStore = create<CircuitState>()(
         set((state) => {
           const operation = state.circuit.operations.find((op) => op.id === id);
           const nextColumn = Math.max(0, column);
-          if (operation && operation.column !== nextColumn) {
+          if (operation?.column === nextColumn) return state;
+          if (operation) {
             const candidate = { ...operation, column: nextColumn };
             const conflict = findPlacementConflict(
               state.circuit.operations,
@@ -659,16 +660,16 @@ export const useCircuitStore = create<CircuitState>()(
             op.controls.every(
               (control, index) => control === updated.controls[index]
             );
-          if (!samePlacement) {
-            const conflict = findPlacementConflict(
-              state.circuit.operations,
-              updated,
-              id
-            );
-            if (conflict) {
-              conflictMessage = placementConflictMessage(conflict, updated);
-              return state;
-            }
+          if (samePlacement) return state;
+
+          const conflict = findPlacementConflict(
+            state.circuit.operations,
+            updated,
+            id
+          );
+          if (conflict) {
+            conflictMessage = placementConflictMessage(conflict, updated);
+            return state;
           }
 
           const circuit: Circuit = {

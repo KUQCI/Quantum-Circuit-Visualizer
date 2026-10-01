@@ -417,10 +417,31 @@ describe("circuit store placement conflicts", () => {
     });
 
     const movedHistoryLength = after.history.length;
+    const movedHistoryIndex = after.historyIndex;
     after.relocateOperation(hId, 2, 1);
-    expect(useCircuitStore.getState().history.length).toBe(
-      movedHistoryLength + 1
-    );
+    after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(movedHistoryLength);
+    expect(after.historyIndex).toBe(movedHistoryIndex);
+  });
+
+  it("does not record a same-slot relocation, so undo removes the last real edit", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const before = useCircuitStore.getState();
+    const firstOperationId = before.circuit.operations[0].id;
+
+    before.relocateOperation(firstOperationId, 0, 0);
+
+    let after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(before.history.length);
+    expect(after.historyIndex).toBe(before.historyIndex);
+
+    after.undo();
+    after = useCircuitStore.getState();
+    expect(after.circuit.operations.map((operation) => operation.id)).toEqual([
+      firstOperationId,
+    ]);
+    expect(after.historyIndex).toBe(before.historyIndex - 1);
   });
 
   it("rejects a move into an occupied slot without changing history", () => {
@@ -440,10 +461,12 @@ describe("circuit store placement conflicts", () => {
     expect(after.history).toHaveLength(historyLength);
 
     after.moveOperation(hId, 0);
-    expect(useCircuitStore.getState().history).toHaveLength(historyLength + 1);
+    const afterNoOpMove = useCircuitStore.getState();
+    expect(afterNoOpMove.history).toHaveLength(historyLength);
+    expect(afterNoOpMove.historyIndex).toBe(after.historyIndex);
   });
 
-  it("allows relocating a swap to its existing occupied slot", () => {
+  it("does not record relocating a swap to the same wires in reversed order", () => {
     const malformed = createEmptyCircuit("Overlapping swap", 2, 0);
     malformed.operations = [
       {
@@ -455,15 +478,6 @@ describe("circuit store placement conflicts", () => {
         classicalTargets: [],
         column: 0,
       },
-      {
-        id: "h",
-        type: "h",
-        label: "H",
-        targets: ["q1"],
-        controls: [],
-        classicalTargets: [],
-        column: 0,
-      },
     ];
     useCircuitStore.getState().setCircuit(malformed);
     const before = useCircuitStore.getState();
@@ -471,11 +485,12 @@ describe("circuit store placement conflicts", () => {
     before.relocateOperation("swap", 0, 0);
 
     const after = useCircuitStore.getState();
-    expect(after.history).toHaveLength(before.history.length + 1);
+    expect(after.history).toHaveLength(before.history.length);
+    expect(after.historyIndex).toBe(before.historyIndex);
     expect(
       after.circuit.operations.find((operation) => operation.id === "swap")
         ?.targets
-    ).toEqual(["q0", "q1"]);
+    ).toEqual(["q1", "q0"]);
   });
 
   it("rejects paste into an occupied slot and accepts it in a free slot", () => {
