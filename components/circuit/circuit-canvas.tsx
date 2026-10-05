@@ -26,6 +26,7 @@ import {
   getExecutionLayers,
   getMaxInspectStep,
   getOperationsUpToStep,
+  predictLeftAlignedColumn,
 } from "@/lib/circuit-layout";
 import { showAppToast } from "@/lib/app-toast";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,16 @@ import { ParameterBindingsPanel } from "@/components/circuit/parameter-bindings-
 interface DropPosition {
   column: number;
   qubitIndex: number;
+}
+
+interface BoxSelection {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+  addToSelection: boolean;
+  dragging: boolean;
 }
 
 interface CircuitCanvasProps {
@@ -172,7 +183,7 @@ function GateBlock({
 }: {
   operation: Operation;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (event?: React.MouseEvent) => void;
   onDelete: () => void;
   wireIndex: number;
   numWires: number;
@@ -211,7 +222,10 @@ function GateBlock({
           width: 4,
           height: numWires * WIRE_HEIGHT - 16,
         }}
-        onClick={onSelect}
+        onClick={(event) => {
+          event.stopPropagation();
+          onSelect(event);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -319,7 +333,7 @@ function GateBlock({
       tabIndex={isFocusableGate ? 0 : undefined}
       aria-pressed={isFocusableGate ? isSelected : undefined}
       aria-label={isFocusableGate ? accessibleLabel : undefined}
-      data-operation-id={isFocusableGate ? operation.id : undefined}
+      data-operation-id={operation.id}
       style={{
         left: columnToX(operation.column) + GATE_COLUMN_INSET,
         top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
@@ -334,7 +348,7 @@ function GateBlock({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        onSelect();
+        onSelect(e);
       }}
       onKeyDown={(e) => {
         if (isFocusableGate && (e.key === "Enter" || e.key === " ")) {
@@ -392,11 +406,13 @@ function DropPreview({
   position,
   numQubits,
   operations,
+  alignmentMode,
 }: {
   gateType: string;
   position: DropPosition;
   numQubits: number;
   operations: Operation[];
+  alignmentMode: string;
 }) {
   const gateDef = getGateByType(gateType);
   if (!gateDef) return null;
@@ -419,6 +435,29 @@ function DropPreview({
       })
     );
   const isInvalid = hasInsufficientQubits || isConflict;
+  const candidate: Operation = {
+    id: "__preview__",
+    type: gateDef.type,
+    label: gateDef.label,
+    ...placementWires,
+    classicalTargets: [],
+    parameters: [],
+    column: position.column,
+  };
+  const landingColumn =
+    !isInvalid && alignmentMode !== "freeform"
+      ? predictLeftAlignedColumn(operations, candidate)
+      : position.column;
+  const landingWireIndices = [
+    ...new Set([...placementWires.targets, ...placementWires.controls]),
+  ]
+    .map((id) => parseInt(id.replace("q", ""), 10))
+    .filter(Number.isInteger);
+  const hasLandingGhost =
+    !isInvalid &&
+    alignmentMode !== "freeform" &&
+    landingColumn !== position.column &&
+    landingWireIndices.length > 0;
 
   const isTwoQubit = gateDef.category === "two";
   const wireIndex = (id: string | undefined) =>
@@ -442,6 +481,28 @@ function DropPreview({
   if (gateDef.type === "barrier") {
     return (
       <>
+        {hasLandingGhost && (
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute z-20 w-1 rounded-full border-2 border-dashed border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/10 opacity-50"
+              style={{
+                left: columnToX(landingColumn) + BARRIER_COLUMN_INSET,
+                top: 8,
+                height: numQubits * WIRE_HEIGHT - 16,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute z-40 rounded bg-[var(--color-cyan-quantum)] px-1.5 py-0.5 text-[9px] font-medium text-white"
+              style={{
+                left: columnToX(landingColumn) + GATE_COLUMN_INSET - 4,
+                top: 4,
+              }}
+            >
+              Lands here
+            </div>
+          </>
+        )}
         <div
           className={cn(
             "pointer-events-none absolute z-30 w-1 rounded-full border-2 border-dashed",
@@ -472,6 +533,30 @@ function DropPreview({
 
   return (
     <>
+      {hasLandingGhost && (
+        <>
+          {landingWireIndices.map((wire) => (
+            <div
+              key={`landing-${wire}`}
+              aria-hidden
+              className="pointer-events-none absolute z-20 h-8 w-8 rounded-lg border-2 border-dashed border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/5 opacity-50"
+              style={{
+                left: columnToX(landingColumn) + GATE_COLUMN_INSET,
+                top: qubitToY(wire) + WIRE_HEIGHT / 2 - 16,
+              }}
+            />
+          ))}
+          <div
+            className="pointer-events-none absolute z-40 rounded bg-[var(--color-cyan-quantum)] px-1.5 py-0.5 text-[9px] font-medium text-white"
+            style={{
+              left: columnToX(landingColumn) + GATE_COLUMN_INSET - 4,
+              top: Math.max(0, Math.min(...landingWireIndices) * WIRE_HEIGHT + 4),
+            }}
+          >
+            Lands here
+          </div>
+        </>
+      )}
       <div
         className={previewStyle}
         style={{
@@ -554,6 +639,7 @@ function SelectedGateActionBar({
   return (
     <div
       className="absolute z-40 flex items-center gap-0.5 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-1 py-0.5 shadow-lg"
+      data-operation-id={operation.id}
       style={{
         left: columnToX(operation.column) + 4,
         top: qubitToY(wireIndex) + WIRE_HEIGHT - 4,
@@ -610,14 +696,19 @@ export function CircuitCanvas({
   const {
     circuit: storeCircuit,
     selectedOperationId: storedSelectedOperationId,
+    selectedOperationIds: storedSelectedOperationIds,
     validationWarnings,
     clipboard,
     setSelectedOperation,
+    toggleOperationSelection,
+    setOperationSelection,
     addOperation,
     addMeasureOperation,
     removeOperation,
+    removeOperations,
     updateOperation,
     relocateOperation,
+    moveOperations,
     duplicateOperation,
     copyOperation,
     pasteOperation,
@@ -630,6 +721,10 @@ export function CircuitCanvas({
   } = useCircuitStore();
   const circuit = circuitOverride ?? storeCircuit;
   const selectedOperationId = readOnly ? null : storedSelectedOperationId;
+  const selectedOperationIds = useMemo(
+    () => (readOnly ? [] : storedSelectedOperationIds),
+    [readOnly, storedSelectedOperationIds]
+  );
   const hydrated = usePersistHydrated(useCircuitStore.persist);
 
   const {
@@ -645,6 +740,9 @@ export function CircuitCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [dropPreview, setDropPreview] = useState<DropPosition | null>(null);
+  const [boxSelection, setBoxSelection] = useState<BoxSelection | null>(null);
+  const boxSelectionRef = useRef<BoxSelection | null>(null);
+  const suppressCanvasClick = useRef(false);
   const [movingOperationId, setMovingOperationId] = useState<string | null>(null);
   const [editingParam, setEditingParam] = useState<string | null>(null);
   const [paramValue, setParamValue] = useState("");
@@ -675,6 +773,18 @@ export function CircuitCanvas({
       layer.some((operation) => operation.id === operationId)
     );
     if (layerIndex >= 0) setInspectStep(layerIndex + 1);
+  };
+
+  const handleOperationSelect = (
+    operationId: string,
+    event?: React.MouseEvent
+  ) => {
+    if (readOnly) return;
+    if (event?.shiftKey || event?.ctrlKey || event?.metaKey) {
+      toggleOperationSelection(operationId);
+    } else {
+      selectOperationForInspect(operationId);
+    }
   };
 
   const inspectCircuit = useMemo(() => {
@@ -975,6 +1085,118 @@ export function CircuitCanvas({
     0
   );
 
+  const handleCanvasPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (
+      readOnly ||
+      inspectMode ||
+      isPaletteDragging ||
+      isPlacementMode ||
+      event.button !== 0 ||
+      !(event.target instanceof Element) ||
+      event.target.closest("[data-operation-id], button, [role=button]")
+    ) {
+      return;
+    }
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const startX = event.clientX - rect.left;
+    const startY = event.clientY - rect.top;
+    boxSelectionRef.current = {
+      pointerId: event.pointerId,
+      startX,
+      startY,
+      currentX: startX,
+      currentY: startY,
+      addToSelection: event.shiftKey,
+      dragging: false,
+    };
+    suppressCanvasClick.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleCanvasPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const selection = boxSelectionRef.current;
+    if (!selection || selection.pointerId !== event.pointerId) return;
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const currentX = event.clientX - rect.left;
+    const currentY = event.clientY - rect.top;
+    const dragging =
+      selection.dragging ||
+      Math.hypot(currentX - selection.startX, currentY - selection.startY) > 4;
+    const nextSelection = { ...selection, currentX, currentY, dragging };
+    boxSelectionRef.current = nextSelection;
+    if (dragging) setBoxSelection(nextSelection);
+  };
+
+  const handleCanvasPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const selection = boxSelectionRef.current;
+    if (!selection || selection.pointerId !== event.pointerId) return;
+
+    const rect = canvasRef.current?.getBoundingClientRect();
+    const currentX = rect ? event.clientX - rect.left : selection.currentX;
+    const currentY = rect ? event.clientY - rect.top : selection.currentY;
+    const dragging =
+      selection.dragging ||
+      Math.hypot(currentX - selection.startX, currentY - selection.startY) > 4;
+    boxSelectionRef.current = null;
+    setBoxSelection(null);
+    if (!dragging) return;
+
+    suppressCanvasClick.current = true;
+    requestAnimationFrame(() => {
+      suppressCanvasClick.current = false;
+    });
+
+    const left = Math.min(selection.startX, currentX);
+    const right = Math.max(selection.startX, currentX);
+    const top = Math.min(selection.startY, currentY);
+    const bottom = Math.max(selection.startY, currentY);
+    const intersects = (x: number, y: number, width: number, height: number) =>
+      x <= right && x + width >= left && y <= bottom && y + height >= top;
+    const selectedIds = circuit.operations
+      .filter((operation) => {
+        if (operation.type === "barrier") {
+          return intersects(
+            columnToX(operation.column) + BARRIER_COLUMN_INSET,
+            8,
+            4,
+            Math.max(0, circuit.qubits.length * WIRE_HEIGHT - 16)
+          );
+        }
+
+        const wires = [
+          ...new Set(
+            [...operation.targets, ...operation.controls]
+              .map((wire) => parseInt(wire.replace("q", ""), 10))
+              .filter(Number.isFinite)
+          ),
+        ];
+        return wires.some((wireIndex) =>
+          intersects(
+            columnToX(operation.column) + GATE_COLUMN_INSET,
+            wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
+            36,
+            36
+          )
+        );
+      })
+      .map((operation) => operation.id);
+    setOperationSelection(
+      selection.addToSelection
+        ? [...selectedOperationIds, ...selectedIds]
+        : selectedIds
+    );
+  };
+
+  const handleCanvasPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (boxSelectionRef.current?.pointerId !== event.pointerId) return;
+    boxSelectionRef.current = null;
+    setBoxSelection(null);
+  };
+
   useEffect(() => {
     if (readOnly) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -1015,6 +1237,11 @@ export function CircuitCanvas({
 
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
+        if (key === "a") {
+          e.preventDefault();
+          setOperationSelection(circuit.operations.map((operation) => operation.id));
+          return;
+        }
         if (key === "c" && selectedOp) {
           e.preventDefault();
           copyOperation(selectedOp.id);
@@ -1030,6 +1257,35 @@ export function CircuitCanvas({
             primaryWireIndex(clipboard)
           );
           if (pastedId) setSelectedOperation(pastedId);
+          return;
+        }
+      }
+
+      if (selectedOperationIds.length > 1) {
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          removeOperations(selectedOperationIds);
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setSelectedOperation(null);
+          return;
+        }
+
+        const movement: [number, number] | null =
+          e.key === "ArrowLeft"
+            ? [-1, 0]
+            : e.key === "ArrowRight"
+              ? [1, 0]
+              : e.key === "ArrowUp"
+                ? [0, -1]
+                : e.key === "ArrowDown"
+                  ? [0, 1]
+                  : null;
+        if (movement) {
+          e.preventDefault();
+          moveOperations(selectedOperationIds, movement[0], movement[1]);
           return;
         }
       }
@@ -1074,16 +1330,21 @@ export function CircuitCanvas({
     readOnly,
     inspectMode,
     selectedOperationId,
+    selectedOperationIds,
     selectedOp,
     selectedWireIndex,
+    circuit.operations,
     circuit.qubits.length,
     removeOperation,
+    removeOperations,
     duplicateOperation,
     copyOperation,
     pasteOperation,
     clipboard,
     nextPasteColumn,
     setSelectedOperation,
+    setOperationSelection,
+    moveOperations,
     relocateOperation,
     undo,
     redo,
@@ -1272,9 +1533,23 @@ export function CircuitCanvas({
               width: WIRE_LABEL_WIDTH + numColumns * COLUMN_WIDTH + 60,
               height: canvasHeight,
             }}
+            onClickCapture={(event) => {
+              if (!suppressCanvasClick.current) return;
+              suppressCanvasClick.current = false;
+              event.preventDefault();
+              event.stopPropagation();
+            }}
             onClick={() => {
+              if (suppressCanvasClick.current) {
+                suppressCanvasClick.current = false;
+                return;
+              }
               if (!readOnly) setSelectedOperation(null);
             }}
+            onPointerDown={handleCanvasPointerDown}
+            onPointerMove={handleCanvasPointerMove}
+            onPointerUp={handleCanvasPointerUp}
+            onPointerCancel={handleCanvasPointerCancel}
           >
             <div
               className="pointer-events-none absolute top-0 z-10 border-r border-[var(--color-border)]"
@@ -1384,7 +1659,7 @@ export function CircuitCanvas({
                         requestAnimationFrame(() =>
                           scrollRef.current
                             ?.querySelector<HTMLElement>(
-                              `[data-operation-id="${id}"]`
+                              `[data-operation-id="${id}"][tabindex="0"]`
                             )
                             ?.focus()
                         );
@@ -1420,12 +1695,25 @@ export function CircuitCanvas({
               </div>
             ))}
 
+            {boxSelection?.dragging && (
+              <div
+                className="pointer-events-none absolute z-20 border border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/15"
+                style={{
+                  left: Math.min(boxSelection.startX, boxSelection.currentX),
+                  top: Math.min(boxSelection.startY, boxSelection.currentY),
+                  width: Math.abs(boxSelection.currentX - boxSelection.startX),
+                  height: Math.abs(boxSelection.currentY - boxSelection.startY),
+                }}
+              />
+            )}
+
             {isPaletteDragging && dropPreview && draggingGate && (
               <DropPreview
                 gateType={draggingGate}
                 position={dropPreview}
                 numQubits={circuit.qubits.length}
                 operations={circuit.operations}
+                alignmentMode={alignmentMode}
               />
             )}
 
@@ -1453,8 +1741,8 @@ export function CircuitCanvas({
                     <GateBlock
                       key={op.id}
                       operation={op}
-                      isSelected={selectedOperationId === op.id}
-                      onSelect={() => selectOperationForInspect(op.id)}
+                      isSelected={selectedOperationIds.includes(op.id)}
+                      onSelect={(event) => handleOperationSelect(op.id, event)}
                       onDelete={() => removeOperation(op.id)}
                       wireIndex={0}
                       numWires={circuit.qubits.length}
@@ -1468,8 +1756,8 @@ export function CircuitCanvas({
                   <GateBlock
                     key={`${op.id}-${wireIdx}`}
                     operation={op}
-                    isSelected={selectedOperationId === op.id}
-                    onSelect={() => selectOperationForInspect(op.id)}
+                    isSelected={selectedOperationIds.includes(op.id)}
+                    onSelect={(event) => handleOperationSelect(op.id, event)}
                     onDelete={() => removeOperation(op.id)}
                     wireIndex={wireIdx}
                     numWires={circuit.qubits.length}
@@ -1481,7 +1769,10 @@ export function CircuitCanvas({
               })}
             </div>
 
-            {selectedOp && !isPaletteDragging && !inspectMode && (
+            {selectedOp &&
+              selectedOperationIds.length <= 1 &&
+              !isPaletteDragging &&
+              !inspectMode && (
               <SelectedGateActionBar
                 operation={selectedOp}
                 wireIndex={selectedWireIndex}
@@ -1492,6 +1783,35 @@ export function CircuitCanvas({
                 draggable
               />
             )}
+            {selectedOperationIds.length > 1 &&
+              !isPaletteDragging &&
+              !inspectMode && (
+                <div
+                  className="absolute left-2 top-2 z-40 flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1 shadow-lg"
+                  data-operation-id={selectedOperationId ?? undefined}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <span className="text-xs font-medium">
+                    {selectedOperationIds.length} gates selected
+                  </span>
+                  <button
+                    type="button"
+                    className="composer-toolbar-btn flex h-7 w-7 items-center justify-center rounded text-[var(--color-destructive)] hover:bg-[var(--color-error-subtle)]"
+                    aria-label={`Delete ${selectedOperationIds.length} selected gates`}
+                    title="Delete selected gates"
+                    onClick={() => removeOperations(selectedOperationIds)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="composer-toolbar-btn h-7 rounded px-2 text-xs"
+                    onClick={() => setSelectedOperation(null)}
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
           </div>
           {circuit.operations.length === 0 &&
             !(
