@@ -181,6 +181,12 @@ After deployment, the site is available at:
 
 **https://kuqci.github.io/Quantum-Circuit-Visualizer/**
 
+### Install & offline
+
+The GitHub Pages build is installable as a web app and works offline after the
+first visit. The Monaco code editor needs one online load before it is available
+offline.
+
 ### Local static preview
 
 ```bash

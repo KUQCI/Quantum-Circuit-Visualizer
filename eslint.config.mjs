@@ -1,4 +1,5 @@
 import { FlatCompat } from "@eslint/eslintrc";
+import globals from "globals";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +15,17 @@ const config = [
         "warn",
         { ignoreRestSiblings: true, argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+    },
+  },
+  {
+    files: ["scripts/sw.template.js"],
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker,
+        __QCV_BASE__: "readonly",
+        __QCV_VERSION__: "readonly",
+        __QCV_PRECACHE__: "readonly",
+      },
     },
   },
 ];
