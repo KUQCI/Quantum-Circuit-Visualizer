@@ -1102,6 +1102,17 @@ export function CircuitCanvas({
       return;
     }
 
+    const container = event.currentTarget;
+    const containerRect = container.getBoundingClientRect();
+    if (
+      event.clientX - containerRect.left >=
+        container.clientLeft + container.clientWidth ||
+      event.clientY - containerRect.top >=
+        container.clientTop + container.clientHeight
+    ) {
+      return;
+    }
+
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const startX = event.clientX - rect.left;
