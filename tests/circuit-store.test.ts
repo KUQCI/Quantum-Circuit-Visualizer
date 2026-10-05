@@ -665,14 +665,51 @@ describe("circuit store multi-selection", () => {
 
     state.undo();
     state = useCircuitStore.getState();
-    expect(state.selectedOperationIds).toEqual([]);
-    expect(state.selectedOperationId).toBeNull();
+    expect(state.selectedOperationIds).toEqual([firstId]);
+    expect(state.selectedOperationId).toBe(firstId);
 
     state.setSelectedOperation(firstId);
     state.setCircuit(createEmptyCircuit("Replacement", 2, 0));
     state = useCircuitStore.getState();
     expect(state.selectedOperationIds).toEqual([]);
     expect(state.selectedOperationId).toBeNull();
+  });
+
+  it("filters setCircuit selection to surviving operation ids", () => {
+    const firstId = addGate("h", "H", ["q0"])!;
+    const removedId = addGate("x", "X", ["q1"])!;
+    const state = useCircuitStore.getState();
+    state.setOperationSelection([firstId, removedId]);
+
+    const updatedCircuit = structuredClone(state.circuit);
+    updatedCircuit.operations = updatedCircuit.operations.filter(
+      (operation) => operation.id === firstId
+    );
+    state.setCircuit(updatedCircuit);
+
+    const after = useCircuitStore.getState();
+    expect(after.selectedOperationIds).toEqual([firstId]);
+    expect(after.selectedOperationId).toBe(firstId);
+  });
+
+  it("keeps a surviving selection through undo and redo", () => {
+    const firstId = addGate("h", "H", ["q0"])!;
+    useCircuitStore.getState().setSelectedOperation(firstId);
+    addGate("x", "X", ["q1"], [], 1);
+
+    useCircuitStore.getState().undo();
+    let after = useCircuitStore.getState();
+    expect(after.circuit.operations.map((operation) => operation.id)).toEqual([
+      firstId,
+    ]);
+    expect(after.selectedOperationIds).toEqual([firstId]);
+    expect(after.selectedOperationId).toBe(firstId);
+
+    after.redo();
+    after = useCircuitStore.getState();
+    expect(after.circuit.operations).toHaveLength(2);
+    expect(after.selectedOperationIds).toEqual([firstId]);
+    expect(after.selectedOperationId).toBe(firstId);
   });
 
   it("removes a group in one history entry and restores it with one undo", () => {
@@ -690,12 +727,23 @@ describe("circuit store multi-selection", () => {
     expect(after.selectedOperationId).toBeNull();
     expect(after.selectedOperationIds).toEqual([]);
 
-    after.undo();
+    expect(() => after.undo()).not.toThrow();
     after = useCircuitStore.getState();
     expect(after.circuit.operations.map((operation) => operation.id)).toEqual([
       firstId,
       secondId,
     ]);
+    expect(
+      after.selectedOperationIds.every((id) =>
+        after.circuit.operations.some((operation) => operation.id === id)
+      )
+    ).toBe(true);
+    expect(
+      after.selectedOperationId === null ||
+        after.circuit.operations.some(
+          (operation) => operation.id === after.selectedOperationId
+        )
+    ).toBe(true);
   });
 
   it("moves a group atomically, including the whole span of a controlled gate", () => {

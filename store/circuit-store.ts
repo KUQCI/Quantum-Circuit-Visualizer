@@ -143,6 +143,22 @@ function singleSelection(id: string | null) {
   };
 }
 
+function selectionWithin(
+  state: Pick<CircuitState, "selectedOperationId" | "selectedOperationIds">,
+  operations: Operation[]
+) {
+  const operationIds = new Set(operations.map((operation) => operation.id));
+  const selectedOperationIds = state.selectedOperationIds.filter((id) =>
+    operationIds.has(id)
+  );
+  const selectedOperationId =
+    state.selectedOperationId && operationIds.has(state.selectedOperationId)
+      ? state.selectedOperationId
+      : selectedOperationIds[selectedOperationIds.length - 1] ?? null;
+
+  return { selectedOperationId, selectedOperationIds };
+}
+
 const PROJECTS_KEY = "qiskit-visualizer-projects";
 
 if (typeof window !== "undefined") {
@@ -258,7 +274,7 @@ export const useCircuitStore = create<CircuitState>()(
         const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
         set((state) => ({
           circuit: safe,
-          ...singleSelection(null),
+          ...selectionWithin(state, safe.operations),
           ...pushHistory({ ...state, circuit: safe }),
         }));
       },
@@ -952,31 +968,31 @@ export const useCircuitStore = create<CircuitState>()(
       },
 
       undo: () => {
-        const { historyIndex, history } = get();
-        if (historyIndex > 0) {
-          const newIndex = historyIndex - 1;
-          const circuit = prepareCircuit(history[newIndex].circuit);
-          set({
+        set((state) => {
+          if (state.historyIndex <= 0) return state;
+          const newIndex = state.historyIndex - 1;
+          const circuit = prepareCircuit(state.history[newIndex].circuit);
+          return {
             historyIndex: newIndex,
             circuit,
-            ...singleSelection(null),
+            ...selectionWithin(state, circuit.operations),
             validationWarnings: validateCircuitPlacement(circuit),
-          });
-        }
+          };
+        });
       },
 
       redo: () => {
-        const { historyIndex, history } = get();
-        if (historyIndex < history.length - 1) {
-          const newIndex = historyIndex + 1;
-          const circuit = prepareCircuit(history[newIndex].circuit);
-          set({
+        set((state) => {
+          if (state.historyIndex >= state.history.length - 1) return state;
+          const newIndex = state.historyIndex + 1;
+          const circuit = prepareCircuit(state.history[newIndex].circuit);
+          return {
             historyIndex: newIndex,
             circuit,
-            ...singleSelection(null),
+            ...selectionWithin(state, circuit.operations),
             validationWarnings: validateCircuitPlacement(circuit),
-          });
-        }
+          };
+        });
       },
 
       canUndo: () => get().historyIndex > 0,

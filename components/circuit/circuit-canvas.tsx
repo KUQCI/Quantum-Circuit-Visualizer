@@ -639,7 +639,7 @@ function SelectedGateActionBar({
   return (
     <div
       className="absolute z-40 flex items-center gap-0.5 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-1 py-0.5 shadow-lg"
-      data-operation-id={operation.id}
+      data-canvas-overlay
       style={{
         left: columnToX(operation.column) + 4,
         top: qubitToY(wireIndex) + WIRE_HEIGHT - 4,
@@ -1093,7 +1093,9 @@ export function CircuitCanvas({
       isPlacementMode ||
       event.button !== 0 ||
       !(event.target instanceof Element) ||
-      event.target.closest("[data-operation-id], button, [role=button]")
+      event.target.closest(
+        "[data-operation-id], [data-canvas-overlay], button, [role=button]"
+      )
     ) {
       return;
     }
@@ -1788,7 +1790,7 @@ export function CircuitCanvas({
               !inspectMode && (
                 <div
                   className="absolute left-2 top-2 z-40 flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1 shadow-lg"
-                  data-operation-id={selectedOperationId ?? undefined}
+                  data-canvas-overlay
                   onClick={(event) => event.stopPropagation()}
                 >
                   <span className="text-xs font-medium">
