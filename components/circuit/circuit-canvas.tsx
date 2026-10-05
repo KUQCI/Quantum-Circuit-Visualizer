@@ -210,7 +210,9 @@ function GateBlock({
       <div
         className={cn(
           "absolute inset-y-2 flex items-center",
-          isPaletteDragging ? "pointer-events-none" : "cursor-pointer"
+          isPaletteDragging
+            ? "pointer-events-none"
+            : "pointer-events-auto cursor-pointer"
         )}
         role="button"
         tabIndex={0}
@@ -327,7 +329,7 @@ function GateBlock({
         "absolute flex items-center justify-center",
         isPaletteDragging
           ? "pointer-events-none"
-          : "cursor-pointer"
+          : "pointer-events-auto cursor-pointer"
       )}
       role={isFocusableGate ? "button" : undefined}
       tabIndex={isFocusableGate ? 0 : undefined}
@@ -1495,21 +1497,40 @@ export function CircuitCanvas({
             isPaletteDragging && "cursor-copy",
             isPlacementMode && "cursor-crosshair"
           )}
+          onClickCapture={(event) => {
+            if (!suppressCanvasClick.current) return;
+            suppressCanvasClick.current = false;
+            event.preventDefault();
+            event.stopPropagation();
+          }}
           onClick={(e) => {
             if (readOnly) return;
-            if (!placementGate || inspectMode || !canvasRef.current) return;
-            const pos = resolveDropPosition(
-              e.clientX,
-              e.clientY,
-              canvasRef.current,
-              circuit.qubits.length
-            );
-            if (pos) {
-              const newId = placeGate(placementGate, pos.qubitIndex, pos.column);
-              if (newId) setSelectedOperation(newId);
-              onPlacementComplete?.();
+            if (placementGate && !inspectMode && canvasRef.current) {
+              const pos = resolveDropPosition(
+                e.clientX,
+                e.clientY,
+                canvasRef.current,
+                circuit.qubits.length
+              );
+              if (pos) {
+                const newId = placeGate(placementGate, pos.qubitIndex, pos.column);
+                if (newId) setSelectedOperation(newId);
+                onPlacementComplete?.();
+              }
+              return;
+            }
+            const target = e.target;
+            if (
+              target === e.currentTarget ||
+              (target instanceof Node && canvasRef.current?.contains(target))
+            ) {
+              setSelectedOperation(null);
             }
           }}
+          onPointerDown={handleCanvasPointerDown}
+          onPointerMove={handleCanvasPointerMove}
+          onPointerUp={handleCanvasPointerUp}
+          onPointerCancel={handleCanvasPointerCancel}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onDragLeave={handleDragLeave}
@@ -1535,23 +1556,6 @@ export function CircuitCanvas({
               width: WIRE_LABEL_WIDTH + numColumns * COLUMN_WIDTH + 60,
               height: canvasHeight,
             }}
-            onClickCapture={(event) => {
-              if (!suppressCanvasClick.current) return;
-              suppressCanvasClick.current = false;
-              event.preventDefault();
-              event.stopPropagation();
-            }}
-            onClick={() => {
-              if (suppressCanvasClick.current) {
-                suppressCanvasClick.current = false;
-                return;
-              }
-              if (!readOnly) setSelectedOperation(null);
-            }}
-            onPointerDown={handleCanvasPointerDown}
-            onPointerMove={handleCanvasPointerMove}
-            onPointerUp={handleCanvasPointerUp}
-            onPointerCancel={handleCanvasPointerCancel}
           >
             <div
               className="pointer-events-none absolute top-0 z-10 border-r border-[var(--color-border)]"
@@ -1727,12 +1731,7 @@ export function CircuitCanvas({
               />
             )}
 
-            <div
-              className={cn(
-                "absolute inset-0",
-                isPaletteDragging && "pointer-events-none"
-              )}
-            >
+            <div className="pointer-events-none absolute inset-0">
               {circuit.operations.map((op) => {
                 const affectedWires = [
                   ...op.targets.map((t) => parseInt(t.replace("q", ""), 10)),

@@ -692,6 +692,52 @@ describe("circuit store multi-selection", () => {
     expect(after.selectedOperationId).toBe(firstId);
   });
 
+  it("remaps selected operations when setCircuit regenerates operation ids", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const state = useCircuitStore.getState();
+    state.setOperationSelection(state.circuit.operations.map((op) => op.id));
+
+    const syncedCircuit = structuredClone(state.circuit);
+    syncedCircuit.operations = syncedCircuit.operations.map((operation, index) => ({
+      ...operation,
+      id: `synced-${index}`,
+    }));
+    syncedCircuit.operations.push({
+      id: "synced-y",
+      type: "y",
+      label: "Y",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 1,
+    });
+    state.setCircuit(syncedCircuit);
+
+    const after = useCircuitStore.getState();
+    expect(after.selectedOperationIds).toEqual(["synced-0", "synced-1"]);
+    expect(after.selectedOperationId).toBe("synced-1");
+  });
+
+  it("drops a selected operation when its placement signature changes", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const state = useCircuitStore.getState();
+    state.setOperationSelection(state.circuit.operations.map((op) => op.id));
+
+    const syncedCircuit = structuredClone(state.circuit);
+    syncedCircuit.operations = syncedCircuit.operations.map((operation, index) => ({
+      ...operation,
+      id: `synced-${index}`,
+      column: index === 0 ? operation.column + 1 : operation.column,
+    }));
+    state.setCircuit(syncedCircuit);
+
+    const after = useCircuitStore.getState();
+    expect(after.selectedOperationIds).toEqual(["synced-1"]);
+    expect(after.selectedOperationId).toBe("synced-1");
+  });
+
   it("keeps a surviving selection through undo and redo", () => {
     const firstId = addGate("h", "H", ["q0"])!;
     useCircuitStore.getState().setSelectedOperation(firstId);

@@ -159,6 +159,63 @@ function selectionWithin(
   return { selectedOperationId, selectedOperationIds };
 }
 
+function sameOperationSignature(left: Operation, right: Operation) {
+  const sameValues = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((value, index) => value === b[index]);
+
+  return (
+    left.type === right.type &&
+    left.column === right.column &&
+    sameValues(left.targets, right.targets) &&
+    sameValues(left.controls, right.controls) &&
+    sameValues(left.classicalTargets, right.classicalTargets)
+  );
+}
+
+function remapSelection(
+  oldOperations: Operation[],
+  newOperations: Operation[],
+  selectedIds: string[],
+  primaryId: string | null
+) {
+  const oldById = new Map(oldOperations.map((operation) => [operation.id, operation]));
+  const newById = new Map(newOperations.map((operation) => [operation.id, operation]));
+  const uniqueSelectedIds = [...new Set(selectedIds)];
+  const usedIds = new Set(
+    uniqueSelectedIds.filter((id) => newById.has(id))
+  );
+  const mappedIds = new Map<string, string>();
+
+  for (const id of uniqueSelectedIds) {
+    if (newById.has(id)) {
+      mappedIds.set(id, id);
+      continue;
+    }
+
+    const oldOperation = oldById.get(id);
+    if (!oldOperation) continue;
+    const match = newOperations.find(
+      (operation) =>
+        !usedIds.has(operation.id) &&
+        sameOperationSignature(oldOperation, operation)
+    );
+    if (match) {
+      usedIds.add(match.id);
+      mappedIds.set(id, match.id);
+    }
+  }
+
+  const selectedOperationIds = uniqueSelectedIds
+    .map((id) => mappedIds.get(id))
+    .filter((id): id is string => id !== undefined);
+  const selectedOperationId =
+    (primaryId ? mappedIds.get(primaryId) : undefined) ??
+    selectedOperationIds[selectedOperationIds.length - 1] ??
+    null;
+
+  return { selectedOperationId, selectedOperationIds };
+}
+
 const PROJECTS_KEY = "qiskit-visualizer-projects";
 
 if (typeof window !== "undefined") {
@@ -274,7 +331,12 @@ export const useCircuitStore = create<CircuitState>()(
         const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
         set((state) => ({
           circuit: safe,
-          ...selectionWithin(state, safe.operations),
+          ...remapSelection(
+            state.circuit.operations,
+            safe.operations,
+            state.selectedOperationIds,
+            state.selectedOperationId
+          ),
           ...pushHistory({ ...state, circuit: safe }),
         }));
       },
