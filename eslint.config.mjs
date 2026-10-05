@@ -1,5 +1,4 @@
 import { FlatCompat } from "@eslint/eslintrc";
-import globals from "globals";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +20,15 @@ const config = [
     files: ["scripts/sw.template.js"],
     languageOptions: {
       globals: {
-        ...globals.serviceworker,
+        self: "readonly",
+        caches: "readonly",
+        clients: "readonly",
+        fetch: "readonly",
+        Response: "readonly",
+        URL: "readonly",
+        console: "readonly",
+        Promise: "readonly",
+        Set: "readonly",
         __QCV_BASE__: "readonly",
         __QCV_VERSION__: "readonly",
         __QCV_PRECACHE__: "readonly",

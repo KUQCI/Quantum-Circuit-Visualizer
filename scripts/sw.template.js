@@ -5,16 +5,30 @@ const PRECACHE_CACHE = `qcv-precache-${VERSION}`;
 const RUNTIME_CACHE = `qcv-runtime-${VERSION}`;
 const CDN_CACHE = "qcv-cdn";
 
+function cacheKeyFor(url, { navigation = false } = {}) {
+  const key = new URL(url);
+  key.search = "";
+  if (navigation && !key.pathname.endsWith("/")) {
+    key.pathname += "/";
+  }
+  return key.href;
+}
+
 function isUnderBase(pathname) {
   return BASE === ""
     ? pathname.startsWith("/")
     : pathname === BASE || pathname.startsWith(`${BASE}/`);
 }
 
-async function cacheSuccessfulResponse(cacheName, request, response) {
+async function cacheSuccessfulResponse(
+  cacheName,
+  request,
+  response,
+  cacheKey = request
+) {
   if (response.ok) {
     const cache = await caches.open(cacheName);
-    await cache.put(request, response.clone());
+    await cache.put(cacheKey, response.clone());
   }
   return response;
 }
@@ -76,7 +90,9 @@ self.addEventListener("fetch", (event) => {
   ) {
     const update = caches.open(CDN_CACHE).then(async (cache) => {
       const response = await fetch(request);
-      if (response.ok) await cache.put(request, response.clone());
+      if (response.ok || response.type === "opaque") {
+        await cache.put(request, response.clone());
+      }
       return response;
     });
     event.waitUntil(update.catch(() => undefined));
@@ -103,7 +119,8 @@ self.addEventListener("fetch", (event) => {
           return await cacheSuccessfulResponse(
             RUNTIME_CACHE,
             request,
-            await fetch(request)
+            await fetch(request),
+            cacheKeyFor(request.url, { navigation: true })
           );
         } catch {
           const fallbackUrl = new URL(request.url);
@@ -147,7 +164,8 @@ self.addEventListener("fetch", (event) => {
         return await cacheSuccessfulResponse(
           RUNTIME_CACHE,
           request,
-          await fetch(request)
+          await fetch(request),
+          cacheKeyFor(request.url)
         );
       } catch {
         return (
