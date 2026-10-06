@@ -19,6 +19,7 @@ import { XpToast } from "@/components/learning/XpToast";
 import { LevelUpDialog } from "@/components/learning/LevelUpDialog";
 import { ShortcutsDialog } from "@/components/help/ShortcutsDialog";
 import { AppToast } from "@/components/ui/app-toast";
+import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import { QuantaBuddyHost } from "@/components/mascot/QuantaBuddy";
 import { QuantaChat } from "@/components/mascot/QuantaChat";
 
@@ -103,6 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <LevelUpDialog />
       <ShortcutsDialog />
       <AppToast />
+      <ServiceWorkerRegistrar />
       <AppBootstrap />
       <a href="#main-content" className="skip-link">
         Skip to content

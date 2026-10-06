@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
@@ -44,7 +44,14 @@ export const metadata: Metadata = {
       "Learn and prototype quantum circuits with an approachable visual builder from the Khalifa University Quantum Computing Initiative.",
     images: ["/assets/og-card.jpg"],
   },
+  appleWebApp: {
+    capable: true,
+    title: "QCI Circuits",
+    statusBarStyle: "black-translucent",
+  },
 };
+
+export const viewport: Viewport = { themeColor: "#050914" };
 
 export default function RootLayout({
   children,

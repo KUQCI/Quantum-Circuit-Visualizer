@@ -16,6 +16,25 @@ const config = [
       ],
     },
   },
+  {
+    files: ["scripts/sw.template.js"],
+    languageOptions: {
+      globals: {
+        self: "readonly",
+        caches: "readonly",
+        clients: "readonly",
+        fetch: "readonly",
+        Response: "readonly",
+        URL: "readonly",
+        console: "readonly",
+        Promise: "readonly",
+        Set: "readonly",
+        __QCV_BASE__: "readonly",
+        __QCV_VERSION__: "readonly",
+        __QCV_PRECACHE__: "readonly",
+      },
+    },
+  },
 ];
 
 export default config;
