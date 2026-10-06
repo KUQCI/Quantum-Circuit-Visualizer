@@ -1,5 +1,6 @@
 "use client";
 
+import { pluralize } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Link2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -426,7 +427,7 @@ export function ClassroomClient() {
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm text-[var(--color-muted-foreground)]">
-                  {visibleRows.length} learners in roster
+                  {visibleRows.length} {pluralize(visibleRows.length, "learner")} in roster
                 </p>
                 <label className="flex items-center gap-2 text-sm">
                   Class
