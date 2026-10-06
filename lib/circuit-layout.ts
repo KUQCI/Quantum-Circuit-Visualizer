@@ -19,6 +19,17 @@ export function compactColumnsLeft(operations: Operation[]): Operation[] {
   });
 }
 
+export function predictLeftAlignedColumn(
+  operations: Operation[],
+  candidate: Operation
+): number {
+  return (
+    compactColumnsLeft([...operations, candidate]).find(
+      (operation) => operation.id === candidate.id
+    )?.column ?? candidate.column
+  );
+}
+
 export function applyLeftAlignment(circuit: Circuit): Circuit {
   return {
     ...circuit,

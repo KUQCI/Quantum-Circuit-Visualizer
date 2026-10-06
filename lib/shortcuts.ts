@@ -25,7 +25,7 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: [["Mod", "V"]], description: "Paste copied gate" },
       {
         keys: [["Delete"], ["Backspace"]],
-        description: "Delete selected gate",
+        description: "Delete selected gate(s)",
       },
     ],
   },
@@ -34,8 +34,17 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
     items: [
       {
         keys: [["Arrow keys"]],
-        description: "Move selected gate",
+        description: "Move selected gate(s)",
       },
+      {
+        keys: [["Shift", "Click"]],
+        description: "Add/remove gate from selection",
+      },
+      {
+        keys: [["Drag"]],
+        description: "Box-select gates",
+      },
+      { keys: [["Mod", "A"]], description: "Select all gates" },
       {
         keys: [["Enter"], ["Space"]],
         description: "Select focused gate / place it on a wire",

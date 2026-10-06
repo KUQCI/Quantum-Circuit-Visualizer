@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createEmptyCircuit } from "@/lib/circuit-schema";
+import { showAppToast } from "@/lib/app-toast";
 import {
   sliceHistoryForPersist,
   useCircuitStore,
 } from "@/store/circuit-store";
 import { validateCircuitPlacement } from "@/lib/validation";
+
+vi.mock("@/lib/app-toast", () => ({ showAppToast: vi.fn() }));
 
 const memoryStore = new Map<string, string>();
 
@@ -36,6 +39,7 @@ function resetCircuitStore() {
     circuit: createEmptyCircuit("Untitled Circuit", 2, 0),
     currentProjectId: null,
     selectedOperationId: null,
+    selectedOperationIds: [],
     clipboard: null,
     validationWarnings: [],
     history: [{ circuit: createEmptyCircuit("Untitled Circuit", 2, 0) }],
@@ -615,5 +619,268 @@ describe("circuit store placement conflicts", () => {
         .circuit.operations.find((operation) => operation.id === "rx")
         ?.parameters
     ).toEqual([{ value: 1.25 }]);
+  });
+});
+
+describe("circuit store multi-selection", () => {
+  beforeEach(() => {
+    resetCircuitStore();
+    vi.mocked(showAppToast).mockClear();
+  });
+
+  it("keeps the primary selection synchronized with the selected ids", () => {
+    const firstId = addGate("h", "H", ["q0"])!;
+    const secondId = addGate("x", "X", ["q1"])!;
+    let state = useCircuitStore.getState();
+
+    state.setSelectedOperation(firstId);
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationId).toBe(firstId);
+    expect(state.selectedOperationIds).toEqual([firstId]);
+
+    state.toggleOperationSelection(secondId);
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationId).toBe(secondId);
+    expect(state.selectedOperationIds).toEqual([firstId, secondId]);
+
+    state.toggleOperationSelection(firstId);
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationId).toBe(secondId);
+    expect(state.selectedOperationIds).toEqual([secondId]);
+
+    state.setOperationSelection([
+      firstId,
+      "missing",
+      secondId,
+      firstId,
+    ]);
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationIds).toEqual([firstId, secondId]);
+    expect(state.selectedOperationId).toBe(secondId);
+
+    state.removeOperation(secondId);
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationIds).toEqual([firstId]);
+    expect(state.selectedOperationId).toBe(firstId);
+
+    state.undo();
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationIds).toEqual([firstId]);
+    expect(state.selectedOperationId).toBe(firstId);
+
+    state.setSelectedOperation(firstId);
+    state.setCircuit(createEmptyCircuit("Replacement", 2, 0));
+    state = useCircuitStore.getState();
+    expect(state.selectedOperationIds).toEqual([]);
+    expect(state.selectedOperationId).toBeNull();
+  });
+
+  it("filters setCircuit selection to surviving operation ids", () => {
+    const firstId = addGate("h", "H", ["q0"])!;
+    const removedId = addGate("x", "X", ["q1"])!;
+    const state = useCircuitStore.getState();
+    state.setOperationSelection([firstId, removedId]);
+
+    const updatedCircuit = structuredClone(state.circuit);
+    updatedCircuit.operations = updatedCircuit.operations.filter(
+      (operation) => operation.id === firstId
+    );
+    state.setCircuit(updatedCircuit);
+
+    const after = useCircuitStore.getState();
+    expect(after.selectedOperationIds).toEqual([firstId]);
+    expect(after.selectedOperationId).toBe(firstId);
+  });
+
+  it("remaps selected operations when setCircuit regenerates operation ids", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const state = useCircuitStore.getState();
+    state.setOperationSelection(state.circuit.operations.map((op) => op.id));
+
+    const syncedCircuit = structuredClone(state.circuit);
+    syncedCircuit.operations = syncedCircuit.operations.map((operation, index) => ({
+      ...operation,
+      id: `synced-${index}`,
+    }));
+    syncedCircuit.operations.push({
+      id: "synced-y",
+      type: "y",
+      label: "Y",
+      targets: ["q0"],
+      controls: [],
+      classicalTargets: [],
+      column: 1,
+    });
+    state.setCircuit(syncedCircuit);
+
+    const after = useCircuitStore.getState();
+    expect(after.selectedOperationIds).toEqual(["synced-0", "synced-1"]);
+    expect(after.selectedOperationId).toBe("synced-1");
+  });
+
+  it("drops a selected operation when its placement signature changes", () => {
+    addGate("h", "H", ["q0"]);
+    addGate("x", "X", ["q1"]);
+    const state = useCircuitStore.getState();
+    state.setOperationSelection(state.circuit.operations.map((op) => op.id));
+
+    const syncedCircuit = structuredClone(state.circuit);
+    syncedCircuit.operations = syncedCircuit.operations.map((operation, index) => ({
+      ...operation,
+      id: `synced-${index}`,
+      column: index === 0 ? operation.column + 1 : operation.column,
+    }));
+    state.setCircuit(syncedCircuit);
+
+    const after = useCircuitStore.getState();
+    expect(after.selectedOperationIds).toEqual(["synced-1"]);
+    expect(after.selectedOperationId).toBe("synced-1");
+  });
+
+  it("keeps a surviving selection through undo and redo", () => {
+    const firstId = addGate("h", "H", ["q0"])!;
+    useCircuitStore.getState().setSelectedOperation(firstId);
+    addGate("x", "X", ["q1"], [], 1);
+
+    useCircuitStore.getState().undo();
+    let after = useCircuitStore.getState();
+    expect(after.circuit.operations.map((operation) => operation.id)).toEqual([
+      firstId,
+    ]);
+    expect(after.selectedOperationIds).toEqual([firstId]);
+    expect(after.selectedOperationId).toBe(firstId);
+
+    after.redo();
+    after = useCircuitStore.getState();
+    expect(after.circuit.operations).toHaveLength(2);
+    expect(after.selectedOperationIds).toEqual([firstId]);
+    expect(after.selectedOperationId).toBe(firstId);
+  });
+
+  it("removes a group in one history entry and restores it with one undo", () => {
+    const firstId = addGate("h", "H", ["q0"])!;
+    const secondId = addGate("x", "X", ["q1"])!;
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    before.setOperationSelection([firstId, secondId]);
+
+    useCircuitStore.getState().removeOperations([firstId, secondId]);
+
+    let after = useCircuitStore.getState();
+    expect(after.circuit.operations).toHaveLength(0);
+    expect(after.history).toHaveLength(historyLength + 1);
+    expect(after.selectedOperationId).toBeNull();
+    expect(after.selectedOperationIds).toEqual([]);
+
+    expect(() => after.undo()).not.toThrow();
+    after = useCircuitStore.getState();
+    expect(after.circuit.operations.map((operation) => operation.id)).toEqual([
+      firstId,
+      secondId,
+    ]);
+    expect(
+      after.selectedOperationIds.every((id) =>
+        after.circuit.operations.some((operation) => operation.id === id)
+      )
+    ).toBe(true);
+    expect(
+      after.selectedOperationId === null ||
+        after.circuit.operations.some(
+          (operation) => operation.id === after.selectedOperationId
+        )
+    ).toBe(true);
+  });
+
+  it("moves a group atomically, including the whole span of a controlled gate", () => {
+    useCircuitStore.getState().addQubit();
+    useCircuitStore.getState().addQubit();
+    const cxId = addGate("cx", "CX", ["q1"], ["q0"], 0)!;
+    const hId = addGate("h", "H", ["q2"], [], 2)!;
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+
+    expect(before.moveOperations([cxId, hId], 1, 1)).toBe(true);
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(historyLength + 1);
+    expect(after.circuit.operations.find((operation) => operation.id === cxId))
+      .toMatchObject({
+        column: 1,
+        targets: ["q2"],
+        controls: ["q1"],
+      });
+    expect(after.circuit.operations.find((operation) => operation.id === hId))
+      .toMatchObject({
+        column: 3,
+        targets: ["q3"],
+      });
+  });
+
+  it("moves adjacent selected gates without treating their old slots as conflicts", () => {
+    const firstId = addGate("h", "H", ["q0"], [], 0)!;
+    const secondId = addGate("x", "X", ["q0"], [], 1)!;
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+
+    expect(before.moveOperations([firstId, secondId], 1, 0)).toBe(true);
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(historyLength + 1);
+    expect(
+      after.circuit.operations.map((operation) => operation.column)
+    ).toEqual([1, 2]);
+  });
+
+  it("rejects out-of-bounds moves and wire shifts of barriers without history or toast", () => {
+    const id = addGate("h", "H", ["q0"])!;
+    const before = useCircuitStore.getState();
+    const historyLength = before.history.length;
+    const operations = before.circuit.operations;
+
+    expect(before.moveOperations([id], 0, -1)).toBe(false);
+    let after = useCircuitStore.getState();
+    expect(after.circuit.operations).toBe(operations);
+    expect(after.history).toHaveLength(historyLength);
+    expect(showAppToast).not.toHaveBeenCalled();
+
+    resetCircuitStore();
+    const barrierId = addGate("barrier", "Barrier", ["q0", "q1"])!;
+    const beforeBarrierMove = useCircuitStore.getState();
+    expect(beforeBarrierMove.moveOperations([barrierId], 0, 1)).toBe(false);
+    after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(beforeBarrierMove.history.length);
+    expect(showAppToast).not.toHaveBeenCalled();
+  });
+
+  it("rejects a group conflict with one toast and no history change", () => {
+    addGate("h", "H", ["q1"], [], 1);
+    const movingId = addGate("x", "X", ["q0"], [], 0)!;
+    const before = useCircuitStore.getState();
+    const operations = before.circuit.operations;
+    const historyLength = before.history.length;
+    const historyIndex = before.historyIndex;
+
+    expect(before.moveOperations([movingId], 1, 1)).toBe(false);
+
+    const after = useCircuitStore.getState();
+    expect(after.circuit.operations).toBe(operations);
+    expect(after.history).toHaveLength(historyLength);
+    expect(after.historyIndex).toBe(historyIndex);
+    expect(showAppToast).toHaveBeenCalledWith(
+      "q1 already has a gate (H) in column 2 — drop it on an empty spot."
+    );
+  });
+
+  it("returns false for a zero delta or empty move list", () => {
+    const id = addGate("h", "H", ["q0"])!;
+    const before = useCircuitStore.getState();
+
+    expect(before.moveOperations([id], 0, 0)).toBe(false);
+    expect(before.moveOperations([], 1, 0)).toBe(false);
+
+    const after = useCircuitStore.getState();
+    expect(after.history).toHaveLength(before.history.length);
+    expect(after.historyIndex).toBe(before.historyIndex);
   });
 });

@@ -53,6 +53,7 @@ interface CircuitState {
   circuit: Circuit;
   currentProjectId: string | null;
   selectedOperationId: string | null;
+  selectedOperationIds: string[];
   clipboard: Operation | null;
   validationWarnings: string[];
   history: HistoryEntry[];
@@ -76,6 +77,8 @@ interface CircuitState {
   commitActivityToWorkspace: () => void;
   resetCircuit: () => void;
   setSelectedOperation: (id: string | null) => void;
+  toggleOperationSelection: (id: string) => void;
+  setOperationSelection: (ids: string[]) => void;
 
   addQubit: () => void;
   removeQubit: (qubitId: string) => void;
@@ -95,7 +98,13 @@ interface CircuitState {
   setParameterBinding: (name: string, value: number) => void;
   clearParameterBinding: (name: string) => void;
   removeOperation: (id: string) => void;
+  removeOperations: (ids: string[]) => void;
   moveOperation: (id: string, column: number) => void;
+  moveOperations: (
+    ids: string[],
+    columnDelta: number,
+    wireDelta: number
+  ) => boolean;
   relocateOperation: (
     id: string,
     column: number,
@@ -125,6 +134,86 @@ interface CircuitState {
   renameProject: (id: string, name: string) => void;
   duplicateProject: (id: string) => void;
   deleteProject: (id: string) => void;
+}
+
+function singleSelection(id: string | null) {
+  return {
+    selectedOperationId: id,
+    selectedOperationIds: id ? [id] : [],
+  };
+}
+
+function selectionWithin(
+  state: Pick<CircuitState, "selectedOperationId" | "selectedOperationIds">,
+  operations: Operation[]
+) {
+  const operationIds = new Set(operations.map((operation) => operation.id));
+  const selectedOperationIds = state.selectedOperationIds.filter((id) =>
+    operationIds.has(id)
+  );
+  const selectedOperationId =
+    state.selectedOperationId && operationIds.has(state.selectedOperationId)
+      ? state.selectedOperationId
+      : selectedOperationIds[selectedOperationIds.length - 1] ?? null;
+
+  return { selectedOperationId, selectedOperationIds };
+}
+
+function sameOperationSignature(left: Operation, right: Operation) {
+  const sameValues = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((value, index) => value === b[index]);
+
+  return (
+    left.type === right.type &&
+    left.column === right.column &&
+    sameValues(left.targets, right.targets) &&
+    sameValues(left.controls, right.controls) &&
+    sameValues(left.classicalTargets, right.classicalTargets)
+  );
+}
+
+function remapSelection(
+  oldOperations: Operation[],
+  newOperations: Operation[],
+  selectedIds: string[],
+  primaryId: string | null
+) {
+  const oldById = new Map(oldOperations.map((operation) => [operation.id, operation]));
+  const newById = new Map(newOperations.map((operation) => [operation.id, operation]));
+  const uniqueSelectedIds = [...new Set(selectedIds)];
+  const usedIds = new Set(
+    uniqueSelectedIds.filter((id) => newById.has(id))
+  );
+  const mappedIds = new Map<string, string>();
+
+  for (const id of uniqueSelectedIds) {
+    if (newById.has(id)) {
+      mappedIds.set(id, id);
+      continue;
+    }
+
+    const oldOperation = oldById.get(id);
+    if (!oldOperation) continue;
+    const match = newOperations.find(
+      (operation) =>
+        !usedIds.has(operation.id) &&
+        sameOperationSignature(oldOperation, operation)
+    );
+    if (match) {
+      usedIds.add(match.id);
+      mappedIds.set(id, match.id);
+    }
+  }
+
+  const selectedOperationIds = uniqueSelectedIds
+    .map((id) => mappedIds.get(id))
+    .filter((id): id is string => id !== undefined);
+  const selectedOperationId =
+    (primaryId ? mappedIds.get(primaryId) : undefined) ??
+    selectedOperationIds[selectedOperationIds.length - 1] ??
+    null;
+
+  return { selectedOperationId, selectedOperationIds };
 }
 
 const PROJECTS_KEY = "qiskit-visualizer-projects";
@@ -212,7 +301,7 @@ export const useCircuitStore = create<CircuitState>()(
             buildWorkspace: null,
             circuit,
             currentProjectId: backup.currentProjectId,
-            selectedOperationId: null,
+            ...singleSelection(null),
             history:
               backup.history.length > 0
                 ? backup.history
@@ -230,6 +319,7 @@ export const useCircuitStore = create<CircuitState>()(
       circuit: createEmptyCircuit("Untitled Circuit", 2, 0),
       currentProjectId: null,
       selectedOperationId: null,
+      selectedOperationIds: [],
       clipboard: null,
       validationWarnings: [],
       history: [{ circuit: createEmptyCircuit("Untitled Circuit", 2, 0) }],
@@ -241,6 +331,12 @@ export const useCircuitStore = create<CircuitState>()(
         const safe = prepareCircuit(circuit, { fallbackName: circuit.name });
         set((state) => ({
           circuit: safe,
+          ...remapSelection(
+            state.circuit.operations,
+            safe.operations,
+            state.selectedOperationIds,
+            state.selectedOperationId
+          ),
           ...pushHistory({ ...state, circuit: safe }),
         }));
       },
@@ -250,7 +346,7 @@ export const useCircuitStore = create<CircuitState>()(
         set((state) => ({
           circuit: safe,
           currentProjectId: null,
-          selectedOperationId: null,
+          ...singleSelection(null),
           ...pushHistory({ ...state, circuit: safe }),
         }));
       },
@@ -273,7 +369,7 @@ export const useCircuitStore = create<CircuitState>()(
             buildWorkspace,
             circuit: safe,
             currentProjectId: null,
-            selectedOperationId: null,
+            ...singleSelection(null),
             history: [{ circuit: structuredClone(safe) }],
             historyIndex: 0,
             validationWarnings: validateCircuitPlacement(safe),
@@ -309,13 +405,44 @@ export const useCircuitStore = create<CircuitState>()(
         set((state) => ({
           circuit,
           currentProjectId: null,
-          selectedOperationId: null,
+          ...singleSelection(null),
           buildWorkspace: null,
           ...pushHistory({ ...state, circuit }),
         }));
       },
 
-      setSelectedOperation: (id) => set({ selectedOperationId: id }),
+      setSelectedOperation: (id) => set(singleSelection(id)),
+
+      toggleOperationSelection: (id) => {
+        set((state) => {
+          if (!state.selectedOperationIds.includes(id)) {
+            return {
+              selectedOperationId: id,
+              selectedOperationIds: [...state.selectedOperationIds, id],
+            };
+          }
+          const selectedOperationIds = state.selectedOperationIds.filter(
+            (selectedId) => selectedId !== id
+          );
+          const selectedOperationId =
+            selectedOperationIds[selectedOperationIds.length - 1] ?? null;
+          return { selectedOperationId, selectedOperationIds };
+        });
+      },
+
+      setOperationSelection: (ids) => {
+        set((state) => {
+          const existingIds = new Set(
+            state.circuit.operations.map((operation) => operation.id)
+          );
+          const selectedOperationIds = [...new Set(ids)].filter((id) =>
+            existingIds.has(id)
+          );
+          const selectedOperationId =
+            selectedOperationIds[selectedOperationIds.length - 1] ?? null;
+          return { selectedOperationId, selectedOperationIds };
+        });
+      },
 
       addQubit: () => {
         set((state) => {
@@ -515,7 +642,7 @@ export const useCircuitStore = create<CircuitState>()(
           };
           return {
             circuit,
-            selectedOperationId: op.id,
+            ...singleSelection(op.id),
             ...pushHistory({ ...state, circuit }),
           };
         });
@@ -596,10 +723,33 @@ export const useCircuitStore = create<CircuitState>()(
             ...state.circuit,
             operations: state.circuit.operations.filter((op) => op.id !== id),
           };
+          const selectedOperationIds = state.selectedOperationIds.filter(
+            (selectedId) => selectedId !== id
+          );
+          const selectedOperationId =
+            state.selectedOperationId === id
+              ? selectedOperationIds[selectedOperationIds.length - 1] ?? null
+              : state.selectedOperationId;
           return {
             circuit,
-            selectedOperationId:
-              state.selectedOperationId === id ? null : state.selectedOperationId,
+            selectedOperationId,
+            selectedOperationIds,
+            ...pushHistory({ ...state, circuit }),
+          };
+        });
+      },
+
+      removeOperations: (ids) => {
+        const operationIds = new Set(ids);
+        set((state) => {
+          const operations = state.circuit.operations.filter(
+            (operation) => !operationIds.has(operation.id)
+          );
+          if (operations.length === state.circuit.operations.length) return state;
+          const circuit = { ...state.circuit, operations };
+          return {
+            circuit,
+            ...singleSelection(null),
             ...pushHistory({ ...state, circuit }),
           };
         });
@@ -633,6 +783,86 @@ export const useCircuitStore = create<CircuitState>()(
           return { circuit, ...pushHistory({ ...state, circuit }) };
         });
         if (conflictMessage) showAppToast(conflictMessage);
+      },
+
+      moveOperations: (ids, columnDelta, wireDelta) => {
+        if (ids.length === 0 || (columnDelta === 0 && wireDelta === 0)) {
+          return false;
+        }
+
+        let moved = false;
+        let conflictMessage: string | null = null;
+        set((state) => {
+          const operationIds = new Set(ids);
+          const movingOperations = state.circuit.operations.filter((operation) =>
+            operationIds.has(operation.id)
+          );
+          if (movingOperations.length === 0) return state;
+          if (
+            wireDelta !== 0 &&
+            movingOperations.some((operation) => operation.type === "barrier")
+          ) {
+            return state;
+          }
+
+          const shiftedOperations = new Map<string, Operation>();
+          let changed = false;
+          for (const operation of movingOperations) {
+            const column = operation.column + columnDelta;
+            if (column < 0) return state;
+
+            const shiftWire = (wireId: string): string | null => {
+              const match = /^q(\d+)$/.exec(wireId);
+              if (!match) return null;
+              const wireIndex = Number(match[1]) + wireDelta;
+              if (wireIndex < 0 || wireIndex >= state.circuit.qubits.length) {
+                return null;
+              }
+              return `q${wireIndex}`;
+            };
+            const targets = operation.targets.map(shiftWire);
+            const controls = operation.controls.map(shiftWire);
+            if (targets.includes(null) || controls.includes(null)) return state;
+
+            const shifted = {
+              ...operation,
+              column,
+              targets: targets as string[],
+              controls: controls as string[],
+            };
+            changed ||=
+              column !== operation.column ||
+              shifted.targets.some(
+                (wire, index) => wire !== operation.targets[index]
+              ) ||
+              shifted.controls.some(
+                (wire, index) => wire !== operation.controls[index]
+              );
+            shiftedOperations.set(operation.id, shifted);
+          }
+          if (!changed) return state;
+
+          const operations = state.circuit.operations.map(
+            (operation) => shiftedOperations.get(operation.id) ?? operation
+          );
+          for (const operation of shiftedOperations.values()) {
+            const conflict = findPlacementConflict(
+              operations,
+              operation,
+              operation.id
+            );
+            if (conflict) {
+              conflictMessage = placementConflictMessage(conflict, operation);
+              return state;
+            }
+          }
+
+          const circuit = { ...state.circuit, operations };
+          moved = true;
+          return { circuit, ...pushHistory({ ...state, circuit }) };
+        });
+        if (conflictMessage) showAppToast(conflictMessage);
+        return moved;
       },
 
       relocateOperation: (id, column, qubitIndex) => {
@@ -705,7 +935,7 @@ export const useCircuitStore = create<CircuitState>()(
           };
           return {
             circuit,
-            selectedOperationId: null,
+            ...singleSelection(null),
             ...pushHistory({ ...state, circuit }),
           };
         });
@@ -717,7 +947,7 @@ export const useCircuitStore = create<CircuitState>()(
           return {
             circuit,
             currentProjectId: null,
-            selectedOperationId: null,
+            ...singleSelection(null),
             ...pushHistory({ ...state, circuit }),
           };
         });
@@ -800,29 +1030,31 @@ export const useCircuitStore = create<CircuitState>()(
       },
 
       undo: () => {
-        const { historyIndex, history } = get();
-        if (historyIndex > 0) {
-          const newIndex = historyIndex - 1;
-          const circuit = prepareCircuit(history[newIndex].circuit);
-          set({
+        set((state) => {
+          if (state.historyIndex <= 0) return state;
+          const newIndex = state.historyIndex - 1;
+          const circuit = prepareCircuit(state.history[newIndex].circuit);
+          return {
             historyIndex: newIndex,
             circuit,
+            ...selectionWithin(state, circuit.operations),
             validationWarnings: validateCircuitPlacement(circuit),
-          });
-        }
+          };
+        });
       },
 
       redo: () => {
-        const { historyIndex, history } = get();
-        if (historyIndex < history.length - 1) {
-          const newIndex = historyIndex + 1;
-          const circuit = prepareCircuit(history[newIndex].circuit);
-          set({
+        set((state) => {
+          if (state.historyIndex >= state.history.length - 1) return state;
+          const newIndex = state.historyIndex + 1;
+          const circuit = prepareCircuit(state.history[newIndex].circuit);
+          return {
             historyIndex: newIndex,
             circuit,
+            ...selectionWithin(state, circuit.operations),
             validationWarnings: validateCircuitPlacement(circuit),
-          });
-        }
+          };
+        });
       },
 
       canUndo: () => get().historyIndex > 0,
