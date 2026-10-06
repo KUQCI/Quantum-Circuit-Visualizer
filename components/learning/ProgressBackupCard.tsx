@@ -3,10 +3,10 @@
 import { useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
 import {
-  createProgressBackup,
   parseProgressBackup,
   type ProgressBackup,
 } from "@/lib/learning/progress-backup";
+import { downloadProgressBackup } from "@/lib/learning/progress-backup-download";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { Button } from "@/components/ui/button";
@@ -34,21 +34,7 @@ export function ProgressBackupCard() {
   const [status, setStatus] = useState<string | null>(null);
 
   const exportBackup = () => {
-    const backup = createProgressBackup(
-      useProgressStore.getState().exportSnapshot(),
-      useCircuitStore.getState().projects
-    );
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `qci-progress-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadProgressBackup();
     setError(null);
     setStatus("Backup exported.");
   };

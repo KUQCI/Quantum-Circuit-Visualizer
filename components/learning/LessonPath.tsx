@@ -3,38 +3,27 @@
 import { LESSONS } from "@/lib/learning/lessons";
 import {
   MODULE_LABELS,
+  MODULE_ORDER,
   MODULE_WHY,
-  type ModuleId,
 } from "@/lib/learning/progress";
-import {
-  isLessonUnlockedByOrder,
-  useProgressStore,
-} from "@/store/progress-store";
+import { isLessonOpenForLearner } from "@/lib/learning/classroom";
+import { useClassroomStore } from "@/store/classroom-store";
+import { useProgressStore } from "@/store/progress-store";
 import { getNextLesson } from "@/lib/navigation/flow";
 import { LessonCard } from "./LessonCard";
 import { Reveal } from "@/components/motion/Reveal";
 import { cn } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
-const MODULE_ORDER: ModuleId[] = [
-  "quantum-basics",
-  "single-qubit-gates",
-  "measurement",
-  "multi-qubit-gates",
-  "entanglement",
-  "algorithms",
-  "qiskit",
-  "capstone",
-  "quantum-ml",
-];
-
 export function LessonPath() {
   const completedLessons = useProgressStore((s) => s.completedLessons);
+  const joined = useClassroomStore((s) => s.joined);
   const progressHydrated = usePersistHydrated(useProgressStore.persist);
+  const classroomHydrated = usePersistHydrated(useClassroomStore.persist);
   const lessonMeta = LESSONS.map((l) => ({ id: l.id, order: l.order }));
   const nextLesson = getNextLesson(completedLessons);
 
-  if (!progressHydrated) {
+  if (!progressHydrated || !classroomHydrated) {
     return (
       <div className="flex min-h-24 items-center justify-center text-sm text-[var(--color-muted-foreground)]">
         Loading…
@@ -116,12 +105,18 @@ export function LessonPath() {
             </div>
             <div className="relative grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {moduleLessons.map((lesson) => {
-                const unlocked = isLessonUnlockedByOrder(
-                  lesson.id,
-                  lesson.order,
-                  completedLessons,
-                  lessonMeta
-                );
+                const classLesson =
+                  joined?.lessonIds.includes(lesson.id) ?? false;
+                const unlocked =
+                  classLesson ||
+                  (moduleUnlocked &&
+                    isLessonOpenForLearner(
+                      lesson.id,
+                      lesson.order,
+                      completedLessons,
+                      lessonMeta,
+                      joined?.lessonIds ?? null
+                    ));
                 const prev = lessonMeta.find((l) => l.order === lesson.order - 1);
                 const prevLesson = prev
                   ? LESSONS.find((l) => l.id === prev.id)
@@ -130,8 +125,9 @@ export function LessonPath() {
                   <Reveal key={lesson.id} delay={(lesson.order % 3) * 60}>
                     <LessonCard
                       lesson={lesson}
-                    unlocked={moduleUnlocked && unlocked}
+                      unlocked={unlocked}
                       completed={completedLessons.includes(lesson.id)}
+                      classLesson={classLesson}
                       recommended={nextLesson?.id === lesson.id}
                       lockedReason={
                         !moduleUnlocked

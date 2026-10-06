@@ -40,6 +40,7 @@ import {
   RotateCcw,
   Bird,
   MessageCircle,
+  Users,
 } from "lucide-react";
 
 const primaryNav = [
@@ -52,6 +53,7 @@ const primaryNav = [
 
 const secondaryNav = [
   { href: "/progress", label: "Progress", icon: BarChart3 },
+  { href: "/classroom", label: "Classroom", icon: Users },
   { href: "/achievements", label: "Achievements", icon: Award },
   { href: "/docs/composer", label: "Docs", icon: BookOpen },
   { href: "/docs/assets", label: "Asset Tracker", icon: Palette },

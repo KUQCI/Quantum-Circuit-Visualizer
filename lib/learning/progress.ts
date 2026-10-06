@@ -43,6 +43,18 @@ export function getLevelFromXp(xp: number): number {
   return level;
 }
 
+export function isLessonUnlockedByOrder(
+  lessonId: string,
+  lessonOrder: number,
+  completedLessons: readonly string[],
+  allLessonIds: readonly { id: string; order: number }[]
+): boolean {
+  if (lessonOrder <= 1) return true;
+  const prev = allLessonIds.find((lesson) => lesson.order === lessonOrder - 1);
+  if (!prev) return true;
+  return completedLessons.includes(prev.id);
+}
+
 export function xpForNextLevel(xp: number): {
   currentLevel: number;
   nextLevel: number | null;
@@ -109,6 +121,7 @@ export const MODULE_IDS = [
 ] as const;
 
 export type ModuleId = (typeof MODULE_IDS)[number];
+export const MODULE_ORDER: readonly ModuleId[] = MODULE_IDS;
 
 export const MODULE_LABELS: Record<ModuleId, string> = {
   "quantum-basics": "Quantum Basics",

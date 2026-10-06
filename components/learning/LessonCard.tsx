@@ -12,6 +12,7 @@ interface LessonCardProps {
   completed: boolean;
   lockedReason?: string;
   recommended?: boolean;
+  classLesson?: boolean;
 }
 
 const difficultyColors = {
@@ -26,6 +27,7 @@ export function LessonCard({
   completed,
   lockedReason,
   recommended,
+  classLesson = false,
 }: LessonCardProps) {
   return (
     <div
@@ -40,6 +42,11 @@ export function LessonCard({
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex flex-wrap gap-1.5">
+          {classLesson && (
+            <span className="rounded-md bg-[var(--color-brand-subtle)] px-2 py-0.5 text-xs font-medium text-[var(--color-brand)]">
+              Class
+            </span>
+          )}
           {recommended && (
             <span className="rounded-md bg-[var(--color-brand-subtle)] px-2 py-0.5 text-xs font-medium text-[var(--color-brand)]">
               Next

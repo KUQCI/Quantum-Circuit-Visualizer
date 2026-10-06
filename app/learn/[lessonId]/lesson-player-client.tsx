@@ -6,7 +6,9 @@ import { LockedActivityState } from "@/components/learning/LockedActivityState";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { getLessonBreadcrumbs } from "@/lib/navigation/flow";
 import { LESSONS } from "@/lib/learning/lessons";
-import { isLessonUnlockedByOrder, useProgressStore } from "@/store/progress-store";
+import { isLessonOpenForLearner } from "@/lib/learning/classroom";
+import { useClassroomStore } from "@/store/classroom-store";
+import { useProgressStore } from "@/store/progress-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
 export function LessonPlayerClient({
@@ -23,10 +25,12 @@ export function LessonPlayerClient({
   relatedLabel?: string;
 }) {
   const completedLessons = useProgressStore((s) => s.completedLessons);
+  const joined = useClassroomStore((s) => s.joined);
   const progressHydrated = usePersistHydrated(useProgressStore.persist);
+  const classroomHydrated = usePersistHydrated(useClassroomStore.persist);
   const allIds = LESSONS.map((l) => ({ id: l.id, order: l.order }));
 
-  if (!progressHydrated) {
+  if (!progressHydrated || !classroomHydrated) {
     return (
       <div className="learning-workspace-shell flex min-h-0 flex-1 items-center justify-center p-8 text-sm text-[var(--color-muted-foreground)]">
         Loading lesson…
@@ -34,11 +38,12 @@ export function LessonPlayerClient({
     );
   }
 
-  const unlocked = isLessonUnlockedByOrder(
+  const unlocked = isLessonOpenForLearner(
     lesson.id,
     lesson.order,
     completedLessons,
-    allIds
+    allIds,
+    joined?.lessonIds ?? null
   );
 
   if (!unlocked) {

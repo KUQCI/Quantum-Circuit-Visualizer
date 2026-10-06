@@ -7,6 +7,7 @@ import {
   getLevelFromXp,
   updateStreak,
 } from "@/lib/learning/progress";
+export { isLessonUnlockedByOrder } from "@/lib/learning/progress";
 import type { SkillTag } from "@/lib/learning/types";
 import {
   completedModulesFor,
@@ -395,19 +396,6 @@ export const useProgressStore = create<ProgressState>()(
     }
   )
 );
-
-/** Sequential lesson unlock: previous lesson must be complete */
-export function isLessonUnlockedByOrder(
-  lessonId: string,
-  lessonOrder: number,
-  completedLessons: string[],
-  allLessonIds: { id: string; order: number }[]
-): boolean {
-  if (lessonOrder <= 1) return true;
-  const prev = allLessonIds.find((l) => l.order === lessonOrder - 1);
-  if (!prev) return true;
-  return completedLessons.includes(prev.id);
-}
 
 /** Challenge tier unlock */
 export function isChallengeUnlockedByTier(

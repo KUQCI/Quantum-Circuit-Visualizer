@@ -6,6 +6,7 @@ import type {
 import type { SkillTag } from "@/lib/learning/types";
 import { LESSONS } from "@/lib/learning/lessons";
 import { MODULE_IDS } from "@/lib/learning/progress";
+import { normalizeClassCode } from "@/lib/learning/classroom";
 import { asBoolean, asNumber, asStringArray } from "@/lib/safe-persist";
 import { prepareCircuit } from "@/lib/circuit-guard";
 import { validateCircuit } from "@/lib/validation";
@@ -18,6 +19,7 @@ export interface ProgressBackup {
   exportedAt: string;
   progress: PersistedProgress;
   projects: Project[];
+  learner?: { name: string; classCode: string | null };
 }
 
 const SKILL_TAGS: SkillTag[] = [
@@ -161,15 +163,36 @@ function sanitizeProgress(value: unknown): PersistedProgress {
 
 export function createProgressBackup(
   progress: PersistedProgress,
-  projects: Project[]
+  projects: Project[],
+  learner?: { name: string; classCode: string | null }
 ): ProgressBackup {
+  const learnerName =
+    typeof learner?.name === "string" ? learner.name.trim().slice(0, 60) : "";
+  const classCode = normalizeClassCode(learner?.classCode);
+  const learnerInfo =
+    learnerName || classCode
+      ? { name: learnerName, classCode }
+      : undefined;
+
   return {
     kind: "qci-progress-backup",
     version: PROGRESS_BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     progress: sanitizeProgress(progress),
     projects: sanitizeProjects(projects),
+    ...(learnerInfo ? { learner: learnerInfo } : {}),
   };
+}
+
+function sanitizeLearner(value: unknown): ProgressBackup["learner"] | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const name =
+    typeof record.name === "string" ? record.name.trim().slice(0, 60) : "";
+  const classCode = normalizeClassCode(record.classCode);
+  return name || classCode ? { name, classCode } : undefined;
 }
 
 export function parseProgressBackup(
@@ -203,6 +226,8 @@ export function parseProgressBackup(
     return { ok: false, error: "Backup is missing project data" };
   }
 
+  const learner = sanitizeLearner(record.learner);
+
   return {
     ok: true,
     backup: {
@@ -214,6 +239,7 @@ export function parseProgressBackup(
           : new Date().toISOString(),
       progress: sanitizeProgress(record.progress),
       projects: sanitizeProjects(record.projects),
+      ...(learner ? { learner } : {}),
     },
   };
 }
