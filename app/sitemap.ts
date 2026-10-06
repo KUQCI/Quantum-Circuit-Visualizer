@@ -10,6 +10,7 @@ const STATIC_ROUTES = [
   "/",
   "/editor",
   "/learn",
+  "/classroom",
   "/progress",
   "/achievements",
   "/projects",

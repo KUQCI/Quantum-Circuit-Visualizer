@@ -60,6 +60,67 @@ describe("progress backups", () => {
     expect(parsed).toEqual({ ok: true, backup });
   });
 
+  it("round-trips optional learner information", () => {
+    const backup = createProgressBackup(emptyProgress(), [], {
+      name: "  Ada Lovelace  ",
+      classCode: " qci-2026 ",
+    });
+
+    expect(backup.learner).toEqual({
+      name: "Ada Lovelace",
+      classCode: "QCI-2026",
+    });
+    expect(parseProgressBackup(JSON.stringify(backup))).toEqual({
+      ok: true,
+      backup,
+    });
+  });
+
+  it("omits empty learner information and remains compatible with old backups", () => {
+    const backup = createProgressBackup(emptyProgress(), [], {
+      name: "  ",
+      classCode: null,
+    });
+    expect(backup).not.toHaveProperty("learner");
+
+    const parsed = parseProgressBackup(
+      JSON.stringify({
+        kind: "qci-progress-backup",
+        version: 1,
+        progress: emptyProgress(),
+        projects: [],
+      })
+    );
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) expect(parsed.backup).not.toHaveProperty("learner");
+  });
+
+  it("omits malformed learner values and sanitizes learner fields", () => {
+    const validBackup = createProgressBackup(emptyProgress(), []);
+    const malformed = parseProgressBackup(
+      JSON.stringify({ ...validBackup, learner: 42 })
+    );
+    expect(malformed.ok).toBe(true);
+    if (malformed.ok) expect(malformed.backup).not.toHaveProperty("learner");
+
+    const sanitized = parseProgressBackup(
+      JSON.stringify({
+        ...validBackup,
+        learner: {
+          name: `  ${"A".repeat(70)}  `,
+          classCode: "bad code",
+        },
+      })
+    );
+    expect(sanitized.ok).toBe(true);
+    if (sanitized.ok) {
+      expect(sanitized.backup.learner).toEqual({
+        name: "A".repeat(60),
+        classCode: null,
+      });
+    }
+  });
+
   it("rejects invalid JSON, kind, and version", () => {
     expect(parseProgressBackup("{")).toEqual({
       ok: false,

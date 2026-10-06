@@ -37,6 +37,11 @@ const tips: Record<string, string[]> = {
     "Try Sandbox when you want a fresh circuit challenge.",
     "A small daily goal is enough to keep your learning streak moving.",
   ],
+  "/classroom": [
+    "Build a playlist in curriculum order and share its link with your learners.",
+    "Learners can download a backup to send their progress back to you.",
+    "Roster files stay in this browser; nothing is uploaded.",
+  ],
   "/challenges": [
     "Challenges are untimed, so focus on why each gate changes the state.",
     "Sandbox generates a fresh circuit to explore.",
@@ -91,6 +96,8 @@ const help: Record<string, string> = {
     "Build is where you compose and simulate circuits. Add gates, inspect their parameters, run the circuit, and share or export the result.",
   "/learn":
     "Learn guides you through short quantum-computing lessons. Choose a module, complete its build task, and review what you have practised.",
+  "/classroom":
+    "Classroom lets you create lesson playlists and review learner progress backups. Files stay in this browser and are not uploaded.",
   "/challenges":
     "Challenges are practice puzzles for applying quantum ideas. Choose a challenge, inspect the target, and use the canvas to find a solution.",
   "/progress":
@@ -142,6 +149,8 @@ export function greetingFor(
       "Drag a gate onto a wire, then press Run — I'll show what changed in the state.",
     "/learn":
       "Start at the top if you're new; each lesson is a few minutes with a build task at the end.",
+    "/classroom":
+      "Choose lessons, share the playlist link, then import learner backups to review progress locally.",
     "/challenges":
       "Challenges are timed-free puzzles. Sandbox gives you a fresh one every day.",
     "/progress":

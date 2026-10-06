@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { QuantaMessage } from "@/components/mascot/QuantaMessage";
 import { QuantaCard } from "@/components/mascot/QuantaCard";
 import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { LessonPath } from "@/components/learning/LessonPath";
+import {
+  JoinedClassCard,
+  PlaylistInvitationCard,
+} from "@/components/learning/ClassPlaylistCards";
 import { ProgressSummary } from "@/components/learning/ProgressSummary";
 import { ProgressHydrationGate } from "@/components/layout/progress-hydration-gate";
 import { ContinueWhereYouLeftOff } from "@/components/navigation/ContinueWhereYouLeftOff";
@@ -74,6 +79,8 @@ export default function LearnPage() {
 
   return (
     <div className="page-container max-w-5xl">
+      <PlaylistInvitationCard />
+      <JoinedClassCard />
       {completedLessons.length === 0 && totalXp === 0 && (
         <QuantaEmptyState
           className="mb-6"
@@ -284,6 +291,14 @@ export default function LearnPage() {
           <h2 className="mb-4 text-xl font-semibold text-[var(--color-foreground)]">
             Lesson path
           </h2>
+          <p className="mb-4 text-sm">
+            <Link
+              href="/classroom"
+              className="font-medium text-[var(--color-brand)] hover:underline"
+            >
+              Teaching a class? Open teacher tools
+            </Link>
+          </p>
           <LessonPath />
         </Reveal>
       </ProgressHydrationGate>
