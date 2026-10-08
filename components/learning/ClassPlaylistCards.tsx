@@ -59,7 +59,7 @@ function PlaylistInvitation() {
     <Card className="mb-6 border-[var(--color-brand-border)]">
       <CardHeader>
         <p className="qci-section-eyebrow">Class playlist</p>
-        <CardTitle>{playlist.title}</CardTitle>
+        <CardTitle className="[overflow-wrap:anywhere]">{playlist.title}</CardTitle>
         <CardDescription>
           {playlist.classCode
             ? `Class code: ${playlist.classCode} · `
@@ -135,7 +135,7 @@ export function JoinedClassCard() {
     <Card className="mb-6 border-[var(--color-brand-border)]">
       <CardHeader>
         <p className="qci-section-eyebrow">Your class</p>
-        <CardTitle>{joined.title}</CardTitle>
+        <CardTitle className="[overflow-wrap:anywhere]">{joined.title}</CardTitle>
         <CardDescription>
           {joined.classCode ? `Class code: ${joined.classCode} · ` : ""}
           {done}/{lessons.length} lessons complete
