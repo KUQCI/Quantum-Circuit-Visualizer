@@ -46,7 +46,6 @@ export function QuantaChat() {
   const messages = useQuantaChatStore((state) => state.messages);
   const pending = useQuantaChatStore((state) => state.pending);
   const error = useQuantaChatStore((state) => state.error);
-  const usage = useQuantaChatStore((state) => state.usage);
   const lastSentAt = useQuantaChatStore((state) => state.lastSentAt);
   const setApiKey = useQuantaChatStore((state) => state.setApiKey);
   const clearApiKey = useQuantaChatStore((state) => state.clearApiKey);
@@ -363,11 +362,7 @@ export function QuantaChat() {
                 <Send className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--color-muted-foreground)]">
-              <span>
-                ~{usage.promptTokens + usage.outputTokens} tokens ·{" "}
-                {usage.requests} requests this session
-              </span>
+            <div className="flex items-center justify-end gap-2 text-[11px] text-[var(--color-muted-foreground)]">
               <button
                 type="button"
                 onClick={clearChat}
