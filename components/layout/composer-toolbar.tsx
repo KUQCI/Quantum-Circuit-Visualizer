@@ -10,12 +10,11 @@ import { ManageRegistersDialog } from "@/components/circuit/manage-registers-dia
 import { RunCircuitDialog } from "@/components/execution/run-circuit-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { getCodeLanguage } from "@/lib/code-adapters";
-import { downloadTextFile } from "@/lib/utils";
+import { copyText, downloadTextFile } from "@/lib/utils";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
-import { encodeCircuitToShare } from "@/lib/share-link";
+import { buildShareUrl } from "@/lib/share-link";
 import { showAppToast } from "@/lib/app-toast";
-import { withBasePath } from "@/lib/routes";
 import { sampleCircuitsMap } from "@/lib/sample-circuits";
 import {
   Save,
@@ -113,22 +112,21 @@ export function ComposerToolbar() {
 
   const handleCopyShareLink = async () => {
     if (!circuitHasContent(circuit)) return;
-    const link = `${window.location.origin}${withBasePath(
-      `/editor?share=${encodeCircuitToShare(circuit)}`
-    )}`;
+
+    let link: string;
     try {
-      await navigator.clipboard.writeText(link);
+      link = buildShareUrl(circuit, window.location.origin);
     } catch {
-      const input = document.createElement("textarea");
-      input.value = link;
-      input.style.position = "fixed";
-      input.style.opacity = "0";
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      input.remove();
+      showAppToast("This circuit is too large to share as a link");
+      return;
     }
-    showAppToast("Link copied");
+
+    try {
+      await copyText(link);
+      showAppToast("Link copied");
+    } catch {
+      showAppToast("Could not copy link");
+    }
   };
 
   const fileItems = [

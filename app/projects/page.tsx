@@ -16,12 +16,15 @@ import { PageActions } from "@/components/navigation/PageActions";
 import { QuantaEmptyState } from "@/components/mascot/QuantaEmptyState";
 import { useCircuitStore, circuitHasContent } from "@/store/circuit-store";
 import { PROJECT_TEMPLATES } from "@/lib/project-templates";
-import { formatDate, pluralize } from "@/lib/utils";
+import { buildShareUrl } from "@/lib/share-link";
+import { copyText, formatDate, pluralize } from "@/lib/utils";
 import { quantaMessages } from "@/lib/mascot/messages";
+import { showAppToast } from "@/lib/app-toast";
 import {
   Plus,
   FolderOpen,
   Copy,
+  Share2,
   Trash2,
   Pencil,
   Save,
@@ -251,6 +254,41 @@ export default function ProjectsPage() {
                   >
                     <Copy className="h-3.5 w-3.5" />
                     Duplicate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!circuitHasContent(project.circuit)}
+                    title={
+                      !circuitHasContent(project.circuit)
+                        ? "Add a gate before sharing"
+                        : undefined
+                    }
+                    aria-label={`Copy share link for ${project.name}`}
+                    onClick={async () => {
+                      let link: string;
+                      try {
+                        link = buildShareUrl(
+                          project.circuit,
+                          window.location.origin
+                        );
+                      } catch {
+                        showAppToast(
+                          "This circuit is too large to share as a link"
+                        );
+                        return;
+                      }
+
+                      try {
+                        await copyText(link);
+                        showAppToast("Link copied");
+                      } catch {
+                        showAppToast("Could not copy link");
+                      }
+                    }}
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                    Share
                   </Button>
                   <Button
                     size="sm"

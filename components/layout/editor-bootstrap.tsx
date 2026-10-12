@@ -47,7 +47,9 @@ export function EditorBootstrap() {
           ...shared,
           name: `${shared.name || "Untitled Circuit"} (shared)`,
         });
-        showAppToast("Loaded shared circuit");
+        showAppToast(
+          "Loaded a shared circuit — Save project to keep your own copy"
+        );
       }
       const next = new URLSearchParams(searchParams.toString());
       next.delete("share");
