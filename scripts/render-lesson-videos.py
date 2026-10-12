@@ -5,19 +5,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import numpy as np
 import shutil
 import subprocess
 import sys
-import wave
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
-from piper import PiperVoice
+import soundfile as sf
+from kokoro_onnx import Kokoro
 from playwright.sync_api import sync_playwright
 
 
-SCENE_PADDING_SECONDS = 0.6
+SCENE_PAUSE_SECONDS = 0.45
+FADE_SECONDS = 0.015
+AUDIO_SAMPLE_RATE = 24000
 FRAME_WAIT_MS = 700
 VIEWPORT = {"width": 1280, "height": 720}
 
@@ -26,7 +29,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--voice", required=True, type=Path)
+    parser.add_argument("--model", required=True, type=Path)
+    parser.add_argument("--voices", required=True, type=Path)
+    parser.add_argument("--voice-name", default="af_heart")
+    parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--lessons", help="Comma-separated lesson ids to render")
     return parser.parse_args()
 
@@ -34,14 +40,6 @@ def parse_args() -> argparse.Namespace:
 def ensure_non_empty(path: Path) -> None:
     if not path.is_file() or path.stat().st_size == 0:
         raise RuntimeError(f"Expected a non-empty file: {path}")
-
-
-def wav_duration(path: Path) -> float:
-    ensure_non_empty(path)
-    with wave.open(str(path), "rb") as wav_file:
-        if wav_file.getnframes() == 0 or wav_file.getframerate() == 0:
-            raise RuntimeError(f"Audio file contains no samples: {path}")
-        return wav_file.getnframes() / wav_file.getframerate()
 
 
 def vtt_time(seconds: float) -> str:
@@ -68,7 +66,9 @@ def run_ffmpeg(command: list[str], cwd: Path | None = None) -> None:
 
 def render_lesson(
     page,
-    voice: PiperVoice,
+    kokoro: Kokoro,
+    voice_name: str,
+    speed: float,
     base_url: str,
     lesson_id: str,
     out_dir: Path,
@@ -90,6 +90,7 @@ def render_lesson(
         raise RuntimeError(f"Lesson {lesson_id} has no walkthrough scenes")
 
     segment_files: list[Path] = []
+    narration_chunks: list[np.ndarray] = []
     vtt_cues: list[str] = []
     video_time = 0.0
     for index, scene in enumerate(scene_data):
@@ -107,15 +108,51 @@ def render_lesson(
         page.wait_for_timeout(FRAME_WAIT_MS)
 
         frame_path = lesson_work / f"scene-{index:03}.png"
-        audio_path = lesson_work / f"scene-{index:03}.wav"
         segment_path = lesson_work / f"scene-{index:03}.mp4"
         page.screenshot(path=str(frame_path), animations="disabled")
         ensure_non_empty(frame_path)
 
-        with wave.open(str(audio_path), "wb") as wav_file:
-            voice.synthesize_wav(scene["speech"], wav_file)
-        duration = wav_duration(audio_path)
-        segment_duration = duration + SCENE_PADDING_SECONDS
+        samples, sample_rate = kokoro.create(
+            scene["speech"],
+            voice=voice_name,
+            speed=speed,
+            lang="en-us",
+        )
+        if sample_rate != AUDIO_SAMPLE_RATE:
+            raise RuntimeError(
+                f"Kokoro returned {sample_rate} Hz audio; "
+                f"expected {AUDIO_SAMPLE_RATE} Hz"
+            )
+        clip = np.asarray(samples, dtype=np.float32)
+        if clip.ndim != 1 or clip.size == 0:
+            raise RuntimeError(
+                f"Kokoro returned unexpected audio shape: {clip.shape}"
+            )
+        clip = clip.copy()
+        fade_samples = min(
+            int(sample_rate * FADE_SECONDS),
+            clip.size // 2,
+        )
+        if fade_samples:
+            clip[:fade_samples] *= np.linspace(
+                0.0, 1.0, fade_samples, dtype=np.float32
+            )
+            clip[-fade_samples:] *= np.linspace(
+                1.0, 0.0, fade_samples, dtype=np.float32
+            )
+
+        speech_duration = clip.size / sample_rate
+        scene_audio = np.concatenate(
+            (
+                clip,
+                np.zeros(
+                    int(sample_rate * SCENE_PAUSE_SECONDS),
+                    dtype=np.float32,
+                ),
+            )
+        )
+        scene_duration = scene_audio.size / sample_rate
+        narration_chunks.append(scene_audio)
         run_ffmpeg(
             [
                 "ffmpeg",
@@ -126,10 +163,9 @@ def render_lesson(
                 "30",
                 "-i",
                 str(frame_path),
-                "-i",
-                str(audio_path),
                 "-t",
-                f"{segment_duration:.3f}",
+                f"{scene_duration:.6f}",
+                "-an",
                 "-c:v",
                 "libx264",
                 "-tune",
@@ -142,16 +178,6 @@ def render_lesson(
                 "yuv420p",
                 "-r",
                 "30",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "96k",
-                "-ar",
-                "48000",
-                "-ac",
-                "1",
-                "-af",
-                "apad",
                 str(segment_path),
             ]
         )
@@ -161,17 +187,29 @@ def render_lesson(
         vtt_cues.extend(
             [
                 str(index + 1),
-                f"{vtt_time(video_time)} --> {vtt_time(video_time + duration)}",
+                f"{vtt_time(video_time)} --> "
+                f"{vtt_time(video_time + speech_duration)}",
                 cue_text,
                 "",
             ]
         )
-        video_time += segment_duration
+        video_time += scene_duration
         print(
             f"{lesson_id}: scene {index + 1}/{len(scene_data)} "
-            f"({duration:.2f}s speech)",
+            f"({speech_duration:.2f}s speech)",
             flush=True,
         )
+
+    narration_path = lesson_work / "narration.wav"
+    narration = np.concatenate(narration_chunks)
+    sf.write(
+        narration_path,
+        narration,
+        AUDIO_SAMPLE_RATE,
+        format="WAV",
+        subtype="PCM_16",
+    )
+    ensure_non_empty(narration_path)
 
     concat_path = lesson_work / "concat.txt"
     concat_path.write_text(
@@ -189,8 +227,23 @@ def render_lesson(
             "0",
             "-i",
             str(concat_path),
-            "-c",
+            "-i",
+            str(narration_path),
+            "-map",
+            "0:v",
+            "-map",
+            "1:a",
+            "-c:v",
             "copy",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "128k",
+            "-ar",
+            "48000",
+            "-ac",
+            "1",
+            "-shortest",
             "-movflags",
             "+faststart",
             str(video_path),
@@ -205,7 +258,7 @@ def render_lesson(
     return {
         "file": video_path.name,
         "vtt": vtt_path.name,
-        "durationSec": round(video_time, 3),
+        "durationSec": round(narration.size / AUDIO_SAMPLE_RATE, 3),
         "scenes": len(scene_data),
     }
 
@@ -215,9 +268,8 @@ def main() -> int:
     base_url = args.base_url.rstrip("/")
     if not base_url:
         raise ValueError("--base-url cannot be empty")
-    ensure_non_empty(args.voice)
-    voice_config = Path(f"{args.voice}.json")
-    ensure_non_empty(voice_config)
+    ensure_non_empty(args.model)
+    ensure_non_empty(args.voices)
 
     args.out.mkdir(parents=True, exist_ok=True)
     out_dir = args.out.resolve()
@@ -227,7 +279,7 @@ def main() -> int:
     work_dir.mkdir()
 
     try:
-        voice = PiperVoice.load(args.voice)
+        kokoro = Kokoro(str(args.model), str(args.voices))
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
             context = browser.new_context(
@@ -265,7 +317,9 @@ def main() -> int:
                 for lesson_id in requested:
                     rendered[lesson_id] = render_lesson(
                         page,
-                        voice,
+                        kokoro,
+                        args.voice_name,
+                        args.speed,
                         base_url,
                         lesson_id,
                         out_dir,
