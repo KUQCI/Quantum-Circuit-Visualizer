@@ -15,19 +15,14 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { LessonCircuitSvg } from "@/components/learning/LessonCircuitPreview";
-import { ProbabilityChart } from "@/components/visualizations/probability-chart";
-import { QSphere } from "@/components/visualizations/q-sphere";
-import { QuantaImage } from "@/components/mascot/QuantaImage";
+import { WalkthroughStage } from "@/components/learning/WalkthroughStage";
 import {
   buildLessonWalkthrough,
   estimateSceneMs,
 } from "@/lib/learning/lesson-walkthrough";
+import { lessonVideoUrl } from "@/lib/learning/lesson-videos";
 import type { LessonDefinition } from "@/lib/learning/types";
 import { computeStepSnapshots } from "@/lib/step-explanations";
 import { useSpeechNarrator } from "@/lib/learning/use-speech-narrator";
@@ -52,17 +47,15 @@ export function LessonWalkthroughPlayer({
   const [sceneIndex, setSceneIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [viewMode, setViewMode] = useState<"animated" | "video">("animated");
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [playbackRequest, setPlaybackRequest] = useState(0);
   const timerRef = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const playingRef = useRef(false);
   const sceneIndexRef = useRef(0);
   const lastSceneIndex = walkthrough.scenes.length - 1;
   const activeIndex = Math.min(sceneIndex, lastSceneIndex);
-  const activeScene = walkthrough.scenes[activeIndex];
-  const snapshot =
-    activeScene.snapshotStep === null
-      ? null
-      : snapshots[activeScene.snapshotStep] ?? null;
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -132,10 +125,13 @@ export function LessonWalkthroughPlayer({
 
   useEffect(() => {
     cancelPlayback();
+    videoRef.current?.pause();
     playingRef.current = false;
     sceneIndexRef.current = 0;
     setIsPlaying(false);
     setSceneIndex(0);
+    setViewMode("animated");
+    setVideoUnavailable(false);
   }, [cancelPlayback, lesson.id]);
 
   useEffect(
@@ -149,13 +145,29 @@ export function LessonWalkthroughPlayer({
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       cancelPlayback();
+      videoRef.current?.pause();
       playingRef.current = false;
       sceneIndexRef.current = 0;
       setIsPlaying(false);
       setSceneIndex(0);
       setPlaybackRequest((value) => value + 1);
+      setViewMode("animated");
+      setVideoUnavailable(false);
     }
     setOpen(nextOpen);
+  };
+
+  const handleViewModeChange = (nextMode: "animated" | "video") => {
+    if (nextMode === viewMode) return;
+    if (nextMode === "video") {
+      playingRef.current = false;
+      cancelPlayback();
+      setIsPlaying(false);
+      setVideoUnavailable(false);
+    } else {
+      videoRef.current?.pause();
+    }
+    setViewMode(nextMode);
   };
 
   const handlePlayPause = () => {
@@ -200,83 +212,42 @@ export function LessonWalkthroughPlayer({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl gap-4 p-4 sm:p-6">
-        <DialogHeader className="gap-1 pr-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand)]">
-            Walkthrough
-          </p>
-          <DialogTitle className="text-xl leading-tight">
-            {lesson.title}
-          </DialogTitle>
-          <DialogDescription>
-            Scene {activeIndex + 1} of {walkthrough.scenes.length}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="max-h-[30vh] min-h-[108px] overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-2 sm:max-h-[24vh]">
-          {walkthrough.circuit ? (
-            <LessonCircuitSvg
-              circuit={walkthrough.circuit}
-              selectedStep={activeScene.visibleSteps}
-              visibleSteps={activeScene.visibleSteps}
+        {viewMode === "animated" ? (
+          <WalkthroughStage
+            walkthrough={walkthrough}
+            snapshots={snapshots}
+            sceneIndex={activeIndex}
+            variant="dialog"
+          />
+        ) : (
+          <div className="space-y-2">
+            <video
+              ref={videoRef}
+              controls
+              preload="none"
+              playsInline
+              src={lessonVideoUrl(lesson.id)}
+              onError={() => setVideoUnavailable(true)}
+              className="aspect-video w-full rounded-md bg-black"
             />
-          ) : (
-            <div className="flex h-28 items-center justify-center">
-              <QuantaImage
-                variant="learning"
-                size={96}
-                alt="Quanta ready to guide the lesson"
-              />
-            </div>
-          )}
-        </div>
-
-        {snapshot && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <section
-              aria-label="State probabilities"
-              className="h-[180px] min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-2"
-            >
-              <ProbabilityChart
-                probabilities={snapshot.after.probabilities}
-                numQubits={snapshot.after.numQubits}
-                error={snapshot.after.error}
-              />
-            </section>
-            <section
-              aria-label="Q-sphere"
-              className="h-[220px] min-w-0 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-2"
-            >
-              <QSphere
-                points={snapshot.after.qSpherePoints}
-                blochVector={snapshot.after.blochVector}
-                numQubits={snapshot.after.numQubits}
-                error={snapshot.after.error}
-              />
-            </section>
+            {videoUnavailable && (
+              <p className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-muted-foreground)]">
+                <span>
+                  This lesson&apos;s video isn&apos;t available yet. The animated
+                  walkthrough above works offline.
+                </span>
+                <a
+                  href={lessonVideoUrl(lesson.id)}
+                  target="_blank"
+                  rel="noopener"
+                  className="font-medium text-[var(--color-brand)] underline underline-offset-2"
+                >
+                  Download MP4
+                </a>
+              </p>
+            )}
           </div>
         )}
-
-        <div
-          aria-live="polite"
-          aria-atomic="true"
-          className="flex min-h-16 items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/35 p-3"
-        >
-          <QuantaImage
-            variant="learning"
-            size={40}
-            bare
-            alt="Quanta"
-            className="h-10 w-10"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
-              {activeScene.title}
-            </p>
-            <p className="text-sm leading-relaxed text-[var(--color-foreground)]">
-              {activeScene.caption}
-            </p>
-          </div>
-        </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Button
@@ -336,6 +307,28 @@ export function LessonWalkthroughPlayer({
               <VolumeX className="h-4 w-4" />
             )}
             Voice
+          </Button>
+        </div>
+
+        <div
+          aria-label="Walkthrough display"
+          className="flex justify-center gap-1 rounded-md border border-[var(--color-border)] p-1"
+        >
+          <Button
+            size="sm"
+            variant={viewMode === "animated" ? "secondary" : "ghost"}
+            aria-pressed={viewMode === "animated"}
+            onClick={() => handleViewModeChange("animated")}
+          >
+            Animated
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === "video" ? "secondary" : "ghost"}
+            aria-pressed={viewMode === "video"}
+            onClick={() => handleViewModeChange("video")}
+          >
+            Video
           </Button>
         </div>
 
