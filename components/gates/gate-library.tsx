@@ -82,6 +82,12 @@ export function GateLibrary({
     { id: "all", label: "All" },
     ...GATE_CATEGORIES.filter((c) => c.id !== "modifier"),
   ];
+  const gridClassName = cn(
+    "grid gap-1.5 justify-start",
+    variant === "learning"
+      ? "grid-cols-[repeat(auto-fill,48px)]"
+      : "grid-cols-[repeat(auto-fill,44px)]"
+  );
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -135,7 +141,7 @@ export function GateLibrary({
               </div>
             </div>
             <div
-              className="mt-2 flex gap-1 overflow-x-auto whitespace-nowrap pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="mt-2 flex flex-wrap gap-1 pb-0.5"
               role="tablist"
               aria-label="Gate categories"
             >
@@ -180,7 +186,7 @@ export function GateLibrary({
                   No gates match your search.
                 </p>
               ) : (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
+                <div className={gridClassName}>
                   {lessonPalette.map((gate) => (
                     <GateGridItem
                       key={gate.type}
@@ -250,7 +256,7 @@ export function GateLibrary({
                         {category.label}
                       </p>
                     )}
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-2">
+                    <div className={gridClassName}>
                       {gates.map((gate) => (
                         <GateGridItem
                           key={gate.type}
@@ -318,7 +324,7 @@ function GateGridItem({
           className={cn(
             "flex cursor-grab select-none flex-col items-center justify-center active:cursor-grabbing active:scale-95",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-            isLearning ? "aspect-square min-h-[52px]" : "aspect-square",
+            isLearning ? "h-12 w-12" : "h-11 w-11",
             getGateColor(gate),
             selected && "quanta-gate--selected"
           )}
@@ -326,7 +332,7 @@ function GateGridItem({
           <GateSymbol
             gate={gate}
             variant="palette"
-            className={isLearning ? "h-8 w-8" : "h-7 w-7"}
+            className={isLearning ? "h-7 w-7" : "h-6 w-6"}
           />
         </div>
       </TooltipTrigger>

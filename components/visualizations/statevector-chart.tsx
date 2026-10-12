@@ -83,19 +83,29 @@ export function StatevectorChart({
 
       {view === "table" ? (
         <div
-          className="min-h-0 flex-1 overflow-auto"
+          className="min-h-0 flex-1 overflow-auto @container"
           tabIndex={0}
           aria-label="Statevector table"
         >
-          <table className="w-full text-[10px]">
+          <table className="w-full min-w-0 text-[10px]">
             <thead className="sticky top-0 bg-[var(--color-background)]">
               <tr className="border-b border-[var(--color-border)] text-left text-[var(--color-muted-foreground)]">
-                <th className="py-1 pr-2 font-medium">State</th>
-                <th className="py-1 pr-2 font-medium">Real</th>
-                <th className="py-1 pr-2 font-medium">Imag</th>
-                <th className="py-1 pr-2 font-medium">|amp|</th>
-                <th className="py-1 pr-2 font-medium">Phase</th>
-                <th className="py-1 font-medium">P(%)</th>
+                <th className="whitespace-nowrap py-1 pr-2 font-medium">State</th>
+                <th className="hidden whitespace-nowrap py-1 pr-2 text-right font-medium tabular-nums @sm:table-cell">
+                  Real
+                </th>
+                <th className="hidden whitespace-nowrap py-1 pr-2 text-right font-medium tabular-nums @sm:table-cell">
+                  Imag
+                </th>
+                <th className="whitespace-nowrap py-1 pr-2 text-right font-medium tabular-nums">
+                  |amp|
+                </th>
+                <th className="whitespace-nowrap py-1 pr-2 text-right font-medium tabular-nums">
+                  Phase
+                </th>
+                <th className="whitespace-nowrap py-1 text-right font-medium tabular-nums">
+                  P(%)
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -114,18 +124,28 @@ export function StatevectorChart({
                     key={row.label}
                     className="border-b border-[var(--color-border)]/50 font-mono"
                   >
-                    <td className="py-1 pr-2">|{row.label}⟩</td>
-                    <td className="py-1 pr-2">{row.amp.re.toFixed(4)}</td>
-                    <td className="py-1 pr-2">{row.amp.im.toFixed(4)}</td>
-                    <td className="py-1 pr-2">{row.mag.toFixed(4)}</td>
-                    <td className="py-1 pr-2">
+                    <td className="whitespace-nowrap py-1 pr-2">
+                      |{row.label}⟩
+                    </td>
+                    <td className="hidden whitespace-nowrap py-1 pr-2 text-right tabular-nums @sm:table-cell">
+                      {row.amp.re.toFixed(4)}
+                    </td>
+                    <td className="hidden whitespace-nowrap py-1 pr-2 text-right tabular-nums @sm:table-cell">
+                      {row.amp.im.toFixed(4)}
+                    </td>
+                    <td className="whitespace-nowrap py-1 pr-2 text-right tabular-nums">
+                      {row.mag.toFixed(4)}
+                    </td>
+                    <td className="whitespace-nowrap py-1 pr-2 text-right tabular-nums">
                       <span
-                        className="inline-block h-2 w-2 rounded-full align-middle mr-1"
+                        className="mr-1 inline-block h-2 w-2 rounded-full align-middle"
                         style={{ backgroundColor: phaseToColor(row.phase) }}
                       />
                       {formatPhase(row.phase)}
                     </td>
-                    <td className="py-1">{(row.prob * 100).toFixed(2)}</td>
+                    <td className="whitespace-nowrap py-1 text-right tabular-nums">
+                      {(row.prob * 100).toFixed(2)}
+                    </td>
                   </tr>
                 ))
               )}

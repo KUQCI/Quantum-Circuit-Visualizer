@@ -10,6 +10,7 @@ import {
   COLUMN_WIDTH,
   WIRE_HEIGHT,
   WIRE_LABEL_WIDTH,
+  GATE_SIZE,
   GATE_COLUMN_INSET,
   BARRIER_COLUMN_INSET,
   columnToX,
@@ -260,8 +261,9 @@ function GateBlock({
   if (isControl && !isControlQubit && !isTarget) return null;
 
   const displayLabel = gateDef?.label ?? operation.label;
+  const gateBoxStyle = { width: GATE_SIZE, height: GATE_SIZE };
   const boxClass = cn(
-    "relative flex h-8 w-8 flex-col items-center justify-center text-[11px] font-bold",
+    "relative flex flex-col items-center justify-center text-xs font-bold",
     getGateColorByType(operation.type),
     isSelected && "quanta-gate--selected",
     isPaletteDragging && "pointer-events-none"
@@ -270,7 +272,7 @@ function GateBlock({
   const renderGateBox = () => {
     if (isControlQubit && isControl && !isTarget) {
       return (
-        <div className="quanta-control-dot h-3 w-3" />
+        <div className="quanta-control-dot h-3.5 w-3.5" />
       );
     }
 
@@ -278,29 +280,35 @@ function GateBlock({
 
     if (operation.type === "cx") {
       return (
-        <div className={cn(boxClass, "text-lg")}>⊕</div>
+        <div className={cn(boxClass, "text-lg")} style={gateBoxStyle}>
+          ⊕
+        </div>
       );
     }
     if (operation.type === "cz") {
-      return <div className={boxClass}>Z</div>;
+      return (
+        <div className={boxClass} style={gateBoxStyle}>
+          Z
+        </div>
+      );
     }
     if (operation.type === "swap" && gateDef) {
       return (
-        <div className={boxClass}>
+        <div className={boxClass} style={gateBoxStyle}>
           <GateSymbol gate={gateDef} className="h-4 w-4" />
         </div>
       );
     }
     if (isMeasure && gateDef) {
       return (
-        <div className={boxClass}>
+        <div className={boxClass} style={gateBoxStyle}>
           <GateSymbol gate={gateDef} className="h-4 w-4" />
         </div>
       );
     }
 
     return (
-      <div className={boxClass}>
+      <div className={boxClass} style={gateBoxStyle}>
         {gateDef ? (
           <GateSymbol gate={gateDef} className="h-3.5 w-3.5" />
         ) : (
@@ -338,9 +346,9 @@ function GateBlock({
       data-operation-id={operation.id}
       style={{
         left: columnToX(operation.column) + GATE_COLUMN_INSET,
-        top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
-        width: 36,
-        height: 36,
+        top: wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - GATE_SIZE / 2,
+        width: GATE_SIZE,
+        height: GATE_SIZE,
       }}
       draggable={isSelected && !isPaletteDragging && !isInspectLocked}
       onDragStart={(e) => {
@@ -372,13 +380,13 @@ function GateBlock({
             top:
               parseInt(operation.controls[0].replace("q", ""), 10) <
               parseInt(operation.targets[0].replace("q", ""), 10)
-                ? 18
+                ? GATE_SIZE / 2
                 : -Math.abs(
                     parseInt(operation.targets[0].replace("q", ""), 10) -
                       parseInt(operation.controls[0].replace("q", ""), 10)
                   ) *
                     WIRE_HEIGHT +
-                  18,
+                  GATE_SIZE / 2,
           }}
         />
       )}
@@ -474,7 +482,7 @@ function DropPreview({
       : wireIndex(placementWires.targets[1]);
 
   const previewStyle = cn(
-    "pointer-events-none absolute z-30 flex h-8 w-8 items-center justify-center rounded-lg border-2 border-dashed text-[11px] font-bold",
+    "pointer-events-none absolute z-30 flex items-center justify-center rounded-lg border-2 border-dashed text-xs font-bold",
     isInvalid
       ? "border-[var(--color-destructive)] bg-[var(--color-destructive)]/20 text-[var(--color-destructive)]"
       : "border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/20 text-[var(--color-cyan-quantum)]"
@@ -541,10 +549,12 @@ function DropPreview({
             <div
               key={`landing-${wire}`}
               aria-hidden
-              className="pointer-events-none absolute z-20 h-8 w-8 rounded-lg border-2 border-dashed border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/5 opacity-50"
+              className="pointer-events-none absolute z-20 rounded-lg border-2 border-dashed border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/5 opacity-50"
               style={{
                 left: columnToX(landingColumn) + GATE_COLUMN_INSET,
-                top: qubitToY(wire) + WIRE_HEIGHT / 2 - 16,
+                top: qubitToY(wire) + WIRE_HEIGHT / 2 - GATE_SIZE / 2,
+                width: GATE_SIZE,
+                height: GATE_SIZE,
               }}
             />
           ))}
@@ -563,7 +573,9 @@ function DropPreview({
         className={previewStyle}
         style={{
           left: columnToX(position.column) + GATE_COLUMN_INSET,
-          top: qubitToY(position.qubitIndex) + WIRE_HEIGHT / 2 - 16,
+          top: qubitToY(position.qubitIndex) + WIRE_HEIGHT / 2 - GATE_SIZE / 2,
+          width: GATE_SIZE,
+          height: GATE_SIZE,
         }}
       >
         <GateSymbol gate={gateDef} className="h-3.5 w-3.5" />
@@ -584,7 +596,10 @@ function DropPreview({
           <div
             className="pointer-events-none absolute z-30 w-0.5 bg-[var(--color-cyan-quantum)]/60"
             style={{
-              left: columnToX(position.column) + GATE_COLUMN_INSET + 16,
+              left:
+                columnToX(position.column) +
+                GATE_COLUMN_INSET +
+                GATE_SIZE / 2,
               top:
                 Math.min(controlIdx, targetIdx) * WIRE_HEIGHT +
                 WIRE_HEIGHT / 2,
@@ -595,7 +610,9 @@ function DropPreview({
             className={previewStyle}
             style={{
               left: columnToX(position.column) + GATE_COLUMN_INSET,
-              top: qubitToY(targetIdx) + WIRE_HEIGHT / 2 - 16,
+              top: qubitToY(targetIdx) + WIRE_HEIGHT / 2 - GATE_SIZE / 2,
+              width: GATE_SIZE,
+              height: GATE_SIZE,
             }}
           >
             {gateDef.type === "cx" ? (
@@ -607,10 +624,14 @@ function DropPreview({
             )}
           </div>
           <div
-            className="pointer-events-none absolute z-30 h-3 w-3 rounded-full border-2 border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/30"
+            className="pointer-events-none absolute z-30 h-3.5 w-3.5 rounded-full border-2 border-[var(--color-cyan-quantum)] bg-[var(--color-cyan-quantum)]/30"
             style={{
-              left: columnToX(position.column) + GATE_COLUMN_INSET + 10,
-              top: qubitToY(controlIdx) + WIRE_HEIGHT / 2 - 6,
+              left:
+                columnToX(position.column) +
+                GATE_COLUMN_INSET +
+                GATE_SIZE / 2 -
+                7,
+              top: qubitToY(controlIdx) + WIRE_HEIGHT / 2 - 7,
             }}
           />
         </>
@@ -754,6 +775,11 @@ export function CircuitCanvas({
 
   const isPaletteDragging = draggingGate !== null;
   const isPlacementMode = placementGate !== null;
+  const showPlacementGuides =
+    isPaletteDragging ||
+    movingOperationId !== null ||
+    Boolean(boxSelection?.dragging) ||
+    isPlacementMode;
   const maxInspectStep = getMaxInspectStep(circuit.operations);
   const executionLayers = useMemo(
     () => getExecutionLayers(circuit.operations),
@@ -1192,9 +1218,9 @@ export function CircuitCanvas({
         return wires.some((wireIndex) =>
           intersects(
             columnToX(operation.column) + GATE_COLUMN_INSET,
-            wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - 18,
-            36,
-            36
+            wireIndex * WIRE_HEIGHT + WIRE_HEIGHT / 2 - GATE_SIZE / 2,
+            GATE_SIZE,
+            GATE_SIZE
           )
         );
       })
@@ -1581,11 +1607,15 @@ export function CircuitCanvas({
             {Array.from({ length: numColumns }).map((_, col) => (
               <div
                 key={col}
-                className="absolute top-0 border-l border-dashed border-[var(--color-border)]/25"
+                className={cn(
+                  "pointer-events-none absolute top-0 border-l border-dashed border-[var(--color-border)]/25 transition-opacity duration-150 motion-reduce:transition-none",
+                  showPlacementGuides ? "opacity-100" : "opacity-0"
+                )}
                 style={{
                   left: WIRE_LABEL_WIDTH + col * COLUMN_WIDTH,
                   height: circuit.qubits.length * WIRE_HEIGHT,
                 }}
+                aria-hidden
               />
             ))}
 
@@ -1626,15 +1656,15 @@ export function CircuitCanvas({
                 >
                   {qubit.label}
                 </div>
-                <div className="relative flex-1 pr-8">
-                  <div className="quanta-wire absolute left-0 right-0 top-1/2 h-px" />
-                  <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center">
+                <div className="relative flex-1 self-stretch">
+                  <div className="quanta-wire absolute left-0 right-3 top-1/2 h-px" />
+                  <div className="absolute right-0.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center">
                     {showPhaseDisks && diskProps ? (
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
                             type="button"
-                            className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]"
                             aria-label={`${qubit.label} state details`}
                           >
                             <PhaseDisk
@@ -1653,7 +1683,7 @@ export function CircuitCanvas({
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      <div className="quanta-wire-cap flex h-5 w-5 items-center justify-center rounded-full border">
+                      <div className="quanta-wire-cap flex h-5 w-5 shrink-0 items-center justify-center rounded-full border">
                         <div className="quanta-wire-cap h-2.5 w-2.5 rounded-full border" />
                       </div>
                     )}
@@ -1831,7 +1861,13 @@ export function CircuitCanvas({
               canvasRootSize.height > 0 &&
               canvasRootSize.height < 200
             ) && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 px-4 text-center text-xs text-[var(--color-muted-foreground)]">
+              <div
+                className="pointer-events-none flex items-center gap-2 text-left text-xs text-[var(--color-muted-foreground)]"
+                style={{
+                  marginLeft: WIRE_LABEL_WIDTH,
+                  marginTop: 24 - WIRE_HEIGHT / 2,
+                }}
+              >
                 <QuantaImage variant="learning" size="xs" />
                 <span>
                   Drag a gate onto a wire — or click a gate, then a wire.
