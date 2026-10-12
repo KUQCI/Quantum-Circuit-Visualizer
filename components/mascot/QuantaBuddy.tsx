@@ -129,6 +129,7 @@ export function QuantaBuddy({
   const [burst, setBurst] = useState<BurstState | null>(null);
   const clearBurst = useCallback(() => setBurst(null), []);
   const message = useQuantaPopoutStore((state) => state.message);
+  const dismissBubble = useQuantaPopoutStore((state) => state.dismiss);
   const setBuddySpeaking = useQuantaPopoutStore(
     (state) => state.setBuddySpeaking
   );
@@ -163,6 +164,36 @@ export function QuantaBuddy({
   const measureBubble = useCallback((width: number, height: number) => {
     bubbleSize.current = { width, height };
   }, []);
+  useEffect(() => {
+    if (!message) return;
+
+    const dismissOnOutsidePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        bubbleRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+      dismissBubble();
+    };
+    const dismissOnEditorInputKeyDown = (event: KeyboardEvent) => {
+      if (!(event.target instanceof Element)) return;
+      if (
+        event.target.closest(
+          'input, textarea, [contenteditable]:not([contenteditable="false"]), .monaco-editor'
+        )
+      ) {
+        dismissBubble();
+      }
+    };
+
+    window.addEventListener("pointerdown", dismissOnOutsidePointerDown);
+    window.addEventListener("keydown", dismissOnEditorInputKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", dismissOnOutsidePointerDown);
+      window.removeEventListener("keydown", dismissOnEditorInputKeyDown);
+    };
+  }, [dismissBubble, message]);
   const closeQuickActions = useCallback(() => {
     const wasOpen = quickActionsOpenRef.current;
     hoverIntentRef.current.reset();

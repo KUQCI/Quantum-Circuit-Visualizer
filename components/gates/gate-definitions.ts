@@ -357,24 +357,16 @@ export function getPaletteGates(): GateDefinition[] {
 }
 
 const GATE_COLOR_MAP: Record<GateDefinition["colorGroup"], string> = {
-  h: "quanta-gate border-transparent bg-[var(--color-gate-h)] text-[var(--color-gate-h-fg)]",
-  pauli:
-    "quanta-gate border-transparent bg-[var(--color-gate-pauli)] text-[var(--color-gate-pauli-fg)]",
-  phase:
-    "quanta-gate border-transparent bg-[var(--color-gate-phase)] text-[var(--color-gate-phase-fg)]",
-  rotation:
-    "quanta-gate border-transparent bg-[var(--color-gate-rotation)] text-[var(--color-gate-rotation-fg)]",
-  two: "quanta-gate border-transparent bg-[var(--color-gate-two)] text-[var(--color-gate-two-fg)]",
-  three:
-    "quanta-gate border-transparent bg-[var(--color-gate-three)] text-[var(--color-gate-three-fg)]",
-  measure:
-    "quanta-gate border-transparent bg-[var(--color-gate-measure)] text-[var(--color-gate-measure-fg)]",
-  nonunitary:
-    "quanta-gate border-transparent bg-[var(--color-gate-nonunitary)] text-[var(--color-gate-measure-fg)]",
-  barrier:
-    "quanta-gate bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-dashed border-[var(--color-gate-measure-fg)]/40",
-  modifier:
-    "quanta-gate bg-[var(--color-gate-barrier)] text-[var(--color-gate-measure-fg)] border border-[var(--color-gate-measure-fg)]/30",
+  h: "quanta-gate [--gate:var(--color-gate-h)]",
+  pauli: "quanta-gate [--gate:var(--color-gate-pauli)]",
+  phase: "quanta-gate [--gate:var(--color-gate-phase)]",
+  rotation: "quanta-gate [--gate:var(--color-gate-rotation)]",
+  two: "quanta-gate [--gate:var(--color-gate-two)]",
+  three: "quanta-gate [--gate:var(--color-gate-three)]",
+  measure: "quanta-gate [--gate:var(--color-gate-measure)]",
+  nonunitary: "quanta-gate [--gate:var(--color-gate-nonunitary)]",
+  barrier: "quanta-gate [--gate:var(--color-gate-barrier)]",
+  modifier: "quanta-gate [--gate:var(--color-gate-modifier)]",
 };
 
 export function getGateColor(gate: GateDefinition | string): string {
@@ -393,12 +385,13 @@ export function getGateByType(type: string): GateDefinition | undefined {
   return GATE_LIBRARY_UI.find((g) => g.type === type);
 }
 
-export const COLUMN_WIDTH = 72;
-export const WIRE_HEIGHT = 56;
+export const GATE_SIZE = 40;
+export const COLUMN_WIDTH = 80;
+export const WIRE_HEIGHT = 64;
 /** Fixed width of the left qubit/classical label column (visual only). */
 export const WIRE_LABEL_WIDTH = 56;
 /** Horizontal inset to center a gate box inside a timeline column. */
-export const GATE_COLUMN_INSET = 12;
+export const GATE_COLUMN_INSET = (COLUMN_WIDTH - GATE_SIZE) / 2;
 export const BARRIER_COLUMN_INSET = 8;
 
 /** Map logical operation.column to canvas x (after label column). */
