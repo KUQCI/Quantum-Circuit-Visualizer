@@ -17,6 +17,55 @@ export interface QuickActionPosition {
   y: number;
 }
 
+export type QuickActionLabelSide = "above" | "below" | "left" | "right";
+export type QuickActionLabelAlign = "start" | "center" | "end";
+
+export function quickActionLabelPlacement({
+  x,
+  y,
+  centerX,
+  centerY,
+  viewportWidth,
+  size = 32,
+  labelWidth = 128,
+}: {
+  x: number;
+  y: number;
+  centerX: number;
+  centerY: number;
+  viewportWidth: number;
+  size?: number;
+  labelWidth?: number;
+}): { side: QuickActionLabelSide; align: QuickActionLabelAlign } {
+  const bx = x + size / 2;
+  const by = y + size / 2;
+  const dx = bx - centerX;
+  const dy = by - centerY;
+  const gap = 6;
+  const margin = 8;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    let side: QuickActionLabelSide = dx < 0 ? "left" : "right";
+    if (side === "left" && x - gap - labelWidth < margin) side = "right";
+    else if (
+      side === "right" &&
+      x + size + gap + labelWidth > viewportWidth - margin
+    ) {
+      side = "left";
+    }
+    return { side, align: "center" };
+  }
+
+  const side = dy < 0 ? "above" : "below";
+  const align: QuickActionLabelAlign =
+    bx - labelWidth / 2 < margin
+      ? "start"
+      : bx + labelWidth / 2 > viewportWidth - margin
+        ? "end"
+        : "center";
+  return { side, align };
+}
+
 export interface HoverIntentState {
   overBuddy: boolean;
   overRing: boolean;

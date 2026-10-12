@@ -24,7 +24,10 @@ import {
 } from "lucide-react";
 import { normalizePath } from "@/lib/routes";
 import { pageHelpFor, tipsFor } from "@/lib/quanta-buddy/persona";
-import { quickActionPositions } from "@/lib/quanta-buddy/quick-actions";
+import {
+  quickActionLabelPlacement,
+  quickActionPositions,
+} from "@/lib/quanta-buddy/quick-actions";
 import type { QuantaBuddyEngine, BuddyFrame } from "@/lib/quanta-buddy/engine";
 import type { QuantaPopoutMessage } from "@/store/quanta-popout-store";
 import { requestOpenShortcuts } from "@/lib/shortcuts";
@@ -152,19 +155,30 @@ export function QuantaQuickActions({
 
   useLayoutEffect(() => {
     const position = (frame: BuddyFrame) => {
+      const centerX = frame.x + 64;
+      const centerY = frame.y + 64;
       const points = quickActionPositions({
-        centerX: frame.x + 64,
-        centerY: frame.y + 64,
+        centerX,
+        centerY,
         count: actions.length,
         viewport: { width: window.innerWidth, height: window.innerHeight },
       });
       points.forEach(({ x, y }, index) => {
         const button = buttonRefs.current[index];
         if (!button) return;
+        const placement = quickActionLabelPlacement({
+          x,
+          y,
+          centerX,
+          centerY,
+          viewportWidth: window.innerWidth,
+        });
         button.style.left = `${x}px`;
         button.style.top = `${y}px`;
         button.style.transform = "scale(1)";
         button.style.opacity = "1";
+        button.dataset.labelSide = placement.side;
+        button.dataset.labelAlign = placement.align;
       });
     };
     positionerRef.current = position;
@@ -243,7 +257,7 @@ export function QuantaQuickActions({
             buttonRefs.current[index] = element;
           }}
           type="button"
-          className="pointer-events-auto fixed flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-foreground)] opacity-0 shadow-lg transition-[opacity,transform] ease-out hover:bg-[var(--color-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          className="group pointer-events-auto fixed flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-foreground)] opacity-0 shadow-lg transition-[opacity,transform] ease-out hover:bg-[var(--color-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           style={{
             left: 0,
             top: 0,
@@ -253,13 +267,18 @@ export function QuantaQuickActions({
             transitionDelay: reducedMotion ? "0ms" : `${index * 25}ms`,
           }}
           aria-label={label}
-          title={label}
           onClick={() => {
             if (!keepOpen) onClose();
             onSelect();
           }}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute whitespace-nowrap rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1 text-xs font-medium text-[var(--color-foreground)] shadow-lg opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none group-data-[label-side=above]:bottom-full group-data-[label-side=above]:mb-1.5 group-data-[label-side=below]:top-full group-data-[label-side=below]:mt-1.5 group-data-[label-side=left]:right-full group-data-[label-side=left]:mr-1.5 group-data-[label-side=left]:top-1/2 group-data-[label-side=left]:-translate-y-1/2 group-data-[label-side=right]:left-full group-data-[label-side=right]:ml-1.5 group-data-[label-side=right]:top-1/2 group-data-[label-side=right]:-translate-y-1/2 group-data-[label-side=above]:group-data-[label-align=center]:left-1/2 group-data-[label-side=above]:group-data-[label-align=center]:-translate-x-1/2 group-data-[label-side=above]:group-data-[label-align=start]:left-0 group-data-[label-side=above]:group-data-[label-align=end]:right-0 group-data-[label-side=below]:group-data-[label-align=center]:left-1/2 group-data-[label-side=below]:group-data-[label-align=center]:-translate-x-1/2 group-data-[label-side=below]:group-data-[label-align=start]:left-0 group-data-[label-side=below]:group-data-[label-align=end]:right-0"
+          >
+            {label}
+          </span>
         </button>
       ))}
     </div>

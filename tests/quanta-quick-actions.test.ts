@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   HoverIntent,
+  quickActionLabelPlacement,
   quickActionPositions,
 } from "@/lib/quanta-buddy/quick-actions";
 
@@ -64,6 +65,68 @@ describe("quick action positions", () => {
       expect(y).toBeGreaterThanOrEqual(8);
       expect(y).toBeLessThanOrEqual(viewport.height - size - 8);
     }
+  });
+});
+
+describe("quick action label placement", () => {
+  it("places the top-of-arc label above and centered", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 624,
+        y: 300,
+        centerX: 640,
+        centerY: 500,
+        viewportWidth: 1280,
+      })
+    ).toEqual({ side: "above", align: "center" });
+  });
+
+  it("places a rightmost endpoint label to the right", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 760,
+        y: 480,
+        centerX: 640,
+        centerY: 500,
+        viewportWidth: 1280,
+      })
+    ).toEqual({ side: "right", align: "center" });
+  });
+
+  it("flips a left endpoint label right when it would cross the viewport edge", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 10,
+        y: 384,
+        centerX: 100,
+        centerY: 400,
+        viewportWidth: 1280,
+      })
+    ).toEqual({ side: "right", align: "center" });
+  });
+
+  it("aligns an above label to the end near the right viewport edge", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 1210,
+        y: 300,
+        centerX: 1200,
+        centerY: 500,
+        viewportWidth: 1280,
+      })
+    ).toEqual({ side: "above", align: "end" });
+  });
+
+  it("places a lower-arc label below and centered", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 624,
+        y: 100,
+        centerX: 640,
+        centerY: 20,
+        viewportWidth: 1280,
+      })
+    ).toEqual({ side: "below", align: "center" });
   });
 });
 
