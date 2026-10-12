@@ -56,7 +56,7 @@ const sections = [
   },
   {
     title: "Run on simulator",
-    body: `Click Run circuit in the toolbar to open the execution dialog. Choose the Local simulator backend, set the number of shots (1–8192), and run. Results appear in the Measurement histogram panel and in the dialog preview. IBM Qasm Simulator and IBM Quantum hardware backends export Qiskit Runtime code for submission with your IBM Quantum account.`,
+    body: `Click Run circuit in the toolbar to open the run dialog. Pick Simulator, set the number of shots (1–8192) and a noise level, and press Run. The most common results and a histogram appear in the dialog and in the Measurement Results panel. Pick IBM Quantum to export Qiskit Runtime code and run it with your IBM Quantum account.`,
   },
 ];
 
