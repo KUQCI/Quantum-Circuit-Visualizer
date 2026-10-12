@@ -66,6 +66,40 @@ export function getPrevLesson(lessonId: string): LessonDefinition | null {
   return idx > 0 ? LESSON_ORDER[idx - 1] : null;
 }
 
+export interface LandingLessonCta {
+  href: string;
+  label: string;
+  detail: string;
+  returning: boolean;
+}
+
+export function getLandingLessonCta(completedLessons: string[]): LandingLessonCta {
+  const first = LESSON_ORDER[0];
+  if (completedLessons.length === 0) {
+    return {
+      href: `/learn/${first.id}`,
+      label: "Start your first lesson",
+      detail: `Lesson 1: ${first.title} · ${first.estimatedMinutes} min`,
+      returning: false,
+    };
+  }
+  const next = getNextLesson(completedLessons);
+  if (next) {
+    return {
+      href: `/learn/${next.id}`,
+      label: "Continue learning",
+      detail: `Up next: ${next.title} · ${next.estimatedMinutes} min`,
+      returning: true,
+    };
+  }
+  return {
+    href: "/challenges",
+    label: "Take on a challenge",
+    detail: "You finished every lesson!",
+    returning: true,
+  };
+}
+
 export function getNextLessonById(lessonId: string): LessonDefinition | null {
   const idx = LESSON_ORDER.findIndex((l) => l.id === lessonId);
   return idx >= 0 && idx < LESSON_ORDER.length - 1 ? LESSON_ORDER[idx + 1] : null;
