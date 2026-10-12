@@ -166,14 +166,19 @@ function renderGate(
   );
 }
 
-function LessonCircuitSvg({
+export function LessonCircuitSvg({
   circuit,
   selectedStep,
+  visibleSteps,
 }: {
   circuit: Circuit;
   selectedStep: number;
+  visibleSteps?: number;
 }) {
   const diagram = buildLessonDiagram(circuit);
+  const visibleColumns = diagram.columns.filter(
+    (column) => visibleSteps === undefined || column.step <= visibleSteps
+  );
   const columnCount = Math.max(diagram.columns.length, 1);
   const classicalCount = circuit.classicalBits.length;
   const width = LABEL_WIDTH + columnCount * COLUMN_WIDTH + 18;
@@ -195,7 +200,7 @@ function LessonCircuitSvg({
         className="min-w-full"
       >
         <title>{description}</title>
-        {diagram.columns.map((column, index) => {
+        {visibleColumns.map((column, index) => {
           const x = LABEL_WIDTH + index * COLUMN_WIDTH;
           return selectedStep === column.step ? (
             <rect
@@ -250,10 +255,27 @@ function LessonCircuitSvg({
               {bit.label}
             </text>
           ))}
-        {diagram.columns.map((column, index) => {
+        {visibleColumns.map((column, index) => {
           const centerX = LABEL_WIDTH + index * COLUMN_WIDTH + COLUMN_WIDTH / 2;
-          return column.items.map((item) =>
-            renderGate(item, circuit, centerX, column.step, diagram.qubitCount)
+          return (
+            <g
+              key={`column-${column.step}`}
+              className={
+                column.step === visibleSteps
+                  ? "walkthrough-gate-drop"
+                  : undefined
+              }
+            >
+              {column.items.map((item) =>
+                renderGate(
+                  item,
+                  circuit,
+                  centerX,
+                  column.step,
+                  diagram.qubitCount
+                )
+              )}
+            </g>
           );
         })}
       </svg>
