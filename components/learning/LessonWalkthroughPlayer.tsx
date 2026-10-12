@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { WalkthroughStage } from "@/components/learning/WalkthroughStage";
@@ -153,6 +156,8 @@ export function LessonWalkthroughPlayer({
       setPlaybackRequest((value) => value + 1);
       setViewMode("animated");
       setVideoUnavailable(false);
+    } else {
+      setVideoUnavailable(false);
     }
     setOpen(nextOpen);
   };
@@ -212,103 +217,19 @@ export function LessonWalkthroughPlayer({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl gap-4 p-4 sm:p-6">
-        {viewMode === "animated" ? (
-          <WalkthroughStage
-            walkthrough={walkthrough}
-            snapshots={snapshots}
-            sceneIndex={activeIndex}
-            variant="dialog"
-          />
-        ) : (
-          <div className="space-y-2">
-            <video
-              ref={videoRef}
-              controls
-              preload="none"
-              playsInline
-              src={lessonVideoUrl(lesson.id)}
-              onError={() => setVideoUnavailable(true)}
-              className="aspect-video w-full rounded-md bg-black"
-            />
-            {videoUnavailable && (
-              <p className="flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-muted-foreground)]">
-                <span>
-                  This lesson&apos;s video isn&apos;t available yet. The animated
-                  walkthrough above works offline.
-                </span>
-                <a
-                  href={lessonVideoUrl(lesson.id)}
-                  target="_blank"
-                  rel="noopener"
-                  className="font-medium text-[var(--color-brand)] underline underline-offset-2"
-                >
-                  Download MP4
-                </a>
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button
-            size="sm"
-            onClick={handlePlayPause}
-            aria-label={isPlaying ? "Pause walkthrough" : "Play walkthrough"}
-          >
-            {isPlaying ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            {isPlaying ? "Pause" : "Play"}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => jumpToScene(Math.max(0, activeIndex - 1))}
-            disabled={activeIndex === 0}
-            aria-label="Previous scene"
-          >
-            <SkipBack className="h-4 w-4" />
-            Previous
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              jumpToScene(Math.min(lastSceneIndex, activeIndex + 1))
-            }
-            disabled={activeIndex === lastSceneIndex}
-            aria-label="Next scene"
-          >
-            <SkipForward className="h-4 w-4" />
-            Next
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleRestart}
-            aria-label="Restart walkthrough"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Restart
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setVoiceEnabled((enabled) => !enabled)}
-            disabled={!narrator.supported}
-            aria-pressed={voiceEnabled}
-            aria-label={voiceEnabled ? "Turn voice off" : "Turn voice on"}
-          >
-            {voiceEnabled ? (
-              <Volume2 className="h-4 w-4" />
-            ) : (
-              <VolumeX className="h-4 w-4" />
-            )}
-            Voice
-          </Button>
-        </div>
+        <DialogHeader className="gap-1 pr-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand)]">
+            Walkthrough
+          </p>
+          <DialogTitle className="text-xl leading-tight">
+            {walkthrough.scenes[0]?.title ?? lesson.title}
+          </DialogTitle>
+          {viewMode === "animated" && (
+            <DialogDescription>
+              Scene {activeIndex + 1} of {walkthrough.scenes.length}
+            </DialogDescription>
+          )}
+        </DialogHeader>
 
         <div
           aria-label="Walkthrough display"
@@ -332,29 +253,137 @@ export function LessonWalkthroughPlayer({
           </Button>
         </div>
 
-        {!narrator.supported && (
-          <p className="text-center text-xs text-[var(--color-muted-foreground)]">
-            Voice isn&apos;t available in this browser, so captions only.
-          </p>
+        {viewMode === "animated" ? (
+          <WalkthroughStage
+            walkthrough={walkthrough}
+            snapshots={snapshots}
+            sceneIndex={activeIndex}
+            variant="dialog"
+          />
+        ) : (
+          videoUnavailable ? (
+            <div className="flex aspect-video w-full flex-col items-center justify-center gap-4 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] p-6 text-center">
+              <p className="text-sm text-[var(--color-muted-foreground)]">
+                This lesson&apos;s video isn&apos;t available yet.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button onClick={() => handleViewModeChange("animated")}>
+                  Watch the animated walkthrough
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <a
+                    href={lessonVideoUrl(lesson.id)}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Download MP4
+                  </a>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              controls
+              preload="none"
+              playsInline
+              src={lessonVideoUrl(lesson.id)}
+              onError={() => setVideoUnavailable(true)}
+              className="aspect-video w-full rounded-md bg-black"
+            />
+          )
         )}
 
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          {walkthrough.scenes.map((scene, index) => (
-            <button
-              key={scene.id}
-              type="button"
-              aria-label={`Scene ${index + 1}: ${scene.title}`}
-              aria-current={activeIndex === index ? "step" : undefined}
-              onClick={() => jumpToScene(index)}
-              className={cn(
-                "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-                activeIndex === index
-                  ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
-                  : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
-              )}
-            />
-          ))}
-        </div>
+        {viewMode === "animated" && (
+          <>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                size="sm"
+                onClick={handlePlayPause}
+                aria-label={
+                  isPlaying ? "Pause walkthrough" : "Play walkthrough"
+                }
+              >
+                {isPlaying ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                {isPlaying ? "Pause" : "Play"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => jumpToScene(Math.max(0, activeIndex - 1))}
+                disabled={activeIndex === 0}
+                aria-label="Previous scene"
+              >
+                <SkipBack className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  jumpToScene(Math.min(lastSceneIndex, activeIndex + 1))
+                }
+                disabled={activeIndex === lastSceneIndex}
+                aria-label="Next scene"
+              >
+                <SkipForward className="h-4 w-4" />
+                Next
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleRestart}
+                aria-label="Restart walkthrough"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restart
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setVoiceEnabled((enabled) => !enabled)}
+                disabled={!narrator.supported}
+                aria-pressed={voiceEnabled}
+                aria-label={voiceEnabled ? "Turn voice off" : "Turn voice on"}
+              >
+                {voiceEnabled ? (
+                  <Volume2 className="h-4 w-4" />
+                ) : (
+                  <VolumeX className="h-4 w-4" />
+                )}
+                Voice
+              </Button>
+            </div>
+
+            {!narrator.supported && (
+              <p className="text-center text-xs text-[var(--color-muted-foreground)]">
+                Voice isn&apos;t available in this browser, so captions only.
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {walkthrough.scenes.map((scene, index) => (
+                <button
+                  key={scene.id}
+                  type="button"
+                  aria-label={`Scene ${index + 1}: ${scene.title}`}
+                  aria-current={activeIndex === index ? "step" : undefined}
+                  onClick={() => jumpToScene(index)}
+                  className={cn(
+                    "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
+                    activeIndex === index
+                      ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
+                      : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
+                  )}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

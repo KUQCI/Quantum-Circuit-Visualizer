@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { LessonCircuitSvg } from "@/components/learning/LessonCircuitPreview";
 import { ProbabilityChart } from "@/components/visualizations/probability-chart";
 import { QSphere } from "@/components/visualizations/q-sphere";
@@ -105,6 +100,7 @@ export function WalkthroughStage({
                       blochVector={snapshot.after.blochVector}
                       numQubits={snapshot.after.numQubits}
                       error={snapshot.after.error}
+                      showHint={false}
                     />
                   </section>
                 </div>
@@ -159,18 +155,6 @@ export function WalkthroughStage({
 
   return (
     <>
-      <DialogHeader className="gap-1 pr-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand)]">
-          Walkthrough
-        </p>
-        <DialogTitle className="text-xl leading-tight">
-          {walkthrough.scenes[0]?.title ?? walkthrough.lessonId}
-        </DialogTitle>
-        <DialogDescription>
-          Scene {activeIndex + 1} of {walkthrough.scenes.length}
-        </DialogDescription>
-      </DialogHeader>
-
       <div className="max-h-[30vh] min-h-[108px] overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-2 sm:max-h-[24vh]">
         {walkthrough.circuit ? (
           <LessonCircuitSvg
