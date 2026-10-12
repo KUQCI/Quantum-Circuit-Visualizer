@@ -95,4 +95,10 @@ jobs:
           fi
           gh release upload lesson-videos \
             videos/*.mp4 videos/*.vtt videos/lesson-videos.json \
+            videos/speech-*.mp3 \
             --clobber
+          while IFS= read -r name; do
+            if [[ "$name" == speech-*.mp3 && ! -f "videos/$name" ]]; then
+              gh release delete-asset lesson-videos "$name" -y
+            fi
+          done < <(gh release view lesson-videos --json assets -q '.assets[].name')

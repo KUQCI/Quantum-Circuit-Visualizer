@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import numpy as np
 import shutil
 import subprocess
 import sys
@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
+import numpy as np
 import soundfile as sf
 from kokoro_onnx import Kokoro
 from playwright.sync_api import sync_playwright
@@ -73,6 +74,7 @@ def render_lesson(
     lesson_id: str,
     out_dir: Path,
     work_dir: Path,
+    speech_clips: set[str],
 ) -> dict[str, object]:
     lesson_work = work_dir / lesson_id
     lesson_work.mkdir(parents=True, exist_ok=True)
@@ -140,6 +142,44 @@ def render_lesson(
             clip[-fade_samples:] *= np.linspace(
                 1.0, 0.0, fade_samples, dtype=np.float32
             )
+
+        speech_clip_name = (
+            "speech-"
+            f"{hashlib.sha256(scene['speech'].encode('utf-8')).hexdigest()[:16]}"
+            ".mp3"
+        )
+        speech_clip_path = out_dir / speech_clip_name
+        speech_clips.add(speech_clip_name)
+        if not speech_clip_path.exists():
+            speech_wav_path = lesson_work / f"{speech_clip_name}.wav"
+            sf.write(
+                speech_wav_path,
+                clip,
+                sample_rate,
+                format="WAV",
+                subtype="PCM_16",
+            )
+            ensure_non_empty(speech_wav_path)
+            run_ffmpeg(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-v",
+                    "error",
+                    "-i",
+                    str(speech_wav_path),
+                    "-codec:a",
+                    "libmp3lame",
+                    "-b:a",
+                    "64k",
+                    "-ac",
+                    "1",
+                    "-ar",
+                    "24000",
+                    str(speech_clip_path),
+                ]
+            )
+        ensure_non_empty(speech_clip_path)
 
         speech_duration = clip.size / sample_rate
         scene_audio = np.concatenate(
@@ -313,6 +353,7 @@ def main() -> int:
                 raise ValueError("No lessons selected")
 
             rendered: dict[str, object] = {}
+            speech_clips: set[str] = set()
             try:
                 for lesson_id in requested:
                     rendered[lesson_id] = render_lesson(
@@ -324,6 +365,7 @@ def main() -> int:
                         lesson_id,
                         out_dir,
                         work_dir,
+                        speech_clips,
                     )
             finally:
                 context.close()
@@ -331,6 +373,7 @@ def main() -> int:
 
         manifest = {
             "generatedAt": datetime.now(timezone.utc).isoformat(),
+            "speechClips": sorted(speech_clips),
             "lessons": rendered,
         }
         (out_dir / "lesson-videos.json").write_text(
