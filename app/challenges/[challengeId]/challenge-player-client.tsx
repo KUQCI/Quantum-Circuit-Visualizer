@@ -3,8 +3,6 @@
 import type { ChallengeDefinition } from "@/lib/learning/types";
 import { LearningPlayer } from "@/components/learning/LearningPlayer";
 import { LockedActivityState } from "@/components/learning/LockedActivityState";
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
-import { getChallengeBreadcrumbs } from "@/lib/navigation/flow";
 import { isChallengeUnlockedByTier, useProgressStore } from "@/store/progress-store";
 import { usePersistHydrated } from "@/lib/use-persist-hydrated";
 
@@ -52,10 +50,6 @@ export function ChallengePlayerClient({
 
   return (
     <div className="learning-workspace-shell">
-      <Breadcrumbs
-        items={getChallengeBreadcrumbs(challenge)}
-        className="mb-2 shrink-0 px-0.5"
-      />
       <LearningPlayer
         activity={challenge}
         mode="challenge"

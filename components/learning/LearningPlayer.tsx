@@ -14,17 +14,17 @@ import { useRouter } from "next/navigation";
 import { CircuitCanvas } from "@/components/circuit/circuit-canvas";
 import { GateLibrary } from "@/components/gates/gate-library";
 import { MultiLanguageCodePanel } from "@/components/code/multi-language-code-panel";
-import { QuantaMessage } from "@/components/mascot/QuantaMessage";
-import { QuantaAchievement } from "@/components/mascot/QuantaAchievement";
+import { QuantaImage } from "@/components/mascot/QuantaImage";
 import { QuantaHint } from "@/components/mascot/QuantaHint";
 import { QuantaPopout } from "@/components/mascot/QuantaPopout";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
 import { LessonCircuitPreview } from "@/components/learning/LessonCircuitPreview";
-import { NextStepCard } from "@/components/navigation/NextStepCard";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { checkCircuit, getLessonGateTypes } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
 import type { CodeLanguageId } from "@/lib/code-adapters";
+import { getChallengeBreadcrumbs, getLessonBreadcrumbs } from "@/lib/navigation/flow";
+import type { QuantaVariant } from "@/lib/quanta-assets";
 import { useCircuitStore } from "@/store/circuit-store";
 import { useProgressStore } from "@/store/progress-store";
 import { useEditorUiStore } from "@/store/editor-ui-store";
@@ -437,6 +437,14 @@ export function LearningPlayer({
 
   const nextLabel = mode === "lesson" ? "Next Lesson" : "Next Challenge";
   const panelLabel = mode === "lesson" ? "Guide" : "Briefing";
+  const breadcrumbItems = isLesson(activity)
+    ? getLessonBreadcrumbs(activity)
+    : getChallengeBreadcrumbs(activity);
+  const parentBreadcrumb = breadcrumbItems[breadcrumbItems.length - 2];
+  const canContinue =
+    mode === "challenge"
+      ? feedbackStatus === "success"
+      : stage === "done";
 
   const storyText = isLesson(activity)
     ? activity.story
@@ -458,8 +466,14 @@ export function LearningPlayer({
   return (
     <div className="learning-player flex min-h-0 w-full flex-col border-y border-[var(--color-border)] bg-[var(--color-background)] md:h-full md:overflow-hidden">
       {/* Top bar */}
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 sm:px-4">
-        <div className="flex min-w-0 items-center gap-2">
+      <div
+        className={cn(
+          "grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 border-b border-[var(--color-border)] px-3 py-2 sm:px-4 lg:h-14 lg:grid-rows-1 lg:gap-x-3 lg:py-0",
+          mode === "lesson" &&
+            "lg:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+        )}
+      >
+        <div className="col-start-1 row-start-1 flex shrink-0 items-center gap-1">
           <Button asChild variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-sm">
             <Link href={backHref}>
               <ArrowLeft className="h-4 w-4" />
@@ -481,15 +495,6 @@ export function LearningPlayer({
             )}
             <span className="hidden sm:inline">{panelLabel}</span>
           </Button>
-        </div>
-        <div className="min-w-0 flex-1 text-center">
-          <h1 className="truncate text-base font-semibold sm:text-lg">{activity.title}</h1>
-          <p className="text-sm capitalize text-[var(--color-muted-foreground)]">
-            {activity.difficulty} · {mode}
-            {isComplete && " · Completed"}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -505,40 +510,89 @@ export function LearningPlayer({
             )}
             {panelLabel}
           </Button>
+        </div>
+        <div className="col-start-2 row-start-1 flex min-w-0 items-center gap-1.5">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex min-w-0 flex-1 items-center gap-1 text-xs text-[var(--color-muted-foreground)]"
+          >
+            <Link
+              href={parentBreadcrumb.href ?? backHref}
+              className="max-w-10 shrink-0 truncate hover:text-[var(--color-brand)] sm:max-w-28"
+            >
+              {parentBreadcrumb.label}
+            </Link>
+            <ChevronRight className="h-3 w-3 shrink-0 opacity-50" aria-hidden />
+            <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-[var(--color-foreground)]">
+              {activity.title}
+            </h1>
+          </nav>
+          <span className="shrink-0 rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] capitalize text-[var(--color-muted-foreground)] sm:px-2 sm:text-xs">
+            {activity.difficulty}
+          </span>
+          {isComplete && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-success)] sm:px-2 sm:text-xs">
+              <CheckCircle className="h-3 w-3" aria-hidden />
+              Completed
+            </span>
+          )}
+        </div>
+        {mode === "lesson" && (
+          <nav
+            aria-label="Lesson steps"
+            className="col-span-3 row-start-2 flex items-center justify-center gap-1 lg:col-span-1 lg:col-start-3 lg:row-start-1"
+          >
+            {(["learn", "quiz", "build", "done"] as LessonStage[]).map(
+              (item, index) => (
+                <div key={item} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={index > maxStageReached}
+                    aria-current={stage === item ? "step" : undefined}
+                    onClick={() => {
+                      setStage(item);
+                      setFeedbackStatus("idle");
+                      setFeedbackMessage("");
+                      setQuantaFeedback("");
+                    }}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs font-semibold capitalize",
+                      stage === item
+                        ? "bg-[var(--color-brand)] text-[var(--color-primary-foreground)]"
+                        : index <
+                            (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(
+                              stage
+                            )
+                          ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)] hover:underline"
+                          : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
+                    )}
+                  >
+                    {item}
+                  </button>
+                  {index < 3 && (
+                    <ChevronRight
+                      className="h-3 w-3 text-[var(--color-muted-foreground)]"
+                      aria-hidden
+                    />
+                  )}
+                </div>
+              )
+            )}
+          </nav>
+        )}
+        <div
+          className={cn(
+            "col-start-3 row-start-1 flex min-w-0 items-center justify-end gap-2",
+            mode === "lesson" && "lg:col-start-4"
+          )}
+        >
           {selectedGate && (
-            <span className="hidden text-xs text-[var(--color-brand)] sm:inline">
+            <span className="hidden max-w-48 truncate text-xs text-[var(--color-brand)] sm:inline">
               Tap a wire to place {selectedGate.toUpperCase()}
             </span>
           )}
           <span className="academy-xp-pill text-xs">+{activity.xpReward} XP</span>
         </div>
-      </div>
-      <div className="flex shrink-0 items-center justify-center gap-1 border-b border-[var(--color-border)] px-3 py-2">
-        {(["learn", "quiz", "build", "done"] as LessonStage[]).map((item, index) => (
-          <div key={item} className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={index > maxStageReached}
-              onClick={() => {
-                setStage(item);
-                setFeedbackStatus("idle");
-                setFeedbackMessage("");
-                setQuantaFeedback("");
-              }}
-              className={cn(
-                "rounded-full px-2 py-1 text-[10px] font-semibold uppercase",
-                stage === item
-                  ? "bg-[var(--color-brand)] text-[var(--color-primary-foreground)]"
-                  : index < (["learn", "quiz", "build", "done"] as LessonStage[]).indexOf(stage)
-                    ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)] hover:underline"
-                    : "bg-[var(--color-muted)] text-[var(--color-muted-foreground)]"
-              )}
-            >
-              {index + 1}. {item}
-            </button>
-            {index < 3 && <ChevronRight className="h-3 w-3 text-[var(--color-muted-foreground)]" />}
-          </div>
-        ))}
       </div>
       <QuantaPopout
         bottomOffset={quantaPopoutBottomOffset}
@@ -568,8 +622,7 @@ export function LearningPlayer({
           aria-label="Lesson"
         >
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
-            <QuantaMessage
-              title="Quanta"
+            <LearningQuantaMessage
               message={quantaFeedback || activity.quantaIntro}
               variant={
                 feedbackStatus === "error"
@@ -617,38 +670,39 @@ export function LearningPlayer({
               <DoneCard
                 lesson={mode === "lesson" && isLesson(activity) ? activity : null}
                 xp={xpAwarded}
-                nextHref={nextHref}
               />
             ) : (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
-                Instructions
-              </h2>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-foreground)] sm:text-base">
-                {storyText}
-              </p>
-            </div>
-            )}
-            {targetCircuit && (
-              <div className="rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
-                <h3 className="mb-1 text-sm font-semibold text-[var(--color-brand)]">
-                  Target circuit
-                </h3>
-                <p className="text-sm text-[var(--color-muted-foreground)]">
-                  {pluralize(targetCircuit.operations.length, "gate")} ·{" "}
-                  {pluralize(targetCircuit.qubits.length, "qubit")}
-                </p>
-                <ul className="mt-2 space-y-1 font-mono text-sm">
-                  {targetCircuit.operations
-                    .sort((a, b) => a.column - b.column)
-                    .map((op) => (
-                      <li key={op.id}>
-                        {op.type.toUpperCase()}{" "}
-                        {op.controls.length ? `c=${op.controls.join(",")} ` : ""}
-                        t={op.targets.join(",")}
-                      </li>
-                    ))}
-                </ul>
+              <div className="space-y-4 border-t border-[var(--color-border)] pt-4">
+                <div className="space-y-2">
+                  <h2 className="text-base font-semibold">Goal</h2>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-foreground)]">
+                    {storyText}
+                  </p>
+                </div>
+                {targetCircuit && (
+                  <div className="space-y-2 border-t border-[var(--color-border)] pt-4">
+                    <h3 className="text-sm font-semibold text-[var(--color-brand)]">
+                      Target circuit
+                    </h3>
+                    <p className="text-sm text-[var(--color-muted-foreground)]">
+                      {pluralize(targetCircuit.operations.length, "gate")} ·{" "}
+                      {pluralize(targetCircuit.qubits.length, "qubit")}
+                    </p>
+                    <ul className="space-y-1 font-mono text-sm">
+                      {targetCircuit.operations
+                        .sort((a, b) => a.column - b.column)
+                        .map((op) => (
+                          <li key={op.id}>
+                            {op.type.toUpperCase()}{" "}
+                            {op.controls.length
+                              ? `c=${op.controls.join(",")} `
+                              : ""}
+                            t={op.targets.join(",")}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
             <QuantaHint hint={activity.quantaHint} visible={showHint} />
@@ -760,83 +814,128 @@ export function LearningPlayer({
       {/* Bottom actions */}
       <div
         ref={actionBarRef}
-        className="learning-action-bar shrink-0 space-y-2 border-t border-[var(--color-border)] px-3 py-3 sm:px-4"
+        className="learning-action-bar shrink-0 border-t border-[var(--color-border)] px-3 py-2 sm:px-4"
       >
-        {(mode === "challenge"
-          ? feedbackStatus === "success"
-          : stage === "done") &&
-          nextHref && (
-          <NextStepCard
-            badge={mode === "lesson" ? "Lesson Complete" : "Challenge Complete"}
-            title={mode === "lesson" ? "Ready for the next lesson?" : "Ready for the next challenge?"}
-            description="Keep your momentum going — or open this circuit in Build mode to experiment."
-            href={nextHref}
-            ctaLabel={nextLabel}
-            secondaryHref="/progress"
-            secondaryLabel="View Progress"
-          />
-        )}
         <ChallengeFeedback
           status={feedbackStatus}
           message={feedbackMessage}
           quantaMessage={quantaFeedback}
           xpAwarded={xpAwarded}
         />
-        <div className="flex flex-wrap gap-2">
-          {(!isLesson(activity) || stage === "build") && (
-            <Button size="default" className="gap-2" onClick={handleCheck}>
-              <CheckCircle className="h-4 w-4" />
-              Check Answer
-            </Button>
-          )}
-          <Button
-            size="default"
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              setShowHint(true);
-              sayQuanta({
-                text: activity.quantaHint,
-                variant: "hint",
-                imageVariant: "thinking",
-              });
-            }}
-          >
-            <Lightbulb className="h-4 w-4" />
-            Show Hint
-          </Button>
-          <Button size="default" variant="ghost" className="gap-2" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
-          {prevHref && (
-            <Button asChild size="default" variant="outline" className="gap-2">
-              <Link href={prevHref}>Previous</Link>
-            </Button>
-          )}
-          <Button size="default" variant="outline" className="gap-2" onClick={handleOpenInBuild}>
-            Open in Build
-          </Button>
-          {relatedHref && relatedLabel && (
-            <Button asChild size="default" variant="secondary" className="gap-2">
-              <Link href={relatedHref}>{relatedLabel}</Link>
-            </Button>
-          )}
-          {(mode === "challenge"
-            ? feedbackStatus === "success"
-            : stage === "done") &&
-            nextHref && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {canContinue ? (
+              <p className="px-1 text-xs text-[var(--color-muted-foreground)]">
+                {mode === "lesson" ? "Lesson complete" : "Challenge complete"} ·{" "}
+                <Link
+                  href="/progress"
+                  className="font-medium text-[var(--color-brand)] hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+                >
+                  View progress
+                </Link>
+              </p>
+            ) : (
+              (!isLesson(activity) || stage === "build") && (
+                <Button size="sm" className="h-9 gap-2" onClick={handleCheck}>
+                  <CheckCircle className="h-4 w-4" />
+                  Check Answer
+                </Button>
+              )
+            )}
             <Button
-              size="default"
-              variant="secondary"
-              className="ml-auto gap-2"
-              onClick={() => router.push(nextHref)}
+              size="sm"
+              variant="outline"
+              className="h-9 gap-2"
+              onClick={() => {
+                setShowHint(true);
+                sayQuanta({
+                  text: activity.quantaHint,
+                  variant: "hint",
+                  imageVariant: "thinking",
+                });
+              }}
             >
-              {nextLabel}
-              <ChevronRight className="h-4 w-4" />
+              <Lightbulb className="h-4 w-4" />
+              Show Hint
             </Button>
-          )}
+            <Button size="sm" variant="ghost" className="h-9 gap-2" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+          </div>
+          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+            {prevHref && (
+              <Button asChild size="sm" variant="outline" className="h-9 gap-2">
+                <Link href={prevHref}>Previous</Link>
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 gap-2"
+              onClick={handleOpenInBuild}
+            >
+              Open in Build
+            </Button>
+            {relatedHref && relatedLabel && (
+              <Button asChild size="sm" variant="secondary" className="h-9 gap-2">
+                <Link href={relatedHref}>{relatedLabel}</Link>
+              </Button>
+            )}
+            {canContinue && nextHref && (
+              <Button
+                asChild
+                size="sm"
+                className="h-9 gap-2 focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+              >
+                <Link href={nextHref}>
+                  {nextLabel}
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LearningQuantaMessage({
+  message,
+  variant,
+  imageVariant,
+}: {
+  message: string;
+  variant: "default" | "success" | "hint" | "error";
+  imageVariant: QuantaVariant;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-3 border-l-2 pl-3",
+        variant === "error"
+          ? "border-[var(--color-destructive)]"
+          : variant === "success"
+            ? "border-[var(--color-success)]"
+            : variant === "hint"
+              ? "border-[var(--color-brand)]"
+              : "border-[var(--color-border)]"
+      )}
+      role="status"
+    >
+      <QuantaImage
+        variant={imageVariant}
+        size={32}
+        bare
+        alt="Quanta"
+        className="h-8 w-8"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="mb-0.5 text-sm font-semibold">Quanta</p>
+        <p className="text-sm leading-relaxed text-[var(--color-foreground)]">
+          {message}
+        </p>
       </div>
     </div>
   );
@@ -856,11 +955,11 @@ function LessonSectionCard({
   const section = lesson.sections[index];
   const miniCircuit = section.circuit;
   return (
-    <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand)]">
+    <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+      <p className="text-sm font-semibold uppercase tracking-wider text-[var(--color-brand)]">
         Part {index + 1} of {lesson.sections.length}
       </p>
-      <h2 className="text-lg font-semibold">{section.heading}</h2>
+      <h2 className="text-base font-semibold">{section.heading}</h2>
       <p className="whitespace-pre-wrap text-sm leading-relaxed">{section.body}</p>
       {miniCircuit && (
         <LessonCircuitPreview circuit={miniCircuit} />
@@ -897,8 +996,8 @@ function QuizCard({
   const question = lesson.quiz[index];
   const correct = choice === question.answerIndex;
   return (
-    <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-muted)]/40 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand)]">
+    <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+      <p className="text-sm font-semibold uppercase tracking-wider text-[var(--color-brand)]">
         Quick check
       </p>
       <h2 className="text-base font-semibold">{question.question}</h2>
@@ -940,32 +1039,43 @@ function QuizCard({
 function DoneCard({
   lesson,
   xp,
-  nextHref,
 }: {
   lesson: LessonDefinition | null;
   xp: number;
-  nextHref?: string;
 }) {
   const totalXp = useProgressStore((state) => state.totalXp);
   const level = useProgressStore((state) => state.getLevel());
   const xpInfo = xpForNextLevel(totalXp);
   return (
-    <div className="space-y-3">
-      <QuantaAchievement
-        title="Circuit milestone complete!"
-        layout="column"
-        message={
-          xp === 0
-            ? "This lesson was already completed — no extra XP this time. Keep experimenting and Quanta will be here for the next step."
-            : `You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`
-        }
-      />
-      <div className="space-y-3 rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-subtle)] p-4">
-        <h2 className="text-lg font-semibold">Level {level} · {getLevelTitle(level)}</h2>
-        <p className="text-sm">
+    <div className="space-y-4 border-t border-[var(--color-border)] pt-4">
+      <div className="flex items-start gap-3">
+        <QuantaImage
+          variant="success"
+          size={56}
+          bare
+          alt="Achievement unlocked"
+          className="h-14 w-14"
+        />
+        <div className="min-w-0 space-y-1">
+          <p className="text-sm font-semibold uppercase tracking-wider text-[var(--color-brand)]">
+            Achievements
+          </p>
+          <h2 className="text-base font-semibold">Circuit milestone complete!</h2>
+          <p className="text-sm leading-relaxed text-[var(--color-muted-foreground)]">
+            {xp === 0
+              ? "This lesson was already completed — no extra XP this time. Keep experimenting and Quanta will be here for the next step."
+              : `You earned ${xp} XP. Keep experimenting and Quanta will be here for the next step.`}
+          </p>
+        </div>
+      </div>
+      <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+        <p className="text-sm font-semibold">
+          Level {level} · {getLevelTitle(level)}
+        </p>
+        <p className="text-sm leading-relaxed text-[var(--color-muted-foreground)]">
           First-try quizzes add a +10 XP bonus. Your progress is saved automatically.
         </p>
-      <div className="h-2 overflow-hidden rounded-full bg-[var(--color-muted)]">
+        <div className="h-2 overflow-hidden rounded-full bg-[var(--color-muted)]">
           <div
             className="h-full rounded-full bg-[var(--color-brand)]"
             style={{ width: `${Math.round((xpInfo.progress || 1) * 100)}%` }}
@@ -976,11 +1086,6 @@ function DoneCard({
             <Link href={`/editor?walkthrough=${lesson.walkthroughId}`}>
               Open guided walkthrough
             </Link>
-          </Button>
-        )}
-        {nextHref && (
-          <Button asChild size="sm">
-            <Link href={nextHref}>Next lesson</Link>
           </Button>
         )}
       </div>

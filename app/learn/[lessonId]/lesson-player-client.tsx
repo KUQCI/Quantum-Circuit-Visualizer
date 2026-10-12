@@ -3,8 +3,6 @@
 import type { LessonDefinition } from "@/lib/learning/types";
 import { LearningPlayer } from "@/components/learning/LearningPlayer";
 import { LockedActivityState } from "@/components/learning/LockedActivityState";
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
-import { getLessonBreadcrumbs } from "@/lib/navigation/flow";
 import { LESSONS } from "@/lib/learning/lessons";
 import { isLessonOpenForLearner } from "@/lib/learning/classroom";
 import { useClassroomStore } from "@/store/classroom-store";
@@ -59,10 +57,6 @@ export function LessonPlayerClient({
 
   return (
     <div className="learning-workspace-shell">
-      <Breadcrumbs
-        items={getLessonBreadcrumbs(lesson)}
-        className="mb-2 shrink-0 px-0.5"
-      />
       <LearningPlayer
         activity={lesson}
         mode="lesson"
