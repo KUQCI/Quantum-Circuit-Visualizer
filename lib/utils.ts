@@ -13,9 +13,28 @@ export function pluralize(
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
-export function copyToClipboard(text: string): Promise<void> {
-  return navigator.clipboard.writeText(text);
+export async function copyText(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch {
+    const input = document.createElement("textarea");
+    input.value = text;
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    document.body.appendChild(input);
+    input.select();
+    try {
+      if (!document.execCommand("copy")) {
+        throw new Error("Failed to copy text to clipboard");
+      }
+    } finally {
+      input.remove();
+    }
+  }
 }
+
+export const copyToClipboard = copyText;
 
 export function downloadTextFile(content: string, filename: string) {
   const blob = new Blob([content], { type: "text/plain" });

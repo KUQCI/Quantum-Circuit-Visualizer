@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyCircuit, type Circuit } from "@/lib/circuit-schema";
-import { decodeShareParam, encodeCircuitToShare } from "@/lib/share-link";
+import {
+  buildShareUrl,
+  decodeShareParam,
+  encodeCircuitToShare,
+} from "@/lib/share-link";
+
+function withoutIds(operation: Circuit["operations"][number]) {
+  const { id, ...rest } = operation;
+  void id;
+  return rest;
+}
 
 function sampleCircuit(): Circuit {
   const circuit = createEmptyCircuit("Symbolic Bell", 3, 1);
@@ -76,11 +86,6 @@ describe("share links", () => {
   it("round-trips parameterized and measured circuits", () => {
     const circuit = sampleCircuit();
     const decoded = decodeShareParam(encodeCircuitToShare(circuit));
-    const withoutIds = (operation: Circuit["operations"][number]) => {
-      const { id, ...rest } = operation;
-      void id;
-      return rest;
-    };
     expect(decoded).not.toBeNull();
     expect(decoded?.name).toBe(circuit.name);
     expect(decoded?.qubits).toEqual(circuit.qubits);
@@ -93,6 +98,28 @@ describe("share links", () => {
       "op_3",
     ]);
     expect(decoded?.parameterBindings).toEqual({ theta: Math.PI / 2 });
+  });
+
+  it("builds share URLs that round-trip circuit operations and qubits", () => {
+    const circuit = sampleCircuit();
+    const url = buildShareUrl(circuit, "https://example.test");
+
+    expect(url.startsWith("https://example.test")).toBe(true);
+    expect(url).toContain("/editor?share=s1.");
+    const decoded = decodeShareParam(new URL(url).searchParams.get("share")!);
+    expect(decoded?.operations.map(withoutIds)).toEqual(
+      circuit.operations.map(withoutIds)
+    );
+    expect(decoded?.qubits).toEqual(circuit.qubits);
+  });
+
+  it("throws when building a URL for an oversized circuit", () => {
+    const circuit = bellCircuit();
+    circuit.name = "x".repeat(32 * 1024);
+
+    expect(() =>
+      buildShareUrl(circuit, "https://example.test")
+    ).toThrow("Circuit is too large to share");
   });
 
   it("decodes legacy payloads without parameter bindings", () => {

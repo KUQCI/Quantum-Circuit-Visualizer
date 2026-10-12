@@ -1,5 +1,6 @@
 import type { Circuit, Operation, Parameter } from "@/lib/circuit-schema";
 import { getGateLabel } from "@/lib/circuit-schema";
+import { withBasePath } from "@/lib/routes";
 import { validateCircuit } from "@/lib/validation";
 
 const MAX_SHARE_BYTES = 32 * 1024;
@@ -214,6 +215,12 @@ export function encodeCircuitToShare(circuit: Circuit): string {
     throw new Error("Circuit is too large to share");
   }
   return `s${SHARE_VERSION}.${toBase64Url(bytes)}`;
+}
+
+export function buildShareUrl(circuit: Circuit, origin: string): string {
+  return `${origin}${withBasePath(
+    `/editor?share=${encodeCircuitToShare(circuit)}`
+  )}`;
 }
 
 export function decodeShareParam(param: string): Circuit | null {
