@@ -19,6 +19,7 @@ import { QuantaHint } from "@/components/mascot/QuantaHint";
 import { QuantaPopout } from "@/components/mascot/QuantaPopout";
 import { ChallengeFeedback } from "@/components/learning/ChallengeFeedback";
 import { LessonCircuitPreview } from "@/components/learning/LessonCircuitPreview";
+import { LessonWalkthroughPlayer } from "@/components/learning/LessonWalkthroughPlayer";
 import { FeatureErrorBoundary } from "@/components/errors/FeatureErrorBoundary";
 import { checkCircuit, getLessonGateTypes } from "@/lib/learning/checker";
 import type { ChallengeDefinition, LessonDefinition } from "@/lib/learning/types";
@@ -639,6 +640,9 @@ export function LearningPlayer({
                     : "learning"
               }
             />
+            {mode === "lesson" && isLesson(activity) && (
+              <LessonWalkthroughPlayer lesson={activity} />
+            )}
             {mode === "lesson" && isLesson(activity) && stage === "learn" ? (
               <LessonSectionCard
                 lesson={activity}
