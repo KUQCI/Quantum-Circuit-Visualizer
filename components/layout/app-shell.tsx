@@ -74,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isFullWorkspace = isFullWorkspacePath(path);
   const isPlayer = isWorkspacePlayerPath(path);
   const isEmbed = path === "/embed";
+  const isWalkthroughVideo = path === "/walkthrough-video";
   const breadcrumbs = getContentBreadcrumbs(path);
 
   useEffect(() => {
@@ -95,6 +96,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
     return clearWorkspaceAttrs;
   }, [isFullWorkspace, isComposer]);
+
+  if (isWalkthroughVideo) {
+    return (
+      <ThemeProvider>
+        <div className="min-h-dvh w-full overflow-hidden bg-black">
+          {children}
+        </div>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>

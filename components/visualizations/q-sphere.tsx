@@ -21,6 +21,7 @@ interface QSphereProps {
   numQubits: number;
   blochVector: { x: number; y: number; z: number } | null;
   error?: string | null;
+  showHint?: boolean;
 }
 
 export function QSphere({
@@ -28,6 +29,7 @@ export function QSphere({
   numQubits,
   blochVector,
   error,
+  showHint = true,
 }: QSphereProps) {
   if (error) {
     return (
@@ -67,9 +69,11 @@ export function QSphere({
             }}
           />
         </div>
-        <span className="hidden text-[10px] text-[var(--color-muted-foreground)] sm:inline">
-          Drag to rotate
-        </span>
+        {showHint && (
+          <span className="hidden text-[10px] text-[var(--color-muted-foreground)] sm:inline">
+            Drag to rotate
+          </span>
+        )}
       </div>
     </div>
   );
