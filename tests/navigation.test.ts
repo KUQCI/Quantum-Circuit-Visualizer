@@ -6,6 +6,7 @@ import {
   getRelatedLesson,
   getAchievementHint,
   getBeginnerChallenge,
+  getLandingLessonCta,
 } from "@/lib/navigation/flow";
 
 describe("navigation flow", () => {
@@ -42,5 +43,19 @@ describe("navigation flow", () => {
       "measurement-check",
     ];
     expect(getBeginnerChallenge([], beginnerIds)).toBeNull();
+  });
+
+  it("points new learners at lesson 1 on the landing page", () => {
+    const cta = getLandingLessonCta([]);
+    expect(cta.href).toBe("/learn/what-is-a-qubit");
+    expect(cta.returning).toBe(false);
+    expect(cta.detail).toContain("Lesson 1");
+  });
+
+  it("points returning learners at their next lesson", () => {
+    const cta = getLandingLessonCta(["what-is-a-qubit"]);
+    expect(cta.href).toBe("/learn/bits-vs-qubits");
+    expect(cta.returning).toBe(true);
+    expect(cta.label).toBe("Continue learning");
   });
 });
