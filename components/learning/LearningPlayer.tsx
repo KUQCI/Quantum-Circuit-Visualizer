@@ -518,16 +518,16 @@ export function LearningPlayer({
           >
             <Link
               href={parentBreadcrumb.href ?? backHref}
-              className="max-w-10 shrink-0 truncate hover:text-[var(--color-brand)] sm:max-w-28"
+              className="hidden max-w-28 shrink-0 truncate hover:text-[var(--color-brand)] sm:inline"
             >
               {parentBreadcrumb.label}
             </Link>
-            <ChevronRight className="h-3 w-3 shrink-0 opacity-50" aria-hidden />
+            <ChevronRight className="hidden h-3 w-3 shrink-0 opacity-50 sm:block" aria-hidden />
             <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-[var(--color-foreground)]">
               {activity.title}
             </h1>
           </nav>
-          <span className="shrink-0 rounded-full border border-[var(--color-border)] bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] capitalize text-[var(--color-muted-foreground)] sm:px-2 sm:text-xs">
+          <span className="hidden shrink-0 rounded-full sm:inline border border-[var(--color-border)] bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] capitalize text-[var(--color-muted-foreground)] sm:px-2 sm:text-xs">
             {activity.difficulty}
           </span>
           {isComplete && (
