@@ -1678,7 +1678,7 @@ class AnimatedLessonScene(Scene):
         }.get(gate, gate.upper())
         label = operation.get("label") or default_label
         if gate in PARAMETER_GATES and operation.get("label"):
-            label = f"{gate.upper()} {operation['label']}"
+            label = f"{gate.upper()}\u2009{operation['label']}"
         return str(label)
 
     def _circuit_gate_column_width(
