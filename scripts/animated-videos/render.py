@@ -1018,6 +1018,7 @@ class AnimatedLessonScene(Scene):
         width: float = 0.92,
         height: float = 0.74,
         color: str | None = None,
+        opaque_background: bool = False,
     ) -> VGroup:
         tile_color = color or self.colors["brand"]
         box = RoundedRectangle(
@@ -1026,8 +1027,10 @@ class AnimatedLessonScene(Scene):
             corner_radius=0.12,
             stroke_color=tile_color,
             stroke_width=2.2,
-            fill_color=tile_color,
-            fill_opacity=0.14,
+            fill_color=(
+                self.colors["background"] if opaque_background else tile_color
+            ),
+            fill_opacity=1 if opaque_background else 0.14,
         )
         label_text = self._text(label, 28, color=tile_color, weight="BOLD")
         if label_text.width > width - 0.08:
@@ -1747,7 +1750,14 @@ class AnimatedLessonScene(Scene):
                 stroke_width=1.5,
                 dash_length=0.06,
             )
-            nodes.extend([meter, connector, label])
+            label_background = Rectangle(
+                width=label.width + 0.12,
+                height=label.height + 0.08,
+                stroke_width=0,
+                fill_color=self.colors["background"],
+                fill_opacity=1,
+            ).move_to(label)
+            nodes.extend([meter, connector, label_background, label])
         elif gate == "swap":
             first, second = targets
             low, high = sorted((wire_y[first], wire_y[second]))
@@ -1761,6 +1771,7 @@ class AnimatedLessonScene(Scene):
                         [center_x, wire_y[target], 0],
                         width,
                         tile_height,
+                        opaque_background=True,
                     )
                 )
         else:
@@ -1785,6 +1796,7 @@ class AnimatedLessonScene(Scene):
                     [center_x, wire_y[target], 0],
                     width,
                     tile_height,
+                    opaque_background=True,
                 )
             )
         return VGroup(*nodes)
@@ -1832,8 +1844,14 @@ class AnimatedLessonScene(Scene):
         visible_count = reveal + add
         multi_qubit_panels = qubits > 1 and bool(panels)
         panel_center_y = -0.7 if qubits > 1 else -0.95
+        has_labeled_parameter_gate = any(
+            operation.get("gate") in PARAMETER_GATES and operation.get("label")
+            for operation in gates[:visible_count]
+        )
         spacing = (
-            0.5
+            0.72
+            if qubits == 2 and has_labeled_parameter_gate
+            else 0.5
             if multi_qubit_panels
             else min(0.6, 1.2 / max(1, qubits - 1))
         )
@@ -2940,7 +2958,11 @@ class AnimatedLessonScene(Scene):
     ) -> None:
         transition = self._transition(beat["caption"])
         wire = self._wire([0, -0.05, 0])
-        gate = self._gate_tile("H", [0.6, 1.9, 0])
+        gate = self._gate_tile(
+            "H",
+            [0.6, 1.9, 0],
+            opaque_background=True,
+        )
         panel = RoundedRectangle(
             width=11.6,
             height=1.2,
@@ -3042,6 +3064,7 @@ class AnimatedLessonScene(Scene):
             width=0.8,
             height=0.7,
             color=self.colors["warning"],
+            opaque_background=True,
         )
         h_gate = self.state["h_gate"]
         z_gate.next_to(h_gate, RIGHT, buff=0.23)
