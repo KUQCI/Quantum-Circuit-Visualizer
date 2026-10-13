@@ -29,6 +29,7 @@ import { lessonVideoUrl } from "@/lib/learning/lesson-videos";
 import type { LessonDefinition } from "@/lib/learning/types";
 import { computeStepSnapshots } from "@/lib/step-explanations";
 import { useSpeechNarrator } from "@/lib/learning/use-speech-narrator";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 
 export function LessonWalkthroughPlayer({
@@ -53,6 +54,7 @@ export function LessonWalkthroughPlayer({
   const [viewMode, setViewMode] = useState<"animated" | "video">("animated");
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [playbackRequest, setPlaybackRequest] = useState(0);
+  const isNarrowViewport = useMediaQuery("(max-width: 640px)");
   const timerRef = useRef<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playingRef = useRef(false);
@@ -292,6 +294,29 @@ export function LessonWalkthroughPlayer({
               className="aspect-video w-full rounded-md bg-black"
             />
           )
+        )}
+
+        {viewMode === "video" && !videoUnavailable && (
+          <details
+            open={isNarrowViewport}
+            className="rounded-md border border-[var(--color-border)] bg-[var(--color-card)]"
+          >
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
+              Transcript
+            </summary>
+            <ol className="max-h-[40vh] list-decimal space-y-3 overflow-y-auto border-t border-[var(--color-border)] px-8 py-3">
+              {walkthrough.scenes.map((scene, index) => (
+                <li key={`${scene.title}-${index}`} className="pl-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+                    {scene.title}
+                  </p>
+                  <p className="mt-1 text-sm [overflow-wrap:anywhere]">
+                    {scene.caption}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </details>
         )}
 
         {viewMode === "animated" && (
