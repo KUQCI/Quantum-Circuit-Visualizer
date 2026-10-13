@@ -11,6 +11,7 @@ on:
       - "components/learning/WalkthroughStage.tsx"
       - "app/walkthrough-video/**"
       - "scripts/render-lesson-videos.py"
+      - "scripts/animated-videos/**"
       - ".github/workflows/lesson-videos.yml"
 
 permissions:
@@ -57,8 +58,10 @@ jobs:
       - name: Install rendering dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ffmpeg
-          python -m pip install "playwright==1.63.0" "kokoro-onnx==0.6.1" "soundfile==0.14.0"
+          sudo apt-get install -y --no-install-recommends \
+            ffmpeg libcairo2-dev libpango1.0-dev pkg-config
+          python -m pip install "playwright==1.63.0" \
+            -r scripts/animated-videos/requirements.txt
           python -m playwright install --with-deps chromium
       - name: Download pinned Kokoro model
         run: |
@@ -83,6 +86,20 @@ jobs:
             --voices "$RUNNER_TEMP/kokoro/voices-v1.0.bin" \
             --voice-name af_heart \
             --out videos
+      - name: Render animated lesson videos
+        run: |
+          python scripts/animated-videos/render.py --self-check
+          animated_out="$RUNNER_TEMP/animated-videos"
+          mkdir -p "$animated_out"
+          python scripts/animated-videos/render.py \
+            --out "$animated_out" \
+            --model "$RUNNER_TEMP/kokoro/kokoro-v1.0.onnx" \
+            --voices "$RUNNER_TEMP/kokoro/voices-v1.0.bin" \
+            --voice-name af_heart
+          shopt -s nullglob
+          for artifact in "$animated_out"/*.mp4 "$animated_out"/*.vtt; do
+            cp "$artifact" videos/
+          done
       - name: Create release and upload videos
         env:
           GH_TOKEN: ${{ github.token }}

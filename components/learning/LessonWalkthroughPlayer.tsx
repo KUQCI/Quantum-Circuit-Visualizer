@@ -25,6 +25,7 @@ import {
   buildLessonWalkthrough,
   estimateSceneMs,
 } from "@/lib/learning/lesson-walkthrough";
+import { animatedVideoTranscript } from "@/lib/learning/animated-videos";
 import { lessonVideoUrl } from "@/lib/learning/lesson-videos";
 import type { LessonDefinition } from "@/lib/learning/types";
 import { computeStepSnapshots } from "@/lib/step-explanations";
@@ -38,6 +39,7 @@ export function LessonWalkthroughPlayer({
   lesson: LessonDefinition;
 }) {
   const walkthrough = useMemo(() => buildLessonWalkthrough(lesson), [lesson]);
+  const animatedTranscript = animatedVideoTranscript(lesson.id);
   const snapshots = useMemo(() => {
     if (!walkthrough.circuit) return [];
     try {
@@ -305,16 +307,24 @@ export function LessonWalkthroughPlayer({
               Transcript
             </summary>
             <ol className="max-h-[40vh] list-decimal space-y-3 overflow-y-auto border-t border-[var(--color-border)] px-8 py-3">
-              {walkthrough.scenes.map((scene, index) => (
-                <li key={`${scene.title}-${index}`} className="pl-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
-                    {scene.title}
-                  </p>
-                  <p className="mt-1 text-sm [overflow-wrap:anywhere]">
-                    {scene.caption}
-                  </p>
-                </li>
-              ))}
+              {animatedTranscript
+                ? animatedTranscript.map((speech, index) => (
+                    <li key={index} className="pl-1">
+                      <p className="text-sm [overflow-wrap:anywhere]">
+                        {speech}
+                      </p>
+                    </li>
+                  ))
+                : walkthrough.scenes.map((scene, index) => (
+                    <li key={`${scene.title}-${index}`} className="pl-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+                        {scene.title}
+                      </p>
+                      <p className="mt-1 text-sm [overflow-wrap:anywhere]">
+                        {scene.caption}
+                      </p>
+                    </li>
+                  ))}
             </ol>
           </details>
         )}
