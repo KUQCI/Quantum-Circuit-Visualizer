@@ -1844,8 +1844,14 @@ class AnimatedLessonScene(Scene):
         visible_count = reveal + add
         multi_qubit_panels = qubits > 1 and bool(panels)
         panel_center_y = -0.7 if qubits > 1 else -0.95
+        has_labeled_parameter_gate = any(
+            operation.get("gate") in PARAMETER_GATES and operation.get("label")
+            for operation in gates[:visible_count]
+        )
         spacing = (
-            0.5
+            0.72
+            if qubits == 2 and has_labeled_parameter_gate
+            else 0.5
             if multi_qubit_panels
             else min(0.6, 1.2 / max(1, qubits - 1))
         )
