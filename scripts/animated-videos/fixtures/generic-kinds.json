@@ -1,0 +1,166 @@
+{
+  "style": {
+    "resolution": [1280, 720],
+    "fps": 30,
+    "background": "#050914",
+    "foreground": "#e2e8f0",
+    "muted": "#a8b4c4",
+    "brand": "#7dd3fc",
+    "success": "#4ade80",
+    "warning": "#f6c453",
+    "danger": "#f87171",
+    "font": "DejaVu Sans",
+    "quantaImage": "public/assets/quanta/quanta-hatching-curious.webp",
+    "logoImage": "public/icons/icon-192.png"
+  },
+  "lessons": [
+    {
+      "id": "generic-kinds-demo",
+      "module": "Fixture",
+      "title": "Generic Beat Kinds",
+      "beats": [
+        {
+          "id": "title",
+          "caption": "A quick tour of the animated beat types.",
+          "speech": "A quick tour of the animated beat types.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "single-qubit",
+          "caption": "H then Z points the qubit toward minus X.",
+          "speech": "Hadamard, then Z, points the Bloch vector toward minus X.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [0]
+              },
+              {
+                "gate": "z",
+                "targets": [0]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": ["bloch", "phase"]
+          }
+        },
+        {
+          "id": "bell-state",
+          "caption": "The Bell circuit shares probability between 00 and 11.",
+          "speech": "The Bell circuit shares probability between zero zero and one one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [0]
+              },
+              {
+                "gate": "cx",
+                "targets": [1],
+                "controls": [0]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": ["probabilities", "phase"]
+          }
+        },
+        {
+          "id": "ghz-state",
+          "caption": "The three-qubit GHZ state has outcomes 000 and 111.",
+          "speech": "The three-qubit GHZ state has outcomes zero zero zero and one one one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [0]
+              },
+              {
+                "gate": "cx",
+                "targets": [1],
+                "controls": [0]
+              },
+              {
+                "gate": "cx",
+                "targets": [2],
+                "controls": [0]
+              }
+            ],
+            "reveal": 0,
+            "add": 3,
+            "panels": ["probabilities"]
+          }
+        },
+        {
+          "id": "histogram",
+          "caption": "Counts show the outcomes from repeated shots.",
+          "speech": "Counts show the outcomes from repeated shots.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "00": 503,
+              "11": 521
+            },
+            "title": "1024 shots"
+          }
+        },
+        {
+          "id": "cards",
+          "caption": "Three ideas to keep in mind.",
+          "speech": "Three ideas to keep in mind.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Quantum notes",
+            "items": [
+              {
+                "title": "Superposition",
+                "body": "Amplitudes can describe more than one basis state."
+              },
+              {
+                "title": "Interference",
+                "body": "Phase changes how amplitudes combine."
+              },
+              {
+                "title": "Measurement",
+                "body": "Outcomes are sampled according to probability."
+              }
+            ]
+          }
+        },
+        {
+          "id": "code",
+          "caption": "A small circuit written as Python code.",
+          "speech": "A small circuit written as Python code.",
+          "scene": {
+            "kind": "code",
+            "language": "python",
+            "lines": [
+              "qc = QuantumCircuit(2)",
+              "qc.h(0)",
+              "qc.cx(0, 1)"
+            ],
+            "highlight": [1]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn to build a circuit.",
+          "speech": "Your turn to build a circuit.",
+          "scene": {
+            "kind": "outro",
+            "chips": ["Place", "Connect", "Run"]
+          }
+        }
+      ]
+    }
+  ]
+}

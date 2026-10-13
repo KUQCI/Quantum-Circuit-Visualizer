@@ -81,6 +81,288 @@ CHILD_STORYBOARDS = "QCV_ANIMATED_STORYBOARDS"
 CHILD_LESSON = "QCV_ANIMATED_LESSON"
 CHILD_TIMINGS = "QCV_ANIMATED_TIMINGS"
 CHILD_REPO_ROOT = "QCV_ANIMATED_REPO_ROOT"
+DEFAULT_STORYBOARDS_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "lib/learning/animated-storyboards.json"
+)
+SUPPORTED_BEAT_KINDS = {
+    "title",
+    "circuit",
+    "histogram",
+    "cards",
+    "code",
+    "outro",
+}
+SUPPORTED_GATES = {
+    "h",
+    "x",
+    "y",
+    "z",
+    "s",
+    "sdg",
+    "t",
+    "tdg",
+    "sx",
+    "rx",
+    "ry",
+    "rz",
+    "p",
+    "cx",
+    "cz",
+    "cy",
+    "swap",
+    "ccx",
+    "cp",
+    "crz",
+    "crx",
+    "cry",
+    "measure",
+    "barrier",
+}
+PARAMETER_GATES = {"rx", "ry", "rz", "p", "cp", "crz", "crx", "cry"}
+
+
+def format_basis_label(index: int, qubits: int) -> str:
+    return "".join(str((index >> qubit) & 1) for qubit in range(qubits))
+
+
+def initial_statevector(qubits: int) -> np.ndarray:
+    if isinstance(qubits, bool) or not isinstance(qubits, int) or qubits < 1:
+        raise ValueError(f"Invalid qubit count: {qubits}")
+    if qubits > 8:
+        raise ValueError(f"Statevector simulation supports at most 8 qubits: {qubits}")
+    state = np.zeros(1 << qubits, dtype=np.complex128)
+    state[0] = 1.0
+    return state
+
+
+def _single_qubit_matrix(gate: str, angle: float = 0.0) -> np.ndarray:
+    cosine = math.cos(angle / 2)
+    sine = math.sin(angle / 2)
+    matrices = {
+        "h": np.array([[1, 1], [1, -1]], dtype=np.complex128) / math.sqrt(2),
+        "x": np.array([[0, 1], [1, 0]], dtype=np.complex128),
+        "y": np.array([[0, -1j], [1j, 0]], dtype=np.complex128),
+        "z": np.array([[1, 0], [0, -1]], dtype=np.complex128),
+        "s": np.diag([1, 1j]).astype(np.complex128),
+        "sdg": np.diag([1, -1j]).astype(np.complex128),
+        "t": np.diag([1, np.exp(1j * math.pi / 4)]).astype(np.complex128),
+        "tdg": np.diag([1, np.exp(-1j * math.pi / 4)]).astype(np.complex128),
+        "sx": np.array(
+            [[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]],
+            dtype=np.complex128,
+        )
+        / 2,
+        "rx": np.array(
+            [[cosine, -1j * sine], [-1j * sine, cosine]],
+            dtype=np.complex128,
+        ),
+        "ry": np.array([[cosine, -sine], [sine, cosine]], dtype=np.complex128),
+        "rz": np.diag(
+            [np.exp(-1j * angle / 2), np.exp(1j * angle / 2)]
+        ).astype(np.complex128),
+        "p": np.diag([1, np.exp(1j * angle)]).astype(np.complex128),
+    }
+    return matrices[gate]
+
+
+def apply_gate(
+    state: np.ndarray,
+    qubits: int,
+    operation: dict[str, Any],
+) -> np.ndarray:
+    gate = operation.get("gate")
+    if not isinstance(gate, str) or gate not in SUPPORTED_GATES:
+        raise ValueError(f"Unsupported gate: {gate}")
+    targets = operation.get("targets")
+    controls = operation.get("controls", [])
+    params = operation.get("params", [])
+    if not isinstance(targets, list) or not isinstance(controls, list):
+        raise ValueError(f"Invalid qubits for {gate}")
+    if not isinstance(params, list) or any(
+        isinstance(value, bool) or not isinstance(value, (int, float))
+        for value in params
+    ):
+        raise ValueError(f"Invalid parameters for {gate}")
+    indices = targets + controls
+    if any(
+        isinstance(index, bool)
+        or not isinstance(index, int)
+        or index < 0
+        or index >= qubits
+        for index in indices
+    ):
+        raise ValueError(f"Qubit index out of range for {gate}: {indices}")
+    if len(set(indices)) != len(indices):
+        raise ValueError(f"Qubit indices overlap for {gate}: {indices}")
+    if gate == "barrier":
+        if not targets or controls or params:
+            raise ValueError("barrier requires targets and no controls or parameters")
+        return state.copy()
+    if gate == "measure":
+        if len(targets) != 1 or controls or params:
+            raise ValueError("measure requires one target and no controls or parameters")
+        return state.copy()
+    if gate == "swap":
+        if len(targets) != 2 or controls or params:
+            raise ValueError("swap requires two targets and no controls or parameters")
+        first, second = targets
+        first_mask, second_mask = 1 << first, 1 << second
+        result = state.copy()
+        for basis in range(state.size):
+            if bool(basis & first_mask) != bool(basis & second_mask):
+                partner = basis ^ first_mask ^ second_mask
+                if basis < partner:
+                    result[basis], result[partner] = state[partner], state[basis]
+        return result
+    if gate in PARAMETER_GATES:
+        if len(params) != 1:
+            raise ValueError(f"{gate} requires exactly one parameter")
+    elif params:
+        raise ValueError(f"{gate} does not take parameters")
+
+    controlled = gate in {"cx", "cz", "cy", "cp", "crz", "crx", "cry", "ccx"}
+    expected_controls = 2 if gate == "ccx" else 1 if controlled else 0
+    if len(controls) != expected_controls or len(targets) != 1:
+        raise ValueError(
+            f"{gate} requires one target and {expected_controls} controls"
+        )
+
+    matrix_gate = {
+        "cx": "x",
+        "ccx": "x",
+        "cz": "z",
+        "cy": "y",
+        "cp": "p",
+        "crz": "rz",
+        "crx": "rx",
+        "cry": "ry",
+    }.get(gate, gate)
+    matrix = _single_qubit_matrix(matrix_gate, float(params[0]) if params else 0.0)
+    target_mask = 1 << targets[0]
+    control_mask = sum(1 << control for control in controls)
+    result = state.copy()
+    for basis in range(state.size):
+        if basis & target_mask or basis & control_mask != control_mask:
+            continue
+        partner = basis | target_mask
+        zero, one = state[basis], state[partner]
+        result[basis] = matrix[0, 0] * zero + matrix[0, 1] * one
+        result[partner] = matrix[1, 0] * zero + matrix[1, 1] * one
+    return result
+
+
+def simulate_operations(
+    qubits: int,
+    operations: Sequence[dict[str, Any]],
+) -> np.ndarray:
+    state = initial_statevector(qubits)
+    for operation in operations:
+        state = apply_gate(state, qubits, operation)
+    return state
+
+
+def state_probabilities(
+    state: np.ndarray,
+    qubits: int,
+) -> list[tuple[str, float]]:
+    return [
+        (format_basis_label(index, qubits), float(abs(amplitude) ** 2))
+        for index, amplitude in enumerate(state)
+    ]
+
+
+def bloch_vector(state: np.ndarray) -> tuple[float, float, float]:
+    alpha, beta = state
+    coherence = np.conjugate(alpha) * beta
+    return (
+        float(2 * coherence.real),
+        float(2 * coherence.imag),
+        float(abs(alpha) ** 2 - abs(beta) ** 2),
+    )
+
+
+def phase_degrees(amplitude: complex) -> int:
+    degrees = round(math.degrees(math.atan2(amplitude.imag, amplitude.real)))
+    return degrees % 360
+
+
+def _assert_state(
+    state: np.ndarray,
+    expected: dict[str, float],
+    tolerance: float = 1e-9,
+) -> None:
+    actual = dict(state_probabilities(state, int(math.log2(state.size))))
+    for label, probability in expected.items():
+        assert abs(actual[label] - probability) < tolerance, (
+            f"{label}: expected {probability}, got {actual[label]}"
+        )
+    for label, probability in actual.items():
+        if label not in expected:
+            assert probability < tolerance, f"Expected {label} to be empty"
+
+
+def run_self_check() -> None:
+    def op(gate: str, targets: list[int], **values: Any) -> dict[str, Any]:
+        return {"gate": gate, "targets": targets, **values}
+
+    _assert_state(simulate_operations(1, [op("x", [0])]), {"1": 1.0})
+    _assert_state(simulate_operations(1, [op("h", [0])]), {"0": 0.5, "1": 0.5})
+    x_after_hzh = simulate_operations(
+        1,
+        [op("h", [0]), op("z", [0]), op("h", [0])],
+    )
+    x_direct = simulate_operations(1, [op("x", [0])])
+    assert np.allclose(x_after_hzh, x_direct), "HZH must equal X"
+    bell = simulate_operations(
+        2,
+        [
+            op("h", [0]),
+            op("cx", [1], controls=[0]),
+        ],
+    )
+    _assert_state(bell, {"00": 0.5, "11": 0.5})
+    _assert_state(
+        simulate_operations(2, [op("x", [0])]),
+        {"10": 1.0},
+    )
+    ghz = simulate_operations(
+        3,
+        [
+            op("h", [0]),
+            op("cx", [1], controls=[0]),
+            op("cx", [2], controls=[0]),
+        ],
+    )
+    _assert_state(ghz, {"000": 0.5, "111": 0.5})
+    phased = simulate_operations(
+        1,
+        [op("h", [0]), op("s", [0]), op("s", [0])],
+    )
+    assert phase_degrees(phased[1]) == 180, "HSS must put |1⟩ at 180°"
+    _assert_state(
+        simulate_operations(1, [op("ry", [0], params=[math.pi])]),
+        {"1": 1.0},
+    )
+    _assert_state(
+        simulate_operations(
+            3,
+            [
+                op("x", [1]),
+                op("x", [2]),
+                op("ccx", [0], controls=[1, 2]),
+            ],
+        ),
+        {"111": 1.0},
+    )
+    _assert_state(
+        simulate_operations(
+            2,
+            [op("x", [0]), op("swap", [0, 1])],
+        ),
+        {"01": 1.0},
+    )
+    print("self-check passed: 10 statevector and phase cases")
 
 
 @dataclass(frozen=True)
@@ -94,12 +376,17 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Render the Quantum Basics animated-video pilot."
     )
-    parser.add_argument("--storyboards", required=True, type=Path)
-    parser.add_argument("--out", required=True, type=Path)
-    parser.add_argument("--model", required=True, type=Path)
-    parser.add_argument("--voices", required=True, type=Path)
+    parser.add_argument(
+        "--storyboards",
+        type=Path,
+        default=DEFAULT_STORYBOARDS_PATH,
+    )
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--model", type=Path)
+    parser.add_argument("--voices", type=Path)
     parser.add_argument("--lessons", help="Comma-separated lesson ids")
     parser.add_argument("--voice-name", default="af_heart")
+    parser.add_argument("--self-check", action="store_true")
     return parser.parse_args()
 
 
@@ -373,8 +660,24 @@ class AnimatedLessonScene(Scene):
                 f"_beat_{lesson_id.replace('-', '_')}_"
                 f"{beat['id'].replace('-', '_')}"
             )
-            method = getattr(self, method_name)
-            method(beat, int(timing["frameCount"]))
+            method = getattr(self, method_name, None)
+            if callable(method):
+                method(beat, int(timing["frameCount"]))
+                continue
+            scene = beat.get("scene")
+            kind = scene.get("kind") if isinstance(scene, dict) else None
+            renderer = getattr(self, f"_scene_{kind}", None)
+            if not callable(renderer):
+                raise ValueError(
+                    f"No renderer for lesson {lesson_id} beat {beat['id']}: "
+                    f"missing or unsupported scene.kind {kind!r}"
+                )
+            if kind not in SUPPORTED_BEAT_KINDS:
+                raise ValueError(
+                    f"No renderer for lesson {lesson_id} beat {beat['id']}: "
+                    f"unsupported scene.kind {kind!r}"
+                )
+            renderer(beat, scene, int(timing["frameCount"]))
 
     def _text(
         self,
@@ -660,6 +963,10 @@ class AnimatedLessonScene(Scene):
             fill_opacity=0.14,
         )
         label_text = self._text(label, 28, color=tile_color, weight="BOLD")
+        if label_text.width > width - 0.12:
+            label_text.scale_to_fit_width(width - 0.12)
+        if label_text.height > height - 0.12:
+            label_text.scale_to_fit_height(height - 0.12)
         group = VGroup(box, label_text)
         group.move_to(center)
         return group
@@ -1079,6 +1386,688 @@ class AnimatedLessonScene(Scene):
             "animation": UpdateFromAlphaFunc(dots, drop),
             "total": total,
         }
+
+    def _probability_panel(
+        self,
+        state: np.ndarray,
+        qubits: int,
+        center: Sequence[float],
+        width: float,
+        height: float,
+    ) -> VGroup:
+        frame = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.14,
+            stroke_color=self.colors["muted"],
+            stroke_width=1.1,
+            fill_color="#0c1626",
+            fill_opacity=0.92,
+        ).move_to(center)
+        title = self._text("Probabilities", 22, color=self.colors["muted"], weight="BOLD")
+        title.move_to(frame.get_top() + DOWN * 0.23)
+        entries = state_probabilities(state, qubits)
+        slot_width = (width - 0.28) / len(entries)
+        bar_width = min(0.44, slot_width * 0.44)
+        baseline_y = frame.get_bottom()[1] + 0.42
+        max_height = max(0.38, height - 1.15)
+        parts: list[Any] = [frame, title]
+        label_size = 20 if qubits <= 3 else 16
+        value_size = 20 if len(entries) <= 8 else 15
+        for index, (label, probability) in enumerate(entries):
+            x = frame.get_left()[0] + 0.14 + (index + 0.5) * slot_width
+            bar_height = max(0.035, probability * max_height)
+            bar = Rectangle(
+                width=bar_width,
+                height=bar_height,
+                stroke_color=self.colors["success"],
+                stroke_width=1.1,
+                fill_color=self.colors["success"],
+                fill_opacity=0.76,
+            ).move_to([x, baseline_y + bar_height / 2, 0])
+            percentage = self._text(
+                f"{round(probability * 100)}%",
+                value_size,
+                color=self.colors["success"],
+                weight="BOLD",
+            ).move_to([x, baseline_y + max_height + 0.13, 0])
+            basis = self._text(label, label_size).move_to(
+                [x, frame.get_bottom()[1] + 0.17, 0]
+            )
+            parts.extend([bar, percentage, basis])
+        return VGroup(*parts)
+
+    def _phase_panel(
+        self,
+        state: np.ndarray,
+        qubits: int,
+        center: Sequence[float],
+        width: float,
+        height: float,
+    ) -> VGroup:
+        frame = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.14,
+            stroke_color=self.colors["muted"],
+            stroke_width=1.1,
+            fill_color="#0c1626",
+            fill_opacity=0.92,
+        ).move_to(center)
+        title = self._text("Phase", 22, color=self.colors["muted"], weight="BOLD")
+        title.move_to(frame.get_top() + DOWN * 0.23)
+        entries = state_probabilities(state, qubits)
+        slot_width = (width - 0.28) / len(entries)
+        radius = min(0.34, slot_width * 0.31, (height - 0.7) * 0.28)
+        radius = max(0.14, radius)
+        dial_y = center[1] - 0.16
+        parts: list[Any] = [frame, title]
+        for index, (label, probability) in enumerate(entries):
+            x = frame.get_left()[0] + 0.14 + (index + 0.5) * slot_width
+            circle = Circle(
+                radius=radius,
+                color=(
+                    self.colors["brand"]
+                    if probability > 1e-9
+                    else self.colors["muted"]
+                ),
+                stroke_width=1.8,
+            ).move_to([x, dial_y, 0])
+            opacity = 1 if probability > 1e-9 else 0.3
+            circle.set_opacity(opacity)
+            basis = self._text(label, 19).move_to(
+                [x, frame.get_top()[1] - 0.43, 0]
+            )
+            basis.set_opacity(opacity)
+            parts.extend([circle, basis])
+            if probability > 1e-9:
+                degrees = phase_degrees(state[index])
+                radians = math.radians(degrees)
+                pointer = Line(
+                    [x, dial_y, 0],
+                    [
+                        x + radius * 0.78 * math.cos(radians),
+                        dial_y + radius * 0.78 * math.sin(radians),
+                        0,
+                    ],
+                    color=self.colors["warning"],
+                    stroke_width=2.4,
+                )
+                degree = self._text(
+                    f"{degrees}°",
+                    18,
+                    color=self.colors["warning"],
+                ).move_to([x, frame.get_bottom()[1] + 0.17, 0])
+                parts.extend([pointer, degree])
+        return VGroup(*parts)
+
+    def _bloch_panel(
+        self,
+        state: np.ndarray,
+        center: Sequence[float],
+        width: float,
+        height: float,
+    ) -> VGroup:
+        frame = RoundedRectangle(
+            width=width,
+            height=height,
+            corner_radius=0.14,
+            stroke_color=self.colors["muted"],
+            stroke_width=1.1,
+            fill_color="#0c1626",
+            fill_opacity=0.92,
+        ).move_to(center)
+        title = self._text("Bloch vector", 22, color=self.colors["muted"], weight="BOLD")
+        title.move_to(frame.get_top() + DOWN * 0.23)
+        sphere_center = np.array([center[0], center[1] - 0.27, 0.0])
+        radius = min(0.55, (height - 0.72) * 0.39, (width - 0.7) * 0.28)
+        circle = Circle(radius=radius, color=self.colors["brand"], stroke_width=1.8)
+        circle.move_to(sphere_center)
+        equator = Ellipse(
+            width=radius * 2,
+            height=radius * 0.48,
+            color=self.colors["muted"],
+            stroke_width=1.2,
+        ).move_to(sphere_center)
+        x, y, z = bloch_vector(state)
+        endpoint = sphere_center + np.array(
+            [radius * 0.88 * (x + 0.45 * y), radius * 0.88 * (z + 0.3 * y), 0]
+        )
+        arrow = Arrow(
+            sphere_center,
+            endpoint,
+            buff=0,
+            color=self.colors["warning"],
+            stroke_width=4,
+            max_tip_length_to_length_ratio=0.24,
+        )
+        return VGroup(frame, title, circle, equator, arrow)
+
+    def _circuit_panels(
+        self,
+        names: Sequence[str],
+        state: np.ndarray,
+        qubits: int,
+        center_y: float,
+    ) -> VGroup:
+        if "bloch" in names and qubits != 1:
+            raise ValueError("The bloch panel requires a one-qubit circuit")
+        if not names:
+            return VGroup()
+        gap = 0.14
+        width = (11.7 - gap * (len(names) - 1)) / len(names)
+        height = 1.82
+        center_y = max(-1.2, center_y)
+        centers = [
+            -5.85 + width / 2 + index * (width + gap)
+            for index in range(len(names))
+        ]
+        panels: list[VGroup] = []
+        for name, center_x in zip(names, centers, strict=True):
+            center = [center_x, center_y, 0]
+            if name == "probabilities":
+                panels.append(self._probability_panel(state, qubits, center, width, height))
+            elif name == "phase":
+                panels.append(self._phase_panel(state, qubits, center, width, height))
+            elif name == "bloch":
+                panels.append(self._bloch_panel(state, center, width, height))
+            else:
+                raise ValueError(f"Unknown circuit panel: {name}")
+        return VGroup(*panels)
+
+    def _circuit_gate_visual(
+        self,
+        operation: dict[str, Any],
+        center_x: float,
+        wire_y: Sequence[float],
+        width: float,
+        top_y: float,
+        bottom_y: float,
+    ) -> VGroup:
+        gate = operation["gate"]
+        targets = operation.get("targets", [])
+        controls = operation.get("controls", [])
+        wire_spacing = (
+            min(abs(wire_y[index] - wire_y[index + 1]) for index in range(len(wire_y) - 1))
+            if len(wire_y) > 1
+            else 0.68
+        )
+        tile_height = min(0.66, wire_spacing * 0.84)
+        if gate == "barrier":
+            return VGroup(
+                DashedLine(
+                    [center_x, top_y + 0.12, 0],
+                    [center_x, bottom_y - 0.12, 0],
+                    color=self.colors["muted"],
+                    stroke_width=2,
+                )
+            )
+        nodes: list[Any] = []
+        if gate == "measure":
+            meter = self._meter([center_x, wire_y[targets[0]], 0]).scale(
+                min(0.38, tile_height / 2)
+            )
+            nodes.append(meter)
+        elif gate == "swap":
+            first, second = targets
+            low, high = sorted((wire_y[first], wire_y[second]))
+            nodes.append(
+                Line([center_x, low, 0], [center_x, high, 0], color=self.colors["brand"], stroke_width=2)
+            )
+            for target in targets:
+                nodes.append(
+                    self._gate_tile(
+                        "×",
+                        [center_x, wire_y[target], 0],
+                        width,
+                        tile_height,
+                    )
+                )
+        else:
+            target = targets[0]
+            if controls:
+                ys = [wire_y[index] for index in (*controls, target)]
+                nodes.append(
+                    Line(
+                        [center_x, min(ys), 0],
+                        [center_x, max(ys), 0],
+                        color=self.colors["brand"],
+                        stroke_width=2,
+                    )
+                )
+                nodes.extend(
+                    Dot([center_x, wire_y[index], 0], radius=0.085, color=self.colors["brand"])
+                    for index in controls
+                )
+            label = operation.get("label") or gate.upper()
+            if gate in PARAMETER_GATES and operation.get("label"):
+                label = f"{gate.upper()}\n{operation['label']}"
+            nodes.append(
+                self._gate_tile(
+                    label,
+                    [center_x, wire_y[target], 0],
+                    width,
+                    tile_height,
+                )
+            )
+        return VGroup(*nodes)
+
+    def _scene_title(
+        self,
+        beat: dict[str, Any],
+        scene: dict[str, Any],
+        frame_count: int,
+    ) -> None:
+        self._title_intro(beat, frame_count)
+
+    def _scene_circuit(
+        self,
+        beat: dict[str, Any],
+        scene: dict[str, Any],
+        frame_count: int,
+    ) -> None:
+        qubits = scene.get("qubits")
+        if isinstance(qubits, bool) or not isinstance(qubits, int):
+            raise ValueError("circuit.qubits must be an integer")
+        state = initial_statevector(qubits)
+        gates = scene.get("gates", [])
+        reveal = scene.get("reveal", 0)
+        add = scene.get("add", 0)
+        panels = scene.get("panels", [])
+        if not isinstance(gates, list) or not isinstance(panels, list):
+            raise ValueError("circuit.gates and circuit.panels must be lists")
+        if (
+            isinstance(reveal, bool)
+            or not isinstance(reveal, int)
+            or isinstance(add, bool)
+            or not isinstance(add, int)
+            or reveal < 0
+            or add < 0
+            or reveal + add > len(gates)
+        ):
+            raise ValueError("circuit reveal + add must be within gates")
+        for name in panels:
+            if name not in {"probabilities", "bloch", "phase"}:
+                raise ValueError(f"Unknown circuit panel: {name}")
+        if "bloch" in panels and qubits != 1:
+            raise ValueError("The bloch panel requires a one-qubit circuit")
+
+        visible_count = reveal + add
+        wire_top = 2.15
+        spacing = min(0.68, 1.8 / max(1, qubits - 1))
+        wire_y = [wire_top - index * spacing for index in range(qubits)]
+        wire_parts: list[Any] = []
+        for index, y in enumerate(wire_y):
+            wire_parts.extend(
+                [
+                    self._text(f"q[{index}]", 24, color=self.colors["muted"]).move_to(
+                        [-6.2, y, 0]
+                    ),
+                    self._text("|0⟩", 24, color=self.colors["brand"]).move_to(
+                        [-5.52, y, 0]
+                    ),
+                    Line(
+                        [-5.05, y, 0],
+                        [5.65, y, 0],
+                        color=self.colors["foreground"],
+                        stroke_width=2.5,
+                    ),
+                ]
+            )
+        wire_group = VGroup(*wire_parts)
+        panel_center_y = wire_y[-1] - 1.55
+        panel_group = self._circuit_panels(panels, state, qubits, panel_center_y)
+        if reveal:
+            for operation in gates[:reveal]:
+                state = apply_gate(state, qubits, operation)
+        panel_group = self._circuit_panels(panels, state, qubits, panel_center_y)
+
+        column_width = min(0.92, max(0.52, 9.0 / max(1, visible_count)))
+        columns = (
+            np.linspace(-4.45, 4.45, visible_count).tolist()
+            if visible_count > 1
+            else [0.0]
+        )
+        initial_gate_groups = VGroup(
+            *[
+                self._circuit_gate_visual(
+                    operation,
+                    columns[index],
+                    wire_y,
+                    column_width,
+                    wire_y[0],
+                    wire_y[-1],
+                )
+                for index, operation in enumerate(gates[:reveal])
+            ]
+        )
+        added_gate_groups: list[VGroup] = []
+        steps: list[Step] = [
+            self._transition(beat["caption"]),
+            Step(
+                0.55,
+                (FadeIn(wire_group), FadeIn(initial_gate_groups), FadeIn(panel_group)),
+            ),
+        ]
+        for index in range(reveal, reveal + add):
+            operation = gates[index]
+            gate_group = self._circuit_gate_visual(
+                operation,
+                columns[index],
+                wire_y,
+                column_width,
+                wire_y[0],
+                wire_y[-1],
+            )
+            state = apply_gate(state, qubits, operation)
+            target_panels = self._circuit_panels(
+                panels,
+                state,
+                qubits,
+                panel_center_y,
+            )
+            animations: list[Any] = [FadeIn(gate_group, shift=DOWN * 0.35)]
+            added_gate_groups.append(gate_group)
+            if panels:
+                animations.append(Transform(panel_group, target_panels))
+            steps.append(Step(0.58, tuple(animations)))
+        self._run_beat(frame_count, steps)
+        self.current_visual = VGroup(
+            wire_group,
+            initial_gate_groups,
+            panel_group,
+            *added_gate_groups,
+        )
+
+    def _scene_histogram(
+        self,
+        beat: dict[str, Any],
+        scene: dict[str, Any],
+        frame_count: int,
+    ) -> None:
+        counts = scene.get("counts")
+        if not isinstance(counts, dict) or not counts:
+            raise ValueError("histogram.counts must be a non-empty object")
+        if any(
+            isinstance(value, bool) or not isinstance(value, int) or value <= 0
+            for value in counts.values()
+        ):
+            raise ValueError("histogram counts must be positive integers")
+        labels = list(counts)
+        values = list(counts.values())
+        total = sum(values)
+        frame = RoundedRectangle(
+            width=11.7,
+            height=4.55,
+            corner_radius=0.18,
+            stroke_color=self.colors["muted"],
+            stroke_width=1.2,
+            fill_color="#0c1626",
+            fill_opacity=0.92,
+        ).move_to([0, 0.08, 0])
+        title_text = scene.get("title")
+        title = None
+        if title_text:
+            title = self._text(
+                str(title_text),
+                26,
+                color=self.colors["brand"],
+                weight="BOLD",
+            ).move_to([0, 2.04, 0])
+        shot_label = self._text("Shots:", 22, color=self.colors["muted"])
+        shot_label.move_to([-0.25, 1.55, 0])
+        counter = self._text("0", 22)
+        counter.next_to(shot_label, RIGHT, buff=0.12)
+        counter_center = counter.get_center()
+        tracker = ValueTracker(0)
+        counter.add_updater(
+            lambda mobject: (
+                mobject.become(self._text(str(round(tracker.get_value())), 22))
+                .move_to(counter_center)
+            )
+        )
+        baseline_y = -1.75
+        bar_area_width = 10.7
+        slot = bar_area_width / len(labels)
+        max_count = max(values)
+        max_height = 2.35
+        bars: list[Any] = []
+        target_bars: list[Any] = []
+        captions: list[Any] = []
+        for index, (label, count) in enumerate(zip(labels, values, strict=True)):
+            x = -bar_area_width / 2 + slot * (index + 0.5)
+            bar_width = min(0.72, slot * 0.48)
+            target_height = max_height * count / max_count
+            bar = Rectangle(
+                width=bar_width,
+                height=0.035,
+                stroke_color=self.colors["success"],
+                stroke_width=1.4,
+                fill_color=self.colors["success"],
+                fill_opacity=0.76,
+            ).move_to([x, baseline_y + 0.02, 0])
+            target = bar.copy().stretch_to_fit_height(target_height)
+            target.move_to([x, baseline_y + target_height / 2, 0])
+            percent = round(count * 100 / total)
+            value = self._text(
+                f"{count} · {percent}%",
+                22 if len(labels) < 7 else 16,
+                color=self.colors["success"],
+                weight="BOLD",
+            ).move_to([x, baseline_y + target_height + 0.2, 0])
+            basis = self._text(label, 22 if len(labels) < 7 else 16).move_to(
+                [x, -2.18, 0]
+            )
+            bars.append(bar)
+            target_bars.append(target)
+            captions.extend([value, basis])
+        static_parts = [frame, shot_label, counter, *captions]
+        if title is not None:
+            static_parts.append(title)
+        transition = self._transition(beat["caption"])
+        dot_group = VGroup(*[bar.copy() for bar in bars])
+        grow_animations = [
+            Transform(bar, target)
+            for bar, target in zip(dot_group, target_bars, strict=True)
+        ]
+        grow_animations.append(tracker.animate.set_value(total))
+        steps = [
+            transition,
+            Step(0.45, (FadeIn(VGroup(*static_parts)),)),
+            Step(1.1, tuple(grow_animations)),
+        ]
+        self._run_beat(frame_count, steps)
+        counter.clear_updaters()
+        self.current_visual = VGroup(*static_parts, dot_group)
+
+    def _scene_cards(
+        self,
+        beat: dict[str, Any],
+        scene: dict[str, Any],
+        frame_count: int,
+    ) -> None:
+        items = scene.get("items")
+        if not isinstance(items, list) or not 1 <= len(items) <= 4:
+            raise ValueError("cards.items must contain one to four cards")
+        heading = scene.get("heading")
+        heading_text = (
+            self._text(heading, 28, color=self.colors["brand"], weight="BOLD").move_to(
+                [0, 2.48, 0]
+            )
+            if heading
+            else None
+        )
+        columns = 1 if len(items) == 1 else 2
+        rows = math.ceil(len(items) / columns)
+        card_width = 10.8 if columns == 1 else 5.35
+        card_height = 3.8 if rows == 1 else 2.15
+        centers_y = [0.15] if rows == 1 else [1.14, -1.18]
+        cards: list[VGroup] = []
+        for index, item in enumerate(items):
+            if not isinstance(item, dict):
+                raise ValueError("cards.items entries must be objects")
+            row, column = divmod(index, columns)
+            center_x = 0 if columns == 1 else (-2.78 if column == 0 else 2.78)
+            box = RoundedRectangle(
+                width=card_width,
+                height=card_height,
+                corner_radius=0.18,
+                stroke_color=self.colors["brand"],
+                stroke_width=1.8,
+                fill_color="#0c1626",
+                fill_opacity=0.94,
+            ).move_to([center_x, centers_y[row], 0])
+            title = self._text(
+                str(item.get("title", "")),
+                26,
+                color=self.colors["brand"],
+                weight="BOLD",
+            )
+            title.next_to(box.get_top(), DOWN, buff=0.28)
+            body = self._wrap_text(
+                str(item.get("body", "")),
+                max_width=card_width - 0.55,
+                sizes=(24, 22, 20),
+                max_lines=4,
+            )
+            body.move_to([center_x, centers_y[row] - 0.15, 0])
+            card = VGroup(box, title, body)
+            self._fit_content(card, max_width=card_width - 0.05, max_height=card_height - 0.1)
+            card.move_to([center_x, centers_y[row], 0])
+            cards.append(card)
+        title_step = (
+            Step(0.4, (FadeIn(heading_text),))
+            if heading_text is not None
+            else None
+        )
+        steps = [self._transition(beat["caption"])]
+        if title_step:
+            steps.append(title_step)
+        steps.extend(
+            Step(0.45, (FadeIn(card, shift=UP * 0.16),))
+            for card in cards
+        )
+        self._run_beat(frame_count, steps)
+        self.current_visual = VGroup(
+            *([heading_text] if heading_text is not None else []),
+            *cards,
+        )
+
+    def _scene_code(
+        self,
+        beat: dict[str, Any],
+        scene: dict[str, Any],
+        frame_count: int,
+    ) -> None:
+        lines = scene.get("lines")
+        if not isinstance(lines, list) or not lines:
+            raise ValueError("code.lines must be a non-empty list")
+        highlight = scene.get("highlight", [])
+        if not isinstance(highlight, list) or any(
+            isinstance(index, bool) or not isinstance(index, int)
+            for index in highlight
+        ):
+            raise ValueError("code.highlight must be a list of line indices")
+        frame = RoundedRectangle(
+            width=11.6,
+            height=4.45,
+            corner_radius=0.18,
+            stroke_color=self.colors["muted"],
+            stroke_width=1.2,
+            fill_color="#0c1626",
+            fill_opacity=0.94,
+        ).move_to([0, 0.05, 0])
+        heading = self._text(
+            str(scene.get("language", "code")).upper(),
+            24,
+            color=self.colors["brand"],
+            weight="BOLD",
+        ).move_to([0, 2.02, 0])
+        code_lines: list[VGroup] = []
+        for index, line in enumerate(lines):
+            wrapped = self._wrap_text(
+                str(line),
+                max_width=10.55,
+                sizes=(28,),
+                max_lines=4,
+                color=self.colors["brand"] if index in highlight else self.colors["foreground"],
+                font="DejaVu Sans Mono",
+            )
+            if wrapped.width > 10.55:
+                wrapped.scale_to_fit_width(10.55)
+            code_lines.append(wrapped)
+        line_group = VGroup(*code_lines).arrange(
+            DOWN,
+            aligned_edge=LEFT,
+            buff=0.12,
+        )
+        line_group.move_to([0, -0.13, 0])
+        if line_group.height > 3.55:
+            line_group.scale_to_fit_height(3.55)
+        steps = [
+            self._transition(beat["caption"]),
+            Step(0.4, (FadeIn(VGroup(frame, heading)),)),
+            *[
+                Step(0.34, (Write(line_group[index]),))
+                for index in range(len(line_group))
+            ],
+        ]
+        self._run_beat(frame_count, steps)
+        self.current_visual = VGroup(frame, heading, line_group)
+
+    def _scene_outro(
+        self,
+        beat: dict[str, Any],
+        scene: dict[str, Any],
+        frame_count: int,
+    ) -> None:
+        transition = self._transition(beat["caption"])
+        title = self._text(
+            "Your turn",
+            54,
+            color=self.colors["brand"],
+            weight="BOLD",
+        )
+        content_caption = self._content_caption(beat["caption"])
+        title_group = VGroup(title, content_caption).arrange(DOWN, buff=0.24)
+        title_group.move_to([1.15, 0.25, 0])
+        chips = scene.get("chips", [])
+        if not isinstance(chips, list):
+            raise ValueError("outro.chips must be a list")
+        chip_group = VGroup()
+        if chips:
+            for chip in chips:
+                label = self._text(str(chip), 22, color=self.colors["brand"], weight="BOLD")
+                box = RoundedRectangle(
+                    width=max(1.3, label.width + 0.4),
+                    height=0.54,
+                    corner_radius=0.13,
+                    stroke_color=self.colors["brand"],
+                    stroke_width=1.4,
+                    fill_color="#0c1626",
+                    fill_opacity=0.9,
+                )
+                chip_group.add(VGroup(box, label))
+            chip_group.arrange(RIGHT, buff=0.18)
+            if chip_group.width > 7.0:
+                chip_group.scale_to_fit_width(7.0)
+            chip_group.move_to([1.15, -1.56, 0])
+        outro_animations: list[Any] = [FadeIn(title_group)]
+        if chips:
+            outro_animations.append(FadeIn(chip_group))
+        quanta_center = self.quanta.copy().set_height(1.55).move_to(
+            [-2.85, 0.1, 0]
+        )
+        quanta_hop = quanta_center.copy().shift(UP * 0.3)
+        steps = [
+            transition,
+            Step(0.7, (Transform(self.quanta, quanta_center),)),
+            Step(0.3, (Transform(self.quanta, quanta_hop),)),
+            Step(0.3, (Transform(self.quanta, quanta_center.copy()),)),
+            Step(0.58, tuple(outro_animations)),
+        ]
+        self._run_beat(frame_count, steps, bob_quanta=False)
+        self.current_visual = VGroup(title_group, chip_group)
 
     def _title_intro(
         self,
@@ -2443,6 +3432,22 @@ class AnimatedLessonScene(Scene):
 
 def main() -> None:
     args = parse_args()
+    if args.self_check:
+        run_self_check()
+        return
+    missing = [
+        option
+        for option, value in (
+            ("--out", args.out),
+            ("--model", args.model),
+            ("--voices", args.voices),
+        )
+        if value is None
+    ]
+    if missing:
+        raise SystemExit(
+            f"Required render arguments: {', '.join(missing)} (or use --self-check)"
+        )
     storyboards_path = args.storyboards.resolve()
     model_path = args.model.resolve()
     voices_path = args.voices.resolve()
