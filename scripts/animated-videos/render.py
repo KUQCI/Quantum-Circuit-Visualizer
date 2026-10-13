@@ -287,6 +287,55 @@ def phase_degrees(amplitude: complex) -> int:
     return degrees % 360
 
 
+def bloch_rotation(operation: dict[str, Any]) -> tuple[np.ndarray, float] | None:
+    gate = operation.get("gate")
+    rotations: dict[str, tuple[np.ndarray, float]] = {
+        "x": (np.array([1.0, 0.0, 0.0]), math.pi),
+        "y": (np.array([0.0, 1.0, 0.0]), math.pi),
+        "z": (np.array([0.0, 0.0, 1.0]), math.pi),
+        "s": (np.array([0.0, 0.0, 1.0]), math.pi / 2),
+        "sdg": (np.array([0.0, 0.0, 1.0]), -math.pi / 2),
+        "t": (np.array([0.0, 0.0, 1.0]), math.pi / 4),
+        "tdg": (np.array([0.0, 0.0, 1.0]), -math.pi / 4),
+        "sx": (np.array([1.0, 0.0, 0.0]), math.pi / 2),
+        "h": (
+            np.array([1.0, 0.0, 1.0]) / math.sqrt(2),
+            math.pi,
+        ),
+    }
+    if gate in rotations:
+        return rotations[gate]
+    if gate in {"rx", "ry", "rz", "p"}:
+        axes = {
+            "rx": np.array([1.0, 0.0, 0.0]),
+            "ry": np.array([0.0, 1.0, 0.0]),
+            "rz": np.array([0.0, 0.0, 1.0]),
+            "p": np.array([0.0, 0.0, 1.0]),
+        }
+        params = operation.get("params", [])
+        if len(params) != 1:
+            return None
+        return axes[gate], float(params[0])
+    return None
+
+
+def rotate_bloch_vector(
+    vector: Sequence[float],
+    axis: Sequence[float],
+    angle: float,
+) -> np.ndarray:
+    unit_axis = np.asarray(axis, dtype=float)
+    unit_axis /= np.linalg.norm(unit_axis)
+    vector_array = np.asarray(vector, dtype=float)
+    return (
+        vector_array * math.cos(angle)
+        + np.cross(unit_axis, vector_array) * math.sin(angle)
+        + unit_axis
+        * np.dot(unit_axis, vector_array)
+        * (1 - math.cos(angle))
+    )
+
+
 def _assert_state(
     state: np.ndarray,
     expected: dict[str, float],
@@ -362,7 +411,25 @@ def run_self_check() -> None:
         ),
         {"01": 1.0},
     )
-    print("self-check passed: 10 statevector and phase cases")
+    rotation_cases = [
+        (op("x", [0]), (0, 0, 1), (0, 0, -1)),
+        (
+            op("rx", [0], params=[math.pi / 2]),
+            (0, 0, 1),
+            (0, -1, 0),
+        ),
+        (op("h", [0]), (0, 0, 1), (1, 0, 0)),
+        (op("s", [0]), (1, 0, 0), (0, 1, 0)),
+        (op("x", [0]), (1, 0, 0), (1, 0, 0)),
+    ]
+    for operation, start, expected in rotation_cases:
+        rotation = bloch_rotation(operation)
+        assert rotation is not None
+        actual = rotate_bloch_vector(start, *rotation)
+        assert np.allclose(actual, expected, atol=1e-9), (
+            f"{operation['gate']} Bloch rotation: expected {expected}, got {actual}"
+        )
+    print("self-check passed: 10 statevector and phase cases; 5 Bloch rotations")
 
 
 @dataclass(frozen=True)
@@ -1404,16 +1471,16 @@ class AnimatedLessonScene(Scene):
             fill_color="#0c1626",
             fill_opacity=0.92,
         ).move_to(center)
-        title = self._text("Probabilities", 22, color=self.colors["muted"], weight="BOLD")
-        title.move_to(frame.get_top() + DOWN * 0.23)
+        title = self._text("Probabilities", 28, color=self.colors["muted"], weight="BOLD")
+        title.move_to(frame.get_top() + DOWN * 0.32)
         entries = state_probabilities(state, qubits)
-        slot_width = (width - 0.28) / len(entries)
-        bar_width = min(0.44, slot_width * 0.44)
-        baseline_y = frame.get_bottom()[1] + 0.42
-        max_height = max(0.38, height - 1.15)
+        slot_width = (width - 0.4) / len(entries)
+        bar_width = min(0.8, slot_width * 0.5)
+        baseline_y = frame.get_bottom()[1] + 0.54
+        max_height = max(0.38, height - 1.65)
         parts: list[Any] = [frame, title]
-        label_size = 20 if qubits <= 3 else 16
-        value_size = 20 if len(entries) <= 8 else 15
+        label_size = 28 if qubits <= 3 else 24
+        value_size = 30 if len(entries) <= 8 else 26
         for index, (label, probability) in enumerate(entries):
             x = frame.get_left()[0] + 0.14 + (index + 0.5) * slot_width
             bar_height = max(0.035, probability * max_height)
@@ -1430,9 +1497,9 @@ class AnimatedLessonScene(Scene):
                 value_size,
                 color=self.colors["success"],
                 weight="BOLD",
-            ).move_to([x, baseline_y + max_height + 0.13, 0])
+            ).move_to([x, baseline_y + max_height + 0.22, 0])
             basis = self._text(label, label_size).move_to(
-                [x, frame.get_bottom()[1] + 0.17, 0]
+                [x, frame.get_bottom()[1] + 0.22, 0]
             )
             parts.extend([bar, percentage, basis])
         return VGroup(*parts)
@@ -1454,13 +1521,13 @@ class AnimatedLessonScene(Scene):
             fill_color="#0c1626",
             fill_opacity=0.92,
         ).move_to(center)
-        title = self._text("Phase", 22, color=self.colors["muted"], weight="BOLD")
-        title.move_to(frame.get_top() + DOWN * 0.23)
+        title = self._text("Phase", 28, color=self.colors["muted"], weight="BOLD")
+        title.move_to(frame.get_top() + DOWN * 0.32)
         entries = state_probabilities(state, qubits)
-        slot_width = (width - 0.28) / len(entries)
-        radius = min(0.34, slot_width * 0.31, (height - 0.7) * 0.28)
+        slot_width = (width - 0.4) / len(entries)
+        radius = min(0.82, slot_width * 0.36, (height - 0.8) * 0.32)
         radius = max(0.14, radius)
-        dial_y = center[1] - 0.16
+        dial_y = center[1] - 0.38
         parts: list[Any] = [frame, title]
         for index, (label, probability) in enumerate(entries):
             x = frame.get_left()[0] + 0.14 + (index + 0.5) * slot_width
@@ -1475,8 +1542,8 @@ class AnimatedLessonScene(Scene):
             ).move_to([x, dial_y, 0])
             opacity = 1 if probability > 1e-9 else 0.3
             circle.set_opacity(opacity)
-            basis = self._text(label, 19).move_to(
-                [x, frame.get_top()[1] - 0.43, 0]
+            basis = self._text(label, 28).move_to(
+                [x, frame.get_top()[1] - 0.78, 0]
             )
             basis.set_opacity(opacity)
             parts.extend([circle, basis])
@@ -1495,9 +1562,9 @@ class AnimatedLessonScene(Scene):
                 )
                 degree = self._text(
                     f"{degrees}°",
-                    18,
+                    26,
                     color=self.colors["warning"],
-                ).move_to([x, frame.get_bottom()[1] + 0.17, 0])
+                ).move_to([x, frame.get_bottom()[1] + 0.22, 0])
                 parts.extend([pointer, degree])
         return VGroup(*parts)
 
@@ -1517,10 +1584,10 @@ class AnimatedLessonScene(Scene):
             fill_color="#0c1626",
             fill_opacity=0.92,
         ).move_to(center)
-        title = self._text("Bloch vector", 22, color=self.colors["muted"], weight="BOLD")
-        title.move_to(frame.get_top() + DOWN * 0.23)
-        sphere_center = np.array([center[0], center[1] - 0.27, 0.0])
-        radius = min(0.55, (height - 0.72) * 0.39, (width - 0.7) * 0.28)
+        title = self._text("Bloch vector", 28, color=self.colors["muted"], weight="BOLD")
+        title.move_to(frame.get_top() + DOWN * 0.32)
+        sphere_center = np.array([center[0], center[1] - 0.25, 0.0])
+        radius = min(1.15, (height - 0.9) * 0.5, (width - 0.7) * 0.24)
         circle = Circle(radius=radius, color=self.colors["brand"], stroke_width=1.8)
         circle.move_to(sphere_center)
         equator = Ellipse(
@@ -1529,11 +1596,20 @@ class AnimatedLessonScene(Scene):
             color=self.colors["muted"],
             stroke_width=1.2,
         ).move_to(sphere_center)
-        x, y, z = bloch_vector(state)
-        endpoint = sphere_center + np.array(
-            [radius * 0.88 * (x + 0.45 * y), radius * 0.88 * (z + 0.3 * y), 0]
+        arrow = self._bloch_arrow(bloch_vector(state), sphere_center, radius)
+        return VGroup(frame, title, circle, equator, arrow)
+
+    def _bloch_arrow(
+        self,
+        vector: Sequence[float],
+        sphere_center: Sequence[float],
+        radius: float,
+    ) -> Arrow:
+        x, y, z = vector
+        endpoint = np.asarray(sphere_center, dtype=float) + np.array(
+            [radius * 0.88 * (x + 0.55 * y), radius * 0.88 * (z + 0.55 * y), 0]
         )
-        arrow = Arrow(
+        return Arrow(
             sphere_center,
             endpoint,
             buff=0,
@@ -1541,7 +1617,26 @@ class AnimatedLessonScene(Scene):
             stroke_width=4,
             max_tip_length_to_length_ratio=0.24,
         )
-        return VGroup(frame, title, circle, equator, arrow)
+
+    def _bloch_arrow_rotation(
+        self,
+        arrow: Arrow,
+        state: np.ndarray,
+        operation: dict[str, Any],
+        radius: float,
+    ) -> Any | None:
+        rotation = bloch_rotation(operation)
+        if rotation is None:
+            return None
+        axis, angle = rotation
+        start_vector = np.asarray(bloch_vector(state), dtype=float)
+        sphere_center = arrow.get_start()
+
+        def update(mobject: Any, alpha: float) -> None:
+            vector = rotate_bloch_vector(start_vector, axis, angle * alpha)
+            mobject.become(self._bloch_arrow(vector, sphere_center, radius))
+
+        return UpdateFromAlphaFunc(arrow, update, rate_func=linear)
 
     def _circuit_panels(
         self,
@@ -1556,8 +1651,7 @@ class AnimatedLessonScene(Scene):
             return VGroup()
         gap = 0.14
         width = (11.7 - gap * (len(names) - 1)) / len(names)
-        height = 1.82
-        center_y = max(-1.2, center_y)
+        height = 3.25
         centers = [
             -5.85 + width / 2 + index * (width + gap)
             for index in range(len(names))
@@ -1604,10 +1698,30 @@ class AnimatedLessonScene(Scene):
             )
         nodes: list[Any] = []
         if gate == "measure":
-            meter = self._meter([center_x, wire_y[targets[0]], 0]).scale(
+            target = targets[0]
+            meter = self._meter([center_x, wire_y[target], 0]).scale(
                 min(0.38, tile_height / 2)
             )
-            nodes.append(meter)
+            label = self._text(
+                f"c[{target}]",
+                26,
+                color=self.colors["brand"],
+                weight="BOLD",
+            ).move_to(
+                [
+                    center_x,
+                    wire_y[target] + tile_height / 2 + 0.16,
+                    0,
+                ]
+            )
+            connector = DashedLine(
+                [center_x, label.get_bottom()[1] - 0.025, 0],
+                [center_x, wire_y[target] + tile_height / 2 + 0.025, 0],
+                color=self.colors["brand"],
+                stroke_width=1.5,
+                dash_length=0.06,
+            )
+            nodes.extend([meter, connector, label])
         elif gate == "swap":
             first, second = targets
             low, high = sorted((wire_y[first], wire_y[second]))
@@ -1693,8 +1807,9 @@ class AnimatedLessonScene(Scene):
             raise ValueError("The bloch panel requires a one-qubit circuit")
 
         visible_count = reveal + add
-        wire_top = 2.15
-        spacing = min(0.68, 1.8 / max(1, qubits - 1))
+        panel_center_y = -0.95
+        spacing = min(0.6, 1.2 / max(1, qubits - 1))
+        wire_top = 2.4 if panels else spacing * (qubits - 1) / 2
         wire_y = [wire_top - index * spacing for index in range(qubits)]
         wire_parts: list[Any] = []
         for index, y in enumerate(wire_y):
@@ -1715,12 +1830,12 @@ class AnimatedLessonScene(Scene):
                 ]
             )
         wire_group = VGroup(*wire_parts)
-        panel_center_y = wire_y[-1] - 1.55
-        panel_group = self._circuit_panels(panels, state, qubits, panel_center_y)
         if reveal:
             for operation in gates[:reveal]:
                 state = apply_gate(state, qubits, operation)
-        panel_group = self._circuit_panels(panels, state, qubits, panel_center_y)
+        panel_objects = list(
+            self._circuit_panels(panels, state, qubits, panel_center_y)
+        )
 
         column_width = min(0.92, max(0.52, 9.0 / max(1, visible_count)))
         columns = (
@@ -1742,13 +1857,13 @@ class AnimatedLessonScene(Scene):
             ]
         )
         added_gate_groups: list[VGroup] = []
-        steps: list[Step] = [
-            self._transition(beat["caption"]),
-            Step(
-                0.55,
-                (FadeIn(wire_group), FadeIn(initial_gate_groups), FadeIn(panel_group)),
-            ),
-        ]
+        steps: list[Step] = [self._transition(beat["caption"])]
+        circuit_animations = [FadeIn(wire_group)]
+        if len(initial_gate_groups):
+            circuit_animations.append(FadeIn(initial_gate_groups))
+        steps.append(Step(0.42, tuple(circuit_animations)))
+        if panel_objects:
+            steps.append(Step(0.42, (FadeIn(VGroup(*panel_objects)),)))
         for index in range(reveal, reveal + add):
             operation = gates[index]
             gate_group = self._circuit_gate_visual(
@@ -1759,23 +1874,51 @@ class AnimatedLessonScene(Scene):
                 wire_y[0],
                 wire_y[-1],
             )
+            previous_state = state
             state = apply_gate(state, qubits, operation)
-            target_panels = self._circuit_panels(
-                panels,
-                state,
-                qubits,
-                panel_center_y,
-            )
             animations: list[Any] = [FadeIn(gate_group, shift=DOWN * 0.35)]
             added_gate_groups.append(gate_group)
-            if panels:
-                animations.append(Transform(panel_group, target_panels))
-            steps.append(Step(0.58, tuple(animations)))
+            replacement_panels: list[tuple[int, VGroup]] = []
+            if not np.allclose(previous_state, state):
+                target_panels = list(
+                    self._circuit_panels(
+                        panels,
+                        state,
+                        qubits,
+                        panel_center_y,
+                    )
+                )
+                for panel_index, panel_name in enumerate(panels):
+                    if panel_name == "bloch":
+                        panel = panel_objects[panel_index]
+                        circle = panel[2]
+                        rotation = self._bloch_arrow_rotation(
+                            panel[4],
+                            previous_state,
+                            operation,
+                            circle.width / 2,
+                        )
+                        if rotation is not None:
+                            animations.append(rotation)
+                    else:
+                        animations.append(FadeOut(panel_objects[panel_index]))
+                        replacement_panels.append(
+                            (panel_index, target_panels[panel_index])
+                        )
+                        panel_objects[panel_index] = target_panels[panel_index]
+            steps.append(Step(0.52, tuple(animations)))
+            if replacement_panels:
+                steps.append(
+                    Step(
+                        0.32,
+                        tuple(FadeIn(panel) for _, panel in replacement_panels),
+                    )
+                )
         self._run_beat(frame_count, steps)
         self.current_visual = VGroup(
             wire_group,
             initial_gate_groups,
-            panel_group,
+            *panel_objects,
             *added_gate_groups,
         )
 
@@ -1789,13 +1932,15 @@ class AnimatedLessonScene(Scene):
         if not isinstance(counts, dict) or not counts:
             raise ValueError("histogram.counts must be a non-empty object")
         if any(
-            isinstance(value, bool) or not isinstance(value, int) or value <= 0
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
             for value in counts.values()
         ):
-            raise ValueError("histogram counts must be positive integers")
+            raise ValueError("histogram counts must be non-negative integers")
         labels = list(counts)
         values = list(counts.values())
         total = sum(values)
+        if total <= 0:
+            raise ValueError("histogram counts must sum to a positive total")
         frame = RoundedRectangle(
             width=11.7,
             height=4.55,
@@ -1814,15 +1959,31 @@ class AnimatedLessonScene(Scene):
                 color=self.colors["brand"],
                 weight="BOLD",
             ).move_to([0, 2.04, 0])
-        shot_label = self._text("Shots:", 22, color=self.colors["muted"])
-        shot_label.move_to([-0.25, 1.55, 0])
-        counter = self._text("0", 22)
-        counter.next_to(shot_label, RIGHT, buff=0.12)
+        counter_font = "DejaVu Sans Mono"
+        counter_digits = max(4, len(str(total)))
+        counter_slot = self._text(
+            "8" * counter_digits,
+            26,
+            color=self.colors["foreground"],
+            font=counter_font,
+        ).move_to([0.65, 1.55, 0])
+        counter_slot.set_opacity(0)
+        shot_label = self._text("Shots:", 26, color=self.colors["muted"])
+        shot_label.next_to(counter_slot, LEFT, buff=0.18)
+        counter = self._text("0", 26, font=counter_font).move_to(
+            counter_slot.get_center()
+        )
         counter_center = counter.get_center()
         tracker = ValueTracker(0)
         counter.add_updater(
             lambda mobject: (
-                mobject.become(self._text(str(round(tracker.get_value())), 22))
+                mobject.become(
+                    self._text(
+                        str(round(tracker.get_value())),
+                        26,
+                        font=counter_font,
+                    )
+                )
                 .move_to(counter_center)
             )
         )
@@ -1837,7 +1998,7 @@ class AnimatedLessonScene(Scene):
         for index, (label, count) in enumerate(zip(labels, values, strict=True)):
             x = -bar_area_width / 2 + slot * (index + 0.5)
             bar_width = min(0.72, slot * 0.48)
-            target_height = max_height * count / max_count
+            target_height = max(0.035, max_height * count / max_count)
             bar = Rectangle(
                 width=bar_width,
                 height=0.035,
@@ -1851,17 +2012,23 @@ class AnimatedLessonScene(Scene):
             percent = round(count * 100 / total)
             value = self._text(
                 f"{count} · {percent}%",
-                22 if len(labels) < 7 else 16,
+                28 if len(labels) < 7 else 24,
                 color=self.colors["success"],
                 weight="BOLD",
-            ).move_to([x, baseline_y + target_height + 0.2, 0])
-            basis = self._text(label, 22 if len(labels) < 7 else 16).move_to(
+            )
+            if value.width > slot * 0.94:
+                value.scale_to_fit_width(slot * 0.94)
+            value.move_to([x, baseline_y + target_height + 0.2, 0])
+            basis = self._text(label, 28 if len(labels) < 7 else 24)
+            if basis.width > slot * 0.94:
+                basis.scale_to_fit_width(slot * 0.94)
+            basis.move_to(
                 [x, -2.18, 0]
             )
             bars.append(bar)
             target_bars.append(target)
             captions.extend([value, basis])
-        static_parts = [frame, shot_label, counter, *captions]
+        static_parts = [frame, shot_label, counter_slot, counter, *captions]
         if title is not None:
             static_parts.append(title)
         transition = self._transition(beat["caption"])
@@ -2028,9 +2195,12 @@ class AnimatedLessonScene(Scene):
             color=self.colors["brand"],
             weight="BOLD",
         )
-        content_caption = self._content_caption(beat["caption"])
+        content_caption = self._content_caption(
+            beat["caption"],
+            max_width=8.2,
+        )
         title_group = VGroup(title, content_caption).arrange(DOWN, buff=0.24)
-        title_group.move_to([1.15, 0.25, 0])
+        title_group.move_to([2.55, 0.25, 0])
         chips = scene.get("chips", [])
         if not isinstance(chips, list):
             raise ValueError("outro.chips must be a list")
@@ -2051,7 +2221,7 @@ class AnimatedLessonScene(Scene):
             chip_group.arrange(RIGHT, buff=0.18)
             if chip_group.width > 7.0:
                 chip_group.scale_to_fit_width(7.0)
-            chip_group.move_to([1.15, -1.56, 0])
+            chip_group.move_to([2.55, -1.56, 0])
         outro_animations: list[Any] = [FadeIn(title_group)]
         if chips:
             outro_animations.append(FadeIn(chip_group))

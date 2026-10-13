@@ -197,6 +197,1189 @@
           "visual": "The schematic fades back. Quanta hops to centre, and 'Your turn' appears with three chips: 'Place', 'Select', 'Inspect'."
         }
       ]
+    },
+    {
+      "id": "add-first-gate",
+      "module": "Single-Qubit Gates",
+      "title": "Add Your First Gate",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Time to place your very first gate: X.",
+          "speech": "Time to place your very first gate. Meet X, the quantum version of NOT.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "start",
+          "caption": "Your qubit starts in |0⟩, so measuring it gives 0 every time.",
+          "speech": "Your qubit starts in ket zero. Right now, measuring it would give zero every single time.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 0,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "place-x",
+          "caption": "Drop X on q[0] and the state flips to |1⟩.",
+          "speech": "Drop an X gate on the qubit zero wire. X flips ket zero to ket one, so the bar jumps all the way across.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "x-again",
+          "caption": "X swaps |0⟩ and |1⟩. Apply it again and you're back to |0⟩.",
+          "speech": "X swaps ket zero and ket one. Apply it a second time, and you're right back where you started.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: drag X onto the q[0] wire.",
+          "speech": "Your turn! Drag the X gate onto the qubit zero wire, then check your answer.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Drag X",
+              "Drop on q[0]",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-superposition",
+      "module": "Single-Qubit Gates",
+      "title": "Create Superposition",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "One H gate is all you need to create a superposition.",
+          "speech": "Superposition is where quantum gets interesting, and one H gate is all you need.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "place-h",
+          "caption": "H turns |0⟩ into an equal superposition: 50% for 0, 50% for 1.",
+          "speech": "Place H on qubit zero. It turns ket zero into an equal superposition, with a fifty percent chance of each result.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "plus-phase",
+          "caption": "Both amplitudes are positive, so both phase dials point at 0°. This is |+⟩.",
+          "speech": "Both amplitudes are positive, so their phases are both zero degrees. This state has a name: ket plus.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 0,
+            "panels": [
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "shots",
+          "caption": "Measure many times and roughly half the shots land on each result.",
+          "speech": "If you measure it many times, about half the shots give zero and half give one. Each single shot is still random.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "0": 509,
+              "1": 515
+            },
+            "title": "1024 shots"
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place H on q[0] and nothing else.",
+          "speech": "Your turn! Place an H gate on qubit zero, and nothing else.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "q[0]",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "flip-with-x",
+      "module": "Single-Qubit Gates",
+      "title": "Flip with X",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "X is the quantum NOT. Let's see what it really does.",
+          "speech": "X is the quantum NOT gate. Let's look at what it really does.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "half-turn",
+          "caption": "On the Bloch sphere, X is a half-turn around the x-axis: north pole to south pole.",
+          "speech": "On the Bloch sphere, X is a half turn around the x axis. The arrow swings from the north pole, ket zero, to the south pole, ket one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "truth-table",
+          "caption": "Like a classical NOT: 0 becomes 1, and 1 becomes 0.",
+          "speech": "On the basis states it acts just like a classical NOT. Zero becomes one, and one becomes zero.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Pauli-X on basis states",
+            "items": [
+              {
+                "title": "X|0⟩ = |1⟩",
+                "body": "0 becomes 1"
+              },
+              {
+                "title": "X|1⟩ = |0⟩",
+                "body": "1 becomes 0"
+              }
+            ]
+          }
+        },
+        {
+          "id": "x-on-plus",
+          "caption": "But X on |+⟩ changes nothing: that arrow already lies on the x-axis.",
+          "speech": "Here's a quantum twist. Apply X to the plus state from an H gate, and nothing changes, because that arrow already lies on the x axis.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: apply X to flip q[0] from |0⟩ to |1⟩.",
+          "speech": "Your turn! Apply X to flip qubit zero from ket zero to ket one.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "X",
+              "q[0]",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "rotate-with-rx",
+      "module": "Single-Qubit Gates",
+      "title": "Rotate with RX",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Rotation gates let you steer a qubit by any angle.",
+          "speech": "Rotation gates let you steer a qubit by any angle you like. Let's try R X.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "quarter-turn",
+          "caption": "RX(π/2) turns the arrow a quarter-turn around the x-axis, onto the equator: 50/50.",
+          "speech": "R X of pi over two turns the arrow a quarter turn around the x axis, from the north pole down to the equator. Now it's fifty, fifty.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "rx",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  1.5707963267948966
+                ],
+                "label": "π/2"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "half-turn",
+          "caption": "Another RX(π/2) finishes the half-turn: now it's |1⟩.",
+          "speech": "Another quarter turn finishes the half turn. Two R X of pi over two make the arrow point straight down, to ket one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "rx",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  1.5707963267948966
+                ],
+                "label": "π/2"
+              },
+              {
+                "gate": "rx",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  1.5707963267948966
+                ],
+                "label": "π/2"
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "small-step",
+          "caption": "Smaller angles mean smaller steps: RX(π/4) gives about 85% for 0 and 15% for 1.",
+          "speech": "Smaller angles mean smaller steps. R X of pi over four gives about eighty five percent for zero, and fifteen percent for one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "rx",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.7853981633974483
+                ],
+                "label": "π/4"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place RX on q[0] with any angle.",
+          "speech": "Your turn! Place R X on qubit zero. Any angle counts, so experiment.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "RX",
+              "Any angle",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "z-and-phase",
+      "module": "Single-Qubit Gates",
+      "title": "Z and Phase",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Not every quantum change shows up in the probabilities.",
+          "speech": "Not every quantum change shows up as a probability change right away. Meet the Z gate.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "z-on-zero",
+          "caption": "Z leaves |0⟩ alone: the arrow on the north pole doesn't move.",
+          "speech": "Z leaves ket zero completely alone. The arrow sits on the north pole, and Z spins it around that very axis, so nothing moves.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "z",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "z-on-plus",
+          "caption": "On |+⟩, Z flips the phase of |1⟩ to 180°, but the bars stay 50/50.",
+          "speech": "Now start with H. Z multiplies the ket one amplitude by minus one, so its phase flips to a hundred and eighty degrees. The bars stay at fifty, fifty.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "z",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "hzh",
+          "caption": "Add another H and the hidden phase appears: H, Z, H gives 1 every time.",
+          "speech": "So did Z do anything? Add one more H. Interference turns that hidden phase into a real result: H, Z, H always measures one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "z",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add Z, then open the HZH walkthrough.",
+          "speech": "Your turn! Add a Z gate, then open the H Z H walkthrough to see phase matter.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Z",
+              "HZH walkthrough"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "s-and-t-gates",
+      "module": "Single-Qubit Gates",
+      "title": "S and T Gates",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "S and T are small, precise phase steps.",
+          "speech": "S and T are small, precise phase steps. They're how we fine tune phase.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "s-gate",
+          "caption": "S adds a quarter-turn, 90°, to the phase of |1⟩.",
+          "speech": "Start with H, then add S. S adds a quarter turn, ninety degrees, to the phase of ket one. On the sphere, the arrow moves a quarter of the way around the equator.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "s",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "phase",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "t-gate",
+          "caption": "T is half of that: an eighth-turn, 45°.",
+          "speech": "T is half as big, an eighth of a turn, forty five degrees.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "t",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "phase",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "t-twice",
+          "caption": "Two T gates make one S, and two S gates make one Z.",
+          "speech": "Two T gates add up to one S, and two S gates add up to one Z. Watch the phase dial reach ninety degrees.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "t",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "t",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "bars-steady",
+          "caption": "Through all of this, the probabilities stay 50/50.",
+          "speech": "And through all of this, the probabilities never budge. Phase gates only change how amplitudes will interfere later.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "s",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "t",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place S or T and compare their phase angles.",
+          "speech": "Your turn! Place S or T on qubit zero and compare their phase angles.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "S",
+              "T",
+              "Compare"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "h-twice-is-identity",
+      "module": "Single-Qubit Gates",
+      "title": "H Twice Is Identity",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Some quantum operations undo themselves when repeated.",
+          "speech": "Some quantum operations undo themselves when you repeat them. Hadamard is one of them.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "first-h",
+          "caption": "One H takes |0⟩ to an equal superposition.",
+          "speech": "One H takes ket zero to the equator: an equal superposition.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "second-h",
+          "caption": "A second H brings it straight back to |0⟩: H · H = I.",
+          "speech": "A second H brings it straight back to ket zero. H times H equals the identity, as if nothing happened.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "why",
+          "caption": "The two paths to |1⟩ cancel out, while the paths to |0⟩ reinforce.",
+          "speech": "Why? After the second H, the two paths to ket one have opposite signs, so they cancel, while the paths to ket zero reinforce. That's interference.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Why it works",
+            "items": [
+              {
+                "title": "Paths to |0⟩",
+                "body": "Same sign: they reinforce"
+              },
+              {
+                "title": "Paths to |1⟩",
+                "body": "Opposite signs: they cancel"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place H, then another H in the next column.",
+          "speech": "Your turn! Place an H, then another H in the next column.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "H",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "measure-a-qubit",
+      "module": "Measurement",
+      "title": "Measure a Qubit",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Measurement bridges the quantum and classical worlds.",
+          "speech": "Measurement is the bridge between the quantum world and the classical one.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "measure-gate",
+          "caption": "Measure reads q[0] and stores a classical 0 or 1 in c[0].",
+          "speech": "A measure gate reads qubit zero and writes the answer, a plain zero or one, into the classical bit c zero.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "all-ones",
+          "caption": "After X, the qubit is definitely |1⟩, so every shot reads 1.",
+          "speech": "After an X gate, the qubit is definitely in ket one, so every single shot reads one.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "1": 1024
+            },
+            "title": "1024 shots after X"
+          }
+        },
+        {
+          "id": "rules",
+          "caption": "Each shot gives a plain 0 or 1, and the qubit is left in the state you saw.",
+          "speech": "Two rules to remember. Each shot gives a plain zero or one. And afterwards, the qubit is left in the state you just saw.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Measurement rules",
+            "items": [
+              {
+                "title": "Always classical",
+                "body": "Each shot gives exactly 0 or 1"
+              },
+              {
+                "title": "It collapses",
+                "body": "Afterwards the qubit is in the state you saw"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: drag Measure onto q[0]. It links to c[0].",
+          "speech": "Your turn! Drag the measure gate onto qubit zero. It links to c zero automatically.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Measure",
+              "q[0]",
+              "c[0]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "run-shots-histogram",
+      "module": "Measurement",
+      "title": "Run Shots and Read a Histogram",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "One run is a sample; many shots reveal the distribution.",
+          "speech": "One run is just a sample. Many shots reveal the whole distribution.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "circuit",
+          "caption": "H then measure: the ideal chances are 50% each.",
+          "speech": "Here's H followed by a measurement. In theory, each result has a fifty percent chance.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "ten-shots",
+          "caption": "With only 10 shots you might see 6 and 4. Small samples are noisy.",
+          "speech": "With only ten shots, you might see six zeros and four ones. Small samples are noisy.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "0": 6,
+              "1": 4
+            },
+            "title": "10 shots"
+          }
+        },
+        {
+          "id": "many-shots",
+          "caption": "With 8,192 shots the histogram settles close to 50/50.",
+          "speech": "With eight thousand one hundred ninety two shots, the histogram settles very close to fifty, fifty.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "0": 4127,
+              "1": 4065
+            },
+            "title": "8192 shots"
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add a measurement, then use Run to collect shots.",
+          "speech": "Your turn! Add a measurement, then use Run to collect shots. Try more shots for a steadier histogram.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Measure",
+              "Run",
+              "More shots"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "measure-superposition",
+      "module": "Measurement",
+      "title": "Measure a Superposition",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Let's turn a quantum possibility into a classical result.",
+          "speech": "Let's turn a quantum possibility into a classical result.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "prepare",
+          "caption": "First prepare: H puts q[0] into an equal superposition.",
+          "speech": "First, prepare. H puts qubit zero into an equal superposition.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "measure",
+          "caption": "Then measure: each shot picks 0 or 1 at random.",
+          "speech": "Then measure. Each shot randomly picks zero or one, and the superposition is gone.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "histogram",
+          "caption": "Repeat the experiment and a 50/50 histogram builds up.",
+          "speech": "Repeat the whole experiment many times, and a fifty, fifty histogram builds up.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "0": 498,
+              "1": 526
+            },
+            "title": "1024 shots"
+          }
+        },
+        {
+          "id": "order",
+          "caption": "Order matters: measuring before H always gives 0.",
+          "speech": "Order matters. If you measure before the H, you're measuring ket zero, so you'd always get zero.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Order matters",
+            "items": [
+              {
+                "title": "H, then measure",
+                "body": "Random 0 or 1"
+              },
+              {
+                "title": "Measure, then H",
+                "body": "Measures |0⟩: always 0"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place H first and Measure second.",
+          "speech": "Your turn! Place H first, and measure second.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "Measure",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "noise-vs-ideal",
+      "module": "Measurement",
+      "title": "Why Hardware Disagrees",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Ideal math is neat. Real hardware adds a little static.",
+          "speech": "Ideal math is neat. Real hardware adds a little static. Let's see how.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "bell",
+          "caption": "The Bell circuit: H, then CX. Ideally only 00 and 11 appear.",
+          "speech": "Here's the Bell circuit: H, then a C X. In an ideal simulation, only zero zero and one one ever appear.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "ideal",
+          "caption": "Ideal: about half 00, half 11, and nothing else.",
+          "speech": "Run it ideally, and you get about half zero zero, half one one, and nothing else.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "00": 509,
+              "11": 515
+            },
+            "title": "Ideal · 1024 shots"
+          }
+        },
+        {
+          "id": "noisy",
+          "caption": "With realistic noise, a few 01 and 10 results sneak in.",
+          "speech": "Now add realistic noise. A few zero one and one zero results sneak in. These are errors.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "00": 478,
+              "01": 29,
+              "10": 28,
+              "11": 489
+            },
+            "title": "Realistic noise · 1024 shots"
+          }
+        },
+        {
+          "id": "sources",
+          "caption": "Gate noise and readout errors cause the extra results.",
+          "speech": "They come from two places: gates that are slightly imperfect, and readout errors, where a zero is read as a one.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Where errors come from",
+            "items": [
+              {
+                "title": "Gate noise",
+                "body": "Each gate is slightly imperfect"
+              },
+              {
+                "title": "Readout error",
+                "body": "Sometimes a 0 is read as 1"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: build the Bell circuit, then Run with Realistic noise.",
+          "speech": "Your turn! Build the Bell circuit, then run it with the realistic noise preset.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "CX",
+              "Realistic"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
