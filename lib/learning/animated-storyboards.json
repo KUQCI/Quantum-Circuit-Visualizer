@@ -1380,6 +1380,1118 @@
           }
         }
       ]
+    },
+    {
+      "id": "two-qubits-four-states",
+      "module": "Multi-Qubit Gates",
+      "title": "Two Qubits, Four States",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Adding one qubit doubles the number of basis states.",
+          "speech": "Adding just one qubit doubles the number of basis states. Let's meet all four.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "four-states",
+          "caption": "Two qubits have four basis states: 00, 10, 01 and 11.",
+          "speech": "Two qubits have four basis states. Each label is a two bit string, one bit per qubit.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [],
+            "reveal": 0,
+            "add": 0,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "x-q0",
+          "caption": "In QCV the left bit is q[0]: X on q[0] gives 10.",
+          "speech": "In this app, the left bit belongs to qubit zero. So an X on qubit zero gives one zero.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "x-q1",
+          "caption": "Flip q[1] as well and you reach 11.",
+          "speech": "Flip qubit one as well, and you reach one one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "h-both",
+          "caption": "H on both qubits spreads the state evenly: 25% each.",
+          "speech": "Put H on both qubits, and the state spreads evenly across all four, twenty five percent each.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "pattern",
+          "caption": "Every new qubit doubles the count: n qubits have 2ⁿ states.",
+          "speech": "Every new qubit doubles the count. Three qubits have eight states, and n qubits have two to the n.",
+          "scene": {
+            "kind": "cards",
+            "heading": "The pattern",
+            "items": [
+              {
+                "title": "1 qubit",
+                "body": "2 states"
+              },
+              {
+                "title": "2 qubits",
+                "body": "4 states"
+              },
+              {
+                "title": "n qubits",
+                "body": "2ⁿ states"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add a second qubit and inspect all four states.",
+          "speech": "Your turn! Add a second qubit, then inspect all four states in the results panel.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Add qubit",
+              "Results"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "cx-basics",
+      "module": "Multi-Qubit Gates",
+      "title": "CX Basics",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Now qubits can condition one another.",
+          "speech": "Now qubits can condition one another. Meet the controlled X gate.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "control-off",
+          "caption": "CX flips its target only when its control is 1. Here q[0] is 0, so nothing happens.",
+          "speech": "C X flips its target only when its control is one. Here qubit zero is zero, so nothing happens.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "control-on",
+          "caption": "Set the control to 1 with X, and CX flips q[1]: 10 becomes 11.",
+          "speech": "Set the control to one with an X gate, and now C X flips qubit one. One zero becomes one one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "truth-table",
+          "caption": "With q[0] as control: 00 and 01 stay put, 10 and 11 swap.",
+          "speech": "Here's the full table. When the control is zero, nothing changes. When it's one, the target bit flips.",
+          "scene": {
+            "kind": "cards",
+            "heading": "CX truth table (control q[0])",
+            "items": [
+              {
+                "title": "00 → 00",
+                "body": "Control off"
+              },
+              {
+                "title": "01 → 01",
+                "body": "Control off"
+              },
+              {
+                "title": "10 → 11",
+                "body": "Control on: flip"
+              },
+              {
+                "title": "11 → 10",
+                "body": "Control on: flip"
+              }
+            ]
+          }
+        },
+        {
+          "id": "superposed-control",
+          "caption": "With a superposed control, CX creates entanglement: 00 and 11.",
+          "speech": "And if the control is in superposition, C X creates entanglement. Only zero zero and one one remain.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place CX with q[0] as control and q[1] as target.",
+          "speech": "Your turn! Place C X with qubit zero as the control and qubit one as the target.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "CX",
+              "Control q[0]",
+              "Target q[1]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "cz-and-swap",
+      "module": "Multi-Qubit Gates",
+      "title": "CZ and SWAP",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Two gates, two different kinds of coordination.",
+          "speech": "Two gates, two very different kinds of coordination: C Z and SWAP.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "cz-phase",
+          "caption": "CZ flips the phase of 11 to 180°. The bars don't move.",
+          "speech": "C Z flips the phase of one one, and only one one. The bars don't move, but its phase dial jumps to a hundred and eighty degrees.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "cz-symmetric",
+          "caption": "CZ is symmetric: it only cares whether both qubits are 1.",
+          "speech": "C Z is symmetric. There's no real difference between control and target. It only cares whether both qubits are one.",
+          "scene": {
+            "kind": "cards",
+            "heading": "CZ is symmetric",
+            "items": [
+              {
+                "title": "Control or target?",
+                "body": "It doesn't matter"
+              },
+              {
+                "title": "Only 11 changes",
+                "body": "It picks up a minus sign"
+              }
+            ]
+          }
+        },
+        {
+          "id": "swap",
+          "caption": "SWAP exchanges two qubits: 10 becomes 01.",
+          "speech": "SWAP is different. It exchanges the complete states of two qubits. Here, one zero becomes zero one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "swap",
+                "targets": [
+                  0,
+                  1
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "code",
+          "caption": "In Qiskit, they're qc.cz(0, 1) and qc.swap(0, 1).",
+          "speech": "In Qiskit code, they're written as q c dot c z, and q c dot swap.",
+          "scene": {
+            "kind": "code",
+            "language": "python",
+            "lines": [
+              "qc = QuantumCircuit(2)",
+              "qc.cz(0, 1)    # phase flip on |11⟩",
+              "qc.swap(0, 1)  # exchange q0 and q1"
+            ],
+            "highlight": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: try CZ or SWAP and inspect what changes.",
+          "speech": "Your turn! Try C Z or SWAP, and inspect what changes.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "CZ",
+              "SWAP"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "toffoli",
+      "module": "Multi-Qubit Gates",
+      "title": "Toffoli (CCX)",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Two conditions can control one flip.",
+          "speech": "Two conditions can control one flip. That's the Toffoli gate, also called C C X.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "controls-off",
+          "caption": "CCX flips q[2] only when q[0] and q[1] are both 1. Here they're 0.",
+          "speech": "C C X flips qubit two only when qubit zero and qubit one are both one. Here they're both zero, so nothing changes.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "ccx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  0,
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "one-control",
+          "caption": "One control on isn't enough: 100 stays 100.",
+          "speech": "Turn on just one control, and it's still not enough. One zero zero stays one zero zero.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "ccx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  0,
+                  1
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "both-controls",
+          "caption": "Both controls on: q[2] flips, and 110 becomes 111.",
+          "speech": "Turn on both controls, and now qubit two flips. One one zero becomes one one one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "ccx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  0,
+                  1
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "why",
+          "caption": "Toffoli computes AND reversibly, a building block of classical logic.",
+          "speech": "Toffoli computes a logical AND without losing information, which makes it a key building block for reversible logic.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Why it matters",
+            "items": [
+              {
+                "title": "Classical AND",
+                "body": "q[2] flips when q[0] AND q[1]"
+              },
+              {
+                "title": "Reversible",
+                "body": "Apply it twice and you undo it"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: use q[0] and q[1] as controls and q[2] as target.",
+          "speech": "Your turn! Use qubit zero and qubit one as controls, and qubit two as the target.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "CCX",
+              "Controls q[0], q[1]",
+              "Target q[2]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "build-bell-state",
+      "module": "Entanglement",
+      "title": "Build a Bell State",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Two qubits, one entangled pair. Let's build a Bell state!",
+          "speech": "Two qubits, one entangled pair. Let's build a Bell state.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "step-h",
+          "caption": "Step one: H on q[0] makes 00 and 10 equally likely.",
+          "speech": "Step one. Put H on qubit zero. Now zero zero and one zero are equally likely.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "step-cx",
+          "caption": "Step two: CX from q[0] to q[1] turns 10 into 11.",
+          "speech": "Step two. Add C X from qubit zero to qubit one. It turns one zero into one one, leaving zero zero and one one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "shots",
+          "caption": "Measure both: always 00 or 11, never a mix.",
+          "speech": "Measure both qubits and you always get matching results: zero zero, or one one. Never a mix.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "00": 517,
+              "11": 507
+            },
+            "title": "1024 shots"
+          }
+        },
+        {
+          "id": "entangled",
+          "caption": "Each qubit alone is random, yet together they always agree.",
+          "speech": "Each qubit on its own looks completely random, yet together they always agree. That's entanglement.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Entangled",
+            "items": [
+              {
+                "title": "Individually random",
+                "body": "Each qubit alone is 50/50"
+              },
+              {
+                "title": "Perfectly correlated",
+                "body": "Together they always agree"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: H on q[0], then CX from q[0] to q[1].",
+          "speech": "Your turn! Place H on qubit zero, then a C X from qubit zero to qubit one.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H on q[0]",
+              "CX q[0] → q[1]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "entangle-two-qubits",
+      "module": "Entanglement",
+      "title": "Entangle Two Qubits",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Entanglement: two qubits, one shared quantum story.",
+          "speech": "Entanglement means two qubits share one quantum story. There's more than one way to create it.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "flip-roles",
+          "caption": "Flip the roles: H on q[1], then CX from q[1] to q[0].",
+          "speech": "Flip the roles. Put H on qubit one, then a C X controlled by qubit one. Again, only zero zero and one one remain.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  0
+                ],
+                "controls": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "anti-correlated",
+          "caption": "Start q[1] at 1 and you get 01 and 10: they always disagree.",
+          "speech": "Start qubit one at one, and you get zero one and one zero instead. Now the qubits always disagree, but they're still entangled.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "test",
+          "caption": "If you can't describe each qubit on its own, they're entangled.",
+          "speech": "Here's the test. If you can't describe each qubit separately, they're entangled. H on both qubits alone doesn't count.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Entangled or not?",
+            "items": [
+              {
+                "title": "Entangled",
+                "body": "You can't describe each qubit separately"
+              },
+              {
+                "title": "Not entangled",
+                "body": "H on both: each qubit has its own state"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: create any two-qubit entangling circuit.",
+          "speech": "Your turn! Build any circuit that entangles two qubits. C X is the easiest way.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Control",
+              "Target",
+              "Check"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ghz-state",
+      "module": "Entanglement",
+      "title": "Build a GHZ State",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Bell pairs can grow into a shared three-qubit state.",
+          "speech": "A Bell pair can grow. Let's share one quantum state across three qubits.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "bell-first",
+          "caption": "H on q[0], then CX to q[1], makes a Bell pair on the first two qubits.",
+          "speech": "Start with H on qubit zero, then a C X to qubit one. That's a Bell pair on the first two qubits.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "third-qubit",
+          "caption": "A second CX from q[1] to q[2] pulls in the third qubit: 000 and 111.",
+          "speech": "A second C X, from qubit one to qubit two, pulls in the third qubit. Now only zero zero zero and one one one remain.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "shots",
+          "caption": "Measure all three and they always agree.",
+          "speech": "Measure all three, and they always agree. All zeros, or all ones.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "000": 514,
+              "111": 510
+            },
+            "title": "1024 shots"
+          }
+        },
+        {
+          "id": "ghz",
+          "caption": "Each extra CX adds one more qubit to the GHZ state.",
+          "speech": "It's called a G H Z state, after three physicists. Each extra C X adds one more qubit to the chain.",
+          "scene": {
+            "kind": "cards",
+            "heading": "GHZ state",
+            "items": [
+              {
+                "title": "Named after",
+                "body": "Greenberger, Horne and Zeilinger"
+              },
+              {
+                "title": "Scales up",
+                "body": "Add one CX per extra qubit"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: H, then connect q[0] to q[1] and q[1] to q[2].",
+          "speech": "Your turn! Start with H, then connect qubit zero to qubit one, and qubit one to qubit two.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "CX",
+              "CX"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "phase-kickback",
+      "module": "Entanglement",
+      "title": "Phase Kickback",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Phase can travel through a controlled interaction.",
+          "speech": "Phase can travel through a controlled interaction. This trick is called phase kickback.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "prepare",
+          "caption": "Put q[0] in superposition with H, and set q[1] to 1.",
+          "speech": "Put qubit zero in superposition with H, and set qubit one to one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "cz",
+          "caption": "CZ flips the phase of 11. The bars don't change, but q[0] now holds a minus sign.",
+          "speech": "Now add C Z. It flips the phase of one one. The bars don't change, but qubit zero has quietly picked up a minus sign.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "reveal",
+          "caption": "One more H on q[0] turns that phase into a result: 11 every time.",
+          "speech": "One more H on qubit zero turns that hidden phase into a real result. Qubit zero now reads one, every single time.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 3,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "kickback",
+          "caption": "The target didn't change. The phase kicked back onto the control.",
+          "speech": "Notice that the target never changed. The phase kicked back onto the control qubit. Many quantum algorithms rely on this.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Kickback",
+            "items": [
+              {
+                "title": "The target stays 1",
+                "body": "q[1] is unchanged"
+              },
+              {
+                "title": "The control changes",
+                "body": "Its phase flipped, then H revealed it"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place CZ between q[0] and q[1], with H around q[0].",
+          "speech": "Your turn! Place C Z between qubit zero and qubit one, and use H to reveal the interference.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "CZ",
+              "H"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

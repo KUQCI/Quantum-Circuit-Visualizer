@@ -1651,7 +1651,7 @@ class AnimatedLessonScene(Scene):
             return VGroup()
         gap = 0.14
         width = (11.7 - gap * (len(names) - 1)) / len(names)
-        height = 3.25
+        height = 3.8 if qubits > 1 else 3.25
         centers = [
             -5.85 + width / 2 + index * (width + gap)
             for index in range(len(names))
@@ -1753,7 +1753,12 @@ class AnimatedLessonScene(Scene):
                     Dot([center_x, wire_y[index], 0], radius=0.085, color=self.colors["brand"])
                     for index in controls
                 )
-            label = operation.get("label") or gate.upper()
+            default_label = {
+                "cx": "X",
+                "cz": "Z",
+                "ccx": "X",
+            }.get(gate, gate.upper())
+            label = operation.get("label") or default_label
             if gate in PARAMETER_GATES and operation.get("label"):
                 label = f"{gate.upper()}\n{operation['label']}"
             nodes.append(
@@ -1807,9 +1812,20 @@ class AnimatedLessonScene(Scene):
             raise ValueError("The bloch panel requires a one-qubit circuit")
 
         visible_count = reveal + add
-        panel_center_y = -0.95
-        spacing = min(0.6, 1.2 / max(1, qubits - 1))
-        wire_top = 2.4 if panels else spacing * (qubits - 1) / 2
+        multi_qubit_panels = qubits > 1 and bool(panels)
+        panel_center_y = -0.7 if qubits > 1 else -0.95
+        spacing = (
+            0.5
+            if multi_qubit_panels
+            else min(0.6, 1.2 / max(1, qubits - 1))
+        )
+        wire_top = (
+            2.6
+            if multi_qubit_panels
+            else 2.4
+            if panels
+            else spacing * (qubits - 1) / 2
+        )
         wire_y = [wire_top - index * spacing for index in range(qubits)]
         wire_parts: list[Any] = []
         for index, y in enumerate(wire_y):
