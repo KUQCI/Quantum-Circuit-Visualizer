@@ -32,3 +32,26 @@ describe("lessonVideoUrl", () => {
     );
   });
 });
+
+describe("speech clip URLs", () => {
+  it("hashes speech text with SHA-256", async () => {
+    const { speechClipHash } = await import("@/lib/learning/lesson-videos");
+
+    await expect(speechClipHash("hello")).resolves.toBe(
+      "2cf24dba5fb0a30e"
+    );
+  });
+
+  it("uses the lesson video base URL for speech clips", async () => {
+    vi.stubEnv(
+      "NEXT_PUBLIC_LESSON_VIDEO_BASE_URL",
+      "https://cdn.example/videos///"
+    );
+    vi.resetModules();
+    const { speechClipUrl } = await import("@/lib/learning/lesson-videos");
+
+    expect(speechClipUrl("2cf24dba5fb0a30e")).toBe(
+      "https://cdn.example/videos/speech-2cf24dba5fb0a30e.mp3"
+    );
+  });
+});
