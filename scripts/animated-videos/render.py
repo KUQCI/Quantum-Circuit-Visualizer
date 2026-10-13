@@ -1030,10 +1030,10 @@ class AnimatedLessonScene(Scene):
             fill_opacity=0.14,
         )
         label_text = self._text(label, 28, color=tile_color, weight="BOLD")
-        if label_text.width > width - 0.12:
-            label_text.scale_to_fit_width(width - 0.12)
-        if label_text.height > height - 0.12:
-            label_text.scale_to_fit_height(height - 0.12)
+        if label_text.width > width - 0.08:
+            label_text.scale_to_fit_width(width - 0.08)
+        if label_text.height > height - 0.08:
+            label_text.scale_to_fit_height(height - 0.08)
         group = VGroup(box, label_text)
         group.move_to(center)
         return group
@@ -1678,7 +1678,7 @@ class AnimatedLessonScene(Scene):
         }.get(gate, gate.upper())
         label = operation.get("label") or default_label
         if gate in PARAMETER_GATES and operation.get("label"):
-            label = f"{gate.upper()}\n{operation['label']}"
+            label = f"{gate.upper()} {operation['label']}"
         return str(label)
 
     def _circuit_gate_column_width(
@@ -1878,9 +1878,9 @@ class AnimatedLessonScene(Scene):
             else [0.0]
         )
         max_column_width = (
-            1.45
+            2.4
             if visible_count <= 1
-            else 8.9 / (visible_count - 1) - 0.06
+            else 8.9 / (visible_count - 1) - 0.02
         )
         column_widths = [
             self._circuit_gate_column_width(
