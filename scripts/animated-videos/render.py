@@ -1873,7 +1873,7 @@ class AnimatedLessonScene(Scene):
 
         column_width = min(0.92, max(0.52, 9.0 / max(1, visible_count)))
         columns = (
-            np.linspace(-4.45, 4.45, visible_count).tolist()
+            np.linspace(-3.85, 5.05, visible_count).tolist()
             if visible_count > 1
             else [0.0]
         )
