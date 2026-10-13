@@ -1,0 +1,202 @@
+{
+  "style": {
+    "resolution": [1280, 720],
+    "fps": 30,
+    "background": "#050914",
+    "foreground": "#e2e8f0",
+    "muted": "#a8b4c4",
+    "brand": "#7dd3fc",
+    "success": "#4ade80",
+    "warning": "#f6c453",
+    "danger": "#f87171",
+    "font": "DejaVu Sans",
+    "quantaImage": "public/assets/quanta/quanta-hatching-curious.webp",
+    "logoImage": "public/icons/icon-192.png"
+  },
+  "lessons": [
+    {
+      "id": "what-is-a-qubit",
+      "module": "Quantum Basics",
+      "title": "What is a Qubit?",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Welcome! I'm Quanta. Every quantum journey starts with a single qubit.",
+          "speech": "Welcome! I'm Quanta. Every quantum journey starts with a single qubit. Let's meet yours.",
+          "visual": "Title card: module label small above, lesson title large. Quanta pops in from scale 0 with a bounce and does a small hop. Title fades out at the end of the beat; Quanta shrinks to her corner spot."
+        },
+        {
+          "id": "classical-bit",
+          "caption": "A classical bit is always exactly one value: 0 or 1.",
+          "speech": "First, a classical bit. It's always exactly one of two values: zero, or one. Flip it, and it's simply the other one.",
+          "visual": "A rounded box labelled 'bit' showing a big '0'. It flips (rotate around the vertical axis) to '1', then back to '0'. Each flip is crisp, and only one value is ever visible."
+        },
+        {
+          "id": "qubit-wire",
+          "caption": "In a circuit, a qubit is a wire. Yours starts in |0⟩.",
+          "speech": "In a circuit, a qubit is drawn as a wire. Yours starts in the state ket zero. An empty wire means nothing has changed it yet.",
+          "visual": "The bit box slides away. A horizontal wire draws itself left to right, labelled 'q[0]' at the left and '|0⟩' just before the wire start. A soft glow pulse travels along the empty wire."
+        },
+        {
+          "id": "amplitudes",
+          "caption": "A qubit can have an amplitude for |0⟩ and for |1⟩. Square them to get the chances.",
+          "speech": "What makes it quantum? A qubit can have an amplitude for ket zero and an amplitude for ket one at the same time. Square their sizes, and you get the chances of each result.",
+          "visual": "Two vertical amplitude bars labelled |0⟩ and |1⟩ in brand colour. They start at 1.0 and 0.0 and animate to 0.6 and 0.8, with value labels following. Then each bar morphs into a probability bar (success colour) of height 0.36 and 0.64, labelled '36%' and '64%', with a small '(0.6)² = 0.36' and '(0.8)² = 0.64' note appearing under each."
+        },
+        {
+          "id": "measurement",
+          "caption": "Measurement always gives a plain 0 or 1. Many shots reveal the chances.",
+          "speech": "But a measurement never shows a fuzzy in-between answer. It always gives a plain zero or one. Repeat it many times, and the counts reveal those chances.",
+          "visual": "A measurement meter icon appears; the probability bars collapse to a single big '1' result card, then reset. Then shot dots fall one by one (accelerating) into two histogram bins '0' and '1': exactly 50 dots, 18 into 0 and 32 into 1, in a fixed deterministic order. A shot counter ticks up to 50."
+        },
+        {
+          "id": "bloch",
+          "caption": "On the Bloch sphere, up is |0⟩, down is |1⟩, and every other direction is a superposition.",
+          "speech": "You'll often see a qubit drawn as an arrow on a sphere. Straight up is ket zero, straight down is ket one, and every other direction is a superposition of the two.",
+          "visual": "A 3D-looking Bloch sphere (circle outline, equator ellipse, dashed vertical axis) with labels |0⟩ at the north pole and |1⟩ at the south pole. The state arrow points up, sweeps smoothly down through the equator to the south pole, then around and back up to the north pole."
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: open Build, find your q[0] wire, and press Check Answer.",
+          "speech": "Your turn! Open Build, find your qubit zero wire, and press Check Answer when you're ready.",
+          "visual": "Everything fades out. Quanta returns to centre and does a happy hop; 'Your turn' appears large with the caption text below it."
+        }
+      ]
+    },
+    {
+      "id": "bits-vs-qubits",
+      "module": "Quantum Basics",
+      "title": "Bits vs Qubits",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Let's compare a classical bit with its quantum upgrade, the qubit.",
+          "speech": "Let's compare the smallest unit of classical information, a bit, with its quantum upgrade, the qubit.",
+          "visual": "Title card with Quanta pop-in, same as lesson 1."
+        },
+        {
+          "id": "side-by-side",
+          "caption": "A bit holds one definite value. A qubit can carry an amplitude for both |0⟩ and |1⟩.",
+          "speech": "A bit holds one definite value, zero or one. A qubit uses the same two labels, ket zero and ket one, but it can carry an amplitude for both.",
+          "visual": "Split screen with a thin vertical divider. Left, titled 'Bit': a box flipping 0 → 1 → 0. Right, titled 'Qubit': two amplitude bars |0⟩ and |1⟩ that animate from (1, 0) to (0.71, 0.71), labelled '0.71' each."
+        },
+        {
+          "id": "not-a-coin",
+          "caption": "A superposition is not a coin that has secretly already landed.",
+          "speech": "A superposition is not a coin that secretly landed already, and we just haven't looked. Something genuinely different is going on.",
+          "visual": "Clear the split screen. A coin drops under an upturned cup; a peek shows 'H' hiding underneath; then a big danger-coloured cross draws over the whole picture."
+        },
+        {
+          "id": "interference",
+          "caption": "Amplitudes have a phase. In step they reinforce; opposite, they cancel.",
+          "speech": "Amplitudes have a phase, a direction. When two paths line up, they reinforce. When they point opposite ways, they cancel out. Ordinary probabilities can never cancel like that.",
+          "visual": "Two rows. Top row, labelled 'In step': two arrows pointing right are placed head-to-tail and merge into one arrow twice as long (success colour, label 'reinforce'). Bottom row, labelled 'Opposite': one arrow right and one arrow left are placed head-to-tail and shrink to a dot (danger colour, label 'cancel')."
+        },
+        {
+          "id": "measurement",
+          "caption": "Measuring still gives one classical bit. Many shots show how often each appears.",
+          "speech": "Measuring still gives back one classical bit. Over many shots, the probabilities tell you how often each result appears.",
+          "visual": "A qubit token (circle with '|ψ⟩') moves into a meter icon and comes out as a plain bit box showing '0'. Then a shot histogram fills: exactly 40 dots, 21 into '0' and 19 into '1', in a fixed deterministic order, with a dashed 50% guide line."
+        },
+        {
+          "id": "outro",
+          "caption": "A bit is a definite value. A qubit is a state with amplitudes that can interfere.",
+          "speech": "So, a bit is a definite value. A qubit is a state with amplitudes that can interfere. That's the upgrade!",
+          "visual": "Two summary cards side by side ('Bit: one definite value', 'Qubit: amplitudes that interfere'). Quanta hops between them, then 'Your turn' appears."
+        }
+      ]
+    },
+    {
+      "id": "reading-the-charts",
+      "module": "Quantum Basics",
+      "title": "Reading the Charts",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Charts turn invisible amplitudes into patterns you can read.",
+          "speech": "Charts turn invisible amplitudes into patterns you can read. Let's read three of them.",
+          "visual": "Title card with Quanta pop-in."
+        },
+        {
+          "id": "circuit",
+          "caption": "Our example: one qubit and an H gate, which makes an equal superposition.",
+          "speech": "Here's our example: one qubit with an H gate. H turns ket zero into an equal superposition.",
+          "visual": "The q[0] wire draws in with '|0⟩' at the start. A rounded square 'H' gate tile (brand colour) drops from above onto the wire with a slight bounce. The wire with the gate then shrinks and moves to the top strip of the frame, where it stays for the rest of the lesson."
+        },
+        {
+          "id": "probabilities",
+          "caption": "Probabilities: how often each result appears. Here 50% each, and the bars sum to 100%.",
+          "speech": "The probability chart answers: how often will each result appear? Here it's fifty percent each, and the bars always add up to one hundred percent.",
+          "visual": "A probability chart with bars |0⟩ and |1⟩. They start at 100% and 0% (the state before H), then animate to 50% and 50%. A brace or line beside them shows '50% + 50% = 100%'."
+        },
+        {
+          "id": "phase",
+          "caption": "Phase is an angle on each amplitude. Flip |1⟩ by 180° and the bars don't move.",
+          "speech": "Phase is an angle attached to each amplitude. Flip the phase of ket one by a hundred and eighty degrees, and the bars don't move at all. But later gates will treat these two states very differently.",
+          "visual": "The probability chart moves to the left half. On the right, two phase dials (circles with a pointer), one per basis state |0⟩ and |1⟩, both pointing at 0°. A 'Z' gate tile appears after H on the top-strip wire, and the |1⟩ dial rotates to 180° (label '180°'). The 50/50 bars on the left pulse to show they are unchanged, with a small 'unchanged' tag."
+        },
+        {
+          "id": "bloch",
+          "caption": "The Bloch sphere tells the same story: H tips the arrow to the equator, and the phase flip spins it to the opposite side.",
+          "speech": "The Bloch sphere shows the same story as geometry. H tips the arrow from the north pole down to the equator. The phase flip spins it around the equator to the opposite side.",
+          "visual": "Replace the chart and dials with a Bloch sphere (labels |0⟩ north, |1⟩ south, |+⟩ on the right of the equator, |−⟩ on the left). The arrow starts at north, rotates down to |+⟩ while the H tile on the top strip highlights, then rotates around the equator to |−⟩ while the Z tile highlights."
+        },
+        {
+          "id": "outro",
+          "caption": "Three panels, one state, three questions. Your turn: add an H gate and open each chart.",
+          "speech": "Three panels, one state, three different questions. Your turn: add an H gate and open each chart.",
+          "visual": "Three small cards in a row: a mini bar chart labelled 'How often?', a mini phase dial labelled 'How do paths combine?', and a mini sphere labelled 'Where does it point?'. Quanta hops, then 'Your turn' appears."
+        }
+      ]
+    },
+    {
+      "id": "tour-the-build-workspace",
+      "module": "Quantum Basics",
+      "title": "Tour the Build Workspace",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "A quick tour makes the Build workspace feel much less mysterious.",
+          "speech": "A quick tour makes the Build workspace feel much less mysterious. Let's walk through it.",
+          "visual": "Title card with Quanta pop-in."
+        },
+        {
+          "id": "layout",
+          "caption": "The Gate library is on the left. The canvas holds your wires, read left to right like a timeline.",
+          "speech": "On the left is the Gate library, where every operation begins. In the middle is the canvas: your qubit wires, read from left to right, like a timeline.",
+          "visual": "A schematic of the workspace builds in as rounded panels: 'Gates' column on the left (a grid of small tiles H, X, Y, Z, S, T, CX, M), 'Canvas' in the centre with one wire 'q[0]', 'Inspector' on the right, and a bottom strip split into 'Results' and 'Code'. The Gates panel highlights (brand border glow) on the first sentence; the Canvas highlights on the second, while a time arrow sweeps left to right along the wire."
+        },
+        {
+          "id": "place",
+          "caption": "Drag H from the Gate library and drop it on q[0].",
+          "speech": "Drag H from the library and drop it on the qubit zero wire.",
+          "visual": "A cursor glyph picks the H tile from the Gates panel; a copy of the tile follows the cursor along an arc and snaps onto the q[0] wire with a small bounce."
+        },
+        {
+          "id": "inspect",
+          "caption": "Click the gate and the Inspector shows its type, target qubit and column.",
+          "speech": "Click the gate, and the Inspector shows exactly what it is: its type, its target qubit, and its column.",
+          "visual": "The cursor clicks the placed H (selection ring appears). The Inspector panel highlights and three rows type in one at a time: 'Type: H', 'Target: q[0]', 'Column: 0'."
+        },
+        {
+          "id": "results",
+          "caption": "Results shows what the circuit does when simulated. One H gives 50/50.",
+          "speech": "Results shows what the circuit does when simulated. For one H gate, that's fifty-fifty.",
+          "visual": "The Results panel highlights; inside it, a mini 'Probabilities' tab label and two bars |0⟩ and |1⟩ grow to 50% each."
+        },
+        {
+          "id": "code",
+          "caption": "Code shows the same circuit as text, ready to export: qc.h(0)",
+          "speech": "And Code shows the same circuit as text, ready to export. Here, the H gate is just one line.",
+          "visual": "The Code panel highlights and the monospace line 'qc.h(0)' types in character by character after a dim 'qc = QuantumCircuit(1)' line. A thin connector line links the H tile on the canvas to the code line."
+        },
+        {
+          "id": "outro",
+          "caption": "Place, select, inspect. Your turn: place a gate and open each panel.",
+          "speech": "Place, select, inspect. That's the whole tour. Your turn: place a gate and open each panel.",
+          "visual": "The schematic fades back. Quanta hops to centre, and 'Your turn' appears with three chips: 'Place', 'Select', 'Inspect'."
+        }
+      ]
+    }
+  ]
+}
