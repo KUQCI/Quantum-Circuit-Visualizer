@@ -1724,7 +1724,14 @@ class AnimatedLessonScene(Scene):
                 stroke_width=1.5,
                 dash_length=0.06,
             )
-            nodes.extend([meter, connector, label])
+            label_background = Rectangle(
+                width=label.width + 0.12,
+                height=label.height + 0.08,
+                stroke_width=0,
+                fill_color=self.colors["background"],
+                fill_opacity=1,
+            ).move_to(label)
+            nodes.extend([meter, connector, label_background, label])
         elif gate == "swap":
             first, second = targets
             low, high = sorted((wire_y[first], wire_y[second]))
@@ -1733,13 +1740,13 @@ class AnimatedLessonScene(Scene):
             )
             for target in targets:
                 nodes.append(
-                self._gate_tile(
-                    "×",
-                    [center_x, wire_y[target], 0],
-                    width,
-                    tile_height,
-                    opaque_background=True,
-                )
+                    self._gate_tile(
+                        "×",
+                        [center_x, wire_y[target], 0],
+                        width,
+                        tile_height,
+                        opaque_background=True,
+                    )
                 )
         else:
             target = targets[0]
