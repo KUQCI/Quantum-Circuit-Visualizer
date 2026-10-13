@@ -1033,10 +1033,10 @@ class AnimatedLessonScene(Scene):
             fill_opacity=1 if opaque_background else 0.14,
         )
         label_text = self._text(label, 28, color=tile_color, weight="BOLD")
-        if label_text.width > width - 0.12:
-            label_text.scale_to_fit_width(width - 0.12)
-        if label_text.height > height - 0.12:
-            label_text.scale_to_fit_height(height - 0.12)
+        if label_text.width > width - 0.08:
+            label_text.scale_to_fit_width(width - 0.08)
+        if label_text.height > height - 0.08:
+            label_text.scale_to_fit_height(height - 0.08)
         group = VGroup(box, label_text)
         group.move_to(center)
         return group
@@ -1672,6 +1672,33 @@ class AnimatedLessonScene(Scene):
                 raise ValueError(f"Unknown circuit panel: {name}")
         return VGroup(*panels)
 
+    def _circuit_gate_label(self, operation: dict[str, Any]) -> str:
+        gate = operation["gate"]
+        default_label = {
+            "cx": "X",
+            "cz": "Z",
+            "ccx": "X",
+        }.get(gate, gate.upper())
+        label = operation.get("label") or default_label
+        if gate in PARAMETER_GATES and operation.get("label"):
+            label = f"{gate.upper()}\u2009{operation['label']}"
+        return str(label)
+
+    def _circuit_gate_column_width(
+        self,
+        operation: dict[str, Any],
+        base_width: float,
+        max_width: float,
+    ) -> float:
+        if operation["gate"] in {"measure", "barrier", "swap"}:
+            return base_width
+        label = self._text(
+            self._circuit_gate_label(operation),
+            28,
+            weight="BOLD",
+        )
+        return min(max_width, max(base_width, label.width + 0.24))
+
     def _circuit_gate_visual(
         self,
         operation: dict[str, Any],
@@ -1705,21 +1732,20 @@ class AnimatedLessonScene(Scene):
             meter = self._meter([center_x, wire_y[target], 0]).scale(
                 min(0.38, tile_height / 2)
             )
+            label_on_right = center_x <= 3.5
+            side = RIGHT if label_on_right else LEFT
             label = self._text(
                 f"c[{target}]",
                 26,
                 color=self.colors["brand"],
                 weight="BOLD",
-            ).move_to(
-                [
-                    center_x,
-                    wire_y[target] + tile_height / 2 + 0.16,
-                    0,
-                ]
-            )
+            ).next_to(meter, side, buff=0.1)
+            label.set_stroke(color=self.colors["background"], width=4, background=True)
+            start = meter.get_right() if label_on_right else meter.get_left()
+            end = label.get_left() if label_on_right else label.get_right()
             connector = DashedLine(
-                [center_x, label.get_bottom()[1] - 0.025, 0],
-                [center_x, wire_y[target] + tile_height / 2 + 0.025, 0],
+                start,
+                end,
                 color=self.colors["brand"],
                 stroke_width=1.5,
                 dash_length=0.06,
@@ -1764,17 +1790,9 @@ class AnimatedLessonScene(Scene):
                     Dot([center_x, wire_y[index], 0], radius=0.085, color=self.colors["brand"])
                     for index in controls
                 )
-            default_label = {
-                "cx": "X",
-                "cz": "Z",
-                "ccx": "X",
-            }.get(gate, gate.upper())
-            label = operation.get("label") or default_label
-            if gate in PARAMETER_GATES and operation.get("label"):
-                label = f"{gate.upper()}\n{operation['label']}"
             nodes.append(
                 self._gate_tile(
-                    label,
+                    self._circuit_gate_label(operation),
                     [center_x, wire_y[target], 0],
                     width,
                     tile_height,
@@ -1826,8 +1844,14 @@ class AnimatedLessonScene(Scene):
         visible_count = reveal + add
         multi_qubit_panels = qubits > 1 and bool(panels)
         panel_center_y = -0.7 if qubits > 1 else -0.95
+        has_labeled_parameter_gate = any(
+            operation.get("gate") in PARAMETER_GATES and operation.get("label")
+            for operation in gates[:visible_count]
+        )
         spacing = (
-            0.5
+            0.72
+            if qubits == 2 and has_labeled_parameter_gate
+            else 0.5
             if multi_qubit_panels
             else min(0.6, 1.2 / max(1, qubits - 1))
         )
@@ -1867,17 +1891,30 @@ class AnimatedLessonScene(Scene):
 
         column_width = min(0.92, max(0.52, 9.0 / max(1, visible_count)))
         columns = (
-            np.linspace(-4.45, 4.45, visible_count).tolist()
+            np.linspace(-3.85, 5.05, visible_count).tolist()
             if visible_count > 1
             else [0.0]
         )
+        max_column_width = (
+            2.4
+            if visible_count <= 1
+            else 8.9 / (visible_count - 1) - 0.02
+        )
+        column_widths = [
+            self._circuit_gate_column_width(
+                operation,
+                column_width,
+                max_column_width,
+            )
+            for operation in gates[:visible_count]
+        ]
         initial_gate_groups = VGroup(
             *[
                 self._circuit_gate_visual(
                     operation,
                     columns[index],
                     wire_y,
-                    column_width,
+                    column_widths[index],
                     wire_y[0],
                     wire_y[-1],
                 )
@@ -1898,7 +1935,7 @@ class AnimatedLessonScene(Scene):
                 operation,
                 columns[index],
                 wire_y,
-                column_width,
+                column_widths[index],
                 wire_y[0],
                 wire_y[-1],
             )
