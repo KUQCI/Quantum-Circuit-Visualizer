@@ -2492,6 +2492,1380 @@
           }
         }
       ]
+    },
+    {
+      "id": "export-first-qiskit",
+      "module": "Qiskit",
+      "title": "Export Your First Qiskit Circuit",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Visual circuits become real code. Let's export!",
+          "speech": "Every circuit you draw is also real code. Let's export one to Qiskit.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "circuit",
+          "caption": "Start with a circuit: one H gate on q[0].",
+          "speech": "Start with a simple circuit: one H gate on qubit zero.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "code",
+          "caption": "The Qiskit panel writes it as code: qc.h(0) is your H gate.",
+          "speech": "The Qiskit panel writes the same circuit as Python code. The line q c dot h of zero is your H gate.",
+          "scene": {
+            "kind": "code",
+            "language": "python",
+            "lines": [
+              "from qiskit import QuantumCircuit",
+              "qc = QuantumCircuit(1)",
+              "qc.h(0)"
+            ],
+            "highlight": [
+              2
+            ]
+          }
+        },
+        {
+          "id": "lines",
+          "caption": "QuantumCircuit(1) makes one qubit; qc.h(0) applies H to it.",
+          "speech": "Quantum circuit of one creates a single qubit, and h of zero applies H to it.",
+          "scene": {
+            "kind": "cards",
+            "heading": "What each line does",
+            "items": [
+              {
+                "title": "QuantumCircuit(1)",
+                "body": "Makes one qubit"
+              },
+              {
+                "title": "qc.h(0)",
+                "body": "Applies H to qubit 0"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: review the Qiskit code, then click Copy.",
+          "speech": "Your turn! Review the generated Qiskit code, then click Copy.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Code panel",
+              "Copy"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "import-qiskit-visualize",
+      "module": "Qiskit",
+      "title": "Import Qiskit and Visualize It",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Code to canvas: the translator works both ways!",
+          "speech": "Code to canvas! The translator works in both directions.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "paste",
+          "caption": "Paste a Qiskit snippet into the code panel.",
+          "speech": "Paste a short Qiskit snippet into the code panel.",
+          "scene": {
+            "kind": "code",
+            "language": "python",
+            "lines": [
+              "qc = QuantumCircuit(1)",
+              "qc.h(0)"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        },
+        {
+          "id": "sync",
+          "caption": "QCV reads it and the H gate appears on q[0].",
+          "speech": "The app reads the code, and an H gate appears on qubit zero, with its results updating live.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "in-sync",
+          "caption": "Change either side and the other follows.",
+          "speech": "Change either side, and the other follows. Code and canvas stay in sync.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Keep them in sync",
+            "items": [
+              {
+                "title": "Edit the code",
+                "body": "The canvas updates"
+              },
+              {
+                "title": "Edit the canvas",
+                "body": "The code updates"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: paste the sample code and let it sync to the canvas.",
+          "speech": "Your turn! Paste the sample code, and let it sync to the canvas.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Paste",
+              "Sync"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "openqasm-export",
+      "module": "Qiskit",
+      "title": "OpenQASM Export",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "One circuit can travel between visual and text tools.",
+          "speech": "One circuit can travel between visual tools and text tools. Meet OpenQASM.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "circuit",
+          "caption": "Here's our circuit: H on q[0].",
+          "speech": "Here's our circuit, an H gate on qubit zero.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 0,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "qasm",
+          "caption": "In OpenQASM it's a few lines: h q[0]; is the H gate.",
+          "speech": "In OpenQASM, it's just a few lines of text. h q zero is the H gate.",
+          "scene": {
+            "kind": "code",
+            "language": "openqasm",
+            "lines": [
+              "OPENQASM 2.0;",
+              "include \"qelib1.inc\";",
+              "qreg q[1];",
+              "h q[0];"
+            ],
+            "highlight": [
+              3
+            ]
+          }
+        },
+        {
+          "id": "why",
+          "caption": "It's compact and portable: many quantum tools can read it.",
+          "speech": "It's compact, easy to share, and many quantum tools can read it.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Why OpenQASM",
+            "items": [
+              {
+                "title": "Compact text",
+                "body": "Easy to save and share"
+              },
+              {
+                "title": "Portable",
+                "body": "Many quantum tools can read it"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: choose OpenQASM in the code panel and export it.",
+          "speech": "Your turn! Choose the OpenQASM tab in the code panel, and export it.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "OpenQASM tab",
+              "Export"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "bind-parameters",
+      "module": "Qiskit",
+      "title": "Bind Parameters",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Parameters let one circuit describe many experiments.",
+          "speech": "Parameters let one circuit describe many different experiments.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "symbol",
+          "caption": "RX(θ) uses a symbol. Until θ has a value, it can't be simulated.",
+          "speech": "Here, R X uses the symbol theta. Until theta has a value, the circuit can't be simulated.",
+          "scene": {
+            "kind": "cards",
+            "heading": "A symbolic angle",
+            "items": [
+              {
+                "title": "RX(θ)",
+                "body": "The angle is a name, not a number"
+              },
+              {
+                "title": "Unbound",
+                "body": "Simulation waits for a value"
+              }
+            ]
+          }
+        },
+        {
+          "id": "bind-half",
+          "caption": "Bind θ = π/2 and the qubit rotates onto the equator: 50/50.",
+          "speech": "Bind theta to pi over two, and the qubit rotates onto the equator. Fifty, fifty.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "rx",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  1.5707963267948966
+                ],
+                "label": "θ=π/2"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "bind-pi",
+          "caption": "Bind θ = π instead and the same circuit gives |1⟩.",
+          "speech": "Bind theta to pi instead, and the same circuit now gives ket one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "rx",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  3.141592653589793
+                ],
+                "label": "θ=π"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "code",
+          "caption": "In Qiskit, assign_parameters binds θ to a number.",
+          "speech": "In Qiskit, assign parameters swaps the symbol for a number.",
+          "scene": {
+            "kind": "code",
+            "language": "python",
+            "lines": [
+              "theta = Parameter(\"θ\")",
+              "qc.rx(theta, 0)",
+              "bound = qc.assign_parameters({theta: 1.57})"
+            ],
+            "highlight": [
+              2
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add RX and enter a numeric angle.",
+          "speech": "Your turn! Add an R X gate, and give it a numeric angle.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "RX",
+              "Bind θ"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "deutsch-problem",
+      "module": "Algorithms",
+      "title": "Deutsch's Problem",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Algorithms are choreography: prepare, query, interfere.",
+          "speech": "Quantum algorithms are choreography. Prepare, query, then interfere.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "problem",
+          "caption": "Is a hidden one-bit function constant or balanced? Classically you need two queries.",
+          "speech": "A hidden function takes one bit. Is it constant, or balanced? Classically, you'd need to ask it twice.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Deutsch's problem",
+            "items": [
+              {
+                "title": "Constant",
+                "body": "f(0) = f(1)"
+              },
+              {
+                "title": "Balanced",
+                "body": "f(0) ≠ f(1)"
+              }
+            ]
+          }
+        },
+        {
+          "id": "prepare",
+          "caption": "Prepare: X on q[1], then H on both qubits.",
+          "speech": "Prepare. Put X on qubit one, then H on both qubits.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 3,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "query",
+          "caption": "Query: a CX oracle, a balanced function, kicks a phase back onto q[0].",
+          "speech": "Query. Here the oracle is a C X, a balanced function. The bars don't change, but a phase kicks back onto qubit zero.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 3,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "interfere",
+          "caption": "Interfere: a final H on q[0] reads 1, so it's balanced. One query!",
+          "speech": "Interfere. A final H on qubit zero gives one, so the function is balanced. And we only asked once.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 4,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: build the H, oracle, H pattern and read q[0].",
+          "speech": "Your turn! Build the H, oracle, H pattern, and read qubit zero.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "Oracle",
+              "H"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "teleportation-tour",
+      "module": "Algorithms",
+      "title": "Quantum Teleportation Tour",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Teleportation is a protocol, not science-fiction transport.",
+          "speech": "Quantum teleportation is a protocol, not science fiction transport. Let's trace it.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "roles",
+          "caption": "Three qubits: the message, plus Alice's and Bob's halves of a Bell pair.",
+          "speech": "There are three roles. Qubit zero holds the state to send. Qubits one and two share a Bell pair, one half for Alice, one for Bob.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Three roles",
+            "items": [
+              {
+                "title": "q[0]",
+                "body": "The state to send"
+              },
+              {
+                "title": "q[1]",
+                "body": "Alice's half of a Bell pair"
+              },
+              {
+                "title": "q[2]",
+                "body": "Bob's half: the destination"
+              }
+            ]
+          }
+        },
+        {
+          "id": "prepare",
+          "caption": "Prepare the message (|1⟩ via X), then share a Bell pair on q[1] and q[2].",
+          "speech": "Prepare the message. Here it's ket one, made with X. Then H and C X share a Bell pair between qubits one and two.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 3,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "alice",
+          "caption": "Alice links the message to her half: CX, then H.",
+          "speech": "Alice links the message to her half with a C X, then applies H. Now the information is spread across all three qubits.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 3,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "bob",
+          "caption": "Controlled corrections land the message on q[2]: it reads 1 every time.",
+          "speech": "Finally, corrections controlled by Alice's qubits, a C X and a C Z, land the message on Bob's qubit. Qubit two now reads one, every time.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 3,
+            "gates": [
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  2
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 5,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "no-cloning",
+          "caption": "The original is never copied, and two classical bits must travel to Bob.",
+          "speech": "The original is never copied; Alice's qubit loses it. And two classical bits must travel to Bob, so nothing goes faster than light.",
+          "scene": {
+            "kind": "cards",
+            "heading": "No cloning, no magic",
+            "items": [
+              {
+                "title": "Original destroyed",
+                "body": "q[0] no longer holds the state"
+              },
+              {
+                "title": "Needs classical bits",
+                "body": "Two bits must be sent to Bob"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add a third qubit and trace each role.",
+          "speech": "Your turn! Add a third qubit, then trace each wire's role in the protocol.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Add qubit",
+              "Trace the wires"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "grover-two-qubits",
+      "module": "Algorithms",
+      "title": "Grover with Two Qubits",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Search becomes interference when amplitudes are amplified.",
+          "speech": "Grover's algorithm turns search into interference. Let's find a marked answer.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "prepare",
+          "caption": "H on both qubits: all four answers equally likely, 25% each.",
+          "speech": "Put H on both qubits. All four possible answers are equally likely, twenty five percent each.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "oracle",
+          "caption": "The oracle, a CZ, marks 11 by flipping its phase.",
+          "speech": "The oracle is a C Z. It marks the answer one one by flipping its phase. The bars don't change yet.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "phase"
+            ]
+          }
+        },
+        {
+          "id": "diffusion",
+          "caption": "The diffusion step reflects about the average: 11 jumps to 100%.",
+          "speech": "Now the diffusion step: H, X, C Z, X, H. It reflects every amplitude about the average, and one one jumps to a hundred percent.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "cz",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "x",
+                "targets": [
+                  1
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "h",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 3,
+            "add": 9,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "general",
+          "caption": "Oracle, then diffusion. For N items it takes about √N rounds.",
+          "speech": "That's the pattern: oracle, then diffusion. With N items, Grover needs only about the square root of N rounds.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Grover in general",
+            "items": [
+              {
+                "title": "Oracle",
+                "body": "Marks the answer with a phase"
+              },
+              {
+                "title": "Diffusion",
+                "body": "Amplifies the marked amplitude"
+              },
+              {
+                "title": "Speed-up",
+                "body": "About √N rounds instead of N"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: use H to prepare and CZ as a phase oracle.",
+          "speech": "Your turn! Use H to prepare, and C Z as a simple phase oracle.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "H",
+              "CZ oracle",
+              "Diffusion"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "capstone-bell-experiment",
+      "module": "Capstone",
+      "title": "Capstone: Bell Experiment",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "This is your first complete quantum experiment.",
+          "speech": "This is your capstone: a complete quantum experiment, from start to finish.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "prepare",
+          "caption": "Prepare: H puts q[0] into superposition.",
+          "speech": "First, prepare. H puts qubit zero into superposition.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "entangle",
+          "caption": "Entangle: CX links q[1] to q[0]. Only 00 and 11 remain.",
+          "speech": "Next, entangle. A C X links qubit one to qubit zero. Only zero zero and one one remain.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 1,
+            "add": 1,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "measure",
+          "caption": "Measure both qubits into classical bits c[0] and c[1].",
+          "speech": "Then measure both qubits into the classical bits c zero and c one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "h",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  1
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "shots",
+          "caption": "Run 1,024 shots: about half 00, half 11, never 01 or 10.",
+          "speech": "Run a thousand and twenty four shots. About half are zero zero, half are one one, and never zero one or one zero.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "00": 521,
+              "11": 503
+            },
+            "title": "1024 shots"
+          }
+        },
+        {
+          "id": "recap",
+          "caption": "Superposition, entanglement and measurement, all in one circuit.",
+          "speech": "You just combined superposition, entanglement, and measurement in one circuit. That's real quantum computing.",
+          "scene": {
+            "kind": "cards",
+            "heading": "What you used",
+            "items": [
+              {
+                "title": "Superposition",
+                "body": "H"
+              },
+              {
+                "title": "Entanglement",
+                "body": "CX"
+              },
+              {
+                "title": "Measurement",
+                "body": "Shots and histograms"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: prepare, entangle and measure both wires.",
+          "speech": "Your turn! Prepare, entangle, and measure both wires. Then check the results.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Prepare",
+              "Entangle",
+              "Measure"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
