@@ -55,6 +55,7 @@ from manim import (
     UpdateFromAlphaFunc,
     ValueTracker,
     VGroup,
+    Wait,
     Write,
     linear,
     smooth,
@@ -71,8 +72,11 @@ VIDEO_FPS = 30
 HEADER_Y = 3.5
 HEADER_RULE_Y = 3.02
 FOOTER_Y = -3.34
+FOOTER_WIDTH = 12.1
+FOOTER_CENTER_X = 0.85
+FOOTER_PADDING = 0.22
 CONTENT_Y = 0.08
-QUANTA_HOME = np.array([-6.28, FOOTER_Y, 0.0])
+QUANTA_HOME = np.array([-6.15, FOOTER_Y, 0.0])
 CHILD_STORYBOARDS = "QCV_ANIMATED_STORYBOARDS"
 CHILD_LESSON = "QCV_ANIMATED_LESSON"
 CHILD_TIMINGS = "QCV_ANIMATED_TIMINGS"
@@ -412,16 +416,16 @@ class AnimatedLessonScene(Scene):
         ).set_opacity(0.36)
 
         footer = RoundedRectangle(
-            width=13.72,
+            width=FOOTER_WIDTH,
             height=1.22,
             corner_radius=0.18,
             stroke_color=self.colors["muted"],
             stroke_width=1.0,
             fill_color="#0b1220",
             fill_opacity=0.94,
-        ).move_to([0, FOOTER_Y, 0])
+        ).move_to([FOOTER_CENTER_X, FOOTER_Y, 0])
 
-        self.quanta = ImageMobject(str(quanta_path)).set_height(1.05)
+        self.quanta = ImageMobject(str(quanta_path)).set_height(1.1)
         self.quanta.move_to(QUANTA_HOME)
         self.add(footer, header_rule)
         self.add(Group(logo, header_text))
@@ -474,15 +478,63 @@ class AnimatedLessonScene(Scene):
         raise ValueError(f"Text does not fit in {max_lines} lines: {value}")
 
     def _caption_mobject(self, caption: str) -> VGroup:
-        group = self._wrap_text(
+        footer_left = FOOTER_CENTER_X - FOOTER_WIDTH / 2
+        caption_left = footer_left + FOOTER_PADDING
+        group = self._wrap_caption(
             caption,
-            max_width=12.3,
+            max_width=FOOTER_WIDTH - 2 * FOOTER_PADDING,
             sizes=(36, 34, 32, 30, 28),
-            max_lines=2,
         )
-        group.move_to([0.64, FOOTER_Y, 0])
-        group.align_to(np.array([-5.42, FOOTER_Y, 0]), LEFT)
+        group.move_to([caption_left + group.width / 2, FOOTER_Y, 0])
         return group
+
+    def _wrap_caption(
+        self,
+        value: str,
+        max_width: float,
+        sizes: Sequence[float],
+    ) -> VGroup:
+        words = value.split()
+        if not words:
+            return VGroup()
+
+        def is_orphan(line: str) -> bool:
+            tokens = line.split()
+            return (
+                len(tokens) == 1
+                and len(tokens[0].strip(".,:;!?()[]{}")) <= 2
+            )
+
+        for size in sizes:
+            full_line = self._text(value, size)
+            if full_line.width <= max_width:
+                return VGroup(full_line)
+
+            candidates: list[tuple[float, VGroup]] = []
+            for split in range(1, len(words)):
+                lines = (
+                    " ".join(words[:split]),
+                    " ".join(words[split:]),
+                )
+                if any(is_orphan(line) for line in lines):
+                    continue
+                line_objects = [self._text(line, size) for line in lines]
+                if any(line.width > max_width for line in line_objects):
+                    continue
+                candidates.append(
+                    (
+                        abs(line_objects[0].width - line_objects[1].width),
+                        VGroup(*line_objects).arrange(
+                            DOWN,
+                            aligned_edge=LEFT,
+                            buff=0.07,
+                        ),
+                    )
+                )
+            if candidates:
+                return min(candidates, key=lambda candidate: candidate[0])[1]
+
+        raise ValueError(f"Caption does not fit in two lines: {value}")
 
     def _content_caption(self, caption: str, max_width: float = 9.8) -> VGroup:
         return self._wrap_text(
@@ -535,6 +587,7 @@ class AnimatedLessonScene(Scene):
         frame_count: int,
         steps: Sequence[Step],
         bob_quanta: bool = True,
+        keep_visible: Sequence[Any] = (),
     ) -> None:
         usable_steps = [step for step in steps if step.animations]
         hold_frames = min(6, max(1, frame_count // 12))
@@ -565,6 +618,8 @@ class AnimatedLessonScene(Scene):
                 rate_func=step.rate_func,
             )
             consumed += frames
+        if keep_visible:
+            self.add(*keep_visible)
         remaining = frame_count - consumed
         if remaining > 0:
             self.wait(remaining / VIDEO_FPS)
@@ -613,8 +668,8 @@ class AnimatedLessonScene(Scene):
         self,
         value: str,
         center: Sequence[float] = ORIGIN,
-        width: float = 3.0,
-        height: float = 2.6,
+        width: float = 4.1,
+        height: float = 3.7,
     ) -> tuple[VGroup, VGroup, Text]:
         box = RoundedRectangle(
             width=width,
@@ -625,9 +680,9 @@ class AnimatedLessonScene(Scene):
             fill_color="#0f1b2e",
             fill_opacity=0.96,
         )
-        label = self._text("bit", 24, color=self.colors["muted"])
+        label = self._text("bit", 28, color=self.colors["muted"])
         label.move_to(box.get_top() + DOWN * 0.38)
-        digit = self._text(value, 88, weight="BOLD")
+        digit = self._text(value, 100, weight="BOLD")
         digit.move_to(box.get_center() + DOWN * 0.16)
         shell = VGroup(box, label)
         card = VGroup(shell, digit)
@@ -661,15 +716,15 @@ class AnimatedLessonScene(Scene):
 
     def _wire(self, center: Sequence[float] = ORIGIN) -> dict[str, Any]:
         line = Line(
-            [-2.7, 0, 0],
-            [3.15, 0, 0],
+            [-3.2, 0, 0],
+            [4.0, 0, 0],
             color=self.colors["foreground"],
             stroke_width=3,
         )
         q_label = self._text("q[0]", 24, color=self.colors["muted"])
-        q_label.next_to(line, LEFT, buff=1.05)
         state = self._text("|0⟩", 28, color=self.colors["brand"])
-        state.next_to(line, LEFT, buff=0.18)
+        state.next_to(line, LEFT, buff=0.15)
+        q_label.next_to(state, LEFT, buff=0.2)
         group = VGroup(q_label, state, line)
         group.move_to(center)
         return {"group": group, "line": line, "q": q_label, "state": state}
@@ -683,8 +738,8 @@ class AnimatedLessonScene(Scene):
         notes: tuple[str, str] | None = None,
         compact: bool = False,
     ) -> VGroup:
-        width = 4.8 if not compact else 3.6
-        height = 3.65 if not compact else 2.6
+        width = 6.2 if not compact else 4.0
+        height = 4.2 if not compact else 2.8
         frame = RoundedRectangle(
             width=width,
             height=height,
@@ -696,21 +751,21 @@ class AnimatedLessonScene(Scene):
         )
         title_text = self._text(
             title,
-            24 if not compact else 20,
+            26 if not compact else 22,
             color=self.colors["muted"],
             weight="BOLD",
         )
-        title_text.move_to(frame.get_top() + DOWN * 0.34)
-        baseline_y = frame.get_bottom()[1] + (0.82 if not compact else 0.58)
+        title_text.move_to(frame.get_top() + DOWN * 0.36)
+        baseline_y = frame.get_bottom()[1] + (1.0 if not compact else 0.66)
         baseline = Line(
-            [frame.get_left()[0] + 0.5, baseline_y, 0],
-            [frame.get_right()[0] - 0.5, baseline_y, 0],
+            [frame.get_left()[0] + 0.55, baseline_y, 0],
+            [frame.get_right()[0] - 0.55, baseline_y, 0],
             color=self.colors["muted"],
             stroke_width=1.2,
         )
-        x_positions = (-0.95, 0.95)
-        max_bar_height = 1.78 if not compact else 1.22
-        bar_width = 0.78 if not compact else 0.58
+        x_positions = (-1.45, 1.45)
+        max_bar_height = 1.8 if not compact else 1.28
+        bar_width = 0.96 if not compact else 0.72
         parts: list[Any] = [frame, title_text, baseline]
         for index, (x, value, value_label, basis) in enumerate(
             zip(x_positions, values, value_labels, ("|0⟩", "|1⟩"), strict=True)
@@ -726,14 +781,14 @@ class AnimatedLessonScene(Scene):
             ).move_to([x, baseline_y + bar_height / 2, 0])
             value_text = self._text(
                 value_label,
-                22 if not compact else 18,
+                26 if not compact else 24,
                 color=color,
                 weight="BOLD",
             )
             value_text.next_to(bar, UP, buff=0.1)
             basis_text = self._text(
                 basis,
-                22 if not compact else 18,
+                24 if not compact else 22,
                 color=self.colors["foreground"],
             )
             basis_text.next_to(baseline, DOWN, buff=0.12)
@@ -742,17 +797,19 @@ class AnimatedLessonScene(Scene):
             if notes:
                 note = self._text(
                     notes[index],
-                    18 if not compact else 15,
+                    24 if not compact else 18,
                     color=self.colors["muted"],
                 )
-                note.move_to([x, frame.get_bottom()[1] + 0.24, 0])
+                note.move_to(
+                    [x, frame.get_bottom()[1] + (0.32 if not compact else 0.22), 0]
+                )
                 parts.append(note)
         return VGroup(*parts)
 
     def _meter(self, center: Sequence[float]) -> VGroup:
         body = RoundedRectangle(
-            width=2.2,
-            height=1.62,
+            width=2.8,
+            height=2.0,
             corner_radius=0.2,
             stroke_color=self.colors["warning"],
             stroke_width=2.4,
@@ -760,7 +817,7 @@ class AnimatedLessonScene(Scene):
             fill_opacity=0.94,
         )
         arc = Arc(
-            radius=0.58,
+            radius=0.72,
             start_angle=0,
             angle=PI,
             color=self.colors["foreground"],
@@ -769,12 +826,12 @@ class AnimatedLessonScene(Scene):
         arc.move_to(body.get_center() + DOWN * 0.05)
         needle = Line(
             body.get_center() + DOWN * 0.08,
-            body.get_center() + UP * 0.36 + RIGHT * 0.24,
+            body.get_center() + UP * 0.43 + RIGHT * 0.28,
             color=self.colors["danger"],
             stroke_width=3,
         )
-        label = self._text("M", 22, color=self.colors["warning"], weight="BOLD")
-        label.move_to(body.get_bottom() + UP * 0.24)
+        label = self._text("M", 28, color=self.colors["warning"], weight="BOLD")
+        label.move_to(body.get_bottom() + UP * 0.28)
         group = VGroup(body, arc, needle, label)
         group.move_to(center)
         return group
@@ -786,36 +843,36 @@ class AnimatedLessonScene(Scene):
     ) -> dict[str, Any]:
         center_point = np.asarray(center, dtype=float)
         outline = Circle(
-            radius=1.48,
+            radius=1.7,
             color=self.colors["brand"],
             stroke_width=2.4,
         ).move_to(center_point)
         equator = Ellipse(
-            width=2.96,
-            height=0.72,
+            width=3.4,
+            height=0.82,
             color=self.colors["muted"],
             stroke_width=1.7,
         ).move_to(center_point)
         axis = DashedLine(
-            center_point + UP * 1.72,
-            center_point + DOWN * 1.72,
+            center_point + UP * 1.94,
+            center_point + DOWN * 1.94,
             color=self.colors["muted"],
             stroke_width=1.4,
         )
-        north = self._text("|0⟩", 24, color=self.colors["foreground"])
-        north.move_to(center_point + UP * 1.85)
-        south = self._text("|1⟩", 24, color=self.colors["foreground"])
-        south.move_to(center_point + DOWN * 1.83)
+        north = self._text("|0⟩", 26, color=self.colors["foreground"])
+        north.move_to(center_point + UP * 2.1)
+        south = self._text("|1⟩", 26, color=self.colors["foreground"])
+        south.move_to(center_point + DOWN * 2.1)
         parts: list[Any] = [outline, equator, axis, north, south]
         if equator_labels:
-            plus = self._text("|+⟩", 22, color=self.colors["success"])
-            plus.move_to(center_point + RIGHT * 1.82)
-            minus = self._text("|−⟩", 22, color=self.colors["danger"])
-            minus.move_to(center_point + LEFT * 1.82)
+            plus = self._text("|+⟩", 24, color=self.colors["success"])
+            plus.move_to(center_point + RIGHT * 2.06)
+            minus = self._text("|−⟩", 24, color=self.colors["danger"])
+            minus.move_to(center_point + LEFT * 2.06)
             parts.extend([plus, minus])
         arrow = Arrow(
             center_point,
-            center_point + UP * 1.24,
+            center_point + UP * 1.45,
             buff=0,
             color=self.colors["warning"],
             stroke_width=5,
@@ -833,20 +890,20 @@ class AnimatedLessonScene(Scene):
         basis: str,
     ) -> dict[str, Any]:
         circle = Circle(
-            radius=0.7,
+            radius=0.9,
             color=self.colors["brand"],
             stroke_width=2,
         ).move_to(center)
         pointer = Line(
             circle.get_center(),
-            circle.get_center() + RIGHT * 0.55,
+            circle.get_center() + RIGHT * 0.72,
             color=self.colors["warning"],
             stroke_width=3,
         )
         dot = Dot(circle.get_center(), radius=0.045, color=self.colors["warning"])
-        basis_text = self._text(basis, 22)
+        basis_text = self._text(basis, 24)
         basis_text.next_to(circle, UP, buff=0.14)
-        degree = self._text("0°", 20, color=self.colors["muted"])
+        degree = self._text("0°", 24, color=self.colors["muted"])
         degree.next_to(circle, DOWN, buff=0.12)
         group = VGroup(circle, pointer, dot, basis_text, degree)
         return {
@@ -862,16 +919,16 @@ class AnimatedLessonScene(Scene):
         guide: bool = False,
     ) -> dict[str, Any]:
         frame = RoundedRectangle(
-            width=7.0,
-            height=3.55,
+            width=9.0,
+            height=4.2,
             corner_radius=0.2,
             stroke_color=self.colors["muted"],
             stroke_width=1.3,
             fill_color="#0c1626",
             fill_opacity=0.92,
         ).move_to([0, CONTENT_Y, 0])
-        baseline_y = frame.get_bottom()[1] + 0.65
-        bin_centers = (-1.72, 1.72)
+        baseline_y = frame.get_bottom()[1] + 0.72
+        bin_centers = (-2.2, 2.2)
         parts: list[Any] = [frame]
         for center_x, label, count in zip(
             bin_centers,
@@ -880,34 +937,34 @@ class AnimatedLessonScene(Scene):
             strict=True,
         ):
             bin_box = RoundedRectangle(
-                width=2.65,
-                height=2.15,
+                width=3.35,
+                height=2.55,
                 corner_radius=0.12,
                 stroke_color=self.colors["brand"],
                 stroke_width=1.5,
                 fill_color="#111c2d",
                 fill_opacity=0.68,
-            ).move_to([center_x, baseline_y + 1.06, 0])
-            label_text = self._text(label, 26, weight="BOLD")
-            label_text.move_to([center_x, frame.get_bottom()[1] + 0.3, 0])
+            ).move_to([center_x, baseline_y + 1.27, 0])
+            label_text = self._text(label, 30, weight="BOLD")
+            label_text.move_to([center_x, frame.get_bottom()[1] + 0.34, 0])
             count_text = self._text(
                 str(count),
-                22,
+                26,
                 color=self.colors["brand"],
                 weight="BOLD",
             )
-            count_text.move_to([center_x, frame.get_top()[1] - 0.33, 0])
+            count_text.move_to([center_x, frame.get_top()[1] - 0.35, 0])
             parts.extend([bin_box, label_text, count_text])
         if guide:
             guide_line = DashedLine(
-                [-3.15, baseline_y + 1.18, 0],
-                [3.15, baseline_y + 1.18, 0],
+                [-4.0, baseline_y + 1.4, 0],
+                [4.0, baseline_y + 1.4, 0],
                 color=self.colors["warning"],
                 stroke_width=1.5,
             )
             guide_label = self._text(
                 "50%",
-                18,
+                24,
                 color=self.colors["warning"],
             )
             guide_label.next_to(guide_line, RIGHT, buff=0.12)
@@ -925,8 +982,8 @@ class AnimatedLessonScene(Scene):
         slots: list[list[np.ndarray]] = [[], []]
         for bin_index, count in enumerate(counts):
             columns = 6 if count <= 21 else 8
-            spacing_x = 0.22
-            spacing_y = 0.22
+            spacing_x = 0.3
+            spacing_y = 0.23
             rows = math.ceil(count / columns)
             for index in range(count):
                 row = index // columns
@@ -935,7 +992,7 @@ class AnimatedLessonScene(Scene):
                     bin_centers[bin_index]
                     + (column - (columns - 1) / 2) * spacing_x
                 )
-                y = baseline_y + 0.3 + row * spacing_y
+                y = baseline_y + 0.32 + row * spacing_y
                 slots[bin_index].append(np.array([x, y, 0.0]))
 
         used = [0, 0]
@@ -948,13 +1005,13 @@ class AnimatedLessonScene(Scene):
             start = np.array(
                 [
                     destination[0] + 0.18 * math.sin(index * 1.7),
-                    frame.get_top()[1] - 0.2,
+                    frame.get_top()[1] - 0.22,
                     0.0,
                 ]
             )
             dot = Dot(
                 start,
-                radius=0.07,
+                radius=0.08,
                 color=(
                     self.colors["success"]
                     if bin_index == 0
@@ -968,19 +1025,19 @@ class AnimatedLessonScene(Scene):
 
         counter_label = self._text(
             "Shots:",
-            21,
+            24,
             color=self.colors["muted"],
         )
-        counter_label.move_to([0.0, frame.get_top()[1] - 0.33, 0])
-        counter_value = self._text("0", 22, color=self.colors["foreground"])
-        counter_center = np.array([0.0, frame.get_top()[1] - 0.33, 0.0])
+        counter_label.move_to([0.0, frame.get_top()[1] - 0.35, 0])
+        counter_value = self._text("0", 24, color=self.colors["foreground"])
+        counter_center = np.array([0.0, frame.get_top()[1] - 0.35, 0.0])
         counter_value.move_to(counter_center)
 
         def update_counter(number: Text) -> None:
             number.become(
                 self._text(
                     str(round(tracker.get_value())),
-                    22,
+                    24,
                     color=self.colors["foreground"],
                 )
             )
@@ -1039,33 +1096,47 @@ class AnimatedLessonScene(Scene):
         if title.width > 10.8:
             title.scale_to_fit_width(10.8)
         title_group = VGroup(module, title).arrange(DOWN, buff=0.2)
-        title_group.move_to([0, 0.72, 0])
-        self.quanta.set_height(1.7).move_to([0, -1.05, 0])
+        title_group.move_to([0, 0.82, 0])
+        intro_quanta = self.quanta.copy().set_height(1.8).move_to(
+            [0, -1.0, 0]
+        )
+        beat_seconds = frame_count / VIDEO_FPS
+        reveal_seconds = 0.78
+        hop_seconds = 0.3
+        pre_hold_seconds = 0.36 + reveal_seconds + 2 * hop_seconds
+        exit_seconds = beat_seconds * 0.15
+        hold_seconds = max(
+            0.1,
+            beat_seconds * 0.85 - pre_hold_seconds,
+        )
         steps = [
             transition,
             Step(
-                0.8,
+                reveal_seconds,
                 (
                     FadeIn(title_group),
-                    FadeIn(self.quanta, scale=0.05),
+                    FadeIn(intro_quanta, scale=0.05),
                 ),
             ),
             Step(
-                0.32,
-                (self.quanta.animate.shift(UP * 0.28).scale(1.08),),
+                hop_seconds,
+                (intro_quanta.animate.shift(UP * 0.28).scale(1.08),),
                 smooth,
             ),
             Step(
-                0.32,
-                (self.quanta.animate.shift(DOWN * 0.28).scale(1 / 1.08),),
+                hop_seconds,
+                (intro_quanta.animate.shift(DOWN * 0.28).scale(1 / 1.08),),
                 smooth,
             ),
+            Step(hold_seconds, (Wait(hold_seconds),), linear),
             Step(
-                0.75,
+                exit_seconds,
                 (
                     FadeOut(title_group),
-                    self.quanta.animate.set_height(1.05).move_to(QUANTA_HOME),
+                    FadeOut(intro_quanta),
+                    FadeIn(self.quanta),
                 ),
+                linear,
             ),
         ]
         self._run_beat(frame_count, steps, bob_quanta=False)
@@ -1665,8 +1736,8 @@ class AnimatedLessonScene(Scene):
         wire = self._wire([0, -0.05, 0])
         gate = self._gate_tile("H", [0.6, 1.9, 0])
         panel = RoundedRectangle(
-            width=7.7,
-            height=1.05,
+            width=11.6,
+            height=1.2,
             corner_radius=0.16,
             stroke_color=self.colors["muted"],
             stroke_width=1.2,
@@ -1698,8 +1769,8 @@ class AnimatedLessonScene(Scene):
             Step(
                 0.8,
                 (
-                    wire["group"].animate.scale(0.55).move_to([0, 2.35, 0]),
-                    gate.animate.scale(0.55).move_to([0.55, 2.35, 0]),
+                    wire["group"].animate.move_to([0, 2.35, 0]),
+                    gate.animate.move_to([0.55, 2.35, 0]),
                 ),
             ),
         ]
@@ -1719,24 +1790,24 @@ class AnimatedLessonScene(Scene):
             ("100%", "0%"),
             "Probabilities",
             self.colors["success"],
-        ).scale(0.9)
+        )
         chart.move_to([0, -0.25, 0])
         target = self._two_bar_chart(
             (0.5, 0.5),
             ("50%", "50%"),
             "Probabilities",
             self.colors["success"],
-        ).scale(0.9)
+        )
         target.move_to([0, -0.25, 0])
         sum_label = self._text(
             "50% + 50% = 100%",
-            25,
+            22,
             color=self.colors["success"],
             weight="BOLD",
-        ).move_to([4.55, -0.25, 0])
+        ).move_to([5.15, -0.25, 0])
         sum_line = Line(
-            [2.35, -1.25, 0],
-            [2.35, 0.75, 0],
+            [3.5, -1.25, 0],
+            [3.5, 0.75, 0],
             color=self.colors["success"],
             stroke_width=2,
         )
@@ -1757,26 +1828,26 @@ class AnimatedLessonScene(Scene):
         chart = self.state["probability_chart"]
         summary = self.current_visual[1]
         transition = self._transition(beat["caption"], clear_current=False)
-        dial_zero = self._phase_dial([2.35, 0.55, 0], "|0⟩")
-        dial_one = self._phase_dial([4.35, 0.55, 0], "|1⟩")
+        dial_zero = self._phase_dial([2.2, 0.3, 0], "|0⟩")
+        dial_one = self._phase_dial([4.65, 0.3, 0], "|1⟩")
         z_gate = self._gate_tile(
             "Z",
             [1.3, 2.35, 0],
-            width=0.52,
-            height=0.46,
+            width=0.8,
+            height=0.7,
             color=self.colors["warning"],
         )
         h_gate = self.state["h_gate"]
         z_gate.next_to(h_gate, RIGHT, buff=0.23)
         unchanged = self._text(
             "unchanged",
-            21,
+            24,
             color=self.colors["success"],
             weight="BOLD",
-        ).move_to([-2.75, -1.65, 0])
+        ).move_to([-2.9, -2.15, 0])
         degree_180 = self._text(
             "180°",
-            20,
+            24,
             color=self.colors["warning"],
         ).move_to(dial_one["degree"])
         steps = [
@@ -1784,7 +1855,7 @@ class AnimatedLessonScene(Scene):
             Step(
                 0.72,
                 (
-                    chart.animate.scale(0.72).move_to([-2.8, -0.1, 0]),
+                    chart.animate.scale(0.72).move_to([-2.9, -0.1, 0]),
                     FadeOut(summary[0]),
                     FadeOut(summary[1]),
                     FadeIn(dial_zero["group"]),
@@ -1807,7 +1878,11 @@ class AnimatedLessonScene(Scene):
             Step(
                 0.7,
                 (
-                    Indicate(chart, color=self.colors["success"], scale_factor=1.04),
+                    Circumscribe(
+                        chart[0],
+                        color=self.colors["success"],
+                        time_width=0.35,
+                    ),
                     FadeIn(unchanged),
                 ),
             ),
@@ -1825,7 +1900,7 @@ class AnimatedLessonScene(Scene):
         self, beat: dict[str, str], frame_count: int
     ) -> None:
         transition = self._transition(beat["caption"])
-        bloch = self._bloch_sphere([0, -0.55, 0], equator_labels=True)
+        bloch = self._bloch_sphere([0, -0.48, 0], equator_labels=True)
         h_gate = self.state["h_gate"]
         z_gate = self.state["z_gate"]
         group = VGroup(bloch["sphere"], bloch["arrow"])
@@ -1957,49 +2032,50 @@ class AnimatedLessonScene(Scene):
             ).move_to(center)
             title_text = self._text(
                 title,
-                17,
+                24,
                 color=self.colors["brand"],
                 weight="BOLD",
             )
-            title_text.move_to(box.get_top() + DOWN * 0.23)
+            title_text.move_to(box.get_top() + DOWN * 0.28)
             return {"group": VGroup(box, title_text), "box": box}
 
-        gates = panel("Gates", 2.25, 3.05, [-4.75, 0.58, 0])
-        canvas = panel("Canvas", 5.15, 3.05, [-0.83, 0.58, 0])
-        inspector = panel("Inspector", 2.55, 3.05, [3.55, 0.58, 0])
-        results = panel("Results", 5.1, 1.2, [-3.2, -1.76, 0])
-        code = panel("Code", 5.1, 1.2, [2.25, -1.76, 0])
+        gates = panel("Gates", 2.5, 3.1, [-5.2, 0.58, 0])
+        canvas = panel("Canvas", 6.4, 3.1, [-0.65, 0.58, 0])
+        inspector = panel("Inspector", 3.2, 3.1, [4.9, 0.58, 0])
+        results = panel("Results", 6.25, 1.55, [-3.2, -1.77, 0])
+        code = panel("Code", 6.25, 1.55, [3.2, -1.77, 0])
 
         gate_tiles = VGroup()
         labels = ("H", "X", "Y", "Z", "S", "T", "CX", "M")
         h_tile = None
         for index, label in enumerate(labels):
-            row, column = divmod(index, 4)
+            row, column = divmod(index, 2)
             tile = self._gate_tile(
                 label,
                 [
-                    -5.48 + column * 0.49,
-                    0.88 - row * 0.58,
+                    -5.67 + column * 0.94,
+                    1.26 - row * 0.63,
                     0,
                 ],
-                width=0.4,
-                height=0.38,
+                width=0.82,
+                height=0.62,
                 color=self.colors["brand"],
             )
-            tile[1].scale_to_fit_width(0.25)
+            if label == "CX":
+                tile[1].scale_to_fit_width(0.62)
             gate_tiles.add(tile)
             if label == "H":
                 h_tile = tile
         gates["group"].add(gate_tiles)
 
         wire = Line(
-            [-2.68, 0.35, 0],
-            [1.05, 0.35, 0],
+            [-2.78, 0.35, 0],
+            [2.2, 0.35, 0],
             color=self.colors["foreground"],
-            stroke_width=2.4,
+            stroke_width=3,
         )
-        wire_label = self._text("q[0]", 18, color=self.colors["muted"])
-        wire_label.next_to(wire, LEFT, buff=0.2)
+        wire_label = self._text("q[0]", 26, color=self.colors["muted"])
+        wire_label.next_to(wire, LEFT, buff=0.18)
         canvas["group"].add(wire, wire_label)
 
         workspace_group = VGroup(
@@ -2092,19 +2168,21 @@ class AnimatedLessonScene(Scene):
             color=self.colors["foreground"],
             fill_color=self.colors["foreground"],
             fill_opacity=1,
-        ).scale(0.15).rotate(-PI / 4)
+        ).scale(0.22).rotate(-PI / 4)
         cursor.move_to(h_tile.get_center() + RIGHT * 0.2 + DOWN * 0.15)
-        placed_h = h_tile.copy().scale(1.45)
+        placed_h = h_tile.copy().scale(1.3)
+        target = np.array([0.45, workspace["wire"].get_y(), 0])
         path = ArcBetweenPoints(
-            h_tile.get_center(),
-            [-0.75, 0.35, 0],
+            placed_h.get_center(),
+            target,
             angle=-PI / 3,
         )
         cursor_path = ArcBetweenPoints(
             cursor.get_center(),
-            [-0.45, 0.1, 0],
+            target + RIGHT * 0.5 + DOWN * 0.22,
             angle=-PI / 3,
         )
+        target_gate = h_tile.copy().scale(1.3).move_to(target)
         steps = [
             transition,
             Step(0.42, (FadeIn(cursor),)),
@@ -2118,16 +2196,17 @@ class AnimatedLessonScene(Scene):
                 ),
                 linear,
             ),
-            Step(0.28, (placed_h.animate.scale(1.12),)),
             Step(
-                0.3,
+                0.38,
                 (
-                    placed_h.animate.scale(1 / 1.12),
+                    Transform(placed_h, target_gate),
                     FadeOut(cursor),
                 ),
             ),
         ]
-        self._run_beat(frame_count, steps)
+        self._run_beat(frame_count, steps, keep_visible=(placed_h,))
+        placed_h.move_to(target)
+        self.add(placed_h)
         self.state["placed_h"] = placed_h
         self.current_visual = None
 
@@ -2137,18 +2216,19 @@ class AnimatedLessonScene(Scene):
         transition = self._transition(beat["caption"])
         workspace = self.state["workspace"]
         placed_h = self.state["placed_h"]
+        self.add(placed_h)
         ring = SurroundingRectangle(
             placed_h,
             color=self.colors["brand"],
-            buff=0.09,
-            stroke_width=2.3,
+            buff=0.12,
+            stroke_width=3,
         )
         rows = VGroup(
-            self._text("Type: H", 17),
-            self._text("Target: q[0]", 17),
-            self._text("Column: 0", 17),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.18)
-        rows.move_to([3.55, 0.35, 0])
+            self._text("Type: H", 26),
+            self._text("Target: q[0]", 26),
+            self._text("Column: 0", 26),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        rows.move_to([4.9, 0.25, 0])
         steps = [
             transition,
             Step(0.45, (FadeIn(ring),)),
@@ -2175,26 +2255,27 @@ class AnimatedLessonScene(Scene):
     ) -> None:
         transition = self._transition(beat["caption"])
         workspace = self.state["workspace"]
+        self.add(self.state["placed_h"])
         tab = self._text(
             "Probabilities",
-            15,
+            24,
             color=self.colors["brand"],
             weight="BOLD",
-        ).move_to([-4.25, -1.72, 0])
+        ).move_to([-4.8, -1.76, 0])
         bar_zero = Rectangle(
-            width=0.48,
+            width=0.7,
             height=0.05,
             stroke_color=self.colors["success"],
             fill_color=self.colors["success"],
             fill_opacity=0.75,
-        ).move_to([-2.55, -1.95, 0])
-        bar_one = bar_zero.copy().move_to([-1.65, -1.95, 0])
-        target_zero = bar_zero.copy().stretch_to_fit_height(0.55)
-        target_zero.move_to([-2.55, -1.72, 0])
-        target_one = bar_one.copy().stretch_to_fit_height(0.55)
-        target_one.move_to([-1.65, -1.72, 0])
-        zero_label = self._text("|0⟩ 50%", 14).move_to([-2.55, -2.22, 0])
-        one_label = self._text("|1⟩ 50%", 14).move_to([-1.65, -2.22, 0])
+        ).move_to([-2.8, -2.125, 0])
+        bar_one = bar_zero.copy().move_to([-1.25, -2.125, 0])
+        target_zero = bar_zero.copy().stretch_to_fit_height(0.56)
+        target_zero.move_to([-2.8, -1.87, 0])
+        target_one = bar_one.copy().stretch_to_fit_height(0.56)
+        target_one.move_to([-1.25, -1.87, 0])
+        zero_label = self._text("|0⟩ 50%", 24).move_to([-2.8, -2.34, 0])
+        one_label = self._text("|1⟩ 50%", 24).move_to([-1.25, -2.34, 0])
         result_visual = VGroup(
             tab,
             bar_zero,
@@ -2234,24 +2315,42 @@ class AnimatedLessonScene(Scene):
         transition = self._transition(beat["caption"])
         workspace = self.state["workspace"]
         placed_h = self.state["placed_h"]
+        self.add(placed_h)
         dim_line = self._text(
             "qc = QuantumCircuit(1)",
-            14,
+            24,
             color=self.colors["muted"],
             font="DejaVu Sans Mono",
-        ).move_to([2.25, -1.65, 0])
+        ).move_to([3.2, -1.76, 0])
         code_line = self._text(
             "qc.h(0)",
-            17,
+            26,
             color=self.colors["success"],
             font="DejaVu Sans Mono",
             weight="BOLD",
-        ).move_to([2.25, -2.05, 0])
-        connector = Line(
-            placed_h.get_bottom(),
-            code_line.get_top(),
-            color=self.colors["brand"],
-            stroke_width=1.4,
+        ).move_to([3.2, -2.2, 0])
+        gate_bottom = placed_h.get_bottom()
+        code_left = code_line.get_left()
+        connector_x = 0.42
+        connector = VGroup(
+            Line(
+                gate_bottom,
+                [connector_x, gate_bottom[1] - 0.12, 0],
+                color=self.colors["brand"],
+                stroke_width=1.8,
+            ),
+            Line(
+                [connector_x, gate_bottom[1] - 0.12, 0],
+                [connector_x, code_line.get_center()[1], 0],
+                color=self.colors["brand"],
+                stroke_width=1.8,
+            ),
+            Line(
+                [connector_x, code_line.get_center()[1], 0],
+                code_left,
+                color=self.colors["brand"],
+                stroke_width=1.8,
+            ),
         ).set_opacity(0.7)
         code_visual = VGroup(dim_line, code_line, connector)
         steps = [
@@ -2278,6 +2377,7 @@ class AnimatedLessonScene(Scene):
     ) -> None:
         transition = self._transition(beat["caption"])
         workspace = self.state["workspace"]
+        self.add(self.state["placed_h"])
         fade_animations: list[Any] = [
             panel.animate.set_opacity(0.16)
             for panel in workspace["group"]
@@ -2313,7 +2413,7 @@ class AnimatedLessonScene(Scene):
         ).arrange(RIGHT, buff=0.22)
         chip_labels = VGroup(
             *[
-                self._text(label, 20, color=self.colors["brand"], weight="BOLD")
+                self._text(label, 22, color=self.colors["brand"], weight="BOLD")
                 for label in ("Place", "Select", "Inspect")
             ]
         )
