@@ -3866,6 +3866,735 @@
           }
         }
       ]
+    },
+    {
+      "id": "qml-encode-data",
+      "module": "Quantum ML",
+      "title": "Encode Data into a Qubit",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Data goes in as angles. That's the whole trick.",
+          "speech": "Machine learning starts with data. A quantum model writes that data into qubit angles.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "small",
+          "caption": "Feature x = 0.6 becomes RY(0.6): a small tilt, about 9% for 1.",
+          "speech": "Say our feature is zero point six. We encode it as R Y of zero point six. The arrow tilts a little, about nine percent for one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.6
+                ],
+                "label": "x=0.6"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "large",
+          "caption": "A bigger value, x = 2.4, tilts much further: about 87% for 1.",
+          "speech": "A bigger value, two point four, tilts much further. Now about eighty seven percent for one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  2.4
+                ],
+                "label": "x=2.4"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "bloch",
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "encoding",
+          "caption": "Different data gives different angles, and different quantum states.",
+          "speech": "That's angle encoding. Different data gives different angles, and different quantum states for the model to work with.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Angle encoding",
+            "items": [
+              {
+                "title": "Different data",
+                "body": "Different angles"
+              },
+              {
+                "title": "Different angles",
+                "body": "Different states"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: place RX or RY on q[0] and give it an angle.",
+          "speech": "Your turn! Place R X or R Y on qubit zero, and give it an angle. That angle is your data point.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "RX or RY",
+              "Your angle"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "qml-parameterised-ansatz",
+      "module": "Quantum ML",
+      "title": "Build a Trainable Ansatz",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Numbers are data. Symbols are knobs.",
+          "speech": "Numbers are data. Symbols are knobs. Let's build a trainable circuit.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "ansatz",
+          "caption": "An ansatz is a circuit with symbolic angles, θ, that training tunes.",
+          "speech": "An ansatz is a circuit whose angles are left as symbols, like theta. Training will tune them.",
+          "scene": {
+            "kind": "cards",
+            "heading": "An ansatz",
+            "items": [
+              {
+                "title": "RY(θ₀), RY(θ₁)",
+                "body": "Trainable angles"
+              },
+              {
+                "title": "CX",
+                "body": "Lets the qubits interact"
+              }
+            ]
+          }
+        },
+        {
+          "id": "bind",
+          "caption": "With θ₀ = 0.8 and θ₁ = 1.6, CX mixes the qubits into one shared state.",
+          "speech": "Bind theta zero to zero point eight, and theta one to one point six. The C X then mixes the two qubits into one shared state.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.8
+                ],
+                "label": "θ₀=0.8"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  1.6
+                ],
+                "label": "θ₁=1.6"
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 3,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "turn-knob",
+          "caption": "Turn one knob, θ₀ = 2.2, and the whole output distribution shifts.",
+          "speech": "Turn just one knob, theta zero to two point two, and the whole output distribution shifts. That's what training exploits.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  2.2
+                ],
+                "label": "θ₀=2.2"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  1.6
+                ],
+                "label": "θ₁=1.6"
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 3,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add RY gates with symbolic angles and connect them with CX.",
+          "speech": "Your turn! Add R Y gates with symbolic angles, and connect the qubits with C X.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "RY(θ)",
+              "RY(θ)",
+              "CX"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "qml-measure-prediction",
+      "module": "Quantum ML",
+      "title": "Read Out a Prediction",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Ask the circuit a question: measure.",
+          "speech": "A model has to give an answer. In a quantum classifier, we ask by measuring.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "measure",
+          "caption": "Measure q[0] into c[0]. Its 0/1 statistics are the prediction.",
+          "speech": "Measure qubit zero into the classical bit c zero. Its statistics of zeros and ones are the model's prediction.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  2.0
+                ],
+                "label": "θ=2.0"
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 3,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "shots",
+          "caption": "In 1,024 shots, q[0] reads 1 about 71% of the time.",
+          "speech": "Over a thousand and twenty four shots, qubit zero reads one about seventy one percent of the time.",
+          "scene": {
+            "kind": "histogram",
+            "counts": {
+              "0": 299,
+              "1": 725
+            },
+            "title": "q[0] · 1024 shots"
+          }
+        },
+        {
+          "id": "rule",
+          "caption": "If P(1) is above 0.5, predict class B; otherwise class A.",
+          "speech": "Then apply a simple rule. If the probability of one is above a half, predict class B. Otherwise, predict class A. Here, that's class B.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Decision rule",
+            "items": [
+              {
+                "title": "P(1) > 0.5",
+                "body": "Predict class B"
+              },
+              {
+                "title": "P(1) < 0.5",
+                "body": "Predict class A"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: add a measurement on q[0] to c[0].",
+          "speech": "Your turn! Add a measurement on qubit zero, into c zero.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Measure q[0]",
+              "c[0]"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "qml-training-loop",
+      "module": "Quantum ML",
+      "title": "The Training Loop",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Let's train a model with one knob.",
+          "speech": "Let's train a model with just one knob.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "loop",
+          "caption": "Training repeats: run the circuit, compute the loss, adjust θ.",
+          "speech": "Training is a loop. Run the circuit, measure how far you are from the target, then nudge theta and repeat.",
+          "scene": {
+            "kind": "cards",
+            "heading": "The loop",
+            "items": [
+              {
+                "title": "Run",
+                "body": "Measure P(1)"
+              },
+              {
+                "title": "Loss",
+                "body": "How far from the target?"
+              },
+              {
+                "title": "Adjust",
+                "body": "Nudge θ and repeat"
+              }
+            ]
+          }
+        },
+        {
+          "id": "start",
+          "caption": "Target: P(1) = 90%. θ = 0.5 gives only 6%. Too low.",
+          "speech": "Our target is a ninety percent chance of one. With theta at zero point five, we only get six percent. Too low.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.5
+                ],
+                "label": "θ=0.5"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "step",
+          "caption": "Step θ up to 1.5: P(1) rises to 46%.",
+          "speech": "Gradient descent steps theta up to one point five. Now the probability of one rises to forty six percent.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  1.5
+                ],
+                "label": "θ=1.5"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "trained",
+          "caption": "At θ = 2.5, P(1) reaches 90%: the loss is almost zero.",
+          "speech": "One more step, to two point five, and we hit ninety percent. The loss is almost zero. The model is trained.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 1,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  2.5
+                ],
+                "label": "θ=2.5"
+              }
+            ],
+            "reveal": 0,
+            "add": 1,
+            "panels": [
+              "probabilities",
+              "bloch"
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: bind θ to different values and watch P(1) move.",
+          "speech": "Your turn! Bind theta to different values in the inspector, and watch the probability of one move toward your target.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Bind θ",
+              "Watch P(1)"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "qml-capstone-classifier",
+      "module": "Quantum ML",
+      "title": "Capstone: Two-Feature Classifier",
+      "beats": [
+        {
+          "id": "intro",
+          "caption": "Final assembly. You know every part.",
+          "speech": "Final assembly. You already know every part of a quantum classifier.",
+          "scene": {
+            "kind": "title"
+          }
+        },
+        {
+          "id": "encode",
+          "caption": "Encode two features with RY on q[0] and q[1].",
+          "speech": "First, encode two features, with R Y gates on qubit zero and qubit one.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.6
+                ],
+                "label": "x₀=0.6"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  1.2
+                ],
+                "label": "x₁=1.2"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.9
+                ],
+                "label": "θ₀=0.9"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  0.4
+                ],
+                "label": "θ₁=0.4"
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 0,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "ansatz",
+          "caption": "Add trainable rotations θ₀ and θ₁: the model's knobs.",
+          "speech": "Next, add trainable rotations, theta zero and theta one. These are the knobs.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.6
+                ],
+                "label": "x₀=0.6"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  1.2
+                ],
+                "label": "x₁=1.2"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.9
+                ],
+                "label": "θ₀=0.9"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  0.4
+                ],
+                "label": "θ₁=0.4"
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 2,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "readout",
+          "caption": "CX mixes the features, and measuring q[0] gives the prediction.",
+          "speech": "A C X mixes the two features together, and measuring qubit zero gives the prediction.",
+          "scene": {
+            "kind": "circuit",
+            "qubits": 2,
+            "gates": [
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.6
+                ],
+                "label": "x₀=0.6"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  1.2
+                ],
+                "label": "x₁=1.2"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  0
+                ],
+                "params": [
+                  0.9
+                ],
+                "label": "θ₀=0.9"
+              },
+              {
+                "gate": "ry",
+                "targets": [
+                  1
+                ],
+                "params": [
+                  0.4
+                ],
+                "label": "θ₁=0.4"
+              },
+              {
+                "gate": "cx",
+                "targets": [
+                  1
+                ],
+                "controls": [
+                  0
+                ]
+              },
+              {
+                "gate": "measure",
+                "targets": [
+                  0
+                ]
+              }
+            ],
+            "reveal": 4,
+            "add": 2,
+            "panels": [
+              "probabilities"
+            ]
+          }
+        },
+        {
+          "id": "export",
+          "caption": "Export it to quantum-learn as a PennyLane ansatz and train it on real data.",
+          "speech": "Finally, export it to quantum learn as a PennyLane ansatz, and train it on real data.",
+          "scene": {
+            "kind": "cards",
+            "heading": "Take it further",
+            "items": [
+              {
+                "title": "quantum-learn",
+                "body": "Export as a PennyLane ansatz"
+              },
+              {
+                "title": "Train it",
+                "body": "Tune θ₀ and θ₁ on real data"
+              }
+            ]
+          }
+        },
+        {
+          "id": "outro",
+          "caption": "Your turn: encode, add trainable RY angles, connect with CX, then measure q[0].",
+          "speech": "Your turn! Encode both features, add trainable angles, connect with C X, then measure qubit zero.",
+          "scene": {
+            "kind": "outro",
+            "chips": [
+              "Encode",
+              "Ansatz",
+              "CX",
+              "Measure"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
