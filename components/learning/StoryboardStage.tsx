@@ -10,9 +10,13 @@ import {
   type AnimatedStoryboardBeat,
   type AnimatedStoryboardScene,
 } from "@/lib/learning/animated-videos";
+import { MODULE_LABELS, MODULE_ORDER } from "@/lib/learning/progress";
 import { computeStepSnapshots } from "@/lib/step-explanations";
 
 function TitleScene({ storyboard }: { storyboard: AnimatedStoryboard }) {
+  const isFirstModule =
+    storyboard.module === MODULE_LABELS[MODULE_ORDER[0]];
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-5 text-center">
       <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
@@ -22,7 +26,7 @@ function TitleScene({ storyboard }: { storyboard: AnimatedStoryboard }) {
         {storyboard.title}
       </h2>
       <QuantaImage
-        variant="learning"
+        variant={isFirstModule ? "learning" : "welcome"}
         size={78}
         bare
         alt="Quanta"
@@ -247,7 +251,7 @@ function OutroScene({
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
       <QuantaImage
-        variant="learning"
+        variant="success"
         size={72}
         bare
         alt="Quanta waving"

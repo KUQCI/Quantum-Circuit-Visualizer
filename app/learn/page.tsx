@@ -152,7 +152,7 @@ export default function LearnPage() {
 
       <Reveal className="mb-6">
         <QuantaCard
-          variant="learning"
+          variant="welcome"
           title="Hi, I’m Quanta"
           description={quantaMessages.welcome}
           imageSize="sm"

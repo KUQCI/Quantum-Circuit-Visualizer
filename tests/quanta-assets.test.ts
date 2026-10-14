@@ -5,7 +5,9 @@ import {
   getQuantaAssetUrl,
   quantaAssets,
   quantaUsageGuide,
+  quantaVariantMap,
   variantFromFeedback,
+  type QuantaVariant,
 } from "@/lib/quanta-assets";
 
 describe("quanta-assets", () => {
@@ -26,6 +28,19 @@ describe("quanta-assets", () => {
   it("maps variants to paths", () => {
     expect(getQuantaAssetPath("thinking")).toBe(quantaAssets.thinking);
     expect(getQuantaAssetPath("welcome")).toBe(quantaAssets.welcome);
+  });
+
+  it("keeps every pose distinct from the learning asset", () => {
+    expect(quantaAssets.thinking).not.toBe(quantaAssets.learning);
+
+    for (const variant of Object.keys(quantaVariantMap) as QuantaVariant[]) {
+      const path = getQuantaAssetPath(variant);
+      if (variant === "learning") {
+        expect(path).toBe(quantaAssets.learning);
+      } else {
+        expect(path).not.toBe(quantaAssets.learning);
+      }
+    }
   });
 
   it("maps feedback kinds to variants", () => {

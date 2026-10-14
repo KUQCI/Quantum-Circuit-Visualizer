@@ -109,7 +109,7 @@ export function WalkthroughStage({
           ) : (
             <div className="flex min-h-0 flex-1 items-center justify-center">
               <QuantaImage
-                variant="learning"
+                variant="welcome"
                 size={256}
                 alt="Quanta ready to guide the lesson"
               />
@@ -118,7 +118,7 @@ export function WalkthroughStage({
 
           <div className="flex h-[148px] shrink-0 items-center gap-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-7 py-5 shadow-[var(--shadow-card)]">
             <QuantaImage
-              variant="learning"
+              variant="welcome"
               size={72}
               bare
               alt="Quanta"
@@ -165,7 +165,7 @@ export function WalkthroughStage({
         ) : (
           <div className="flex h-28 items-center justify-center">
             <QuantaImage
-              variant="learning"
+              variant="welcome"
               size={96}
               alt="Quanta ready to guide the lesson"
             />
@@ -205,7 +205,7 @@ export function WalkthroughStage({
         className="flex min-h-16 items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/35 p-3"
       >
         <QuantaImage
-          variant="learning"
+          variant="welcome"
           size={40}
           bare
           alt="Quanta"

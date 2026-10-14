@@ -314,7 +314,7 @@ export function BuildTour() {
       >
         <div className="flex items-start gap-3">
           <div className="hidden shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-2xl sm:block">
-            <QuantaImage variant="learning" size="sm" bare />
+            <QuantaImage variant="welcome" size="sm" bare />
           </div>
           <div className="min-w-0 flex-1">
             <p className="qci-section-eyebrow">Build tour · {stepIndex + 1} of {steps.length}</p>

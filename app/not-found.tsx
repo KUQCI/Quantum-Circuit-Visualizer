@@ -7,7 +7,7 @@ export default function NotFound() {
       <QuantaEmptyState
         title="Quanta looked everywhere…"
         description="This page isn't in any register. Head home, open Build, or keep learning."
-        variant="thinking"
+        variant="emptyNervous"
         actions={[
           { label: "Home", href: "/", primary: true },
           { label: "Open Build", href: "/editor" },

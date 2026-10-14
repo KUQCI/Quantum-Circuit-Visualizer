@@ -1868,7 +1868,7 @@ export function CircuitCanvas({
                   marginTop: 24 - WIRE_HEIGHT / 2,
                 }}
               >
-                <QuantaImage variant="learning" size="xs" />
+                <QuantaImage variant="avatar" size="xs" />
                 <span>
                   Drag a gate onto a wire — or click a gate, then a wire.
                 </span>
