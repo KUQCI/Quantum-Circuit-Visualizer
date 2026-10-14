@@ -352,6 +352,38 @@ def _assert_state(
             assert probability < tolerance, f"Expected {label} to be empty"
 
 
+def asap_gate_layers(
+    gates: Sequence[dict[str, Any]],
+    qubits: int,
+) -> list[int]:
+    last_layer = [-1] * qubits
+    layers: list[int] = []
+    for operation in gates:
+        targets = operation.get("targets", [])
+        controls = operation.get("controls", [])
+        if not isinstance(targets, list) or not isinstance(controls, list):
+            raise ValueError("Gate targets and controls must be lists")
+        span = [*targets, *controls]
+        if not span or any(
+            isinstance(wire, bool)
+            or not isinstance(wire, int)
+            or wire < 0
+            or wire >= qubits
+            for wire in span
+        ):
+            raise ValueError("Gate wires must identify valid circuit qubits")
+        first_wire = min(span)
+        last_wire = max(span)
+        layer = 1 + max(
+            last_layer[wire]
+            for wire in range(first_wire, last_wire + 1)
+        )
+        layers.append(layer)
+        for wire in range(first_wire, last_wire + 1):
+            last_layer[wire] = layer
+    return layers
+
+
 def run_self_check() -> None:
     def op(gate: str, targets: list[int], **values: Any) -> dict[str, Any]:
         return {"gate": gate, "targets": targets, **values}
@@ -412,6 +444,36 @@ def run_self_check() -> None:
         ),
         {"01": 1.0},
     )
+    storyboard_data = load_storyboards(DEFAULT_STORYBOARDS_PATH)
+
+    def circuit_scene(
+        lesson_id: str,
+        beat_id: str,
+    ) -> tuple[int, list[dict[str, Any]]]:
+        lesson = next(
+            lesson
+            for lesson in storyboard_data["lessons"]
+            if lesson["id"] == lesson_id
+        )
+        beat = next(beat for beat in lesson["beats"] if beat["id"] == beat_id)
+        scene = beat["scene"]
+        return scene["qubits"], scene["gates"]
+
+    grover_qubits, grover_gates = circuit_scene("grover-two-qubits", "prepare")
+    assert asap_gate_layers(grover_gates, grover_qubits)[:2] == [0, 0], (
+        "Grover's first two H gates should share layer 0"
+    )
+    teleport_qubits, teleport_gates = circuit_scene(
+        "teleportation-tour",
+        "prepare",
+    )
+    assert asap_gate_layers(teleport_gates, teleport_qubits)[:2] == [0, 0], (
+        "Teleportation's first X and H gates should share layer 0"
+    )
+    assert asap_gate_layers(
+        [op("cx", [2], controls=[0]), op("h", [1])],
+        3,
+    ) == [0, 1], "A gate's vertical connector must occupy its full qubit span"
     rotation_cases = [
         (op("x", [0]), (0, 0, 1), (0, 0, -1)),
         (
@@ -430,7 +492,10 @@ def run_self_check() -> None:
         assert np.allclose(actual, expected, atol=1e-9), (
             f"{operation['gate']} Bloch rotation: expected {expected}, got {actual}"
         )
-    print("self-check passed: 10 statevector and phase cases; 5 Bloch rotations")
+    print(
+        "self-check passed: 10 statevector and phase cases; "
+        "5 Bloch rotations; ASAP gate layers"
+    )
 
 
 @dataclass(frozen=True)
@@ -725,6 +790,8 @@ class AnimatedLessonScene(Scene):
         repo_root = Path(os.environ[CHILD_REPO_ROOT])
         data = load_storyboards(storyboards_path)
         self.style = data["style"]
+        self.first_module = data["lessons"][0]["module"]
+        self.quanta_poses = self.style.get("quantaPoses")
         self.lesson = next(
             lesson for lesson in data["lessons"] if lesson["id"] == lesson_id
         )
@@ -795,9 +862,16 @@ class AnimatedLessonScene(Scene):
 
     def _build_chrome(self) -> None:
         logo_path = self.repo_root / self.style["logoImage"]
-        quanta_path = self.repo_root / self.style["quantaImage"]
+        pose_names = ("firstSteps", "default", "outro", "capstone")
+        if not isinstance(self.quanta_poses, dict) or any(
+            not isinstance(self.quanta_poses.get(name), str)
+            for name in pose_names
+        ):
+            raise ValueError("style.quantaPoses must define all four pose paths")
+        for name in pose_names:
+            ensure_non_empty(self.repo_root / self.quanta_poses[name])
+        quanta_path = self.repo_root / self.quanta_poses["default"]
         ensure_non_empty(logo_path)
-        ensure_non_empty(quanta_path)
 
         logo = ImageMobject(str(logo_path)).set_height(0.54)
         logo.move_to([-6.66, HEADER_Y, 0])
@@ -1299,19 +1373,28 @@ class AnimatedLessonScene(Scene):
     ) -> dict[str, Any]:
         circle = Circle(
             radius=0.9,
-            color=self.colors["brand"],
-            stroke_width=2,
-        ).move_to(center)
-        pointer = Line(
-            circle.get_center(),
-            circle.get_center() + RIGHT * 0.72,
-            color=self.colors["warning"],
+            stroke_color=self.colors["brand"],
             stroke_width=3,
+            fill_color="#0b1220",
+            fill_opacity=1,
+        ).move_to(center)
+        pointer = Arrow(
+            circle.get_center(),
+            circle.get_center() + RIGHT * (circle.radius * 0.8),
+            buff=0,
+            color=self.colors["warning"],
+            stroke_width=7,
+            max_tip_length_to_length_ratio=0.32,
         )
         dot = Dot(circle.get_center(), radius=0.045, color=self.colors["warning"])
         basis_text = self._text(basis, 24)
         basis_text.next_to(circle, UP, buff=0.14)
-        degree = self._text("0°", 24, color=self.colors["muted"])
+        degree = self._text(
+            "0°",
+            26,
+            color=self.colors["warning"],
+            weight="BOLD",
+        )
         degree.next_to(circle, DOWN, buff=0.12)
         group = VGroup(circle, pointer, dot, basis_text, degree)
         return {
@@ -1567,15 +1650,13 @@ class AnimatedLessonScene(Scene):
             x = frame.get_left()[0] + 0.14 + (index + 0.5) * slot_width
             circle = Circle(
                 radius=radius,
-                color=(
-                    self.colors["brand"]
-                    if probability > 1e-9
-                    else self.colors["muted"]
-                ),
-                stroke_width=1.8,
+                stroke_color=self.colors["brand"],
+                stroke_width=3,
+                fill_color="#0b1220",
+                fill_opacity=1,
             ).move_to([x, dial_y, 0])
             opacity = 1 if probability > 1e-9 else 0.3
-            circle.set_opacity(opacity)
+            circle.set_stroke(opacity=opacity)
             basis = self._text(label, 28).move_to(
                 [x, frame.get_top()[1] - 0.78, 0]
             )
@@ -1584,20 +1665,23 @@ class AnimatedLessonScene(Scene):
             if probability > 1e-9:
                 degrees = phase_degrees(state[index])
                 radians = math.radians(degrees)
-                pointer = Line(
+                pointer = Arrow(
                     [x, dial_y, 0],
                     [
-                        x + radius * 0.78 * math.cos(radians),
-                        dial_y + radius * 0.78 * math.sin(radians),
+                        x + radius * 0.8 * math.cos(radians),
+                        dial_y + radius * 0.8 * math.sin(radians),
                         0,
                     ],
+                    buff=0,
                     color=self.colors["warning"],
-                    stroke_width=2.4,
+                    stroke_width=7,
+                    max_tip_length_to_length_ratio=0.32,
                 )
                 degree = self._text(
                     f"{degrees}°",
                     26,
                     color=self.colors["warning"],
+                    weight="BOLD",
                 ).move_to([x, frame.get_bottom()[1] + 0.22, 0])
                 parts.extend([pointer, degree])
         return VGroup(*parts)
@@ -1920,32 +2004,43 @@ class AnimatedLessonScene(Scene):
             self._circuit_panels(panels, state, qubits, panel_center_y)
         )
 
-        column_width = min(0.92, max(0.52, 9.0 / max(1, visible_count)))
+        gate_layers = asap_gate_layers(gates, qubits)
+        visible_layers = gate_layers[:visible_count]
+        layer_ids = sorted(set(visible_layers))
+        layer_count = len(layer_ids)
         columns = (
-            np.linspace(-3.85, 5.05, visible_count).tolist()
-            if visible_count > 1
+            np.linspace(-3.85, 5.05, layer_count).tolist()
+            if layer_count > 1
             else [0.0]
+            if layer_count == 1
+            else []
         )
+        column_by_layer = dict(zip(layer_ids, columns, strict=True))
+        column_width = min(0.92, max(0.52, 9.0 / max(1, layer_count)))
         max_column_width = (
             2.4
-            if visible_count <= 1
-            else 8.9 / (visible_count - 1) - 0.02
+            if layer_count <= 1
+            else 8.9 / (layer_count - 1) - 0.02
         )
-        column_widths = [
-            self._circuit_gate_column_width(
-                operation,
-                column_width,
-                max_column_width,
+        column_width_by_layer = {
+            layer: max(
+                self._circuit_gate_column_width(
+                    operation,
+                    column_width,
+                    max_column_width,
+                )
+                for operation, gate_layer in zip(gates, gate_layers, strict=True)
+                if gate_layer == layer
             )
-            for operation in gates[:visible_count]
-        ]
+            for layer in layer_ids
+        }
         initial_gate_groups = VGroup(
             *[
                 self._circuit_gate_visual(
                     operation,
-                    columns[index],
+                    column_by_layer[gate_layers[index]],
                     wire_y,
-                    column_widths[index],
+                    column_width_by_layer[gate_layers[index]],
                     wire_y[0],
                     wire_y[-1],
                 )
@@ -1964,9 +2059,9 @@ class AnimatedLessonScene(Scene):
             operation = gates[index]
             gate_group = self._circuit_gate_visual(
                 operation,
-                columns[index],
+                column_by_layer[gate_layers[index]],
                 wire_y,
-                column_widths[index],
+                column_width_by_layer[gate_layers[index]],
                 wire_y[0],
                 wire_y[-1],
             )
@@ -2182,7 +2277,7 @@ class AnimatedLessonScene(Scene):
             ).move_to([center_x, centers_y[row], 0])
             title = self._text(
                 str(item.get("title", "")),
-                26,
+                30,
                 color=self.colors["brand"],
                 weight="BOLD",
             )
@@ -2190,7 +2285,7 @@ class AnimatedLessonScene(Scene):
             body = self._wrap_text(
                 str(item.get("body", "")),
                 max_width=card_width - 0.55,
-                sizes=(24, 22, 20),
+                sizes=(32, 30, 27),
                 max_lines=4,
             )
             body.move_to([center_x, centers_y[row] - 0.15, 0])
@@ -2291,11 +2386,7 @@ class AnimatedLessonScene(Scene):
             color=self.colors["brand"],
             weight="BOLD",
         )
-        content_caption = self._content_caption(
-            beat["caption"],
-            max_width=8.2,
-        )
-        title_group = VGroup(title, content_caption).arrange(DOWN, buff=0.24)
+        title_group = VGroup(title)
         title_group.move_to([2.55, 0.25, 0])
         chips = scene.get("chips", [])
         if not isinstance(chips, list):
@@ -2321,17 +2412,23 @@ class AnimatedLessonScene(Scene):
         outro_animations: list[Any] = [FadeIn(title_group)]
         if chips:
             outro_animations.append(FadeIn(chip_group))
-        quanta_center = self.quanta.copy().set_height(1.55).move_to(
-            [-2.85, 0.1, 0]
+        pose_name = (
+            "capstone"
+            if "capstone" in self.lesson["id"]
+            else "outro"
         )
-        quanta_hop = quanta_center.copy().shift(UP * 0.3)
+        quanta_center = ImageMobject(
+            str(self.repo_root / self.quanta_poses[pose_name])
+        ).set_height(1.55)
+        quanta_center.move_to([-2.85, 0.1, 0])
         steps = [
             transition,
-            Step(0.7, (Transform(self.quanta, quanta_center),)),
-            Step(0.3, (Transform(self.quanta, quanta_hop),)),
-            Step(0.3, (Transform(self.quanta, quanta_center.copy()),)),
+            Step(0.7, (FadeOut(self.quanta), FadeIn(quanta_center))),
+            Step(0.3, (quanta_center.animate.shift(UP * 0.3),)),
+            Step(0.3, (quanta_center.animate.shift(DOWN * 0.3),)),
             Step(0.58, tuple(outro_animations)),
         ]
+        self.quanta = quanta_center
         self._run_beat(frame_count, steps, bob_quanta=False)
         self.current_visual = VGroup(title_group, chip_group)
 
@@ -2352,9 +2449,15 @@ class AnimatedLessonScene(Scene):
             title.scale_to_fit_width(10.8)
         title_group = VGroup(module, title).arrange(DOWN, buff=0.2)
         title_group.move_to([0, 0.82, 0])
-        intro_quanta = self.quanta.copy().set_height(1.8).move_to(
-            [0, -1.0, 0]
+        pose_name = (
+            "firstSteps"
+            if self.lesson["module"] == self.first_module
+            else "default"
         )
+        intro_quanta = ImageMobject(
+            str(self.repo_root / self.quanta_poses[pose_name])
+        ).set_height(1.8)
+        intro_quanta.move_to([0, -1.0, 0])
         beat_seconds = frame_count / VIDEO_FPS
         reveal_seconds = 0.78
         hop_seconds = 0.3
@@ -2413,8 +2516,7 @@ class AnimatedLessonScene(Scene):
             color=self.colors["brand"],
             weight="BOLD",
         )
-        content_caption = self._content_caption(beat["caption"])
-        group = VGroup(title, content_caption).arrange(DOWN, buff=0.24)
+        group = VGroup(title)
         group.move_to([1.15, 0.25, 0])
         return transition, group
 
@@ -3107,8 +3209,9 @@ class AnimatedLessonScene(Scene):
         ).move_to([-2.9, -2.15, 0])
         degree_180 = self._text(
             "180°",
-            24,
+            26,
             color=self.colors["warning"],
+            weight="BOLD",
         ).move_to(dial_one["degree"])
         steps = [
             transition,
