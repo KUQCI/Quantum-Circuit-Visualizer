@@ -8,6 +8,7 @@ import {
   findPlacementConflict,
   occupiedWires,
   placementConflictMessage,
+  minWireIndex,
 } from "@/lib/circuit-edit";
 import type { Operation, Circuit } from "@/lib/circuit-schema";
 
@@ -116,6 +117,12 @@ describe("circuit-edit", () => {
   it("primaryWireIndex returns minimum wire", () => {
     const op = baseOp({ controls: ["q2"], targets: ["q3"] });
     expect(primaryWireIndex(op)).toBe(2);
+  });
+
+  it("minWireIndex includes both targets and controls", () => {
+    const op = baseOp({ controls: ["q2"], targets: ["q0", "q3"] });
+    expect(minWireIndex(op)).toBe(0);
+    expect(minWireIndex(baseOp({ controls: ["q2"], targets: ["q3"] }))).toBe(2);
   });
 
   it("countOpsUsingQubit counts affected operations", () => {

@@ -21,6 +21,8 @@ import { PhaseDisk, getMarginalDiskForQubit, QubitStateTooltipContent } from "@/
 import { simulateCircuit } from "@/lib/quantum-state";
 import {
   findPlacementConflict,
+  minWireIndex,
+  occupiedWires,
   primaryWireIndex,
 } from "@/lib/circuit-edit";
 import {
@@ -1042,7 +1044,24 @@ export function CircuitCanvas({
       );
 
       if (moveId && pos && !inspectMode) {
-        const moved = relocateOperation(moveId, pos.column, pos.qubitIndex);
+        let moved: boolean;
+        if (
+          selectedOperationIds.length > 1 &&
+          selectedOperationIds.includes(moveId)
+        ) {
+          const movingOperation = circuit.operations.find(
+            (op) => op.id === moveId
+          );
+          moved = movingOperation
+            ? moveOperations(
+                selectedOperationIds,
+                pos.column - movingOperation.column,
+                pos.qubitIndex - minWireIndex(movingOperation)
+              )
+            : false;
+        } else {
+          moved = relocateOperation(moveId, pos.column, pos.qubitIndex);
+        }
         if (moved && alignmentMode !== "freeform") {
           alignOperationsLeft({ mergeWithLastEntry: true });
         }
@@ -1059,8 +1078,11 @@ export function CircuitCanvas({
       draggingGate,
       movingOperationId,
       circuit.qubits.length,
+      circuit.operations,
+      selectedOperationIds,
       placeGate,
       relocateOperation,
+      moveOperations,
       setSelectedOperation,
       alignOperationsLeft,
       alignmentMode,
@@ -1079,6 +1101,18 @@ export function CircuitCanvas({
 
   const selectedOp = circuit.operations.find(
     (op) => op.id === selectedOperationId
+  );
+  const selectedOperations = useMemo(
+    () =>
+      circuit.operations.filter((op) => selectedOperationIds.includes(op.id)),
+    [circuit.operations, selectedOperationIds]
+  );
+  const selectedMinColumn = selectedOperations.length
+    ? Math.min(...selectedOperations.map((op) => op.column))
+    : 0;
+  const selectedMaxWireIndex = Math.max(
+    0,
+    ...selectedOperations.flatMap((op) => occupiedWires(op))
   );
 
   const applySelectedParam = () => {
@@ -1829,8 +1863,13 @@ export function CircuitCanvas({
               !isPaletteDragging &&
               !inspectMode && (
                 <div
-                  className="absolute left-2 top-2 z-40 flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1 shadow-lg"
+                  className="absolute z-40 flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1 shadow-lg"
                   data-canvas-overlay
+                  style={{
+                    left: columnToX(selectedMinColumn) + 4,
+                    top:
+                      qubitToY(selectedMaxWireIndex) + WIRE_HEIGHT - 4,
+                  }}
                   onClick={(event) => event.stopPropagation()}
                 >
                   <span className="text-xs font-medium">
