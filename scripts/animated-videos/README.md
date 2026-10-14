@@ -47,8 +47,9 @@ Run from the repository root:
 ```
 
 Use `--lessons what-is-a-qubit,bits-vs-qubits` to render only selected lesson
-IDs, `--voice-name af_heart` to select the Kokoro voice, or
-`--storyboards <path>` to use another storyboard file. The storyboard path defaults to
+IDs, `--voice-name` to select a Kokoro voice (default `am_michael`),
+`--speed` to adjust narration speed (default `0.95`), or `--storyboards <path>`
+to use another storyboard file. The storyboard path defaults to
 `lib/learning/animated-storyboards.json`.
 
 Each lesson produces:

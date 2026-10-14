@@ -452,7 +452,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", type=Path)
     parser.add_argument("--voices", type=Path)
     parser.add_argument("--lessons", help="Comma-separated lesson ids")
-    parser.add_argument("--voice-name", default="af_heart")
+    parser.add_argument("--voice-name", default="am_michael")
+    parser.add_argument("--speed", type=float, default=0.95)
     parser.add_argument("--self-check", action="store_true")
     return parser.parse_args()
 
@@ -498,6 +499,7 @@ def synthesize_lesson(
     kokoro: Kokoro,
     lesson: dict[str, Any],
     voice_name: str,
+    speed: float,
     out_dir: Path,
 ) -> tuple[Path, Path, list[dict[str, float | int]]]:
     chunks: list[np.ndarray] = []
@@ -510,7 +512,7 @@ def synthesize_lesson(
         samples, sample_rate = kokoro.create(
             speech,
             voice=voice_name,
-            speed=1.0,
+            speed=speed,
             lang="en-us",
         )
         if sample_rate != AUDIO_SAMPLE_RATE:
@@ -3726,6 +3728,7 @@ def main() -> None:
             kokoro,
             lesson,
             args.voice_name,
+            args.speed,
             out_dir,
         )
         with tempfile.TemporaryDirectory(

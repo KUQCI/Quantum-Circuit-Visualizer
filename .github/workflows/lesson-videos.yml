@@ -84,7 +84,8 @@ jobs:
             --base-url "http://localhost:3005/$REPOSITORY_NAME" \
             --model "$RUNNER_TEMP/kokoro/kokoro-v1.0.onnx" \
             --voices "$RUNNER_TEMP/kokoro/voices-v1.0.bin" \
-            --voice-name af_heart \
+            --voice-name am_michael \
+            --speed 0.95 \
             --out videos
       - name: Render animated lesson videos
         run: |
@@ -95,7 +96,8 @@ jobs:
             --out "$animated_out" \
             --model "$RUNNER_TEMP/kokoro/kokoro-v1.0.onnx" \
             --voices "$RUNNER_TEMP/kokoro/voices-v1.0.bin" \
-            --voice-name af_heart
+            --voice-name am_michael \
+            --speed 0.95
           shopt -s nullglob
           for artifact in "$animated_out"/*.mp4 "$animated_out"/*.vtt; do
             cp "$artifact" videos/
