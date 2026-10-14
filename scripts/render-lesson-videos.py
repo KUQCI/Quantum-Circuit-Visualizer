@@ -32,8 +32,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--model", required=True, type=Path)
     parser.add_argument("--voices", required=True, type=Path)
-    parser.add_argument("--voice-name", default="af_heart")
-    parser.add_argument("--speed", type=float, default=1.0)
+    parser.add_argument("--voice-name", default="am_michael")
+    parser.add_argument("--speed", type=float, default=0.95)
     parser.add_argument("--lessons", help="Comma-separated lesson ids to render")
     return parser.parse_args()
 
