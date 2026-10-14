@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: lesson-videos
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   render:

@@ -10,7 +10,12 @@
     "warning": "#f6c453",
     "danger": "#f87171",
     "font": "DejaVu Sans",
-    "quantaImage": "public/assets/quanta/quanta-hatching-curious.webp",
+    "quantaPoses": {
+      "firstSteps": "public/assets/quanta/quanta-hatching-curious.webp",
+      "default": "public/assets/quanta/quanta-simple-duck.webp",
+      "outro": "public/assets/quanta/quanta-coding-power.webp",
+      "capstone": "public/assets/quanta/quanta-trophy.webp"
+    },
     "logoImage": "public/icons/icon-192.png"
   },
   "lessons": [
@@ -26,7 +31,7 @@
           "scene": {
             "kind": "title"
           },
-          "visual": "Title card: module label small above, lesson title large. Quanta pops in from scale 0 with a bounce and does a small hop. Title fades out at the end of the beat; Quanta shrinks to her corner spot."
+          "visual": "Title card: module label small above, lesson title large. Quanta pops in from scale 0 with a bounce and does a small hop. Title fades out at the end of the beat; Quanta shrinks to his corner spot."
         },
         {
           "id": "classical-bit",
