@@ -291,7 +291,7 @@ export function LearningPlayer({
     sayQuanta({
       text: note,
       variant: "hint",
-      imageVariant: "learning",
+      imageVariant: "thinking",
     });
   }, [activity, sayQuanta, sectionIndex, stage]);
 
@@ -637,7 +637,7 @@ export function LearningPlayer({
                   ? "thinking"
                   : feedbackStatus === "success"
                     ? "success"
-                    : "learning"
+                    : "welcome"
               }
             />
             {mode === "lesson" && isLesson(activity) && (

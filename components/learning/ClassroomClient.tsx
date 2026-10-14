@@ -419,7 +419,7 @@ export function ClassroomClient() {
 
           {rosterRows.length === 0 ? (
             <QuantaEmptyState
-              variant="learning"
+              variant="empty"
               title="Your classroom roster starts here"
               description="Share a playlist link with learners. They can choose “Send progress to teacher” to download a backup, then import those files here to review the class."
             />

@@ -277,7 +277,7 @@ export default function HomePage() {
       {/* Encouragement */}
       <Reveal as="section" className="qci-section border-t border-[var(--color-border)]">
         <div className="technical-panel flex flex-col items-center gap-6 p-6 text-center sm:flex-row sm:p-8 sm:text-left">
-          <QuantaImage variant="learning" size="lg" className="shrink-0" />
+          <QuantaImage variant="thinking" size="lg" className="shrink-0" />
           <div className="min-w-0 flex-1">
             <h2 className="text-2xl font-semibold tracking-tight text-[var(--color-foreground)]">
               Stuck? You&apos;re not on your own.

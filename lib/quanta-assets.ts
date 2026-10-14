@@ -83,7 +83,7 @@ export const quantaUsageGuide: {
   usage: string;
 }[] = [
   { variant: "welcome", label: "Welcome", usage: "Home Meet Quanta card, onboarding" },
-  { variant: "learning", label: "Learning", usage: "Learn dashboard, beginner lessons" },
+  { variant: "learning", label: "Learning", usage: "First steps only: new-learner empty states and Module 1 title cards" },
   { variant: "thinking", label: "Hint", usage: "Lesson hints and tip bubbles" },
   { variant: "waiting", label: "Waiting", usage: "Incomplete challenges, streak reminders" },
   { variant: "success", label: "Success", usage: "Achievements, lesson complete" },
