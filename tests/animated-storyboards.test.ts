@@ -114,11 +114,6 @@ describe("animated lesson storyboards", () => {
         ?.beats.map((beat) => beat.speech)
     );
 
-    const lessonWithoutStoryboard = LESSON_IDS.find(
-      (lessonId) =>
-        !storyboards.lessons.some((storyboard) => storyboard.id === lessonId)
-    );
-    expect(lessonWithoutStoryboard).toBeDefined();
-    expect(animatedVideoTranscript(lessonWithoutStoryboard!)).toBeNull();
+    expect(animatedVideoTranscript("not-a-storyboarded-lesson")).toBeNull();
   });
 });
