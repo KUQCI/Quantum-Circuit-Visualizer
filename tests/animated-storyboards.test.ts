@@ -1,26 +1,15 @@
 import { describe, expect, it } from "vitest";
 import animatedStoryboardsJson from "@/lib/learning/animated-storyboards.json";
-import { animatedVideoTranscript } from "@/lib/learning/animated-videos";
+import {
+  animatedVideoTranscript,
+  getAnimatedStoryboard,
+  type AnimatedStoryboard,
+} from "@/lib/learning/animated-videos";
 import { LESSON_IDS } from "@/lib/learning/lessons";
 
-type StoryboardBeat = {
-  id: string;
-  caption: string;
-  speech: string;
-  scene?: {
-    kind: string;
-    [key: string]: unknown;
-  };
+const storyboards = animatedStoryboardsJson as unknown as {
+  lessons: AnimatedStoryboard[];
 };
-
-type StoryboardData = {
-  lessons: Array<{
-    id: string;
-    beats: StoryboardBeat[];
-  }>;
-};
-
-const storyboards = animatedStoryboardsJson as unknown as StoryboardData;
 const beatKinds = new Set([
   "title",
   "circuit",
@@ -80,7 +69,6 @@ describe("animated lesson storyboards", () => {
     for (const lesson of storyboards.lessons) {
       for (const beat of lesson.beats) {
         const scene = beat.scene;
-        if (!scene) continue;
         expect(beatKinds.has(scene.kind)).toBe(true);
         if (scene.kind === "circuit") {
           const gates = (scene.gates ?? []) as Array<{ gate?: string }>;
@@ -115,5 +103,14 @@ describe("animated lesson storyboards", () => {
     );
 
     expect(animatedVideoTranscript("not-a-storyboarded-lesson")).toBeNull();
+  });
+
+  it("returns a typed storyboard for every lesson", () => {
+    expect(storyboards.lessons).toHaveLength(36);
+    for (const lesson of storyboards.lessons) {
+      expect(getAnimatedStoryboard(lesson.id)).toEqual(lesson);
+      expect(lesson.beats.every((beat) => beat.scene)).toBe(true);
+    }
+    expect(getAnimatedStoryboard("not-a-storyboarded-lesson")).toBeNull();
   });
 });

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -532,6 +533,34 @@ def synthesize_lesson(
             )
             clip[-fade_samples:] *= np.linspace(
                 1.0, 0.0, fade_samples, dtype=np.float32
+            )
+
+        speech_hash = hashlib.sha256(speech.encode("utf-8")).hexdigest()[:16]
+        speech_clip_path = out_dir / f"speech-{speech_hash}.mp3"
+        with tempfile.NamedTemporaryFile(
+            suffix=".wav",
+            prefix="storyboard-speech-",
+            dir=out_dir,
+        ) as speech_wav:
+            sf.write(speech_wav.name, clip, sample_rate, subtype="PCM_16")
+            run_command(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    "-i",
+                    speech_wav.name,
+                    "-ar",
+                    "48000",
+                    "-ac",
+                    "1",
+                    "-codec:a",
+                    "libmp3lame",
+                    "-b:a",
+                    "128k",
+                    str(speech_clip_path),
+                ]
             )
 
         speech_duration = clip.size / sample_rate

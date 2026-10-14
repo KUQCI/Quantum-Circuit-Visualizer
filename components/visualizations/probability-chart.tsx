@@ -7,24 +7,32 @@ interface ProbabilityChartProps {
   probabilities: ProbabilityEntry[];
   numQubits: number;
   error?: string | null;
+  compact?: boolean;
 }
 
 export function ProbabilityChart({
   probabilities,
   numQubits,
   error,
+  compact = false,
 }: ProbabilityChartProps) {
   const visible = useMemo(
     () => probabilities.filter((p) => p.probability > 1e-6),
     [probabilities]
   );
 
-  const chartHeight = 160;
-  const padding = { top: 16, right: 12, bottom: 36, left: 44 };
-  const innerW = Math.max(probabilities.length * 36, 120);
+  const chartHeight = compact ? 120 : 160;
+  const padding = compact
+    ? { top: 12, right: 12, bottom: 24, left: 44 }
+    : { top: 16, right: 12, bottom: 36, left: 44 };
+  const innerW = compact
+    ? Math.max(probabilities.length * 48, 236)
+    : Math.max(probabilities.length * 36, 120);
   const innerH = chartHeight - padding.top - padding.bottom;
   const chartWidth = padding.left + innerW + padding.right;
-  const barWidth = Math.min(40, innerW / Math.max(probabilities.length, 1) - 4);
+  const barWidth = compact
+    ? Math.min(72, innerW / Math.max(probabilities.length, 1) - 8)
+    : Math.min(40, innerW / Math.max(probabilities.length, 1) - 4);
   const probSum = probabilities.reduce((s, p) => s + p.probability, 0);
   const scrollable = probabilities.length > 16;
 
@@ -67,7 +75,7 @@ export function ProbabilityChart({
           x={12}
           y={padding.top + innerH / 2}
           fill="var(--color-muted-foreground)"
-          fontSize={10}
+          fontSize={compact ? 12 : 10}
           transform={`rotate(-90, 12, ${padding.top + innerH / 2})`}
           textAnchor="middle"
         >
@@ -90,7 +98,7 @@ export function ProbabilityChart({
                 x={padding.left - 8}
                 y={y + 3}
                 fill="var(--color-muted-foreground)"
-                fontSize={9}
+                fontSize={compact ? 12 : 9}
                 textAnchor="end"
               >
                 {tick}
@@ -137,18 +145,18 @@ export function ProbabilityChart({
                 x={x + barWidth / 2}
                 y={padding.top + innerH + 14}
                 fill="var(--color-muted-foreground)"
-                fontSize={9}
+                fontSize={compact ? 12 : 9}
                 textAnchor="middle"
                 fontFamily="monospace"
               >
-                {entry.label.replace(/\|/g, "")}
+                {compact ? entry.label : entry.label.replace(/\|/g, "")}
               </text>
               {isVisible && entry.percentage >= 1 && (
                 <text
                   x={x + barWidth / 2}
                   y={y - 4}
                   fill="var(--color-foreground)"
-                  fontSize={8}
+                  fontSize={compact ? 11 : 8}
                   textAnchor="middle"
                 >
                   {entry.percentage.toFixed(0)}%
