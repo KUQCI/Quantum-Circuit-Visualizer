@@ -241,7 +241,7 @@ export function LessonWalkthroughPlayer({
           </DialogTitle>
           {viewMode === "animated" && (
             <DialogDescription>
-              {storyboard ? "Beat" : "Scene"} {activeIndex + 1} of {sceneCount}
+              Scene {activeIndex + 1} of {sceneCount}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -425,7 +425,7 @@ export function LessonWalkthroughPlayer({
                     <button
                       key={beat.id}
                       type="button"
-                      aria-label={`Beat ${index + 1}: ${beat.caption}`}
+                      aria-label={`Scene ${index + 1}: ${beat.caption}`}
                       title={beat.caption}
                       aria-current={activeIndex === index ? "step" : undefined}
                       onClick={() => jumpToScene(index)}

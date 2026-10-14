@@ -6,6 +6,7 @@ import {
   computeStepSnapshots,
   explainStep,
 } from "@/lib/step-explanations";
+import { useElementSize } from "@/lib/use-element-size";
 import { MAX_SIMULATION_QUBITS } from "@/lib/quantum-state";
 import {
   buildLessonDiagram,
@@ -31,8 +32,12 @@ function itemRows(item: LessonDiagramItem): number[] {
   );
 }
 
-function rowY(row: number): number {
-  return TOP_PADDING + row * ROW_HEIGHT;
+function rowY(
+  row: number,
+  topPadding = TOP_PADDING,
+  rowHeight = ROW_HEIGHT
+): number {
+  return topPadding + row * rowHeight;
 }
 
 function renderGate(
@@ -41,7 +46,16 @@ function renderGate(
   centerX: number,
   columnStep: number,
   qubitCount: number,
-  animation?: { animate: boolean; highlight: boolean; delayMs: number }
+  options?: {
+    animate: boolean;
+    highlight: boolean;
+    delayMs: number;
+    gateWidth?: number;
+    gateHeight?: number;
+    fontSize?: number;
+    topPadding?: number;
+    rowHeight?: number;
+  }
 ) {
   const sourceOperation = circuit.operations.find(
     (operation) => operation.id === item.id
@@ -51,33 +65,37 @@ function renderGate(
   const lastRow = rows[rows.length - 1] ?? firstRow;
   const targetRows = item.targets.length > 0 ? item.targets : [firstRow];
   const classicalTargets = sourceOperation?.classicalTargets ?? [];
-  const targetY = (target: number) => rowY(target);
-  const classicalStart = TOP_PADDING + qubitCount * ROW_HEIGHT + 10;
+  const topPadding = options?.topPadding ?? TOP_PADDING;
+  const rowHeight = options?.rowHeight ?? ROW_HEIGHT;
+  const gateWidth = options?.gateWidth ?? 44;
+  const gateHeight = options?.gateHeight ?? 24;
+  const targetY = (target: number) => rowY(target, topPadding, rowHeight);
+  const classicalStart = topPadding + qubitCount * rowHeight + 10;
 
   return (
     <g
       key={`${item.id}-${columnStep}`}
       className={[
-        animation?.animate ? "storyboard-gate-drop" : "",
-        animation?.highlight ? "storyboard-gate-glow" : "",
+        options?.animate ? "storyboard-gate-drop" : "",
+        options?.highlight ? "storyboard-gate-glow" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       style={
-        animation?.animate
-          ? { animationDelay: `${animation.delayMs}ms` }
+        options?.animate
+          ? { animationDelay: `${options.delayMs}ms` }
           : undefined
       }
     >
       {rows.length > 1 && (
         <line
           x1={centerX}
-          y1={rowY(firstRow)}
+          y1={rowY(firstRow, topPadding, rowHeight)}
           x2={centerX}
-          y2={rowY(lastRow)}
+          y2={rowY(lastRow, topPadding, rowHeight)}
           stroke="var(--color-foreground)"
           strokeOpacity={0.65}
-          strokeWidth={1.5}
+          strokeWidth={options?.gateHeight ? 2 : 1.5}
         />
       )}
       {item.controls.map((control) => (
@@ -85,7 +103,7 @@ function renderGate(
           key={`${item.id}-control-${control}`}
           cx={centerX}
           cy={targetY(control)}
-          r={4}
+          r={options?.gateHeight ? 5 : 4}
           fill="var(--color-foreground)"
         />
       ))}
@@ -114,20 +132,23 @@ function renderGate(
         targetRows.map((target) => (
           <g key={`${item.id}-target-${target}`}>
             <rect
-              x={centerX - 22}
-              y={targetY(target) - 12}
-              width={44}
-              height={24}
+              x={centerX - gateWidth / 2}
+              y={targetY(target) - gateHeight / 2}
+              width={gateWidth}
+              height={gateHeight}
               rx={5}
               fill="var(--color-background)"
               stroke="var(--color-brand)"
-              strokeWidth={1.5}
+              strokeWidth={options?.gateHeight ? 2 : 1.5}
             />
             <text
               x={centerX}
-              y={targetY(target) + 4}
+              y={
+                targetY(target) +
+                (options?.fontSize ? options.fontSize * 0.35 : 4)
+              }
               fill="var(--color-foreground)"
-              fontSize={10}
+              fontSize={options?.fontSize ?? 10}
               fontWeight={600}
               textAnchor="middle"
             >
@@ -186,13 +207,16 @@ export function LessonCircuitSvg({
   visibleSteps,
   animatedOperationIds = [],
   highlightedOperationIds = [],
+  fillContainer = false,
 }: {
   circuit: Circuit;
   selectedStep: number;
   visibleSteps?: number;
   animatedOperationIds?: string[];
   highlightedOperationIds?: string[];
+  fillContainer?: boolean;
 }) {
+  const { ref: containerRef, size } = useElementSize<HTMLDivElement>();
   const diagram = buildLessonDiagram(circuit);
   const visibleColumns = diagram.columns.filter(
     (column) => visibleSteps === undefined || column.step <= visibleSteps
@@ -200,32 +224,65 @@ export function LessonCircuitSvg({
   const columnCount = Math.max(diagram.columns.length, 1);
   const classicalCount = circuit.classicalBits.length;
   const width = LABEL_WIDTH + columnCount * COLUMN_WIDTH + 18;
+  const compactStoryboard =
+    fillContainer && size.width > 0 && size.width < 500;
+  const topPadding = compactStoryboard ? 12 : TOP_PADDING;
+  const rowHeight = fillContainer
+    ? diagram.qubitCount > 2
+      ? compactStoryboard
+        ? 24
+        : 46
+      : diagram.qubitCount === 2
+        ? 44
+        : ROW_HEIGHT
+    : ROW_HEIGHT;
+  const availableColumnWidth = size.width
+    ? (size.width - LABEL_WIDTH - 18) / columnCount
+    : COLUMN_WIDTH;
+  const columnWidth =
+    fillContainer && size.width
+      ? Math.max(availableColumnWidth, 48)
+      : COLUMN_WIDTH;
+  const svgWidth =
+    fillContainer && size.width
+      ? Math.max(size.width, LABEL_WIDTH + columnCount * columnWidth + 18)
+      : width;
   const height =
-    TOP_PADDING +
-    Math.max(diagram.qubitCount - 1, 0) * ROW_HEIGHT +
-    24 +
-    (classicalCount > 0 ? classicalCount * CLASSICAL_ROW_HEIGHT + 8 : 0);
+    classicalCount > 0
+      ? topPadding +
+        diagram.qubitCount * rowHeight +
+        19 +
+        (classicalCount - 1) * CLASSICAL_ROW_HEIGHT
+      : topPadding + Math.max(diagram.qubitCount - 1, 0) * rowHeight + 24;
   const description = `Circuit diagram: ${diagram.qubitCount} qubits, ${circuit.operations.filter((operation) => operation.type !== "barrier").length} gates`;
 
   return (
-    <div className="overflow-x-auto rounded border border-[var(--color-border)] bg-[var(--color-background)] p-2">
+    <div
+      ref={fillContainer ? containerRef : undefined}
+      className={
+        fillContainer
+          ? "h-full w-full overflow-hidden"
+          : "overflow-x-auto rounded border border-[var(--color-border)] bg-[var(--color-background)] p-2"
+      }
+    >
       <svg
-        width={width}
+        width={svgWidth}
         height={height}
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`0 0 ${svgWidth} ${height}`}
         role="img"
         aria-label={description}
-        className="min-w-full"
+        className={fillContainer ? "h-full w-full" : "min-w-full"}
+        preserveAspectRatio="xMidYMid meet"
       >
         <title>{description}</title>
         {visibleColumns.map((column, index) => {
-          const x = LABEL_WIDTH + index * COLUMN_WIDTH;
+          const x = LABEL_WIDTH + index * columnWidth;
           return selectedStep === column.step ? (
             <rect
               key={`highlight-${column.step}`}
               x={x + 2}
               y={5}
-              width={COLUMN_WIDTH - 4}
+              width={columnWidth - 4}
               height={height - 10}
               rx={6}
               fill="var(--color-brand)"
@@ -234,7 +291,7 @@ export function LessonCircuitSvg({
           ) : null;
         })}
         {circuit.qubits.map((qubit, index) => {
-          const y = rowY(index);
+          const y = rowY(index, topPadding, rowHeight);
           return (
             <g key={qubit.id}>
               <text
@@ -248,7 +305,7 @@ export function LessonCircuitSvg({
               <line
                 x1={LABEL_WIDTH}
                 y1={y}
-                x2={width - 8}
+                x2={svgWidth - 8}
                 y2={y}
                 stroke="var(--color-border)"
               />
@@ -261,8 +318,8 @@ export function LessonCircuitSvg({
               key={bit.id}
               x={4}
               y={
-                TOP_PADDING +
-                circuit.qubits.length * ROW_HEIGHT +
+                topPadding +
+                circuit.qubits.length * rowHeight +
                 10 +
                 index * CLASSICAL_ROW_HEIGHT +
                 4
@@ -274,7 +331,8 @@ export function LessonCircuitSvg({
             </text>
           ))}
         {visibleColumns.map((column, index) => {
-          const centerX = LABEL_WIDTH + index * COLUMN_WIDTH + COLUMN_WIDTH / 2;
+          const centerX =
+            LABEL_WIDTH + index * columnWidth + columnWidth / 2;
           return (
             <g
               key={`column-${column.step}`}
@@ -295,6 +353,29 @@ export function LessonCircuitSvg({
                     animate: animatedOperationIds.includes(item.id),
                     highlight: highlightedOperationIds.includes(item.id),
                     delayMs: index * 180,
+                    gateWidth: fillContainer
+                      ? diagram.qubitCount > 2
+                        ? compactStoryboard
+                          ? 52
+                          : 68
+                        : 68
+                      : undefined,
+                    gateHeight: fillContainer
+                      ? diagram.qubitCount > 2
+                        ? compactStoryboard
+                          ? 22
+                          : 40
+                        : 40
+                      : undefined,
+                    fontSize: fillContainer
+                      ? diagram.qubitCount > 2
+                        ? compactStoryboard
+                          ? 11
+                          : 16
+                        : 16
+                      : undefined,
+                    topPadding,
+                    rowHeight,
                   }
                 )
               )}

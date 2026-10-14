@@ -63,7 +63,13 @@ function CircuitScene({
   );
 
   return (
-    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-1.5 p-2">
+    <div
+      className={`grid h-full min-h-0 ${
+        scene.qubits > 1
+          ? "grid-rows-[3fr_2fr]"
+          : "grid-rows-[2fr_3fr]"
+      } gap-1.5 p-2`}
+    >
       <div className="min-h-0 overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1">
         <LessonCircuitSvg
           circuit={circuit}
@@ -71,6 +77,7 @@ function CircuitScene({
           visibleSteps={circuit.operations.length}
           animatedOperationIds={animatedIds}
           highlightedOperationIds={highlightedIds}
+          fillContainer
         />
       </div>
       <div className="min-h-0 overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1.5">
