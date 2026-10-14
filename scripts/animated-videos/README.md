@@ -57,6 +57,8 @@ Each lesson produces:
 - `<id>.mp4`: 1280×720, 30 fps H.264 video with 48 kHz mono AAC audio
 - `<id>-narration.wav`: the continuous 24 kHz mono PCM narration
 - `<id>.vtt`: one caption cue per storyboard beat
+- `speech-<hash>.mp3`: a 48 kHz mono clip for each beat's speech, named by
+  the first 16 characters of its SHA-256 hash
 
 `--self-check` validates the simulator's gate conventions, basis-label order,
 Bloch vectors, and phase angles without requiring render or model arguments.

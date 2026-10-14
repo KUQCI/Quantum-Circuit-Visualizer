@@ -20,12 +20,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { StoryboardStage } from "@/components/learning/StoryboardStage";
 import { WalkthroughStage } from "@/components/learning/WalkthroughStage";
 import {
   buildLessonWalkthrough,
   estimateSceneMs,
 } from "@/lib/learning/lesson-walkthrough";
-import { animatedVideoTranscript } from "@/lib/learning/animated-videos";
+import {
+  animatedVideoTranscript,
+  getAnimatedStoryboard,
+} from "@/lib/learning/animated-videos";
 import { lessonVideoUrl } from "@/lib/learning/lesson-videos";
 import type { LessonDefinition } from "@/lib/learning/types";
 import { computeStepSnapshots } from "@/lib/step-explanations";
@@ -39,6 +43,7 @@ export function LessonWalkthroughPlayer({
   lesson: LessonDefinition;
 }) {
   const walkthrough = useMemo(() => buildLessonWalkthrough(lesson), [lesson]);
+  const storyboard = getAnimatedStoryboard(lesson.id);
   const animatedTranscript = animatedVideoTranscript(lesson.id);
   const snapshots = useMemo(() => {
     if (!walkthrough.circuit) return [];
@@ -61,7 +66,8 @@ export function LessonWalkthroughPlayer({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playingRef = useRef(false);
   const sceneIndexRef = useRef(0);
-  const lastSceneIndex = walkthrough.scenes.length - 1;
+  const sceneCount = storyboard?.beats.length ?? walkthrough.scenes.length;
+  const lastSceneIndex = sceneCount - 1;
   const activeIndex = Math.min(sceneIndex, lastSceneIndex);
 
   const clearTimer = useCallback(() => {
@@ -87,7 +93,11 @@ export function LessonWalkthroughPlayer({
   useEffect(() => {
     if (!open || !isPlaying) return;
     const scene = walkthrough.scenes[activeIndex];
-    if (!scene) return;
+    const beat = storyboard?.beats[activeIndex];
+    if (!scene && !beat) return;
+    const caption = beat?.caption ?? scene?.caption;
+    const speech = beat?.speech ?? scene?.speech;
+    if (!caption || !speech) return;
 
     const advance = () => {
       timerRef.current = null;
@@ -104,13 +114,13 @@ export function LessonWalkthroughPlayer({
     };
 
     if (narrator.supported && voiceEnabled) {
-      narrator.speak(scene.speech, () => {
+      narrator.speak(speech, () => {
         timerRef.current = window.setTimeout(advance, 600);
       });
     } else {
       timerRef.current = window.setTimeout(
         advance,
-        estimateSceneMs(scene.caption)
+        estimateSceneMs(caption)
       );
     }
 
@@ -126,6 +136,7 @@ export function LessonWalkthroughPlayer({
     narrator,
     open,
     playbackRequest,
+    storyboard,
     voiceEnabled,
     walkthrough.scenes,
   ]);
@@ -226,11 +237,11 @@ export function LessonWalkthroughPlayer({
             Walkthrough
           </p>
           <DialogTitle className="text-xl leading-tight">
-            {walkthrough.scenes[0]?.title ?? lesson.title}
+            {storyboard?.title ?? walkthrough.scenes[0]?.title ?? lesson.title}
           </DialogTitle>
           {viewMode === "animated" && (
             <DialogDescription>
-              Scene {activeIndex + 1} of {walkthrough.scenes.length}
+              {storyboard ? "Beat" : "Scene"} {activeIndex + 1} of {sceneCount}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -258,12 +269,20 @@ export function LessonWalkthroughPlayer({
         </div>
 
         {viewMode === "animated" ? (
-          <WalkthroughStage
-            walkthrough={walkthrough}
-            snapshots={snapshots}
-            sceneIndex={activeIndex}
-            variant="dialog"
-          />
+          storyboard ? (
+            <StoryboardStage
+              key={storyboard.beats[activeIndex]?.id}
+              storyboard={storyboard}
+              beatIndex={activeIndex}
+            />
+          ) : (
+            <WalkthroughStage
+              walkthrough={walkthrough}
+              snapshots={snapshots}
+              sceneIndex={activeIndex}
+              variant="dialog"
+            />
+          )
         ) : (
           videoUnavailable ? (
             <div className="flex aspect-video w-full flex-col items-center justify-center gap-4 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] p-6 text-center">
@@ -401,21 +420,39 @@ export function LessonWalkthroughPlayer({
             )}
 
             <div className="flex flex-wrap items-center justify-center gap-1.5">
-              {walkthrough.scenes.map((scene, index) => (
-                <button
-                  key={scene.id}
-                  type="button"
-                  aria-label={`Scene ${index + 1}: ${scene.title}`}
-                  aria-current={activeIndex === index ? "step" : undefined}
-                  onClick={() => jumpToScene(index)}
-                  className={cn(
-                    "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-                    activeIndex === index
-                      ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
-                      : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
-                  )}
-                />
-              ))}
+              {storyboard
+                ? storyboard.beats.map((beat, index) => (
+                    <button
+                      key={beat.id}
+                      type="button"
+                      aria-label={`Beat ${index + 1}: ${beat.caption}`}
+                      title={beat.caption}
+                      aria-current={activeIndex === index ? "step" : undefined}
+                      onClick={() => jumpToScene(index)}
+                      className={cn(
+                        "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
+                        activeIndex === index
+                          ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
+                          : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
+                      )}
+                    />
+                  ))
+                : walkthrough.scenes.map((scene, index) => (
+                    <button
+                      key={scene.id}
+                      type="button"
+                      aria-label={`Scene ${index + 1}: ${scene.title}`}
+                      title={scene.caption}
+                      aria-current={activeIndex === index ? "step" : undefined}
+                      onClick={() => jumpToScene(index)}
+                      className={cn(
+                        "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
+                        activeIndex === index
+                          ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
+                          : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
+                      )}
+                    />
+                  ))}
             </div>
           </>
         )}

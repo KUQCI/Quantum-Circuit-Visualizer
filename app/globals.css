@@ -924,8 +924,127 @@ button:disabled,
   }
 }
 
+@keyframes storyboard-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes storyboard-gate-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgb(34 211 238 / 35%));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgb(34 211 238 / 90%));
+  }
+}
+
+@keyframes storyboard-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes storyboard-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes storyboard-wave {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes storyboard-bar-grow {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+}
+
+.animate-storyboard-item {
+  animation: storyboard-item-enter 380ms ease-out both;
+}
+
+.animate-storyboard-pop {
+  animation: storyboard-pop 650ms cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+.animate-storyboard-bob {
+  animation: storyboard-bob 2.2s ease-in-out infinite;
+}
+
+.animate-storyboard-wave {
+  transform-origin: center bottom;
+  animation: storyboard-wave 1.6s ease-in-out infinite;
+}
+
+.animate-storyboard-bar {
+  animation: storyboard-bar-grow 650ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  transform-origin: bottom;
+}
+
+.storyboard-gate-drop {
+  animation: walkthrough-gate-drop 420ms ease-out both;
+}
+
+.storyboard-gate-glow {
+  animation: storyboard-gate-glow 1.6s ease-in-out infinite;
+}
+
+.storyboard-gate-drop.storyboard-gate-glow {
+  animation:
+    walkthrough-gate-drop 420ms ease-out both,
+    storyboard-gate-glow 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .walkthrough-gate-drop {
+    animation: none;
+  }
+
+  .animate-storyboard-item,
+  .animate-storyboard-pop,
+  .animate-storyboard-bob,
+  .animate-storyboard-wave,
+  .animate-storyboard-bar,
+  .storyboard-gate-drop,
+  .storyboard-gate-glow {
     animation: none;
   }
 }

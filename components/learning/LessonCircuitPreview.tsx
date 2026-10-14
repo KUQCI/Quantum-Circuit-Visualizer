@@ -40,7 +40,8 @@ function renderGate(
   circuit: Circuit,
   centerX: number,
   columnStep: number,
-  qubitCount: number
+  qubitCount: number,
+  animation?: { animate: boolean; highlight: boolean; delayMs: number }
 ) {
   const sourceOperation = circuit.operations.find(
     (operation) => operation.id === item.id
@@ -54,7 +55,20 @@ function renderGate(
   const classicalStart = TOP_PADDING + qubitCount * ROW_HEIGHT + 10;
 
   return (
-    <g key={`${item.id}-${columnStep}`}>
+    <g
+      key={`${item.id}-${columnStep}`}
+      className={[
+        animation?.animate ? "storyboard-gate-drop" : "",
+        animation?.highlight ? "storyboard-gate-glow" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={
+        animation?.animate
+          ? { animationDelay: `${animation.delayMs}ms` }
+          : undefined
+      }
+    >
       {rows.length > 1 && (
         <line
           x1={centerX}
@@ -170,10 +184,14 @@ export function LessonCircuitSvg({
   circuit,
   selectedStep,
   visibleSteps,
+  animatedOperationIds = [],
+  highlightedOperationIds = [],
 }: {
   circuit: Circuit;
   selectedStep: number;
   visibleSteps?: number;
+  animatedOperationIds?: string[];
+  highlightedOperationIds?: string[];
 }) {
   const diagram = buildLessonDiagram(circuit);
   const visibleColumns = diagram.columns.filter(
@@ -266,13 +284,18 @@ export function LessonCircuitSvg({
                   : undefined
               }
             >
-              {column.items.map((item) =>
+              {column.items.map((item, index) =>
                 renderGate(
                   item,
                   circuit,
                   centerX,
                   column.step,
-                  diagram.qubitCount
+                  diagram.qubitCount,
+                  {
+                    animate: animatedOperationIds.includes(item.id),
+                    highlight: highlightedOperationIds.includes(item.id),
+                    delayMs: index * 180,
+                  }
                 )
               )}
             </g>

@@ -99,7 +99,7 @@ jobs:
             --voice-name am_michael \
             --speed 0.95
           shopt -s nullglob
-          for artifact in "$animated_out"/*.mp4 "$animated_out"/*.vtt; do
+          for artifact in "$animated_out"/*.mp4 "$animated_out"/*.vtt "$animated_out"/speech-*.mp3; do
             cp "$artifact" videos/
           done
       - name: Create release and upload videos
