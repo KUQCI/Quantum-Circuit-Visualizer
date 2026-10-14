@@ -185,7 +185,7 @@ export function QuantaChat() {
       className="fixed bottom-3 right-3 z-[47] flex max-h-[70vh] w-[min(420px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-foreground)] shadow-2xl sm:bottom-4 sm:right-4 max-[639px]:bottom-0 max-[639px]:right-0 max-[639px]:w-full max-[639px]:rounded-b-none"
     >
       <header className="flex items-center gap-2 border-b border-[var(--color-border)] px-3 py-2.5">
-        <QuantaImage variant="empty" size="xs" bare alt="Quanta" />
+        <QuantaImage variant="avatar" size="xs" bare alt="Quanta" />
         <h2 className="min-w-0 flex-1 text-sm font-semibold">Chat with Quanta</h2>
         <button
           type="button"

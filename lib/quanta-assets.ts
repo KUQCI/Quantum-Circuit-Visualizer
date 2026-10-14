@@ -7,7 +7,7 @@ import { withBasePath } from "@/lib/routes";
 export const quantaAssets = {
   welcome: "/assets/quanta/quanta-simple-duck.webp",
   learning: "/assets/quanta/quanta-hatching-curious.webp",
-  thinking: "/assets/quanta/quanta-hatching-thinking.webp",
+  thinking: "/assets/quanta/quanta-rubber-duck.webp",
   waiting: "/assets/quanta/quanta-tick-tock.webp",
   success: "/assets/quanta/quanta-trophy.webp",
   coding: "/assets/quanta/quanta-coding-power.webp",
@@ -41,6 +41,7 @@ export type QuantaVariant =
   | "didYouCode"
   | "error"
   | "empty"
+  | "emptyNervous"
   | "hatchingNeutral"
   | "avatar";
 
@@ -57,6 +58,7 @@ export const quantaVariantMap: Record<QuantaVariant, QuantaAssetKey> = {
   didYouCode: "didYouCode",
   error: "error",
   empty: "empty",
+  emptyNervous: "emptyNervous",
   hatchingNeutral: "hatchingNeutral",
   avatar: "avatar",
 };
@@ -64,7 +66,7 @@ export const quantaVariantMap: Record<QuantaVariant, QuantaAssetKey> = {
 export const quantaAltText: Record<QuantaVariant, string> = {
   welcome: "Quanta the duck, smiling and ready to help",
   learning: "Baby Quanta hatching from an egg, looking curious",
-  thinking: "Baby Quanta hatching and thinking",
+  thinking: "Quanta hugging an egg, ready to help you think it through",
   waiting: "Quanta checking a watch — tick tock",
   success: "Quanta celebrating inside a trophy",
   coding: "Quanta coding with quantum energy",
@@ -73,6 +75,7 @@ export const quantaAltText: Record<QuantaVariant, string> = {
   didYouCode: "Quanta asking Did you code today?",
   error: "Surprised Quanta reacting to a hatching egg",
   empty: "Quanta waiting beside an egg — nothing hatched yet",
+  emptyNervous: "Quanta nervously watching an egg that hasn't hatched",
   hatchingNeutral: "Quanta hatching from an egg",
   avatar: "Quanta head portrait",
 };
@@ -84,7 +87,7 @@ export const quantaUsageGuide: {
 }[] = [
   { variant: "welcome", label: "Welcome", usage: "Home Meet Quanta card, onboarding" },
   { variant: "learning", label: "Learning", usage: "First steps only: new-learner empty states and Module 1 title cards" },
-  { variant: "thinking", label: "Hint", usage: "Lesson hints and tip bubbles" },
+  { variant: "thinking", label: "Hint", usage: "Hints, tips and stuck moments (rubber-duck helper)" },
   { variant: "waiting", label: "Waiting", usage: "Incomplete challenges, streak reminders" },
   { variant: "success", label: "Success", usage: "Achievements, lesson complete" },
   { variant: "coding", label: "Coding", usage: "Challenges header, Build promo" },
@@ -93,6 +96,7 @@ export const quantaUsageGuide: {
   { variant: "didYouCode", label: "Did you code?", usage: "Progress / streak page" },
   { variant: "error", label: "Error", usage: "Parser failures, incorrect answers" },
   { variant: "empty", label: "Empty state", usage: "No projects, empty lists" },
+  { variant: "emptyNervous", label: "Not found", usage: "404 and missing content" },
   { variant: "avatar", label: "Avatar", usage: "Compact Quanta face accents" },
 ];
 
