@@ -61,13 +61,19 @@ function CircuitScene({
   const fallbackPanels = scene.panels.filter(
     (panel) => panel !== "probabilities"
   );
+  const mobileProbabilities = state?.probabilities.filter(
+    ({ label, probability }) =>
+      probability > 1e-6 || label === "|000⟩"
+  ) ?? [];
 
   return (
     <div
-      className={`grid h-full min-h-0 ${
-        scene.qubits > 1
-          ? "grid-rows-[3fr_2fr]"
-          : "grid-rows-[2fr_3fr]"
+      className={`grid h-full ${
+        hasProbabilityPanel
+          ? "grid-rows-[100px_140px] sm:min-h-0 sm:grid-rows-[3fr_2fr]"
+          : scene.qubits > 1
+            ? "min-h-0 grid-rows-[3fr_2fr]"
+            : "min-h-0 grid-rows-[2fr_3fr]"
       } gap-1.5 p-2`}
     >
       <div className="min-h-0 overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1">
@@ -80,13 +86,29 @@ function CircuitScene({
           fillContainer
         />
       </div>
-      <div className="min-h-0 overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1.5">
+      <div
+        className={`min-h-[140px] overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1.5 ${
+          hasProbabilityPanel ? "sm:min-h-0" : ""
+        }`}
+      >
         {state && hasProbabilityPanel ? (
-          <ProbabilityChart
-            probabilities={state.probabilities}
-            numQubits={state.numQubits}
-            error={state.error}
-          />
+          <>
+            <div className="h-full min-h-0 sm:hidden">
+              <ProbabilityChart
+                probabilities={mobileProbabilities}
+                numQubits={state.numQubits}
+                error={state.error}
+                compact
+              />
+            </div>
+            <div className="hidden h-full min-h-0 sm:block">
+              <ProbabilityChart
+                probabilities={state.probabilities}
+                numQubits={state.numQubits}
+                error={state.error}
+              />
+            </div>
+          </>
         ) : state ? (
           <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300">
@@ -286,6 +308,9 @@ export function StoryboardStage({
   const beat = storyboard.beats[activeIndex];
 
   if (!beat) return null;
+  const hasProbabilityPanel =
+    beat.scene.kind === "circuit" &&
+    beat.scene.panels.includes("probabilities");
 
   return (
     <div className="space-y-2">
@@ -295,7 +320,11 @@ export function StoryboardStage({
         data-storyboard-beat={beat.id}
         role="group"
         aria-label={`${storyboard.title}: ${beat.caption}`}
-        className="aspect-video overflow-hidden rounded-xl border border-slate-700 bg-slate-950 text-slate-100 shadow-xl"
+        className={`${
+          hasProbabilityPanel
+            ? "aspect-auto sm:aspect-video"
+            : "aspect-video"
+        } w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-950 text-slate-100 shadow-xl`}
       >
         <SceneContent scene={beat.scene} storyboard={storyboard} />
       </div>
