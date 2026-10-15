@@ -169,7 +169,7 @@ function HistogramScene({
                 />
               </div>
               <span className="font-mono text-xs text-slate-100">
-                {label}
+                |{label}⟩
               </span>
             </div>
           );
