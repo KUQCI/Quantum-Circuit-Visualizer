@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -74,6 +75,43 @@ export function AppHeader() {
   const toggle = useQuantaBuddyStore((state) => state.toggle);
   const callQuanta = useQuantaBuddyStore((state) => state.callQuanta);
   const toggleChat = useQuantaChatStore((state) => state.toggleOpen);
+  const handoffRef = useRef(false);
+  const lastInputModalityRef = useRef<"keyboard" | "pointer">("keyboard");
+
+  useEffect(() => {
+    const markKeyboard = () => {
+      lastInputModalityRef.current = "keyboard";
+    };
+    const markPointer = () => {
+      lastInputModalityRef.current = "pointer";
+    };
+    window.addEventListener("keydown", markKeyboard, true);
+    window.addEventListener("pointerdown", markPointer, true);
+    return () => {
+      window.removeEventListener("keydown", markKeyboard, true);
+      window.removeEventListener("pointerdown", markPointer, true);
+    };
+  }, []);
+
+  const handleAskQuanta = () => {
+    handoffRef.current = true;
+    toggleChat();
+  };
+  const handleCallQuanta = () => {
+    const keyboardInitiated =
+      lastInputModalityRef.current === "keyboard" &&
+      window.matchMedia("(min-width: 768px)").matches;
+    handoffRef.current = keyboardInitiated;
+    callQuanta(keyboardInitiated);
+  };
+  const handleOpenShortcuts = () => {
+    const returnFocusTo = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[aria-label="More navigation"], [aria-label="Open menu"]'
+      )
+    ).find((element) => element.getClientRects().length > 0);
+    requestOpenShortcuts(returnFocusTo);
+  };
 
   return (
     <header className="glass-nav-compact sticky top-0 z-40 shrink-0">
@@ -142,7 +180,16 @@ export function AppHeader() {
                 More
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent
+              align="end"
+              className="w-52"
+              onCloseAutoFocus={(event) => {
+                if (handoffRef.current) {
+                  handoffRef.current = false;
+                  event.preventDefault();
+                }
+              }}
+            >
               {secondaryNav.map((item) => {
                 const Icon = item.icon;
                 const active = isPathActive(pathname, item.href);
@@ -189,7 +236,7 @@ export function AppHeader() {
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={toggleChat}>
+              <DropdownMenuItem onClick={handleAskQuanta}>
                 <MessageCircle className="h-4 w-4" aria-hidden />
                 Ask Quanta
               </DropdownMenuItem>
@@ -197,10 +244,13 @@ export function AppHeader() {
                 <Bird className="h-4 w-4" aria-hidden />
                 {enabled ? "Hide Quanta" : "Show Quanta"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={callQuanta} disabled={!enabled}>
+              <DropdownMenuItem
+                onClick={handleCallQuanta}
+                disabled={!enabled}
+              >
                 Call Quanta
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={requestOpenShortcuts}>
+              <DropdownMenuItem onClick={handleOpenShortcuts}>
                 Keyboard shortcuts
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -217,7 +267,16 @@ export function AppHeader() {
                 <Menu className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent
+              align="end"
+              className="w-52"
+              onCloseAutoFocus={(event) => {
+                if (handoffRef.current) {
+                  handoffRef.current = false;
+                  event.preventDefault();
+                }
+              }}
+            >
               {[...primaryNav, ...secondaryNav].map((item) => {
                 const Icon = item.icon;
                 const active = isPathActive(pathname, item.href);
@@ -264,7 +323,7 @@ export function AppHeader() {
                 <RotateCcw className="h-4 w-4" aria-hidden />
                 Replay tour
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={toggleChat}>
+              <DropdownMenuItem onClick={handleAskQuanta}>
                 <MessageCircle className="h-4 w-4" aria-hidden />
                 Ask Quanta
               </DropdownMenuItem>
@@ -272,10 +331,13 @@ export function AppHeader() {
                 <Bird className="h-4 w-4" aria-hidden />
                 {enabled ? "Hide Quanta" : "Show Quanta"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={callQuanta} disabled={!enabled}>
+              <DropdownMenuItem
+                onClick={handleCallQuanta}
+                disabled={!enabled}
+              >
                 Call Quanta
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={requestOpenShortcuts}>
+              <DropdownMenuItem onClick={handleOpenShortcuts}>
                 Keyboard shortcuts
               </DropdownMenuItem>
             </DropdownMenuContent>

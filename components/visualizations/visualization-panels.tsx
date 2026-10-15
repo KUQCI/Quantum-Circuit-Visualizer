@@ -427,7 +427,7 @@ export function VisualizationPanels({
                 role="tab"
                 aria-selected={activeTab === panelId}
                 className={cn(
-                  "touch-target-sm shrink-0 rounded-md px-3 text-xs font-medium transition-colors",
+                  "touch-target-sm shrink-0 rounded-md px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-ring)]",
                   activeTab === panelId
                     ? "bg-[var(--color-brand-subtle)] text-[var(--color-brand)]"
                     : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-brand-hover)] hover:text-[var(--color-brand)]"

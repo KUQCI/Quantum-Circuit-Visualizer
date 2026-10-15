@@ -70,9 +70,13 @@ export const SHORTCUT_GROUPS: ShortcutGroup[] = [
 
 export const OPEN_SHORTCUTS_EVENT = "qci:open-shortcuts";
 
-export function requestOpenShortcuts(): void {
+export function requestOpenShortcuts(returnFocusTo?: HTMLElement): void {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent(OPEN_SHORTCUTS_EVENT));
+    window.dispatchEvent(
+      new CustomEvent(OPEN_SHORTCUTS_EVENT, {
+        detail: { returnFocusTo },
+      })
+    );
   }
 }
 

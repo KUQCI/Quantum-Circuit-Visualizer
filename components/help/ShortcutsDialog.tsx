@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Dialog,
@@ -25,6 +25,7 @@ function isShortcutPage(pathname: string): boolean {
 export function ShortcutsDialog() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const isMac = useMemo(
     () =>
       typeof navigator !== "undefined" &&
@@ -33,7 +34,12 @@ export function ShortcutsDialog() {
   );
 
   useEffect(() => {
-    const openDialog = () => setOpen(true);
+    const openDialog = (event: Event) => {
+      returnFocusRef.current = (
+        event as CustomEvent<{ returnFocusTo?: HTMLElement }>
+      ).detail?.returnFocusTo ?? null;
+      setOpen(true);
+    };
     const onKeyDown = (event: KeyboardEvent) => {
       if (
         isShortcutPage(pathname) &&
@@ -41,6 +47,7 @@ export function ShortcutsDialog() {
         (event.key === "?" || (event.code === "Slash" && event.shiftKey))
       ) {
         event.preventDefault();
+        returnFocusRef.current = null;
         setOpen(true);
       }
     };
@@ -56,7 +63,17 @@ export function ShortcutsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent aria-describedby="keyboard-shortcuts-description">
+      <DialogContent
+        aria-describedby="keyboard-shortcuts-description"
+        onCloseAutoFocus={(event) => {
+          const returnFocus = returnFocusRef.current;
+          returnFocusRef.current = null;
+          if (returnFocus?.isConnected) {
+            event.preventDefault();
+            returnFocus.focus();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Keyboard shortcuts</DialogTitle>
           <DialogDescription id="keyboard-shortcuts-description">

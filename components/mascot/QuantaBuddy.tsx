@@ -87,13 +87,25 @@ function isGateDrag(event: DragEvent): boolean {
   );
 }
 
+function visibleNavigationTrigger(): HTMLElement | null {
+  return (
+    Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[aria-label="More navigation"], [aria-label="Open menu"]'
+      )
+    ).find((element) => element.getClientRects().length > 0) ?? null
+  );
+}
+
 export function QuantaBuddy({
   callRequest,
+  keyboardCallRequest,
   reducedMotion,
   autoCall,
   onChat,
 }: {
   callRequest: number;
+  keyboardCallRequest: number;
   reducedMotion: boolean;
   autoCall: boolean;
   onChat: () => void;
@@ -112,6 +124,7 @@ export function QuantaBuddy({
   const pointerOverRing = useRef(false);
   const hoverRequiresLeave = useRef(false);
   const lastCallRequest = useRef(callRequest);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const lastPresent = useRef(false);
   const spriteMasks = useRef(new Map<string, SpriteAlphaMask>());
   const lastFrame = useRef<BuddyFrame | null>(null);
@@ -198,11 +211,18 @@ export function QuantaBuddy({
     const wasOpen = quickActionsOpenRef.current;
     hoverIntentRef.current.reset();
     if (wasOpen) {
+      const returnFocus = returnFocusRef.current;
+      returnFocusRef.current = null;
       quickActionsOpenRef.current = false;
       hoverRequiresLeave.current = true;
       engineRef.current?.setFrozen(false);
       setQuickActionsOpen(false);
       setFocusRequest(null);
+      if (returnFocus?.isConnected) {
+        window.setTimeout(() => {
+          if (returnFocus.isConnected) returnFocus.focus();
+        }, 0);
+      }
     }
   }, []);
   const openQuickActions = useCallback((source: "hover" | "click") => {
@@ -634,9 +654,29 @@ export function QuantaBuddy({
   useEffect(() => {
     if (!ready || callRequest === lastCallRequest.current) return;
     lastCallRequest.current = callRequest;
+    const keyboardInitiated = keyboardCallRequest === callRequest;
+    if (keyboardInitiated) {
+      returnFocusRef.current = visibleNavigationTrigger();
+    }
     engineRef.current?.call();
     setVisible(true);
-  }, [callRequest, ready]);
+    if (!keyboardInitiated) return;
+
+    const deadline = performance.now() + 8000;
+    const interval = window.setInterval(() => {
+      const engine = engineRef.current;
+      if (engine?.present && !engine.isBusy) {
+        window.clearInterval(interval);
+        openQuickActions("click");
+      } else if (performance.now() >= deadline) {
+        window.clearInterval(interval);
+        const returnFocus = returnFocusRef.current;
+        returnFocusRef.current = null;
+        if (returnFocus?.isConnected) returnFocus.focus();
+      }
+    }, 50);
+    return () => window.clearInterval(interval);
+  }, [callRequest, keyboardCallRequest, openQuickActions, ready]);
 
   useEffect(() => {
     if (!ready) return;
@@ -940,6 +980,9 @@ export function QuantaBuddyHost() {
   const pathname = usePathname();
   const enabled = useQuantaBuddyStore((state) => state.enabled);
   const callRequest = useQuantaBuddyStore((state) => state.callRequest);
+  const keyboardCallRequest = useQuantaBuddyStore(
+    (state) => state.keyboardCallRequest
+  );
   const setChatOpen = useQuantaChatStore((state) => state.setOpen);
   const hydrated = usePersistHydrated(useQuantaBuddyStore.persist);
   const desktop = useDesktopMediaQuery("(min-width: 768px)");
@@ -952,6 +995,7 @@ export function QuantaBuddyHost() {
   return (
     <QuantaBuddy
       callRequest={callRequest}
+      keyboardCallRequest={keyboardCallRequest}
       reducedMotion={reducedMotion}
       autoCall
       onChat={() => setChatOpen(true)}

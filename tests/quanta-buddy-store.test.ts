@@ -11,11 +11,29 @@ describe("quanta buddy store", () => {
   });
 
   it("increments the call request without changing visibility", () => {
-    useQuantaBuddyStore.setState({ enabled: true, callRequest: 0 });
+    useQuantaBuddyStore.setState({
+      enabled: true,
+      callRequest: 0,
+      keyboardCallRequest: 0,
+    });
     useQuantaBuddyStore.getState().callQuanta();
     useQuantaBuddyStore.getState().callQuanta();
     expect(useQuantaBuddyStore.getState().callRequest).toBe(2);
     expect(useQuantaBuddyStore.getState().enabled).toBe(true);
+  });
+
+  it("marks keyboard call requests without mislabeling pointer calls", () => {
+    useQuantaBuddyStore.setState({
+      callRequest: 0,
+      keyboardCallRequest: 0,
+    });
+    useQuantaBuddyStore.getState().callQuanta(true);
+    expect(useQuantaBuddyStore.getState().keyboardCallRequest).toBe(1);
+    useQuantaBuddyStore.getState().callQuanta();
+    expect(useQuantaBuddyStore.getState().callRequest).toBe(2);
+    expect(useQuantaBuddyStore.getState().keyboardCallRequest).toBe(1);
+    useQuantaBuddyStore.getState().callQuanta(true);
+    expect(useQuantaBuddyStore.getState().keyboardCallRequest).toBe(3);
   });
 
   it("toggles quack sounds", () => {
