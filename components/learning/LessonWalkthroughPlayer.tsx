@@ -59,6 +59,7 @@ export function LessonWalkthroughPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [viewMode, setViewMode] = useState<"animated" | "video">("animated");
+  const [videoBusy, setVideoBusy] = useState(false);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [playbackRequest, setPlaybackRequest] = useState(0);
   const isNarrowViewport = useMediaQuery("(max-width: 640px)");
@@ -149,6 +150,7 @@ export function LessonWalkthroughPlayer({
     setIsPlaying(false);
     setSceneIndex(0);
     setViewMode("animated");
+    setVideoBusy(false);
     setVideoUnavailable(false);
   }, [cancelPlayback, lesson.id]);
 
@@ -170,6 +172,7 @@ export function LessonWalkthroughPlayer({
       setSceneIndex(0);
       setPlaybackRequest((value) => value + 1);
       setViewMode("animated");
+      setVideoBusy(false);
       setVideoUnavailable(false);
     } else {
       setVideoUnavailable(false);
@@ -179,6 +182,7 @@ export function LessonWalkthroughPlayer({
 
   const handleViewModeChange = (nextMode: "animated" | "video") => {
     if (nextMode === viewMode) return;
+    setVideoBusy(false);
     if (nextMode === "video") {
       playingRef.current = false;
       cancelPlayback();
@@ -311,7 +315,15 @@ export function LessonWalkthroughPlayer({
               preload="none"
               playsInline
               src={lessonVideoUrl(lesson.id)}
-              onError={() => setVideoUnavailable(true)}
+              aria-busy={videoBusy || undefined}
+              onLoadStart={() => setVideoBusy(true)}
+              onWaiting={() => setVideoBusy(true)}
+              onCanPlay={() => setVideoBusy(false)}
+              onPlaying={() => setVideoBusy(false)}
+              onError={() => {
+                setVideoBusy(false);
+                setVideoUnavailable(true);
+              }}
               className="aspect-video w-full rounded-md bg-black"
             />
           )

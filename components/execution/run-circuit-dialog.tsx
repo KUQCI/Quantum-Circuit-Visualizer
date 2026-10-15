@@ -90,7 +90,10 @@ export function RunCircuitDialog({ open, onOpenChange }: RunCircuitDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 p-0">
+      <DialogContent
+        aria-busy={isRunning || undefined}
+        className="gap-0 p-0"
+      >
         <DialogHeader className="px-5 pb-3 pt-5">
           <DialogTitle>Run circuit</DialogTitle>
           <DialogDescription>
