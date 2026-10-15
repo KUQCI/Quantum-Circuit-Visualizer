@@ -48,10 +48,12 @@ function getContentBreadcrumbs(pathname: string) {
     return [{ label: "Home", href: "/" }, { label: "Export" }];
   if (path === "/roadmap")
     return [{ label: "Home", href: "/" }, { label: "Roadmap" }];
+  if (path === "/docs")
+    return [{ label: "Home", href: "/" }, { label: "Docs" }];
   if (path.startsWith("/docs"))
     return [
       { label: "Home", href: "/" },
-      { label: "Docs", href: "/docs/composer" },
+      { label: "Docs", href: "/docs" },
       {
         label: path.includes("/api")
           ? "API Reference"
