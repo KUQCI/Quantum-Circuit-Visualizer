@@ -20,7 +20,10 @@ export interface CodeDiagnostic {
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-[var(--color-muted-foreground)]">
+    <div
+      aria-busy="true"
+      className="flex h-full items-center justify-center text-sm text-[var(--color-muted-foreground)]"
+    >
       Loading editor…
     </div>
   ),

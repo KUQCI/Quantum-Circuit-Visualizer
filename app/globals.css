@@ -1990,3 +1990,87 @@ button:disabled,
     transform: translate(16px, -24px);
   }
 }
+
+@media (hover: hover) and (pointer: fine) {
+  html {
+    cursor: url("./cursors/duck-default.png") 6 3, auto;
+    cursor:
+      image-set(
+        url("./cursors/duck-default.png") 1x,
+        url("./cursors/duck-default@2x.png") 2x
+      )
+      6 3, auto;
+  }
+
+  a[href]:not([aria-disabled="true"]),
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select:not(:disabled):not([aria-disabled="true"]),
+  .cursor-pointer:not(:disabled):not([aria-disabled="true"]) {
+    cursor: url("./cursors/duck-pointer.png") 4 2, pointer;
+    cursor:
+      image-set(
+        url("./cursors/duck-pointer.png") 1x,
+        url("./cursors/duck-pointer@2x.png") 2x
+      )
+      4 2, pointer;
+  }
+
+  [draggable="true"]:not(:disabled):not([aria-disabled="true"]),
+  .cursor-grab:not(:disabled):not([aria-disabled="true"]) {
+    cursor: url("./cursors/duck-grab.png") 16 16, grab;
+    cursor:
+      image-set(
+        url("./cursors/duck-grab.png") 1x,
+        url("./cursors/duck-grab@2x.png") 2x
+      )
+      16 16, grab;
+  }
+
+  .cursor-grabbing:not(:disabled):not([aria-disabled="true"]),
+  .cursor-grab:active:not(:disabled):not([aria-disabled="true"]),
+  [draggable="true"]:active:not(:disabled):not([aria-disabled="true"]) {
+    cursor: url("./cursors/duck-grabbing.png") 16 16, grabbing;
+    cursor:
+      image-set(
+        url("./cursors/duck-grabbing.png") 1x,
+        url("./cursors/duck-grabbing@2x.png") 2x
+      )
+      16 16, grabbing;
+  }
+
+  [aria-busy="true"]:not(:disabled):not([aria-disabled="true"]),
+  .cursor-wait:not(:disabled):not([aria-disabled="true"]),
+  .cursor-progress:not(:disabled):not([aria-disabled="true"]) {
+    cursor: url("./cursors/duck-progress.png") 16 16, progress;
+    cursor:
+      image-set(
+        url("./cursors/duck-progress.png") 1x,
+        url("./cursors/duck-progress@2x.png") 2x
+      )
+      16 16, progress;
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  input:not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="range"],
+      [type="button"],
+      [type="submit"]
+    ):not(:disabled):not([aria-disabled="true"]),
+  textarea:not(:disabled):not([aria-disabled="true"]),
+  [contenteditable="true"]:not([aria-disabled="true"]),
+  .monaco-editor .view-lines {
+    cursor: text;
+  }
+}
