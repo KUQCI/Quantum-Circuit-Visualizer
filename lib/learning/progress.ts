@@ -85,27 +85,47 @@ export function xpForNextLevel(xp: number): {
   };
 }
 
+export function localDayKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function localDayDifference(lastActiveDate: string, now: Date): number {
+  const last = new Date(`${lastActiveDate}T12:00:00`);
+  const today = new Date(`${localDayKey(now)}T12:00:00`);
+  return Math.round(
+    (today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
+  );
+}
+
 export function updateStreak(
   lastActiveDate: string | null,
-  currentStreak: number
+  currentStreak: number,
+  now: Date = new Date()
 ): { streak: number; lastActiveDate: string } {
-  const current = new Date();
-  const today = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, "0")}-${String(current.getDate()).padStart(2, "0")}`;
+  const today = localDayKey(now);
   if (!lastActiveDate) {
     return { streak: 1, lastActiveDate: today };
   }
-  if (lastActiveDate === today) {
+  const diffDays = localDayDifference(lastActiveDate, now);
+  if (diffDays < 0) {
+    return { streak: currentStreak || 1, lastActiveDate };
+  }
+  if (diffDays === 0) {
     return { streak: currentStreak || 1, lastActiveDate: today };
   }
-  const last = new Date(`${lastActiveDate}T12:00:00`);
-  const now = new Date(`${today}T12:00:00`);
-  const diffDays = Math.round(
-    (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)
-  );
   if (diffDays === 1) {
     return { streak: (currentStreak || 0) + 1, lastActiveDate: today };
   }
   return { streak: 1, lastActiveDate: today };
+}
+
+export function displayedStreak(
+  lastActiveDate: string | null,
+  currentStreak: number,
+  now: Date = new Date()
+): number {
+  if (!lastActiveDate) return 0;
+  return localDayDifference(lastActiveDate, now) > 1 ? 0 : currentStreak;
 }
 
 export const MODULE_IDS = [

@@ -4,6 +4,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import { isFullWorkspacePath, normalizePath } from "@/lib/routes";
 import { unboundSymbols } from "@/lib/parameter-bindings";
 import {
+  displayedStreak,
   getLevelFromXp,
   getLevelTitle,
   xpForNextLevel,
@@ -39,7 +40,9 @@ export function QuantaPersona({
   const path = normalizePath(pathname);
   const totalXp = useProgressStore((state) => state.totalXp);
   const levelTitle = getLevelTitle(getLevelFromXp(totalXp));
-  const streak = useProgressStore((state) => state.currentStreak);
+  const currentStreak = useProgressStore((state) => state.currentStreak);
+  const lastActiveDate = useProgressStore((state) => state.lastActiveDate);
+  const streak = displayedStreak(lastActiveDate, currentStreak);
   const completedLessons = useProgressStore(
     (state) => state.completedLessons.length
   );
