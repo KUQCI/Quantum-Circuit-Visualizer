@@ -19,6 +19,7 @@ const STATIC_ROUTES = [
   "/import",
   "/challenges",
   "/challenges/sandbox",
+  "/docs",
   "/docs/api",
   "/docs/assets",
   "/docs/composer",
