@@ -64,11 +64,15 @@ export function MeasurementHistogram({
           )}
         </div>
       )}
-      <div className={`min-h-0 flex-1 ${scrollable ? "overflow-x-auto" : ""}`}>
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto">
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           width="100%"
           height="100%"
+          style={{
+            minHeight: scrollable ? chartHeight : undefined,
+            minWidth: chartWidth,
+          }}
           preserveAspectRatio="xMidYMid meet"
           aria-label="Measurement histogram"
         >
@@ -107,7 +111,7 @@ export function MeasurementHistogram({
                 x={padding.left - 8}
                 y={y + 3}
                 fill="var(--color-muted-foreground)"
-                fontSize={9}
+                fontSize={scrollable ? 10 : 9}
                 textAnchor="end"
               >
                 {Math.round(tick)}
@@ -148,7 +152,7 @@ export function MeasurementHistogram({
                 x={x + barWidth / 2}
                 y={padding.top + innerH + 14}
                 fill="var(--color-muted-foreground)"
-                fontSize={9}
+                fontSize={scrollable ? 10 : 9}
                 textAnchor="middle"
                 fontFamily="monospace"
               >
@@ -159,7 +163,7 @@ export function MeasurementHistogram({
                   x={x + barWidth / 2}
                   y={y - 4}
                   fill="var(--color-foreground)"
-                  fontSize={8}
+                  fontSize={scrollable ? 10 : 8}
                   textAnchor="middle"
                 >
                   {entry.percentage.toFixed(0)}%

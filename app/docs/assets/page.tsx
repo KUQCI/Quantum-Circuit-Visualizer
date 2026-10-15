@@ -25,8 +25,8 @@ const statusClass: Record<AssetStatus, string> = {
 
 export default function AssetTrackerPage() {
   return (
-    <div className="page-container max-w-4xl">
-      <div className="page-header mb-8">
+    <div className="page-container min-w-0 max-w-4xl">
+      <div className="page-header mb-8 min-w-0">
         <p className="qci-section-eyebrow">Docs · Internal</p>
         <h1 className="page-title text-3xl">Artist asset tracker</h1>
         <p className="page-description mt-3 max-w-2xl">
@@ -50,9 +50,13 @@ export default function AssetTrackerPage() {
         />
       </div>
 
-      <div className="mb-8 grid gap-4 md:grid-cols-2">
-        <ArtistAssetPlaceholder assetId="quantum-journey-banner" aspect="banner" />
-        <div className="technical-panel flex flex-col items-center justify-center gap-3 p-4">
+      <div className="mb-8 grid min-w-0 gap-4 md:grid-cols-2">
+        <ArtistAssetPlaceholder
+          assetId="quantum-journey-banner"
+          aspect="banner"
+          className="min-w-0 max-w-full"
+        />
+        <div className="technical-panel flex min-w-0 flex-col items-center justify-center gap-3 p-4">
           <p className="mono-label text-[0.65rem] text-[var(--color-muted-foreground)]">
             Quanta teacher (official)
           </p>
@@ -66,8 +70,8 @@ export default function AssetTrackerPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)]">
-        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+      <div className="min-w-0 max-w-full overflow-x-auto rounded-2xl border border-[var(--color-border)]">
+        <table className="w-full min-w-[720px] max-w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
               <th className="mono-label px-4 py-3 text-[0.65rem] text-[var(--color-muted-foreground)]">
@@ -135,9 +139,9 @@ export default function AssetTrackerPage() {
         </table>
       </div>
 
-      <p className="mt-6 text-sm text-[var(--color-muted-foreground)]">
+      <p className="mt-6 min-w-0 max-w-full text-sm text-[var(--color-muted-foreground)] [overflow-wrap:anywhere]">
         Placeholders in the UI are tagged with{" "}
-        <code className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs">
+        <code className="max-w-full rounded bg-[var(--color-muted)] px-1.5 py-0.5 font-mono text-xs [overflow-wrap:anywhere]">
           data-artist-asset
         </code>
         . Search the repo for{" "}

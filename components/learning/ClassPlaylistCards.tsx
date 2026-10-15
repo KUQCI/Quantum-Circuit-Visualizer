@@ -164,7 +164,7 @@ export function JoinedClassCard() {
               <li key={lesson.id}>
                 <Link
                   href={`/learn/${lesson.id}`}
-                  className="flex items-center gap-2 rounded-md border border-[var(--color-border)] px-3 py-2 text-sm hover:border-[var(--color-brand-border)]"
+                  className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-start gap-x-2 rounded-md border border-[var(--color-border)] px-3 py-2 text-sm hover:border-[var(--color-brand-border)] sm:flex sm:items-center"
                 >
                   <Marker
                     className={`h-4 w-4 shrink-0 ${
@@ -176,8 +176,10 @@ export function JoinedClassCard() {
                     }`}
                     aria-hidden
                   />
-                  <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
-                  <span className="text-xs text-[var(--color-muted-foreground)]">
+                  <span className="min-w-0 [overflow-wrap:anywhere] sm:flex-1">
+                    {lesson.title}
+                  </span>
+                  <span className="col-start-2 min-w-0 text-xs text-[var(--color-muted-foreground)] sm:ml-auto">
                     {isDone ? "Done" : isNext ? "Next" : `Lesson ${index + 1}`}
                   </span>
                 </Link>
