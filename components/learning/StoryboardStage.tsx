@@ -72,13 +72,11 @@ function CircuitScene({
 
   return (
     <div
-      className={`grid h-full ${
-        hasProbabilityPanel
-          ? "grid-rows-[100px_140px] sm:min-h-0 sm:grid-rows-[3fr_2fr]"
-          : scene.qubits > 1
-            ? "min-h-0 grid-rows-[3fr_2fr]"
-            : "min-h-0 grid-rows-[2fr_3fr]"
-      } gap-1.5 p-2`}
+      className={`grid h-full grid-rows-[168px_140px] gap-1.5 p-2 sm:min-h-0 ${
+        scene.qubits > 1
+          ? "sm:grid-rows-[3fr_2fr]"
+          : "sm:grid-rows-[2fr_3fr]"
+      }`}
     >
       <div className="min-h-0 overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1">
         <LessonCircuitSvg
@@ -91,9 +89,7 @@ function CircuitScene({
         />
       </div>
       <div
-        className={`min-h-[140px] overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1.5 ${
-          hasProbabilityPanel ? "sm:min-h-0" : ""
-        }`}
+        className="min-h-[140px] overflow-hidden rounded-lg border border-slate-700/80 bg-slate-900/80 p-1.5 sm:min-h-0"
       >
         {state && hasProbabilityPanel ? (
           <>
@@ -312,9 +308,7 @@ export function StoryboardStage({
   const beat = storyboard.beats[activeIndex];
 
   if (!beat) return null;
-  const hasProbabilityPanel =
-    beat.scene.kind === "circuit" &&
-    beat.scene.panels.includes("probabilities");
+  const hasCircuitScene = beat.scene.kind === "circuit";
 
   return (
     <div className="space-y-2">
@@ -325,7 +319,7 @@ export function StoryboardStage({
         role="group"
         aria-label={`${storyboard.title}: ${beat.caption}`}
         className={`${
-          hasProbabilityPanel
+          hasCircuitScene
             ? "aspect-auto sm:aspect-video"
             : "aspect-video"
         } w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-950 text-slate-100 shadow-xl`}
