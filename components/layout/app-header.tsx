@@ -269,7 +269,7 @@ export function AppHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-52"
+              className="w-52 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain"
               onCloseAutoFocus={(event) => {
                 if (handoffRef.current) {
                   handoffRef.current = false;

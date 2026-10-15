@@ -35,8 +35,8 @@ export default function TranslatorDebugPage() {
   };
 
   return (
-    <div className="page-container max-w-5xl">
-      <div className="page-header mb-6">
+    <div className="page-container min-w-0 max-w-5xl">
+      <div className="page-header mb-6 min-w-0">
         <p className="qci-section-eyebrow">Docs · Developer</p>
         <h1 className="page-title text-3xl">Translator debug</h1>
         <p className="page-description mt-2 max-w-2xl">
@@ -58,17 +58,17 @@ export default function TranslatorDebugPage() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="technical-panel p-4">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <section className="technical-panel min-w-0 p-4">
           <h2 className="mono-label mb-3 text-xs text-[var(--color-brand)]">
             Live JSON IR
           </h2>
-          <pre className="max-h-[360px] overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs text-[var(--color-foreground)]">
+          <pre className="max-h-[360px] min-w-0 max-w-full overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs text-[var(--color-foreground)]">
             {JSON.stringify(circuit, null, 2)}
           </pre>
         </section>
 
-        <section className="technical-panel p-4">
+        <section className="technical-panel min-w-0 p-4">
           <h2 className="mono-label mb-3 text-xs text-[var(--color-brand)]">
             Validation
           </h2>
@@ -84,7 +84,7 @@ export default function TranslatorDebugPage() {
               {semantics.isValid ? "valid" : "invalid"}
             </span>
           </p>
-          <pre className="max-h-[160px] overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs">
+          <pre className="max-h-[160px] min-w-0 max-w-full overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs">
             Errors:{"\n"}
             {semantics.errors.join("\n") || "(none)"}
             {"\n\n"}Warnings:{"\n"}
@@ -93,7 +93,7 @@ export default function TranslatorDebugPage() {
           <h2 className="mono-label mb-2 mt-4 text-xs text-[var(--color-brand)]">
             Generated Qiskit
           </h2>
-          <pre className="max-h-[160px] overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs">
+          <pre className="max-h-[160px] min-w-0 max-w-full overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs">
             {generated.success
               ? generated.code
               : `ERROR: ${generated.error}`}
@@ -104,20 +104,20 @@ export default function TranslatorDebugPage() {
         </section>
       </div>
 
-      <section className="technical-panel mt-4 p-4">
+      <section className="technical-panel mt-4 min-w-0 p-4">
         <h2 className="mono-label mb-3 text-xs text-[var(--color-brand)]">
           Scratch Qiskit parse
         </h2>
         <textarea
           value={scratch}
           onChange={(e) => setScratch(e.target.value)}
-          className="min-h-[160px] w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] p-3 font-mono text-xs text-[var(--color-foreground)]"
+          className="min-h-[160px] min-w-0 max-w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-canvas)] p-3 font-mono text-xs text-[var(--color-foreground)]"
           spellCheck={false}
         />
         <Button className="mt-3" size="sm" onClick={runParse}>
           Parse scratchpad
         </Button>
-        <pre className="mt-3 max-h-[320px] overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs">
+        <pre className="mt-3 max-h-[320px] min-w-0 max-w-full overflow-auto rounded-xl bg-[var(--color-canvas)] p-3 text-xs">
           {parseLog || "Results appear here."}
         </pre>
       </section>
