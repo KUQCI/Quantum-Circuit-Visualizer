@@ -116,13 +116,20 @@ export function retargetOperation(
   };
 }
 
-/** Primary wire index for an operation (for selection UI). */
-export function primaryWireIndex(op: Operation): number {
+/** Minimum wire index occupied by an operation's targets and controls. */
+export function minWireIndex(
+  op: Pick<Operation, "targets" | "controls">
+): number {
   const indices = [
     ...op.targets.map(qIndex),
     ...op.controls.map(qIndex),
   ];
   return indices.length ? Math.min(...indices) : 0;
+}
+
+/** Primary wire index for an operation (for selection UI). */
+export function primaryWireIndex(op: Operation): number {
+  return minWireIndex(op);
 }
 
 export function operationUsesRegister(
