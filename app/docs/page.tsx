@@ -15,6 +15,12 @@ export const metadata: Metadata = {
 
 const DOCS_PAGES = [
   {
+    href: "/docs/composer",
+    title: "Quantum Circuit Composer Guide",
+    description:
+      "Build quantum circuits on the canvas, inspect their state, and generate code.",
+  },
+  {
     href: "/docs/api",
     title: "IBM Quantum API Reference",
     description:
@@ -25,12 +31,6 @@ const DOCS_PAGES = [
     title: "Artist asset tracker",
     description:
       "Follow the internal art pipeline, placeholders, and requirements for project assets.",
-  },
-  {
-    href: "/docs/composer",
-    title: "Quantum Circuit Composer Guide",
-    description:
-      "Build quantum circuits on the canvas, inspect their state, and generate code.",
   },
   {
     href: "/docs/debug",
