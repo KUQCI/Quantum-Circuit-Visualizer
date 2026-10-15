@@ -316,10 +316,10 @@ export function LessonWalkthroughPlayer({
               playsInline
               src={lessonVideoUrl(lesson.id)}
               aria-busy={videoBusy || undefined}
-              onLoadStart={() => setVideoBusy(true)}
               onWaiting={() => setVideoBusy(true)}
               onCanPlay={() => setVideoBusy(false)}
               onPlaying={() => setVideoBusy(false)}
+              onPause={() => setVideoBusy(false)}
               onError={() => {
                 setVideoBusy(false);
                 setVideoUnavailable(true);
