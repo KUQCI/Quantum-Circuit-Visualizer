@@ -169,7 +169,7 @@ export function ComposerToolbar() {
 
   const helpItems = [
     { label: "Supported gates", action: () => router.push("/docs/composer") },
-    { label: "Keyboard shortcuts", action: requestOpenShortcuts },
+    { label: "Keyboard shortcuts", action: () => requestOpenShortcuts() },
     { label: "Translator limitations", action: () => router.push("/docs/debug") },
     { label: "About this visualizer", action: () => router.push("/") },
   ];

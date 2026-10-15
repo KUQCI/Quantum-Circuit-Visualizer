@@ -124,6 +124,7 @@ export function ProgressBackupCard() {
               type="file"
               accept="application/json,.json"
               className="sr-only"
+              tabIndex={-1}
               onChange={(event) => {
                 void handleFile(event.target.files?.[0]);
                 event.currentTarget.value = "";
@@ -155,7 +156,7 @@ export function ProgressBackupCard() {
           if (!open) setPendingBackup(null);
         }}
       >
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Restore progress backup?</DialogTitle>
             <DialogDescription>
@@ -165,7 +166,7 @@ export function ProgressBackupCard() {
               {pendingBackup?.projects.length ?? 0} projects.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
             <Button
               type="button"
               variant="ghost"

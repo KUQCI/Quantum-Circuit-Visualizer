@@ -16,7 +16,8 @@ interface QuantaBuddyState {
   skin: SkinId;
   setSkin: (skin: SkinId) => void;
   callRequest: number;
-  callQuanta: () => void;
+  keyboardCallRequest: number;
+  callQuanta: (keyboardInitiated?: boolean) => void;
 }
 
 export const useQuantaBuddyStore = create<QuantaBuddyState>()(
@@ -32,7 +33,17 @@ export const useQuantaBuddyStore = create<QuantaBuddyState>()(
       skin: "classic",
       setSkin: (skin) => set({ skin }),
       callRequest: 0,
-      callQuanta: () => set((state) => ({ callRequest: state.callRequest + 1 })),
+      keyboardCallRequest: 0,
+      callQuanta: (keyboardInitiated = false) =>
+        set((state) => {
+          const callRequest = state.callRequest + 1;
+          return {
+            callRequest,
+            keyboardCallRequest: keyboardInitiated
+              ? callRequest
+              : state.keyboardCallRequest,
+          };
+        }),
     }),
     {
       name: "qci-quanta-buddy",

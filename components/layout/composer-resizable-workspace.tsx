@@ -121,7 +121,7 @@ function NarrowWorkspace({
               data-narrow-tab={tab.id}
               data-tour={tab.id}
               className={cn(
-                "flex-1 px-2 py-2 text-xs font-medium",
+                "flex-1 px-2 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-ring)]",
                 narrowActiveTab === tab.id
                   ? "border-b-2 border-[var(--color-brand)] text-[var(--color-foreground)]"
                   : "text-[var(--color-muted-foreground)]"

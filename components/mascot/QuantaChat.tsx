@@ -27,6 +27,16 @@ const STARTERS = [
   "What is superposition?",
 ];
 
+function visibleNavigationTrigger(): HTMLElement | null {
+  return (
+    Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[aria-label="More navigation"], [aria-label="Open menu"]'
+      )
+    ).find((element) => element.getClientRects().length > 0) ?? null
+  );
+}
+
 function isAbortError(error: unknown): boolean {
   return (
     error !== null &&
@@ -64,6 +74,8 @@ export function QuantaChat() {
   const keyInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
   const effectiveKey = resolveApiKey(apiKey);
   const showKeyForm = !effectiveKey || editingKey;
 
@@ -71,6 +83,31 @@ export function QuantaChat() {
     const match = path.match(/^\/learn\/([^/]+)$/);
     return match ? getLessonById(match[1]) : undefined;
   }, [path]);
+
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      const activeElement = document.activeElement;
+      const activeIsMenuItem =
+        activeElement instanceof HTMLElement &&
+        activeElement.closest('[role="menuitem"]') !== null;
+      returnFocusRef.current =
+        activeElement instanceof HTMLElement &&
+        activeElement !== document.body &&
+        activeElement.isConnected &&
+        !activeIsMenuItem
+          ? activeElement
+          : visibleNavigationTrigger();
+    } else if (!open && wasOpenRef.current) {
+      const returnFocus = returnFocusRef.current;
+      returnFocusRef.current = null;
+      if (returnFocus?.isConnected) {
+        window.setTimeout(() => {
+          if (returnFocus.isConnected) returnFocus.focus();
+        }, 0);
+      }
+    }
+    wasOpenRef.current = open;
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
