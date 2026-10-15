@@ -46,6 +46,23 @@ describe("storyboard circuit conversion", () => {
     });
   });
 
+  it("labels the first Bell-state H outcomes with q[0] on the right", () => {
+    const circuit = circuitBeat("build-bell-state", "step-h");
+    const hOnlyCircuit = {
+      ...circuit,
+      operations: circuit.operations.slice(0, 1),
+    };
+    const probabilities =
+      computeStepSnapshots(hOnlyCircuit).at(-1)?.after.probabilities;
+
+    expect(
+      probabilities
+        ?.filter(({ probability }) => probability > 0)
+        .map(({ label }) => label)
+        .sort()
+    ).toEqual(["|00⟩", "|01⟩"]);
+  });
+
   it("converts a parameterized rotation", () => {
     const circuit = circuitBeat("rotate-with-rx", "quarter-turn");
 

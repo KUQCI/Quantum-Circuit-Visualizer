@@ -1582,7 +1582,7 @@
         },
         {
           "id": "four-states",
-          "caption": "Two qubits have four basis states: 00, 10, 01 and 11.",
+          "caption": "Two qubits have four basis states: 00, 01, 10 and 11.",
           "speech": "Two qubits have four basis states. Each label is a two bit string, one bit per qubit.",
           "scene": {
             "kind": "circuit",
@@ -1597,8 +1597,8 @@
         },
         {
           "id": "x-q0",
-          "caption": "In QCV the left bit is q[0]: X on q[0] gives 10.",
-          "speech": "In this app, the left bit belongs to qubit zero. So an X on qubit zero gives one zero.",
+          "caption": "Labels read like Qiskit: q[0] is the right bit, so X on q[0] gives 01.",
+          "speech": "Labels read like Qiskit, with qubit zero as the rightmost bit. So an X on qubit zero gives zero one.",
           "scene": {
             "kind": "circuit",
             "qubits": 2,
@@ -1750,8 +1750,8 @@
         },
         {
           "id": "control-on",
-          "caption": "Set the control to 1 with X, and CX flips q[1]: 10 becomes 11.",
-          "speech": "Set the control to one with an X gate, and now C X flips qubit one. One zero becomes one one.",
+          "caption": "Set the control to 1 with X, and CX flips q[1]: 01 becomes 11.",
+          "speech": "Set the control to one with an X gate, and now C X flips qubit one. Zero one becomes one one.",
           "scene": {
             "kind": "circuit",
             "qubits": 2,
@@ -1781,7 +1781,7 @@
         },
         {
           "id": "truth-table",
-          "caption": "With q[0] as control: 00 and 01 stay put, 10 and 11 swap.",
+          "caption": "With q[0] as control: 00 and 10 stay put, 01 and 11 swap.",
           "speech": "Here's the full table. When the control is zero, nothing changes. When it's one, the target bit flips.",
           "scene": {
             "kind": "cards",
@@ -1792,15 +1792,15 @@
                 "body": "Control off"
               },
               {
-                "title": "01 → 01",
+                "title": "10 → 10",
                 "body": "Control off"
               },
               {
-                "title": "10 → 11",
+                "title": "01 → 11",
                 "body": "Control on: flip"
               },
               {
-                "title": "11 → 10",
+                "title": "11 → 01",
                 "body": "Control on: flip"
               }
             ]
@@ -1924,8 +1924,8 @@
         },
         {
           "id": "swap",
-          "caption": "SWAP exchanges two qubits: 10 becomes 01.",
-          "speech": "SWAP is different. It exchanges the complete states of two qubits. Here, one zero becomes zero one.",
+          "caption": "SWAP exchanges two qubits: 01 becomes 10.",
+          "speech": "SWAP is different. It exchanges the complete states of two qubits. Here, zero one becomes one zero.",
           "scene": {
             "kind": "circuit",
             "qubits": 2,
@@ -2024,8 +2024,8 @@
         },
         {
           "id": "one-control",
-          "caption": "One control on isn't enough: 100 stays 100.",
-          "speech": "Turn on just one control, and it's still not enough. One zero zero stays one zero zero.",
+          "caption": "One control on isn't enough: 001 stays 001.",
+          "speech": "Turn on just one control, and it's still not enough. Zero zero one stays zero zero one.",
           "scene": {
             "kind": "circuit",
             "qubits": 3,
@@ -2056,8 +2056,8 @@
         },
         {
           "id": "both-controls",
-          "caption": "Both controls on: q[2] flips, and 110 becomes 111.",
-          "speech": "Turn on both controls, and now qubit two flips. One one zero becomes one one one.",
+          "caption": "Both controls on: q[2] flips, and 011 becomes 111.",
+          "speech": "Turn on both controls, and now qubit two flips. Zero one one becomes one one one.",
           "scene": {
             "kind": "circuit",
             "qubits": 3,
@@ -2141,8 +2141,8 @@
         },
         {
           "id": "step-h",
-          "caption": "Step one: H on q[0] makes 00 and 10 equally likely.",
-          "speech": "Step one. Put H on qubit zero. Now zero zero and one zero are equally likely.",
+          "caption": "Step one: H on q[0] makes 00 and 01 equally likely.",
+          "speech": "Step one. Put H on qubit zero. Now zero zero and zero one are equally likely.",
           "scene": {
             "kind": "circuit",
             "qubits": 2,
@@ -2172,8 +2172,8 @@
         },
         {
           "id": "step-cx",
-          "caption": "Step two: CX from q[0] to q[1] turns 10 into 11.",
-          "speech": "Step two. Add C X from qubit zero to qubit one. It turns one zero into one one, leaving zero zero and one one.",
+          "caption": "Step two: CX from q[0] to q[1] turns 01 into 11.",
+          "speech": "Step two. Add C X from qubit zero to qubit one. It turns zero one into one one, leaving zero zero and one one.",
           "scene": {
             "kind": "circuit",
             "qubits": 2,

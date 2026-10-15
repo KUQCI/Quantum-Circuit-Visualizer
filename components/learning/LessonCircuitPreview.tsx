@@ -226,7 +226,32 @@ export function LessonCircuitSvg({
   const width = LABEL_WIDTH + columnCount * COLUMN_WIDTH + 18;
   const compactStoryboard =
     fillContainer && size.width > 0 && size.width < 500;
-  const topPadding = compactStoryboard ? 12 : TOP_PADDING;
+  const gateWidth = fillContainer
+    ? diagram.qubitCount > 2
+      ? compactStoryboard
+        ? 52
+        : 68
+      : 68
+    : undefined;
+  const gateHeight = fillContainer
+    ? diagram.qubitCount > 2
+      ? compactStoryboard
+        ? 22
+        : 40
+      : 40
+    : undefined;
+  const fontSize = fillContainer
+    ? diagram.qubitCount > 2
+      ? compactStoryboard
+        ? 11
+        : 16
+      : 16
+    : undefined;
+  const renderedGateHeight = gateHeight ?? 24;
+  const topPadding = Math.max(
+    compactStoryboard ? 12 : TOP_PADDING,
+    renderedGateHeight / 2 + 4
+  );
   const rowHeight = fillContainer
     ? diagram.qubitCount > 2
       ? compactStoryboard
@@ -253,7 +278,9 @@ export function LessonCircuitSvg({
         diagram.qubitCount * rowHeight +
         19 +
         (classicalCount - 1) * CLASSICAL_ROW_HEIGHT
-      : topPadding + Math.max(diagram.qubitCount - 1, 0) * rowHeight + 24;
+      : topPadding +
+        Math.max(diagram.qubitCount - 1, 0) * rowHeight +
+        Math.max(24, renderedGateHeight / 2 + 4);
   const description = `Circuit diagram: ${diagram.qubitCount} qubits, ${circuit.operations.filter((operation) => operation.type !== "barrier").length} gates`;
 
   return (
@@ -353,27 +380,9 @@ export function LessonCircuitSvg({
                     animate: animatedOperationIds.includes(item.id),
                     highlight: highlightedOperationIds.includes(item.id),
                     delayMs: index * 180,
-                    gateWidth: fillContainer
-                      ? diagram.qubitCount > 2
-                        ? compactStoryboard
-                          ? 52
-                          : 68
-                        : 68
-                      : undefined,
-                    gateHeight: fillContainer
-                      ? diagram.qubitCount > 2
-                        ? compactStoryboard
-                          ? 22
-                          : 40
-                        : 40
-                      : undefined,
-                    fontSize: fillContainer
-                      ? diagram.qubitCount > 2
-                        ? compactStoryboard
-                          ? 11
-                          : 16
-                        : 16
-                      : undefined,
+                    gateWidth,
+                    gateHeight,
+                    fontSize,
                     topPadding,
                     rowHeight,
                   }

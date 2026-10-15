@@ -124,7 +124,9 @@ PARAMETER_GATES = {"rx", "ry", "rz", "p", "cp", "crz", "crx", "cry"}
 
 
 def format_basis_label(index: int, qubits: int) -> str:
-    return "".join(str((index >> qubit) & 1) for qubit in range(qubits))
+    return "".join(
+        str((index >> qubit) & 1) for qubit in reversed(range(qubits))
+    )
 
 
 def initial_statevector(qubits: int) -> np.ndarray:
@@ -406,7 +408,7 @@ def run_self_check() -> None:
     _assert_state(bell, {"00": 0.5, "11": 0.5})
     _assert_state(
         simulate_operations(2, [op("x", [0])]),
-        {"10": 1.0},
+        {"01": 1.0},
     )
     ghz = simulate_operations(
         3,
@@ -442,7 +444,7 @@ def run_self_check() -> None:
             2,
             [op("x", [0]), op("swap", [0, 1])],
         ),
-        {"01": 1.0},
+        {"10": 1.0},
     )
     storyboard_data = load_storyboards(DEFAULT_STORYBOARDS_PATH)
 
