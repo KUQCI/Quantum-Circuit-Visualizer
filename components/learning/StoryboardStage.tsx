@@ -119,7 +119,7 @@ function CircuitScene({
                 .filter(({ probability }) => probability > 0.001)
                 .map(({ label, probability }) => (
                   <span key={label}>
-                    |{label}⟩ {Math.round(probability * 100)}%
+                    {label} {Math.round(probability * 100)}%
                   </span>
                 ))}
             </div>
@@ -169,7 +169,7 @@ function HistogramScene({
                 />
               </div>
               <span className="font-mono text-xs text-slate-100">
-                |{label}⟩
+                {label}
               </span>
             </div>
           );
