@@ -321,6 +321,7 @@ export function QuantaChat() {
           <div
             className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
             aria-live="polite"
+            aria-busy={pending || undefined}
             role="log"
           >
             {messages.length === 0 && (
