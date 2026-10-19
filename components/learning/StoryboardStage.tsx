@@ -245,22 +245,24 @@ function OutroScene({
   scene: Extract<AnimatedStoryboardScene, { kind: "outro" }>;
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
+    <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center sm:gap-3 sm:px-4">
       <QuantaImage
         variant="success"
         size={72}
         bare
         alt="Quanta waving"
-        className="animate-storyboard-wave"
+        className="animate-storyboard-wave size-12! sm:size-[72px]!"
       />
-      <h2 className="text-xl font-bold text-slate-50 sm:text-2xl">
-        {scene.title}
-      </h2>
-      <div className="flex flex-wrap justify-center gap-1.5">
+      {scene.title && (
+        <h2 className="text-xl font-bold text-slate-50 sm:text-2xl">
+          {scene.title}
+        </h2>
+      )}
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-1.5">
         {(scene.chips ?? []).map((chip, index) => (
           <span
             key={`${chip}-${index}`}
-            className="animate-storyboard-item rounded-full border border-cyan-700 bg-cyan-950/80 px-2.5 py-1 text-[10px] font-medium text-cyan-100 sm:text-xs"
+            className="animate-storyboard-item rounded-full border border-cyan-700 bg-cyan-950/80 px-2 py-0.5 leading-tight text-[10px] font-medium text-cyan-100 sm:px-2.5 sm:py-1 sm:text-xs"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             {chip}
