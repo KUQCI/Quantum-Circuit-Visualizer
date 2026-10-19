@@ -231,7 +231,7 @@ export function LessonWalkthroughPlayer({
           Watch walkthrough
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl gap-4 p-4 sm:p-6">
+      <DialogContent className="max-w-3xl gap-4 p-4 sm:p-6 [&>button]:h-8 [&>button]:w-8">
         <DialogHeader className="gap-1 pr-7">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-brand)]">
             Walkthrough
@@ -429,13 +429,17 @@ export function LessonWalkthroughPlayer({
                       title={beat.caption}
                       aria-current={activeIndex === index ? "step" : undefined}
                       onClick={() => jumpToScene(index)}
-                      className={cn(
-                        "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-                        activeIndex === index
-                          ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
-                          : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
-                      )}
-                    />
+                      className="group flex h-6 w-6 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+                    >
+                      <span
+                        className={cn(
+                          "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors",
+                          activeIndex === index
+                            ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
+                            : "bg-[var(--color-muted)] group-hover:bg-[var(--color-brand-subtle)]"
+                        )}
+                      />
+                    </button>
                   ))
                 : walkthrough.scenes.map((scene, index) => (
                     <button
@@ -445,13 +449,17 @@ export function LessonWalkthroughPlayer({
                       title={scene.caption}
                       aria-current={activeIndex === index ? "step" : undefined}
                       onClick={() => jumpToScene(index)}
-                      className={cn(
-                        "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-                        activeIndex === index
-                          ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
-                          : "bg-[var(--color-muted)] hover:bg-[var(--color-brand-subtle)]"
-                      )}
-                    />
+                      className="group flex h-6 w-6 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+                    >
+                      <span
+                        className={cn(
+                          "h-3 w-3 rounded-full border border-[var(--color-border)] transition-colors",
+                          activeIndex === index
+                            ? "border-[var(--color-brand)] bg-[var(--color-brand)]"
+                            : "bg-[var(--color-muted)] group-hover:bg-[var(--color-brand-subtle)]"
+                        )}
+                      />
+                    </button>
                   ))}
             </div>
           </>
