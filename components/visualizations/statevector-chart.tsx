@@ -163,6 +163,7 @@ export function StatevectorChart({
             height={140}
             viewBox={`0 0 ${amplitudes.length * 28 + 8} 140`}
             className="min-w-full"
+            style={{ minWidth: amplitudes.length * 28 + 8 }}
           >
             {rows.map((row, i) => {
               const barH = (row.mag / maxMag) * 100;
@@ -183,7 +184,7 @@ export function StatevectorChart({
                     y={132}
                     textAnchor="middle"
                     fill="var(--color-muted-foreground)"
-                    fontSize={7}
+                    fontSize={amplitudes.length > 4 ? 10 : 7}
                     fontFamily="monospace"
                   >
                     {row.label}
