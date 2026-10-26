@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProbabilityEntry } from "@/lib/quantum-state";
 
 interface ProbabilityChartProps {
@@ -16,25 +16,66 @@ export function ProbabilityChart({
   error,
   compact = false,
 }: ProbabilityChartProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (compact) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const size = {
+        width: Math.round(entry.contentRect.width),
+        height: Math.round(entry.contentRect.height),
+      };
+      setContainerSize((current) =>
+        current?.width === size.width && current.height === size.height
+          ? current
+          : size
+      );
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [compact, error, numQubits]);
+
   const visible = useMemo(
     () => probabilities.filter((p) => p.probability > 1e-6),
     [probabilities]
   );
 
-  const chartHeight = compact ? 120 : 160;
+  const measured = !compact ? containerSize : null;
+  const chartHeight = compact
+    ? 120
+    : Math.max(160, measured?.height ?? 160);
   const padding = compact
     ? { top: 12, right: 12, bottom: 24, left: 44 }
     : { top: 16, right: 12, bottom: 36, left: 44 };
   const scrollable = probabilities.length > 4;
   const needsWideSlots = probabilities.length > 8;
-  const innerW = compact
+  const minInnerW = compact
     ? Math.max(probabilities.length * 48, 236)
     : Math.max(probabilities.length * (needsWideSlots ? 52 : 36), 120);
+  const innerW = compact
+    ? minInnerW
+    : Math.max(
+        minInnerW,
+        (measured?.width ?? 0) - padding.left - padding.right
+      );
   const innerH = chartHeight - padding.top - padding.bottom;
   const chartWidth = padding.left + innerW + padding.right;
   const barWidth = compact
     ? Math.min(72, innerW / Math.max(probabilities.length, 1) - 8)
-    : Math.min(40, innerW / Math.max(probabilities.length, 1) - 4);
+    : measured
+      ? Math.min(
+          56,
+          (innerW / Math.max(probabilities.length, 1)) * 0.6
+        )
+      : Math.min(40, innerW / Math.max(probabilities.length, 1) - 4);
   const probSum = probabilities.reduce((s, p) => s + p.probability, 0);
 
   if (error) {
@@ -55,15 +96,22 @@ export function ProbabilityChart({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <div
+        ref={scrollContainerRef}
+        className="min-h-0 min-w-0 flex-1 overflow-auto"
+      >
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-          width="100%"
-          height="100%"
-          style={{
-            minHeight: scrollable ? chartHeight : undefined,
-            minWidth: chartWidth,
-          }}
+          width={measured ? chartWidth : "100%"}
+          height={measured ? chartHeight : "100%"}
+          style={
+            measured
+              ? undefined
+              : {
+                  minHeight: scrollable ? chartHeight : undefined,
+                  minWidth: chartWidth,
+                }
+          }
           preserveAspectRatio="xMidYMid meet"
           aria-label="Probability distribution chart"
         >
@@ -80,7 +128,7 @@ export function ProbabilityChart({
           x={12}
           y={padding.top + innerH / 2}
           fill="var(--color-muted-foreground)"
-          fontSize={compact ? 12 : 10}
+          fontSize={compact ? 12 : 11}
           transform={`rotate(-90, 12, ${padding.top + innerH / 2})`}
           textAnchor="middle"
         >
@@ -103,7 +151,7 @@ export function ProbabilityChart({
                 x={padding.left - 8}
                 y={y + 3}
                 fill="var(--color-muted-foreground)"
-                fontSize={compact ? 12 : scrollable ? 10 : 9}
+                fontSize={compact ? 12 : 10}
                 textAnchor="end"
               >
                 {tick}
@@ -150,7 +198,7 @@ export function ProbabilityChart({
                 x={x + barWidth / 2}
                 y={padding.top + innerH + 14}
                 fill="var(--color-muted-foreground)"
-                fontSize={compact ? 12 : scrollable ? 10 : 9}
+                fontSize={compact ? 12 : 11}
                 textAnchor="middle"
                 fontFamily="monospace"
               >
@@ -161,7 +209,7 @@ export function ProbabilityChart({
                   x={x + barWidth / 2}
                   y={y - 4}
                   fill="var(--color-foreground)"
-                  fontSize={compact ? 11 : scrollable ? 10 : 8}
+                  fontSize={compact ? 11 : 10}
                   textAnchor="middle"
                 >
                   {entry.percentage.toFixed(0)}%

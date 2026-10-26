@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { HistogramEntry } from "@/lib/shot-simulator";
 import { getNoisePresetLabel, type NoiseModel } from "@/lib/noise-model";
 
@@ -24,6 +25,32 @@ export function MeasurementHistogram({
   emptyMessage = "Run circuit to see measurement results",
   noise,
 }: MeasurementHistogramProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const size = {
+        width: Math.round(entry.contentRect.width),
+        height: Math.round(entry.contentRect.height),
+      };
+      setContainerSize((current) =>
+        current?.width === size.width && current.height === size.height
+          ? current
+          : size
+      );
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [error, histogram.length]);
+
   if (error) {
     return (
       <div className="flex h-full items-center justify-center px-3 text-center text-xs text-[var(--color-destructive)]">
@@ -40,12 +67,18 @@ export function MeasurementHistogram({
     );
   }
 
-  const chartHeight = 160;
+  const chartHeight = Math.max(160, containerSize?.height ?? 160);
   const padding = { top: 16, right: 12, bottom: 36, left: 44 };
-  const innerW = Math.max(histogram.length * 40, 120);
+  const minInnerW = Math.max(histogram.length * 40, 120);
+  const innerW = Math.max(
+    minInnerW,
+    (containerSize?.width ?? 0) - padding.left - padding.right
+  );
   const innerH = chartHeight - padding.top - padding.bottom;
   const chartWidth = padding.left + innerW + padding.right;
-  const barWidth = Math.min(48, innerW / histogram.length - 4);
+  const barWidth = containerSize
+    ? Math.min(56, (innerW / histogram.length) * 0.6)
+    : Math.min(48, innerW / histogram.length - 4);
   const maxPct = Math.max(...histogram.map((h) => h.percentage), 1);
   const axisMax = histogramAxisMax(maxPct);
   const scrollable = histogram.length > 16;
@@ -64,15 +97,22 @@ export function MeasurementHistogram({
           )}
         </div>
       )}
-      <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+      <div
+        ref={scrollContainerRef}
+        className="min-h-0 min-w-0 flex-1 overflow-auto"
+      >
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-          width="100%"
-          height="100%"
-          style={{
-            minHeight: scrollable ? chartHeight : undefined,
-            minWidth: chartWidth,
-          }}
+          width={containerSize ? chartWidth : "100%"}
+          height={containerSize ? chartHeight : "100%"}
+          style={
+            containerSize
+              ? undefined
+              : {
+                  minHeight: scrollable ? chartHeight : undefined,
+                  minWidth: chartWidth,
+                }
+          }
           preserveAspectRatio="xMidYMid meet"
           aria-label="Measurement histogram"
         >
@@ -88,7 +128,7 @@ export function MeasurementHistogram({
           x={12}
           y={padding.top + innerH / 2}
           fill="var(--color-muted-foreground)"
-          fontSize={10}
+          fontSize={11}
           transform={`rotate(-90, 12, ${padding.top + innerH / 2})`}
           textAnchor="middle"
         >
@@ -111,7 +151,7 @@ export function MeasurementHistogram({
                 x={padding.left - 8}
                 y={y + 3}
                 fill="var(--color-muted-foreground)"
-                fontSize={scrollable ? 10 : 9}
+                fontSize={10}
                 textAnchor="end"
               >
                 {Math.round(tick)}
@@ -152,7 +192,7 @@ export function MeasurementHistogram({
                 x={x + barWidth / 2}
                 y={padding.top + innerH + 14}
                 fill="var(--color-muted-foreground)"
-                fontSize={scrollable ? 10 : 9}
+                fontSize={11}
                 textAnchor="middle"
                 fontFamily="monospace"
               >
@@ -163,7 +203,7 @@ export function MeasurementHistogram({
                   x={x + barWidth / 2}
                   y={y - 4}
                   fill="var(--color-foreground)"
-                  fontSize={scrollable ? 10 : 8}
+                  fontSize={10}
                   textAnchor="middle"
                 >
                   {entry.percentage.toFixed(0)}%
