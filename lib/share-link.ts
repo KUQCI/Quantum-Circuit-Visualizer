@@ -223,6 +223,11 @@ export function buildShareUrl(circuit: Circuit, origin: string): string {
   )}`;
 }
 
+export function sharedCopyName(name: string | undefined): string {
+  const baseName = (name ?? "").replace(/(?:\s*\(shared\))+\s*$/, "").trim();
+  return `${baseName || "Untitled Circuit"} (shared)`;
+}
+
 export function decodeShareParam(param: string): Circuit | null {
   if (!param || param.length > MAX_SHARE_BYTES * 2) return null;
   try {

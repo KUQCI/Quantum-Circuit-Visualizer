@@ -26,16 +26,20 @@ export function quickActionLabelPlacement({
   centerX,
   centerY,
   viewportWidth,
+  viewportHeight,
   size = 32,
   labelWidth = 128,
+  labelHeight = 26,
 }: {
   x: number;
   y: number;
   centerX: number;
   centerY: number;
   viewportWidth: number;
+  viewportHeight: number;
   size?: number;
   labelWidth?: number;
+  labelHeight?: number;
 }): { side: QuickActionLabelSide; align: QuickActionLabelAlign } {
   const bx = x + size / 2;
   const by = y + size / 2;
@@ -56,7 +60,15 @@ export function quickActionLabelPlacement({
     return { side, align: "center" };
   }
 
-  const side = dy < 0 ? "above" : "below";
+  let side: QuickActionLabelSide = dy < 0 ? "above" : "below";
+  if (
+    side === "below" &&
+    y + size + gap + labelHeight > viewportHeight - margin
+  ) {
+    side = "above";
+  } else if (side === "above" && y - gap - labelHeight < margin) {
+    side = "below";
+  }
   const align: QuickActionLabelAlign =
     bx - labelWidth / 2 < margin
       ? "start"

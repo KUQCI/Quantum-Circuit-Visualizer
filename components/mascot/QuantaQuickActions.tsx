@@ -172,6 +172,7 @@ export function QuantaQuickActions({
           centerX,
           centerY,
           viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
         });
         button.style.left = `${x}px`;
         button.style.top = `${y}px`;

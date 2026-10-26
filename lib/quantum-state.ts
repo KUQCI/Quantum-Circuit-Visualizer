@@ -72,7 +72,7 @@ function cExp(angle: number): Complex {
   return c(Math.cos(angle), Math.sin(angle));
 }
 
-function formatBasisLabel(index: number, numQubits: number): string {
+export function formatBasisLabel(index: number, numQubits: number): string {
   return index.toString(2).padStart(numQubits, "0").split("").reverse().join("");
 }
 

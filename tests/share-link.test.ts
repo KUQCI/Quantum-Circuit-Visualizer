@@ -4,6 +4,7 @@ import {
   buildShareUrl,
   decodeShareParam,
   encodeCircuitToShare,
+  sharedCopyName,
 } from "@/lib/share-link";
 
 function withoutIds(operation: Circuit["operations"][number]) {
@@ -83,6 +84,13 @@ function bellCircuit(): Circuit {
 }
 
 describe("share links", () => {
+  it("adds only one shared suffix and falls back for empty names", () => {
+    expect(sharedCopyName("Bell")).toBe("Bell (shared)");
+    expect(sharedCopyName("Bell (shared) (shared)")).toBe("Bell (shared)");
+    expect(sharedCopyName("")).toBe("Untitled Circuit (shared)");
+    expect(sharedCopyName(undefined)).toBe("Untitled Circuit (shared)");
+  });
+
   it("round-trips parameterized and measured circuits", () => {
     const circuit = sampleCircuit();
     const decoded = decodeShareParam(encodeCircuitToShare(circuit));
