@@ -31,13 +31,17 @@ export function QuantaEmptyState({
   return (
     <div
       className={cn(
-        "technical-panel flex flex-col items-center gap-4 px-6 py-10 text-center",
+        "technical-panel flex flex-col items-center gap-3 px-4 py-6 text-center sm:gap-4 sm:px-6 sm:py-10",
         className
       )}
     >
-      <QuantaImage variant={variant} size="lg" />
+      <QuantaImage
+        variant={variant}
+        size="lg"
+        className="size-[88px]! sm:size-[152px]!"
+      />
       <div className="max-w-md">
-        <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
+        <h2 className="text-base font-semibold text-[var(--color-foreground)] sm:text-lg">
           {title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted-foreground)]">
