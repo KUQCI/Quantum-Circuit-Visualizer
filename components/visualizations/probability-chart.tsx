@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProbabilityEntry } from "@/lib/quantum-state";
 
+const MIN_MEASURED_CHART_HEIGHT = 96;
+
 interface ProbabilityChartProps {
   probabilities: ProbabilityEntry[];
   numQubits: number;
@@ -51,7 +53,9 @@ export function ProbabilityChart({
   const measured = !compact ? containerSize : null;
   const chartHeight = compact
     ? 120
-    : Math.max(160, measured?.height ?? 160);
+    : measured
+      ? Math.max(MIN_MEASURED_CHART_HEIGHT, measured.height)
+      : 160;
   const padding = compact
     ? { top: 12, right: 12, bottom: 24, left: 44 }
     : { top: 16, right: 12, bottom: 36, left: 44 };

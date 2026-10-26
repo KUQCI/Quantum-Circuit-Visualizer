@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import type { HistogramEntry } from "@/lib/shot-simulator";
 import { getNoisePresetLabel, type NoiseModel } from "@/lib/noise-model";
 
+const MIN_MEASURED_CHART_HEIGHT = 96;
+
 interface MeasurementHistogramProps {
   histogram: HistogramEntry[];
   shots: number;
@@ -67,7 +69,9 @@ export function MeasurementHistogram({
     );
   }
 
-  const chartHeight = Math.max(160, containerSize?.height ?? 160);
+  const chartHeight = containerSize
+    ? Math.max(MIN_MEASURED_CHART_HEIGHT, containerSize.height)
+    : 160;
   const padding = { top: 16, right: 12, bottom: 36, left: 44 };
   const minInnerW = Math.max(histogram.length * 40, 120);
   const innerW = Math.max(
