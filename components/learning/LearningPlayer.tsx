@@ -343,6 +343,14 @@ export function LearningPlayer({
         setStage("build");
         return;
       }
+      if (quizChecked && !correct) {
+        setQuizChecked(false);
+        setQuizChoice(null);
+        setFeedbackStatus("idle");
+        setFeedbackMessage("");
+        setQuantaFeedback("");
+        return;
+      }
       setQuizChecked(true);
       recordQuizAnswer(activity.id, question.id, correct);
       if (!correct) {

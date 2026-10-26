@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Complex } from "@/lib/quantum-state";
-import { phaseToColor } from "@/lib/quantum-state";
+import { formatBasisLabel, phaseToColor } from "@/lib/quantum-state";
 import { cn } from "@/lib/utils";
 
 interface StatevectorChartProps {
@@ -55,7 +55,7 @@ export function StatevectorChart({
   const rows = amplitudes.map((amp, i) => {
     const mag = Math.sqrt(amp.re * amp.re + amp.im * amp.im);
     const phase = Math.atan2(amp.im, amp.re);
-    const label = i.toString(2).padStart(numQubits, "0");
+    const label = formatBasisLabel(i, numQubits);
     return { label, amp, mag, phase, prob: mag * mag };
   });
 

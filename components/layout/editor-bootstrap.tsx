@@ -7,7 +7,7 @@ import { useEditorUiStore } from "@/store/editor-ui-store";
 import { getWalkthrough } from "@/lib/learning/walkthroughs";
 import { restoreWalkthroughBackup } from "@/lib/learning/walkthrough-backup";
 import { AlertTriangle } from "lucide-react";
-import { decodeShareParam } from "@/lib/share-link";
+import { decodeShareParam, sharedCopyName } from "@/lib/share-link";
 import { showAppToast } from "@/lib/app-toast";
 
 /** Handles ?project=id query param and viewport-aware default panel state. */
@@ -45,7 +45,7 @@ export function EditorBootstrap() {
       } else {
         setActivityCircuit({
           ...shared,
-          name: `${shared.name || "Untitled Circuit"} (shared)`,
+          name: sharedCopyName(shared.name),
         });
         showAppToast(
           "Loaded a shared circuit — Save project to keep your own copy"

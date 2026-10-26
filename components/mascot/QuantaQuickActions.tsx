@@ -172,6 +172,7 @@ export function QuantaQuickActions({
           centerX,
           centerY,
           viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
         });
         button.style.left = `${x}px`;
         button.style.top = `${y}px`;
@@ -257,7 +258,7 @@ export function QuantaQuickActions({
             buttonRefs.current[index] = element;
           }}
           type="button"
-          className="group pointer-events-auto fixed flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-foreground)] opacity-0 shadow-lg transition-[opacity,transform] ease-out hover:bg-[var(--color-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          className="group pointer-events-auto fixed flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-foreground)] opacity-0 shadow-lg transition-[opacity,transform] ease-out hover:z-10 hover:bg-[var(--color-secondary)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           style={{
             left: 0,
             top: 0,

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  formatBasisLabel,
   simulateCircuit,
   indexToQSphereCoords,
   nChooseK,
@@ -53,7 +54,15 @@ describe("Quantum State Simulation", () => {
       classicalTargets: [], column: 0,
     });
     const result = simulateCircuit(circuit);
-    expect(result.probabilities.find((entry) => entry.probability > 0.99)?.label).toBe("|01⟩");
+    const amplitudeIndex = result.amplitudes.findIndex(
+      (amplitude) => Math.hypot(amplitude.re, amplitude.im) > 0.99
+    );
+    const amplitudeLabel = formatBasisLabel(amplitudeIndex, 2);
+    const probabilityLabel = result.probabilities.find(
+      (entry) => entry.probability > 0.99
+    )?.label;
+    expect(amplitudeLabel).toBe("01");
+    expect(`|${amplitudeLabel}⟩`).toBe(probabilityLabel);
   });
 
   it("computes Bell-state marginals from the reduced density matrix", () => {

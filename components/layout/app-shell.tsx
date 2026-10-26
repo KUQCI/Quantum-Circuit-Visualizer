@@ -27,7 +27,11 @@ function getContentBreadcrumbs(pathname: string) {
   const path = normalizePath(pathname);
   if (path === "/") return [];
   if (isEditorPath(path)) return [];
+  if (path === "/embed")
+    return [{ label: "Home", href: "/" }, { label: "Embed" }];
   if (path === "/learn") return [{ label: "Home", href: "/" }, { label: "Learn" }];
+  if (path === "/classroom")
+    return [{ label: "Home", href: "/" }, { label: "Classroom" }];
   if (path === "/review")
     return [
       { label: "Home", href: "/" },

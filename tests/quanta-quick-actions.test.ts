@@ -77,6 +77,7 @@ describe("quick action label placement", () => {
         centerX: 640,
         centerY: 500,
         viewportWidth: 1280,
+        viewportHeight: viewport.height,
       })
     ).toEqual({ side: "above", align: "center" });
   });
@@ -89,6 +90,7 @@ describe("quick action label placement", () => {
         centerX: 640,
         centerY: 500,
         viewportWidth: 1280,
+        viewportHeight: viewport.height,
       })
     ).toEqual({ side: "right", align: "center" });
   });
@@ -101,6 +103,7 @@ describe("quick action label placement", () => {
         centerX: 100,
         centerY: 400,
         viewportWidth: 1280,
+        viewportHeight: viewport.height,
       })
     ).toEqual({ side: "right", align: "center" });
   });
@@ -113,6 +116,7 @@ describe("quick action label placement", () => {
         centerX: 1200,
         centerY: 500,
         viewportWidth: 1280,
+        viewportHeight: viewport.height,
       })
     ).toEqual({ side: "above", align: "end" });
   });
@@ -125,6 +129,33 @@ describe("quick action label placement", () => {
         centerX: 640,
         centerY: 20,
         viewportWidth: 1280,
+        viewportHeight: viewport.height,
+      })
+    ).toEqual({ side: "below", align: "center" });
+  });
+
+  it("flips a lower label above near the bottom viewport edge", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 624,
+        y: 740,
+        centerX: 640,
+        centerY: 700,
+        viewportWidth: viewport.width,
+        viewportHeight: viewport.height,
+      })
+    ).toEqual({ side: "above", align: "center" });
+  });
+
+  it("flips an upper label below near the top viewport edge", () => {
+    expect(
+      quickActionLabelPlacement({
+        x: 624,
+        y: 10,
+        centerX: 640,
+        centerY: 50,
+        viewportWidth: viewport.width,
+        viewportHeight: viewport.height,
       })
     ).toEqual({ side: "below", align: "center" });
   });
