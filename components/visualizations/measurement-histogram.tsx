@@ -73,7 +73,7 @@ export function MeasurementHistogram({
     ? Math.max(MIN_MEASURED_CHART_HEIGHT, containerSize.height)
     : 160;
   const padding = { top: 16, right: 12, bottom: 36, left: 44 };
-  const minInnerW = Math.max(histogram.length * 40, 120);
+  const minInnerW = Math.max(histogram.length * (histogram.length > 8 ? 52 : 40), 120);
   const innerW = Math.max(
     minInnerW,
     (containerSize?.width ?? 0) - padding.left - padding.right
